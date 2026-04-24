@@ -40,6 +40,11 @@ FocusScope {
     property string _connectMode: ""
     property int _activationChecks: 0
     property string _connectError: ""
+    property string _forgetConfirmSsid: ""
+    property string _forgetBusySsid: ""
+    property string _forgetResultSsid: ""
+    property bool _forgetResultOk: false
+    readonly property bool _showStatus: root._connecting || root._connectError !== ""
 
     function promptOpen() {
         return root._connectSsid !== "" && root._connectSecure
@@ -47,6 +52,7 @@ FocusScope {
 
     function openPasswordPrompt(ssid, security) {
         root._stopActivationCheck()
+        root._clearForgetState()
         root._connectSsid = ssid
         root._connectSecurity = security || ""
         root._connectSecure = true
@@ -67,6 +73,7 @@ FocusScope {
 
     function _beginInlineConnect(ssid, security) {
         root._stopActivationCheck()
+        root._clearForgetState()
         root._connectSsid = ssid || ""
         root._connectSecurity = security || ""
         root._connectSecure = false
@@ -77,6 +84,63 @@ FocusScope {
 
     function _ssidMatches(left, right) {
         return (left || "").trim().toLowerCase() === (right || "").trim().toLowerCase()
+    }
+
+    function _hasSavedProfile(ssid) {
+        return wifiService.findSavedProfileName(ssid) !== ""
+    }
+
+    function _networkStatusText(network) {
+        if (network.active)
+            return "Connected"
+        if (root._hasSavedProfile(network.ssid))
+            return "Saved network"
+        return ((network.security || "") !== "") ? "Secured network" : "Open network"
+    }
+
+    function _clearForgetState() {
+        root._forgetConfirmSsid = ""
+        root._forgetBusySsid = ""
+        root._forgetResultSsid = ""
+        root._forgetResultOk = false
+    }
+
+    function _confirmForget(ssid) {
+        if (root._connecting || root._forgetBusySsid !== "" || ssid === "")
+            return
+
+        root._forgetResultSsid = ""
+        root._forgetResultOk = false
+        root._forgetConfirmSsid = ssid
+    }
+
+    function _cancelForget(ssid) {
+        if (root._forgetConfirmSsid === ssid)
+            root._forgetConfirmSsid = ""
+    }
+
+    function _forgetNetwork(ssid) {
+        const target = (ssid || "").trim()
+        if (target.length === 0 || root._forgetBusySsid !== "")
+            return
+
+        root._forgetConfirmSsid = ""
+        root._forgetResultSsid = ""
+        root._forgetResultOk = false
+        root._forgetBusySsid = target
+
+        if (!wifiService.forgetNetwork(target, function(result) {
+            root._forgetBusySsid = ""
+            root._forgetResultSsid = target
+            root._forgetResultOk = !!(result && result.success)
+            pollProc.running = true
+            forgetResultClearTimer.restart()
+        })) {
+            root._forgetBusySsid = ""
+            root._forgetResultSsid = target
+            root._forgetResultOk = false
+            forgetResultClearTimer.restart()
+        }
     }
 
     function _startActivationCheck(mode) {
@@ -185,6 +249,87 @@ FocusScope {
         id: wifiService
     }
 
+    component StatusPill: Rectangle {
+        id: pill
+        required property bool active
+        required property bool connecting
+        required property string message
+        property color fillColor: pill.connecting ? Theme.qsRowBgHover : Theme.qsRowBg
+        property color strokeColor: pill.connecting ? Theme.qsEdge : Theme.qsEdgeSoft
+        property color labelColor: pill.connecting ? Theme.textPrimary : Theme.red
+
+        Layout.alignment: Qt.AlignHCenter
+        Layout.preferredWidth: Math.min(root.width - 24, statusRow.implicitWidth + 24)
+        Layout.preferredHeight: 28
+        radius: 14
+        color: fillColor
+        border.width: 1
+        border.color: strokeColor
+        opacity: active ? 1 : 0
+        clip: true
+
+        Behavior on opacity {
+            NumberAnimation { duration: 90 }
+        }
+
+        Behavior on fillColor {
+            ColorAnimation { duration: 110 }
+        }
+
+        Behavior on strokeColor {
+            ColorAnimation { duration: 110 }
+        }
+
+        RowLayout {
+            id: statusRow
+
+            anchors {
+                fill: parent
+                leftMargin: 12
+                rightMargin: 12
+            }
+            spacing: 8
+
+            Rectangle {
+                width: 8
+                height: 8
+                radius: 4
+                color: pill.connecting ? Theme.accent : Theme.red
+                opacity: 0.95
+
+                SequentialAnimation on opacity {
+                    running: pill.active && pill.connecting
+                    loops: Animation.Infinite
+
+                    NumberAnimation {
+                        from: 0.95
+                        to: 0.35
+                        duration: 650
+                        easing.type: Easing.InOutQuad
+                    }
+
+                    NumberAnimation {
+                        from: 0.35
+                        to: 0.95
+                        duration: 650
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: pill.active ? pill.message : " "
+                font.family: Theme.fontUi
+                font.pixelSize: 11
+                font.weight: Font.Medium
+                color: pill.labelColor
+                elide: Text.ElideRight
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
+    }
+
     // ── Layout ────────────────────────────────────────────────────
     ColumnLayout {
         id: col
@@ -271,19 +416,10 @@ FocusScope {
 
         Item { height: 8; z: 3 }
 
-        Text {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 14
-            text: (!root.promptOpen() && (root._connecting || root._connectError !== "")) ? root._statusText() : " "
-            font.family: Theme.fontUi
-            font.pixelSize: 11
-            color: root._connecting ? Theme.textDim : Theme.red
-            horizontalAlignment: Text.AlignHCenter
-            opacity: !root.promptOpen() && (root._connecting || root._connectError !== "") ? 1 : 0
-
-            Behavior on opacity {
-                NumberAnimation { duration: 90 }
-            }
+        StatusPill {
+            active: !root.promptOpen() && root._showStatus
+            connecting: root._connecting
+            message: root._statusText()
         }
 
         Item {
@@ -426,19 +562,10 @@ FocusScope {
                     }
                 }
 
-                Text {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 14
-                    text: (root._connecting || root._connectError !== "") ? root._statusText() : " "
-                    font.family: Theme.fontUi
-                    font.pixelSize: 11
-                    color: root._connecting ? Theme.textDim : Theme.red
-                    horizontalAlignment: Text.AlignHCenter
-                    opacity: root._connecting || root._connectError !== "" ? 1 : 0
-
-                    Behavior on opacity {
-                        NumberAnimation { duration: 90 }
-                    }
+                StatusPill {
+                    active: root._showStatus
+                    connecting: root._connecting
+                    message: root._statusText()
                 }
 
                 RowLayout {
@@ -544,7 +671,16 @@ FocusScope {
                         Layout.fillWidth: true
                         height: 52
                         radius: 18
+                        readonly property bool secureNetwork: (modelData.security || "") !== ""
                         readonly property bool selectedForPrompt: root.promptOpen() && root._connectSsid === modelData.ssid
+                        readonly property bool rememberedProfile: root._hasSavedProfile(modelData.ssid)
+                        readonly property bool savedProfile: !modelData.active && rememberedProfile
+                        readonly property bool forgetPending: root._forgetConfirmSsid === modelData.ssid
+                        readonly property bool forgetBusy: root._forgetBusySsid === modelData.ssid
+                        readonly property bool forgetHasResult: root._forgetResultSsid === modelData.ssid
+                        readonly property bool forgetOk: forgetHasResult && root._forgetResultOk
+                        readonly property bool forgetActionVisible: rememberedProfile
+                            && (wifiHover.hovered || forgetPending || forgetBusy || forgetHasResult)
                         color: modelData.active
                             ? Theme.hoverBgStrong
                             : (selectedForPrompt ? Qt.rgba(1, 1, 1, 0.10)
@@ -553,6 +689,28 @@ FocusScope {
                         border.color: modelData.active
                             ? Qt.rgba(1, 1, 1, 0.14)
                             : (selectedForPrompt ? Theme.accent : Qt.rgba(1, 1, 1, 0.05))
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.ArrowCursor
+                            enabled: root._forgetBusySsid === ""
+                                && !wifiRow.forgetPending
+                                && !wifiRow.forgetBusy
+                                && !wifiRow.forgetHasResult
+                            onClicked: {
+                                root._forgetConfirmSsid = ""
+                                if (root._connecting) return
+                                if (modelData.active) return
+                                if ((modelData.security || "") !== "") {
+                                    if (wifiService.hasSavedProfile(modelData.ssid))
+                                        root._connectSavedSecureNetwork(modelData)
+                                    else
+                                        root.openPasswordPrompt(modelData.ssid, modelData.security)
+                                } else {
+                                    root._connectOpenNetwork(modelData.ssid)
+                                }
+                            }
+                        }
 
                         RowLayout {
                             anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
@@ -591,9 +749,7 @@ FocusScope {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: modelData.active
-                                        ? "Connected"
-                                        : ((modelData.security || "") !== "" ? "Secured network" : "Open network")
+                                    text: root._networkStatusText(modelData)
                                     font.family: Theme.fontUi
                                     font.pixelSize: 10
                                     color: Theme.textDim
@@ -602,11 +758,128 @@ FocusScope {
                             }
 
                             Text {
-                                visible: (modelData.security || "") !== ""
+                                visible: wifiRow.secureNetwork
                                 text: "󰌾"
                                 font.family: Theme.fontIcons
                                 font.pixelSize: 12
                                 color: Theme.textDim
+                            }
+                            Item {
+                                z: 1
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: forgetActions.visible ? forgetActions.implicitWidth
+                                                                    : (savedChip.visible ? savedChip.implicitWidth : 0)
+                                implicitHeight: forgetActions.visible ? forgetActions.implicitHeight
+                                                                      : (savedChip.visible ? savedChip.implicitHeight : 0)
+
+                                RowLayout {
+                                    id: forgetActions
+                                    anchors.centerIn: parent
+                                    visible: wifiRow.forgetActionVisible
+                                    spacing: 6
+
+                                    Rectangle {
+                                        visible: wifiRow.forgetPending
+                                        implicitWidth: 56
+                                        implicitHeight: 28
+                                        radius: 14
+                                        color: Qt.rgba(1, 1, 1, 0.06)
+                                        border.width: 1
+                                        border.color: Qt.rgba(1, 1, 1, 0.08)
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "Cancel"
+                                            font.family: Theme.fontUi
+                                            font.pixelSize: 10
+                                            font.weight: Font.Medium
+                                            color: Theme.textPrimary
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            preventStealing: true
+                                            cursorShape: Qt.ArrowCursor
+                                            onClicked: root._cancelForget(wifiRow.modelData.ssid)
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        id: forgetButton
+                                        implicitWidth: wifiRow.forgetBusy ? 78 : (wifiRow.forgetPending ? 58 : 62)
+                                        implicitHeight: 28
+                                        radius: 14
+                                        color: {
+                                            if (wifiRow.forgetHasResult)
+                                                return wifiRow.forgetOk ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 0.35, 0.35, 0.14)
+                                            if (wifiRow.forgetPending)
+                                                return Qt.rgba(1, 0.35, 0.35, 0.16)
+                                            if (wifiRow.forgetBusy)
+                                                return Qt.rgba(1, 1, 1, 0.06)
+                                            return Qt.rgba(1, 1, 1, 0.08)
+                                        }
+                                        border.width: 1
+                                        border.color: wifiRow.forgetPending
+                                            ? Qt.rgba(1, 0.45, 0.45, 0.22)
+                                            : Qt.rgba(1, 1, 1, 0.08)
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: {
+                                                if (wifiRow.forgetHasResult) return wifiRow.forgetOk ? "Forgot" : "Failed"
+                                                if (wifiRow.forgetBusy) return "Forgetting…"
+                                                return "Forget"
+                                            }
+                                            font.family: Theme.fontUi
+                                            font.pixelSize: 10
+                                            font.weight: Font.Medium
+                                            color: {
+                                                if (wifiRow.forgetHasResult)
+                                                    return wifiRow.forgetOk ? Theme.textPrimary : Theme.red
+                                                if (wifiRow.forgetBusy)
+                                                    return Theme.textDisabled
+                                                if (wifiRow.forgetPending)
+                                                    return Theme.red
+                                                return Theme.textPrimary
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            preventStealing: true
+                                            cursorShape: Qt.ArrowCursor
+                                            enabled: root._forgetBusySsid === "" && !wifiRow.forgetHasResult
+                                            onClicked: {
+                                                if (wifiRow.forgetPending)
+                                                    root._forgetNetwork(wifiRow.modelData.ssid)
+                                                else
+                                                    root._confirmForget(wifiRow.modelData.ssid)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    id: savedChip
+                                    anchors.centerIn: parent
+                                    visible: wifiRow.savedProfile && !wifiRow.forgetActionVisible
+                                    implicitWidth: savedLabel.implicitWidth + 12
+                                    implicitHeight: 20
+                                    radius: 10
+                                    color: Qt.rgba(1, 1, 1, 0.06)
+                                    border.width: 1
+                                    border.color: Qt.rgba(1, 1, 1, 0.08)
+
+                                    Text {
+                                        id: savedLabel
+                                        anchors.centerIn: parent
+                                        text: "Saved"
+                                        font.family: Theme.fontUi
+                                        font.pixelSize: 10
+                                        font.weight: Font.Medium
+                                        color: Theme.accent
+                                    }
+                                }
                             }
                             Text {
                                 visible: !!modelData.active
@@ -621,23 +894,6 @@ FocusScope {
                             id: wifiHover
                             blocking: false
                             cursorShape: Qt.ArrowCursor
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.ArrowCursor
-                            onClicked: {
-                                if (root._connecting) return
-                                if (modelData.active) return
-                                if ((modelData.security || "") !== "") {
-                                    if (wifiService.hasSavedProfile(modelData.ssid))
-                                        root._connectSavedSecureNetwork(modelData)
-                                    else
-                                        root.openPasswordPrompt(modelData.ssid, modelData.security)
-                                } else {
-                                    root._connectOpenNetwork(modelData.ssid)
-                                }
-                            }
                         }
                     }
                 }
@@ -720,6 +976,15 @@ FocusScope {
     Timer { id: focusTimer;   interval: 80;   onTriggered: passField.forceActiveFocus() }
     Timer { id: afterToggle;  interval: 700;  onTriggered: pollProc.running = true }
     Timer { id: afterConnect; interval: 3500; onTriggered: pollProc.running = true }
+    Timer {
+        id: forgetResultClearTimer
+        interval: 2200
+        onTriggered: {
+            root._forgetResultSsid = ""
+            root._forgetResultOk = false
+            pollProc.running = true
+        }
+    }
     Timer {
         id: activationTimer
         interval: 900

@@ -11,6 +11,7 @@ Item {
     property string _pendingSsid: ""
     property string _pendingPassword: ""
     property string _pendingDeleteProfile: ""
+    property string _pendingForgetProfile: ""
     property var _cleanupResult: null
     property string _cleanupProfile: ""
 
@@ -148,7 +149,7 @@ Item {
             return false
 
         root._forgetCallback = callback || null
-        root._removeSavedProfile(profileName)
+        root._pendingForgetProfile = profileName
         forgetNetworkProc.command = ["nmcli", "connection", "delete", profileName]
         forgetNetworkProc.running = true
         return true
@@ -169,7 +170,7 @@ Item {
             return false
         }
 
-        if (connectProc.running || forgetProc.running)
+        if (connectProc.running || forgetProc.running || forgetNetworkProc.running || cleanupProc.running)
             return false
 
         root._connectCallback = callback || null
@@ -299,8 +300,14 @@ Item {
         }
 
         onExited: code => {
+            const deletedProfile = root._pendingForgetProfile
+            root._pendingForgetProfile = ""
             const callback = root._forgetCallback
             root._forgetCallback = null
+            if (code === 0 && deletedProfile.length > 0) {
+                root._removeSavedProfile(deletedProfile)
+                root.refreshSavedProfiles()
+            }
             if (callback) {
                 callback({
                     success: code === 0,

@@ -289,7 +289,7 @@ Item {
 
             Widgets.QuickSettingsTile {
                 label: "Wi-Fi"
-                sublabel: root.wifiPage.connectedSsid.length > 0 ? root.wifiPage.connectedSsid : (root.wifiPage.wifiOn ? "Connected" : "Off")
+                sublabel: root.wifiPage.connectedSsid.length > 0 ? root.wifiPage.connectedSsid : (root.wifiPage.wifiOn ? "On" : "Off")
                 iconOn: "󰤨"
                 iconOff: "󰤭"
                 toggled: root.wifiPage.wifiOn
