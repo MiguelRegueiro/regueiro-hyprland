@@ -16,7 +16,7 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 ## Dependencies
 
 ```sh
-sudo pacman -S hyprland hyprpaper hyprlock hyprpicker \
+sudo pacman -S hyprland hyprpaper hyprlock hyprpicker hypridle \
                quickshell \
                rofi \
                kitty fish starship fastfetch btop \
@@ -71,5 +71,5 @@ cargo install runin
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell rofi fish starship fastfetch kitty fcitx5
+stow hypr quickshell rofi fish starship fastfetch kitty fcitx5 hypridle
 ```

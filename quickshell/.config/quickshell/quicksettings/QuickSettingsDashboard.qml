@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Io
+import Quickshell.Services.UPower
 import "widgets" as Widgets
 import "../theme/Theme.js" as Theme
 
@@ -74,6 +76,112 @@ Item {
 
             Item {
                 Layout.fillWidth: true
+
+                visible: batteryInfo.hasBattery
+
+                property var dev: UPower.displayDevice
+                property bool hasBattery: dev && dev.percentage >= 0
+                property int percent: hasBattery ? Math.min(100, Math.round(dev.percentage * 100)) : 0
+                property bool charging: hasBattery && (dev.state === UPowerDeviceState.Charging
+                    || dev.state === UPowerDeviceState.FullyCharged)
+                property bool full: hasBattery && dev.state === UPowerDeviceState.FullyCharged
+                property real secondsLeft: hasBattery && !charging ? dev.timeToEmpty : 0
+
+                function formatTime(secs) {
+                    if (secs <= 0) return ""
+                    const h = Math.floor(secs / 3600)
+                    const m = Math.floor((secs % 3600) / 60)
+                    if (h > 0 && m > 0) return h + "h " + m + "m"
+                    if (h > 0) return h + "h"
+                    return m + "m"
+                }
+
+                id: batteryInfo
+                Layout.preferredHeight: 38
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 38
+                    radius: 19
+                    color: Theme.qsRowBg
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.08)
+                    width: pillRow.implicitWidth + 20
+
+                    RowLayout {
+                        id: pillRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Item {
+                            width: 24
+                            height: 12
+
+                            // Body
+                            Rectangle {
+                                id: batteryBody
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 21
+                                height: 12
+                                radius: 3
+                                color: "transparent"
+                                border.width: 1.5
+                                border.color: batteryInfo.percent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+
+                                // Fill
+                                Rectangle {
+                                    anchors {
+                                        left: parent.left
+                                        top: parent.top
+                                        bottom: parent.bottom
+                                        margins: 2.5
+                                    }
+                                    width: Math.max(0, (parent.width - 5) * batteryInfo.percent / 100)
+                                    radius: 1.5
+                                    color: batteryInfo.charging || batteryInfo.full ? Theme.green : batteryInfo.percent <= 15 ? Theme.red : Theme.textPrimary
+
+                                    Behavior on width {
+                                        NumberAnimation { duration: 200 }
+                                    }
+                                }
+
+                                // Charging bolt
+                                Text {
+                                    anchors.centerIn: parent
+                                    visible: batteryInfo.charging && !batteryInfo.full
+                                    text: "󱐋"
+                                    font.family: Theme.fontIcons
+                                    font.pixelSize: 8
+                                    color: "black"
+                                }
+                            }
+
+                            // Terminal nub
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 3
+                                height: 5
+                                radius: 1
+                                color: batteryInfo.percent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+                            }
+                        }
+
+                        Text {
+                            text: {
+                                if (batteryInfo.full) return "Charged"
+                                if (batteryInfo.charging) return batteryInfo.percent + "% · Charging"
+                                const t = batteryInfo.formatTime(batteryInfo.secondsLeft)
+                                return batteryInfo.percent + "%" + (t ? " · " + t : "")
+                            }
+                            font.family: Theme.fontUi
+                            font.pixelSize: 13
+                            color: Theme.textDim
+                        }
+                    }
+                }
             }
 
             Item {
@@ -235,7 +343,7 @@ Item {
 
             Widgets.QuickSettingsTile {
                 label: "Do Not Disturb"
-                sublabel: root.notificationStore.dnd ? "Silenced" : "Notifications on"
+                sublabel: root.notificationStore.dnd ? "On" : "Off"
                 iconOn: "󰂛"
                 iconOff: "󰂜"
                 toggled: root.notificationStore.dnd

@@ -14,26 +14,10 @@ Rectangle {
     signal clicked()
 
     property var batteryDevice: UPower.displayDevice
-    property int batteryPercent: batteryDevice ? Math.round(batteryDevice.percentage * 100) : -1
+    property int batteryPercent: batteryDevice ? Math.min(100, Math.round(batteryDevice.percentage * 100)) : -1
     property bool batteryCharging: batteryDevice && (batteryDevice.state === UPowerDeviceState.Charging
         || batteryDevice.state === UPowerDeviceState.FullyCharged)
-    property string batteryIcon: {
-        if (!batteryDevice || batteryPercent < 0)
-            return ""
-        if (batteryCharging)
-            return "󰂄"
-        if (batteryPercent > 90)
-            return "󰁹"
-        if (batteryPercent > 70)
-            return "󰂂"
-        if (batteryPercent > 50)
-            return "󰂀"
-        if (batteryPercent > 30)
-            return "󰁾"
-        if (batteryPercent > 15)
-            return "󰁼"
-        return "󰁺"
-    }
+    property bool batteryFull: batteryDevice && batteryDevice.state === UPowerDeviceState.FullyCharged
 
     property string networkIcon: "󰤭"
 
@@ -136,13 +120,55 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            Text {
-                text: root.batteryIcon
-                font.family: Theme.fontIcons
-                font.pixelSize: 14
-                font.weight: Font.DemiBold
-                color: root.batteryCharging ? Theme.green : Theme.textPrimary
+            Item {
+                width: 22
+                height: 10
                 anchors.verticalCenter: parent.verticalCenter
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 19
+                    height: 10
+                    radius: 2.5
+                    color: "transparent"
+                    border.width: 1.5
+                    border.color: root.batteryPercent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            top: parent.top
+                            bottom: parent.bottom
+                            margins: 2
+                        }
+                        width: Math.max(0, (parent.width - 4) * root.batteryPercent / 100)
+                        radius: 1
+                        color: root.batteryCharging || root.batteryFull ? Theme.green : root.batteryPercent <= 15 ? Theme.red : Theme.textPrimary
+
+                        Behavior on width {
+                            NumberAnimation { duration: 200 }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: root.batteryCharging && !root.batteryFull
+                        text: "󱐋"
+                        font.family: Theme.fontIcons
+                        font.pixelSize: 7
+                        color: "black"
+                    }
+                }
+
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 2.5
+                    height: 4
+                    radius: 1
+                    color: root.batteryPercent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+                }
             }
 
             Text {

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
+import Quickshell
 import Quickshell.Io
 import "../../theme/Theme.js" as Theme
 

@@ -156,6 +156,18 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         delegate: Component {
+            Overlays.VolumeOSD {
+                required property var modelData
+
+                targetScreen: modelData
+                audioService: audioServiceState
+            }
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+        delegate: Component {
             Notifications.NotificationsOverlay {
                 required property var modelData
 

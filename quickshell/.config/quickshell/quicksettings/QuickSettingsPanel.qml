@@ -353,7 +353,7 @@ FocusScope {
                         top: parent.top
                         left: parent.left
                         right: parent.right
-                        topMargin: root.attachTop + Theme.qsContentPadding
+                        topMargin: root.attachTop
                         leftMargin: root.attachRight + Theme.qsContentPadding
                         rightMargin: root.attachRight + Theme.qsContentPadding
                     }
