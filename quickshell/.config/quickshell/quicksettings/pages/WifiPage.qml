@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic
 import Quickshell
 import Quickshell.Io
+import "../../services" as Services
 import "../../theme/Theme.js" as Theme
 
 // Expandable WiFi submenu (toggle + network list + password prompt)
@@ -21,24 +22,167 @@ FocusScope {
 
     // Polling frequency control
     property bool menuOpen: false
-    onMenuOpenChanged: if (menuOpen) pollProc.running = true
+    onMenuOpenChanged: {
+        if (menuOpen) {
+            pollProc.running = true
+            wifiService.refreshSavedProfiles()
+        }
+    }
 
     // Internal
     property var _networks: []
     property string _connectSsid: ""
+    property string _connectSecurity: ""
     property bool _connectSecure: false
     property bool _showPassword: false
+    property bool _connecting: false
+    property bool _awaitingActivation: false
+    property string _connectMode: ""
+    property int _activationChecks: 0
+    property string _connectError: ""
 
     function promptOpen() {
         return root._connectSsid !== "" && root._connectSecure
     }
 
-    function openPasswordPrompt(ssid) {
+    function openPasswordPrompt(ssid, security) {
+        root._stopActivationCheck()
         root._connectSsid = ssid
+        root._connectSecurity = security || ""
         root._connectSecure = true
         root._showPassword = false
+        root._connecting = false
+        root._connectMode = "password"
+        root._connectError = ""
         passField.text = ""
         focusTimer.restart()
+    }
+
+    function _statusText() {
+        if (root._connecting)
+            return root._connectSsid !== "" ? "Connecting to " + root._connectSsid + "…" : "Connecting…"
+
+        return root._connectError
+    }
+
+    function _beginInlineConnect(ssid, security) {
+        root._stopActivationCheck()
+        root._connectSsid = ssid || ""
+        root._connectSecurity = security || ""
+        root._connectSecure = false
+        root._showPassword = false
+        root._connecting = true
+        root._connectError = ""
+    }
+
+    function _ssidMatches(left, right) {
+        return (left || "").trim().toLowerCase() === (right || "").trim().toLowerCase()
+    }
+
+    function _startActivationCheck(mode) {
+        root._connectMode = mode || root._connectMode
+        root._awaitingActivation = true
+        root._activationChecks = 0
+        if (!pollProc.running)
+            pollProc.running = true
+        activationTimer.start()
+    }
+
+    function _stopActivationCheck() {
+        root._awaitingActivation = false
+        root._activationChecks = 0
+        activationTimer.stop()
+    }
+
+    function _forgetFailedTarget() {
+        wifiService.forgetNetwork(root._connectSsid)
+    }
+
+    function _handleActivationTimeout() {
+        const failedSsid = root._connectSsid
+        const failedSecurity = root._connectSecurity
+        const failedMode = root._connectMode
+
+        root._stopActivationCheck()
+        root._connecting = false
+
+        if (failedMode === "saved") {
+            root._forgetFailedTarget()
+            root.openPasswordPrompt(failedSsid, failedSecurity)
+            root._connectError = "Saved password was rejected. Enter it again."
+            return
+        }
+
+        if (failedMode === "password") {
+            root._forgetFailedTarget()
+            passField.text = ""
+            root._connectError = "Password rejected. Try again."
+            passField.forceActiveFocus()
+            return
+        }
+
+        root._connectError = "Connection timed out"
+    }
+
+    function _finishConnectSuccess() {
+        root._stopActivationCheck()
+        passField.text = ""
+        root._connectSsid = ""
+        root._connectSecurity = ""
+        root._connectSecure = false
+        root._showPassword = false
+        root._connecting = false
+        root._connectMode = ""
+        root._connectError = ""
+        root.needsFocus = false
+        wifiService.refreshSavedProfiles()
+        afterConnect.start()
+    }
+
+    function _connectOpenNetwork(ssid) {
+        root._beginInlineConnect(ssid, "")
+        root._connectMode = "open"
+        if (!wifiService.connect(ssid, "", function(result) {
+            if (result && result.success) {
+                root._startActivationCheck("open")
+                return
+            }
+
+            root._stopActivationCheck()
+            root._connecting = false
+            root._connectError = wifiService.describeFailure(result, false)
+        })) {
+            root._connecting = false
+            root._connectError = "Another Wi-Fi request is still running"
+        }
+    }
+
+    function _connectSavedSecureNetwork(network) {
+        root._beginInlineConnect(network.ssid, network.security || "")
+        root._connectMode = "saved"
+        if (!wifiService.connect(network.ssid, "", function(result) {
+            if (result && result.success) {
+                root._startActivationCheck("saved")
+                return
+            }
+
+            root._stopActivationCheck()
+            root._connecting = false
+            if (result && result.needsPassword) {
+                root.openPasswordPrompt(network.ssid, network.security || "")
+                root._connectError = "Saved password was rejected. Enter it again."
+                return
+            }
+
+            root._connectError = wifiService.describeFailure(result, false)
+        })) {
+            root._connecting = false
+            root._connectError = "Another Wi-Fi request is still running"
+        }
+    }
+
+    Services.WifiConnectionService {
+        id: wifiService
     }
 
     // ── Layout ────────────────────────────────────────────────────
@@ -65,7 +209,7 @@ FocusScope {
                 // Back button
                 Rectangle {
                     readonly property bool hovered: backHover.hovered
-                    width: 44; height: 44; radius: 12
+                    width: 44; height: 44; radius: 22
                     color: hovered ? Theme.hoverBgStrong : Theme.qsRowBg
                     Behavior on color { ColorAnimation { duration: 110 } }
                     Text {
@@ -96,6 +240,7 @@ FocusScope {
                     Layout.preferredWidth: 24
                     horizontalAlignment: Text.AlignHCenter
                 }
+                Item { width: 6 }
                 Text {
                     Layout.fillWidth: true
                     text: "Wi-Fi"
@@ -107,14 +252,14 @@ FocusScope {
 
                 // Toggle pill
                 Rectangle {
-                    width: 40; height: 22; radius: 11
+                    width: 48; height: 26; radius: 13
                     color: root.wifiOn ? Theme.accent : Qt.rgba(1,1,1,0.15)
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: 80 } }
                     Rectangle {
-                        width: 16; height: 16; radius: 8; color: "white"
+                        width: 20; height: 20; radius: 10; color: "white"
                         anchors.verticalCenter: parent.verticalCenter
                         x: root.wifiOn ? parent.width - width - 3 : 3
-                        Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                        Behavior on x { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
                     }
                     MouseArea {
                         anchors.fill: parent; preventStealing: true; cursorShape: Qt.ArrowCursor; z: 2
@@ -126,12 +271,32 @@ FocusScope {
 
         Item { height: 8; z: 3 }
 
+        Text {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 14
+            text: (!root.promptOpen() && (root._connecting || root._connectError !== "")) ? root._statusText() : " "
+            font.family: Theme.fontUi
+            font.pixelSize: 11
+            color: root._connecting ? Theme.textDim : Theme.red
+            horizontalAlignment: Text.AlignHCenter
+            opacity: !root.promptOpen() && (root._connecting || root._connectError !== "") ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation { duration: 90 }
+            }
+        }
+
+        Item {
+            height: 8
+            z: 3
+        }
+
         // Password input (Sticky below header)
         Rectangle {
             id: passBox
             Layout.fillWidth: true
             visible: root.promptOpen()
-            height: visible ? 128 : 0
+            height: visible ? passContent.implicitHeight + 24 : 0
             radius: 18
             color: Theme.menuBg
             border.color: Theme.qsEdge
@@ -142,7 +307,8 @@ FocusScope {
             Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
             ColumnLayout {
-                anchors { fill: parent; leftMargin: 14; rightMargin: 14; topMargin: 12; bottomMargin: 12 }
+                id: passContent
+                anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 14; rightMargin: 14; topMargin: 12 }
                 spacing: 10
 
                 ColumnLayout {
@@ -196,6 +362,7 @@ FocusScope {
                         selectByMouse: true
                         activeFocusOnPress: true
                         clip: true
+                        onTextEdited: if (!root._connecting) root._connectError = ""
                         Keys.onReturnPressed: {
                             event.accepted = true
                             root._doConnect(text)
@@ -259,6 +426,21 @@ FocusScope {
                     }
                 }
 
+                Text {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 14
+                    text: (root._connecting || root._connectError !== "") ? root._statusText() : " "
+                    font.family: Theme.fontUi
+                    font.pixelSize: 11
+                    color: root._connecting ? Theme.textDim : Theme.red
+                    horizontalAlignment: Text.AlignHCenter
+                    opacity: root._connecting || root._connectError !== "" ? 1 : 0
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: 90 }
+                    }
+                }
+
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -296,13 +478,14 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 34
                         radius: 17
-                        color: connectHover.hovered ? Theme.tileActiveBgHover : Theme.tileActiveBg
+                        opacity: root._connecting ? 0.5 : 1.0
+                        color: connectHover.hovered && !root._connecting ? Theme.tileActiveBgHover : Theme.tileActiveBg
                         border.width: 1
                         border.color: Qt.rgba(1, 1, 1, 0.10)
 
                         Text {
                             anchors.centerIn: parent
-                            text: "Connect"
+                            text: root._connecting ? "Connecting…" : "Connect"
                             font.family: Theme.fontUi
                             font.pixelSize: 12
                             font.weight: Font.Medium
@@ -444,15 +627,15 @@ FocusScope {
                             anchors.fill: parent
                             cursorShape: Qt.ArrowCursor
                             onClicked: {
+                                if (root._connecting) return
                                 if (modelData.active) return
                                 if ((modelData.security || "") !== "") {
-                                    root.openPasswordPrompt(modelData.ssid)
+                                    if (wifiService.hasSavedProfile(modelData.ssid))
+                                        root._connectSavedSecureNetwork(modelData)
+                                    else
+                                        root.openPasswordPrompt(modelData.ssid, modelData.security)
                                 } else {
-                                    root._connectSsid = modelData.ssid
-                                    root._connectSecure = false
-                                    connectProc.command = ["nmcli", "device", "wifi",
-                                                           "connect", modelData.ssid]
-                                    connectProc.running = true
+                                    root._connectOpenNetwork(modelData.ssid)
                                 }
                             }
                         }
@@ -463,6 +646,7 @@ FocusScope {
     }
 
     function toggle() {
+        wifiOn = !wifiOn
         wifiToggleProc.running = true
         afterToggle.start()
     }
@@ -475,26 +659,60 @@ FocusScope {
         return "󰤨"
     }
 
+    function _isWpaSecurity(security) {
+        var sec = (security || "").toUpperCase()
+        return sec.indexOf("WPA") >= 0 || sec.indexOf("PSK") >= 0 || sec.indexOf("SAE") >= 0
+    }
+
+    function _validatePassword(pwd) {
+        if (pwd.length === 0) return "Enter a password"
+        if (!root._isWpaSecurity(root._connectSecurity)) return ""
+        if (pwd.length < 8) return "WPA password must be at least 8 characters"
+        if (pwd.length > 64) return "WPA password must be 8-63 chars, or 64 hex digits"
+        if (pwd.length === 64 && !/^[0-9A-Fa-f]{64}$/.test(pwd))
+            return "A 64-character WPA key must use only 0-9 and A-F"
+        return ""
+    }
+
     function _doConnect(pwd) {
-        if (pwd.length > 0) {
-            connectProc.command = ["nmcli", "device", "wifi", "connect",
-                                   root._connectSsid, "password", pwd]
-            connectProc.running = true
-            passField.text = ""
-            root._connectSsid = ""
-            root._connectSecure = false
-            root._showPassword = false
-            root.needsFocus = false
-        } else {
+        if (root._connecting) return
+        root._connectError = root._validatePassword(pwd)
+        if (root._connectError !== "") {
             passField.forceActiveFocus()
+            return
+        }
+
+        root._connecting = true
+        root._connectMode = "password"
+        if (!wifiService.connect(root._connectSsid, pwd, function(result) {
+            if (result && result.success) {
+                root._startActivationCheck("password")
+                return
+            }
+
+            root._stopActivationCheck()
+            root._connecting = false
+            if (result && (result.needsPassword || wifiService.detectAuthenticationError(result.error || "")))
+                passField.text = ""
+
+            root._connectError = wifiService.describeFailure(result, true)
+            passField.forceActiveFocus()
+        })) {
+            root._connecting = false
+            root._connectError = "Another Wi-Fi request is still running"
         }
     }
 
     function _cancel() {
+        root._stopActivationCheck()
         passField.text = ""
         root._connectSsid = ""
+        root._connectSecurity = ""
         root._connectSecure = false
         root._showPassword = false
+        root._connecting = false
+        root._connectMode = ""
+        root._connectError = ""
         root.needsFocus = false
     }
 
@@ -502,6 +720,31 @@ FocusScope {
     Timer { id: focusTimer;   interval: 80;   onTriggered: passField.forceActiveFocus() }
     Timer { id: afterToggle;  interval: 700;  onTriggered: pollProc.running = true }
     Timer { id: afterConnect; interval: 3500; onTriggered: pollProc.running = true }
+    Timer {
+        id: activationTimer
+        interval: 900
+        repeat: true
+        onTriggered: {
+            if (!root._awaitingActivation) {
+                stop()
+                return
+            }
+
+            if (root._ssidMatches(root.connectedSsid, root._connectSsid)) {
+                root._finishConnectSuccess()
+                return
+            }
+
+            root._activationChecks += 1
+            if (root._activationChecks >= 8) {
+                root._handleActivationTimeout()
+                return
+            }
+
+            if (!pollProc.running)
+                pollProc.running = true
+        }
+    }
 
     // Poll every 6s; extra trigger when menu opens
     Timer {
@@ -517,6 +760,10 @@ FocusScope {
             "echo \"ssid:$(nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2 | head -1)\";" +
             "nmcli -t -m multiline -f IN-USE,SSID,SECURITY,SIGNAL dev wifi list 2>/dev/null | sed 's/^/NET:/'"
         ]
+        environment: ({
+            LANG: "C.UTF-8",
+            LC_ALL: "C.UTF-8"
+        })
         stdout: StdioCollector {
             id: pollData
             onStreamFinished: {
@@ -558,15 +805,12 @@ FocusScope {
                     if (!a.active && b.active) return 1
                     return (b.signal || 0) - (a.signal || 0)
                 })
+
+                if (root._awaitingActivation && root._ssidMatches(root.connectedSsid, root._connectSsid))
+                    root._finishConnectSuccess()
             }
         }
     }
 
     Process { id: wifiToggleProc; command: [Quickshell.env("HOME") + "/.config/hypr/scripts/wifi-toggle.sh"] }
-
-    Process {
-        id: connectProc
-        command: ["echo"]
-        onRunningChanged: if (!running) afterConnect.start()
-    }
 }
