@@ -1,0 +1,16 @@
+#!/bin/sh
+
+case "${1:-}" in
+    left)
+        hyprctl --batch 'dispatch fullscreen 1 unset ; dispatch setfloating active ; dispatch resizeactive exact 50% 100% ; dispatch movewindow l'
+        ;;
+    right)
+        hyprctl --batch 'dispatch fullscreen 1 unset ; dispatch setfloating active ; dispatch resizeactive exact 50% 100% ; dispatch movewindow r'
+        ;;
+    restore)
+        hyprctl --batch 'dispatch fullscreen 1 unset ; dispatch settiled active'
+        ;;
+    *)
+        exit 2
+        ;;
+esac

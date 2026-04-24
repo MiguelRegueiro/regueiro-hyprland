@@ -1,0 +1,113 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "kitty",
+    "source": "~/.config/fastfetch/CachyOS3.png",
+    "width": 38,
+    "padding": {
+      "top": 3,
+      "left": 2,
+      "right": 2
+    }
+  },
+  "modules": [
+    "break",
+
+    // Hardware
+    {
+      "type": "host",
+      "key": "PC",
+      "keyColor": "#04b4e0"
+    },
+    {
+      "type": "cpu",
+      "key": "CPU",
+      "keyColor": "#04b4e0"
+    },
+    {
+      "type": "gpu",
+      "key": "GPU",
+      "keyColor": "#04b4e0"
+    },
+    {
+      "type": "memory",
+      "key": "RAM",
+      "keyColor": "#04b4e0"
+    },
+    {
+      "type": "swap",
+      "key": "Swap",
+      "keyColor": "#04b4e0"
+    },
+    {
+      "type": "disk",
+      "key": "Disk",
+      "keyColor": "#04b4e0"
+    },
+
+    "break",
+
+    // System
+    {
+      "type": "os",
+      "key": "OS",
+      "keyColor": "#527cfa"
+    },
+    {
+      "type": "kernel",
+      "key": "Kernel",
+      "keyColor": "#527cfa"
+    },
+    {
+      "type": "bios",
+      "key": "UEFI",
+      "keyColor": "#527cfa"
+    },
+    {
+      "type": "de",
+      "key": "DE",
+      "keyColor": "#527cfa"
+    },
+    {
+      "type": "command",
+      "key": "Packages",
+      "keyColor": "#527cfa",
+      "text": "[ -f \"$HOME/.cache/fastfetch/packages.txt\" ] && cat \"$HOME/.cache/fastfetch/packages.txt\" || echo \"refresh pending\""
+    },
+    {
+      "type": "shell",
+      "key": "Shell",
+      "keyColor": "#527cfa"
+    },
+    {
+      "type": "terminal",
+      "key": "Terminal",
+      "keyColor": "#527cfa"
+    },
+
+    "break",
+
+    // Runtime
+    {
+      "type": "command",
+      "key": "OS Age ",
+      "keyColor": "#0388e1",
+      "text": "install_epoch=$(stat -c %W /); printf '%s days\\n' \"$((( $(date +%s) - install_epoch ) / 86400))\""
+    },
+    {
+      "type": "uptime",
+      "key": "Uptime ",
+      "keyColor": "#0388e1"
+    },
+    {
+      "type": "datetime",
+      "key": "DateTime ",
+      "keyColor": "#0388e1"
+    },
+    {
+      "type": "battery",
+      "format": "{/4}{-}{/}{4}{?5} [{5}]{?}",
+      "keyColor": "#0388e1"
+    }
+  ]
+}

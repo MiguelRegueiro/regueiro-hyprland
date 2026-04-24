@@ -1,0 +1,571 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls.Basic
+import Quickshell.Io
+import "../../theme/Theme.js" as Theme
+
+// Expandable WiFi submenu (toggle + network list + password prompt)
+FocusScope {
+    id: root
+
+    Layout.fillWidth: true
+    implicitHeight: 460
+
+    // Public — read by parent tiles
+    property bool wifiOn: false
+    property string connectedSsid: ""
+    property bool needsFocus: false
+
+    signal backClicked()
+
+    // Polling frequency control
+    property bool menuOpen: false
+    onMenuOpenChanged: if (menuOpen) pollProc.running = true
+
+    // Internal
+    property var _networks: []
+    property string _connectSsid: ""
+    property bool _connectSecure: false
+    property bool _showPassword: false
+
+    function promptOpen() {
+        return root._connectSsid !== "" && root._connectSecure
+    }
+
+    function openPasswordPrompt(ssid) {
+        root._connectSsid = ssid
+        root._connectSecure = true
+        root._showPassword = false
+        passField.text = ""
+        focusTimer.restart()
+    }
+
+    // ── Layout ────────────────────────────────────────────────────
+    ColumnLayout {
+        id: col
+        anchors.fill: parent
+        spacing: 0
+
+        // Wi-Fi on/off header
+        Rectangle {
+            id: header
+            Layout.fillWidth: true
+            height: 52
+            radius: 18
+            color: Theme.qsRowBg
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.05)
+            z: 3
+
+            RowLayout {
+                anchors { fill: parent; leftMargin: 4; rightMargin: 8 }
+                spacing: 0
+
+                // Back button
+                Rectangle {
+                    readonly property bool hovered: backHover.hovered
+                    width: 44; height: 44; radius: 12
+                    color: hovered ? Theme.hoverBgStrong : Theme.qsRowBg
+                    Behavior on color { ColorAnimation { duration: 110 } }
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰁍"
+                        font.family: Theme.fontIcons; font.pixelSize: 18
+                        color: Theme.textPrimary
+                    }
+                    HoverHandler {
+                        id: backHover
+                        blocking: false
+                        cursorShape: Qt.ArrowCursor
+                    }
+                    TapHandler {
+                        acceptedButtons: Qt.LeftButton
+                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                        onTapped: root.backClicked()
+                    }
+                }
+
+                Item { width: 8 }
+
+                Text {
+                    text: root.wifiOn ? "󰤨" : "󰤭"
+                    font.family: Theme.fontIcons
+                    font.pixelSize: 18
+                    color: root.wifiOn ? Theme.accent : Theme.textDim
+                    Layout.preferredWidth: 24
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: "Wi-Fi"
+                    font.family: Theme.fontUi
+                    font.pixelSize: 14
+                    font.weight: Font.Medium
+                    color: Theme.textPrimary
+                }
+
+                // Toggle pill
+                Rectangle {
+                    width: 40; height: 22; radius: 11
+                    color: root.wifiOn ? Theme.accent : Qt.rgba(1,1,1,0.15)
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Rectangle {
+                        width: 16; height: 16; radius: 8; color: "white"
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: root.wifiOn ? parent.width - width - 3 : 3
+                        Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    }
+                    MouseArea {
+                        anchors.fill: parent; preventStealing: true; cursorShape: Qt.ArrowCursor; z: 2
+                        onClicked: root.toggle()
+                    }
+                }
+            }
+        }
+
+        Item { height: 8; z: 3 }
+
+        // Password input (Sticky below header)
+        Rectangle {
+            id: passBox
+            Layout.fillWidth: true
+            visible: root.promptOpen()
+            height: visible ? 128 : 0
+            radius: 18
+            color: Theme.menuBg
+            border.color: Theme.qsEdge
+            border.width: 1
+            clip: true
+            z: 5 // Ensure it's on top of the list content
+            
+            Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+            ColumnLayout {
+                anchors { fill: parent; leftMargin: 14; rightMargin: 14; topMargin: 12; bottomMargin: 12 }
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Password Required"
+                        font.family: Theme.fontUi
+                        font.pixelSize: 13
+                        font.weight: Font.DemiBold
+                        color: Theme.textPrimary
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root._connectSsid
+                        font.family: Theme.fontUi
+                        font.pixelSize: 11
+                        color: Theme.textDim
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 40
+                    radius: 14
+                    color: Qt.rgba(1, 1, 1, 0.08)
+                    border.color: passField.activeFocus ? Theme.accent : Qt.rgba(1, 1, 1, 0.14)
+                    border.width: 1
+
+                    TextInput {
+                        id: passField
+                        anchors {
+                            left: parent.left
+                            right: eyeButton.left
+                            leftMargin: 12
+                            rightMargin: 10
+                            verticalCenter: parent.verticalCenter
+                        }
+                        font.family: Theme.fontUi
+                        font.pixelSize: 13
+                        color: Theme.textPrimary
+                        selectionColor: Theme.accent
+                        selectedTextColor: Theme.textPrimary
+                        echoMode: root._showPassword ? TextInput.Normal : TextInput.Password
+                        focus: root.promptOpen()
+                        cursorVisible: activeFocus
+                        selectByMouse: true
+                        activeFocusOnPress: true
+                        clip: true
+                        Keys.onReturnPressed: {
+                            event.accepted = true
+                            root._doConnect(text)
+                        }
+                        Keys.onEnterPressed: {
+                            event.accepted = true
+                            root._doConnect(text)
+                        }
+                        Keys.onEscapePressed: {
+                            event.accepted = true
+                            root._cancel()
+                        }
+                    }
+
+                    Text {
+                        anchors {
+                            left: passField.left
+                            verticalCenter: parent.verticalCenter
+                        }
+                        visible: passField.text.length === 0
+                        text: "Enter Wi-Fi password"
+                        font.family: Theme.fontUi
+                        font.pixelSize: 13
+                        color: Qt.rgba(1, 1, 1, 0.42)
+                    }
+
+                    Rectangle {
+                        id: eyeButton
+                        width: 28
+                        height: 28
+                        radius: 14
+                        anchors {
+                            right: parent.right
+                            rightMargin: 6
+                            verticalCenter: parent.verticalCenter
+                        }
+                        color: eyeHover.hovered ? Theme.hoverBgStrong : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: root._showPassword ? "\uf070" : "\uf06e"
+                            font.family: Theme.fontIcons
+                            font.pixelSize: 14
+                            color: Theme.textDim
+                        }
+
+                        HoverHandler {
+                            id: eyeHover
+                            blocking: false
+                            cursorShape: Qt.ArrowCursor
+                        }
+
+                        TapHandler {
+                            acceptedButtons: Qt.LeftButton
+                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                            onTapped: {
+                                root._showPassword = !root._showPassword
+                                passField.forceActiveFocus()
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        radius: 17
+                        color: cancelHover.hovered ? Theme.qsRowBgHover : Qt.rgba(1, 1, 1, 0.06)
+                        border.width: 1
+                        border.color: Qt.rgba(1, 1, 1, 0.08)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Cancel"
+                            font.family: Theme.fontUi
+                            font.pixelSize: 12
+                            color: Theme.textPrimary
+                        }
+
+                        HoverHandler {
+                            id: cancelHover
+                            blocking: false
+                            cursorShape: Qt.ArrowCursor
+                        }
+
+                        TapHandler {
+                            acceptedButtons: Qt.LeftButton
+                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                            onTapped: root._cancel()
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        radius: 17
+                        color: connectHover.hovered ? Theme.tileActiveBgHover : Theme.tileActiveBg
+                        border.width: 1
+                        border.color: Qt.rgba(1, 1, 1, 0.10)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Connect"
+                            font.family: Theme.fontUi
+                            font.pixelSize: 12
+                            font.weight: Font.Medium
+                            color: "white"
+                        }
+
+                        HoverHandler {
+                            id: connectHover
+                            blocking: false
+                            cursorShape: Qt.ArrowCursor
+                        }
+
+                        TapHandler {
+                            acceptedButtons: Qt.LeftButton
+                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                            onTapped: root._doConnect(passField.text)
+                        }
+                    }
+                }
+            }
+        }
+
+        Item { height: root.promptOpen() ? 12 : 0; z: 3 }
+
+        // Scrollable area for network list
+        Flickable {
+            id: flick
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            contentHeight: listCol.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            z: 1
+
+            ScrollBar.vertical: ScrollBar {
+                width: 4
+                policy: ScrollBar.AsNeeded
+                background: null
+                contentItem: Rectangle {
+                    implicitWidth: 4
+                    radius: 2
+                    color: Qt.rgba(1,1,1,0.2)
+                }
+            }
+
+            ColumnLayout {
+                id: listCol
+                width: parent.width
+                spacing: 4
+
+                Repeater {
+                    model: root.wifiOn ? root._networks : []
+                    delegate: Rectangle {
+                        id: wifiRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        height: 52
+                        radius: 18
+                        readonly property bool selectedForPrompt: root.promptOpen() && root._connectSsid === modelData.ssid
+                        color: modelData.active
+                            ? Theme.hoverBgStrong
+                            : (selectedForPrompt ? Qt.rgba(1, 1, 1, 0.10)
+                                                 : (wifiHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg))
+                        border.width: 1
+                        border.color: modelData.active
+                            ? Qt.rgba(1, 1, 1, 0.14)
+                            : (selectedForPrompt ? Theme.accent : Qt.rgba(1, 1, 1, 0.05))
+
+                        RowLayout {
+                            anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
+                            spacing: 10
+
+                            Rectangle {
+                                Layout.preferredWidth: 28
+                                Layout.preferredHeight: 28
+                                radius: 14
+                                color: modelData.active
+                                    ? Qt.rgba(1, 1, 1, 0.12)
+                                    : (wifiHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: root._sigIcon(modelData.signal || 0)
+                                    font.family: Theme.fontIcons
+                                    font.pixelSize: 15
+                                    color: modelData.active ? Theme.textPrimary : Theme.textDim
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.ssid || ""
+                                    font.family: Theme.fontUi
+                                    font.pixelSize: 12
+                                    font.weight: modelData.active ? Font.DemiBold : Font.Medium
+                                    color: Theme.textPrimary
+                                    elide: Text.ElideRight
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.active
+                                        ? "Connected"
+                                        : ((modelData.security || "") !== "" ? "Secured network" : "Open network")
+                                    font.family: Theme.fontUi
+                                    font.pixelSize: 10
+                                    color: Theme.textDim
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            Text {
+                                visible: (modelData.security || "") !== ""
+                                text: "󰌾"
+                                font.family: Theme.fontIcons
+                                font.pixelSize: 12
+                                color: Theme.textDim
+                            }
+                            Text {
+                                visible: !!modelData.active
+                                text: "󰄬"
+                                font.family: Theme.fontIcons
+                                font.pixelSize: 14
+                                color: Theme.green
+                            }
+                        }
+
+                        HoverHandler {
+                            id: wifiHover
+                            blocking: false
+                            cursorShape: Qt.ArrowCursor
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.ArrowCursor
+                            onClicked: {
+                                if (modelData.active) return
+                                if ((modelData.security || "") !== "") {
+                                    root.openPasswordPrompt(modelData.ssid)
+                                } else {
+                                    root._connectSsid = modelData.ssid
+                                    root._connectSecure = false
+                                    connectProc.command = ["nmcli", "device", "wifi",
+                                                           "connect", modelData.ssid]
+                                    connectProc.running = true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function toggle() {
+        wifiToggleProc.running = true
+        afterToggle.start()
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────
+    function _sigIcon(pct) {
+        if (pct < 25) return "󰤟"
+        if (pct < 50) return "󰤢"
+        if (pct < 75) return "󰤥"
+        return "󰤨"
+    }
+
+    function _doConnect(pwd) {
+        if (pwd.length > 0) {
+            connectProc.command = ["nmcli", "device", "wifi", "connect",
+                                   root._connectSsid, "password", pwd]
+            connectProc.running = true
+            passField.text = ""
+            root._connectSsid = ""
+            root._connectSecure = false
+            root._showPassword = false
+            root.needsFocus = false
+        } else {
+            passField.forceActiveFocus()
+        }
+    }
+
+    function _cancel() {
+        passField.text = ""
+        root._connectSsid = ""
+        root._connectSecure = false
+        root._showPassword = false
+        root.needsFocus = false
+    }
+
+    // ── Timers ─────────────────────────────────────────────────────
+    Timer { id: focusTimer;   interval: 80;   onTriggered: passField.forceActiveFocus() }
+    Timer { id: afterToggle;  interval: 700;  onTriggered: pollProc.running = true }
+    Timer { id: afterConnect; interval: 3500; onTriggered: pollProc.running = true }
+
+    // Poll every 6s; extra trigger when menu opens
+    Timer {
+        interval: 6000; running: true; repeat: true; triggeredOnStart: true
+        onTriggered: pollProc.running = true
+    }
+
+    // ── Processes ─────────────────────────────────────────────────
+    Process {
+        id: pollProc
+        command: ["bash", "-c",
+            "echo \"wifi:$(nmcli radio wifi 2>/dev/null)\";" +
+            "echo \"ssid:$(nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2 | head -1)\";" +
+            "nmcli -t -m multiline -f IN-USE,SSID,SECURITY,SIGNAL dev wifi list 2>/dev/null | sed 's/^/NET:/'"
+        ]
+        stdout: StdioCollector {
+            id: pollData
+            onStreamFinished: {
+                var lines = pollData.text.split("\n")
+                var list = [], cur = null
+                for (var i = 0; i < lines.length; i++) {
+                    var raw = lines[i]
+                    if (raw.startsWith("wifi:")) {
+                        root.wifiOn = raw.slice(5).trim() === "enabled"; continue
+                    }
+                    if (raw.startsWith("ssid:")) {
+                        root.connectedSsid = raw.slice(5).trim(); continue
+                    }
+                    if (!raw.startsWith("NET:")) continue
+                    var line = raw.slice(4)
+                    var ci = line.indexOf(":")
+                    if (ci < 0) continue
+                    var key = line.slice(0, ci).replace(/\[\d+\]$/, "")
+                    var val = line.slice(ci + 1).replace(/\\:/g, ":")
+                    if (key === "IN-USE") {
+                        if (cur && cur.ssid !== undefined) list.push(cur)
+                        cur = { active: val.trim() === "*" }
+                    } else if (cur) {
+                        if      (key === "SSID")     cur.ssid     = val
+                        else if (key === "SECURITY") cur.security = val
+                        else if (key === "SIGNAL")   cur.signal   = parseInt(val) || 0
+                    }
+                }
+                if (cur && cur.ssid !== undefined) list.push(cur)
+                // Deduplicate by SSID — keep active entry or highest signal
+                var seen = {}
+                list.forEach(n => {
+                    if (!n.ssid) return
+                    if (!seen[n.ssid] || n.active || n.signal > (seen[n.ssid].signal || 0))
+                        seen[n.ssid] = n
+                })
+                root._networks = Object.values(seen).sort((a, b) => {
+                    if (a.active && !b.active) return -1
+                    if (!a.active && b.active) return 1
+                    return (b.signal || 0) - (a.signal || 0)
+                })
+            }
+        }
+    }
+
+    Process { id: wifiToggleProc; command: [Quickshell.env("HOME") + "/.config/hypr/scripts/wifi-toggle.sh"] }
+
+    Process {
+        id: connectProc
+        command: ["echo"]
+        onRunningChanged: if (!running) afterConnect.start()
+    }
+}

@@ -1,0 +1,91 @@
+* {
+    bg:        #1c1c1cbf;
+    bgalt:     #ffffff0f;
+    bgsel:     #ffffff1c;
+    fg:        #f6f5f4;
+    fgdim:     #f6f5f480;
+    accent:    #3584e4;
+    bordercol: #ffffff14;
+
+    background-color: transparent;
+    text-color:       @fg;
+    font:             "Cantarell 12";
+}
+
+window {
+    background-color: @bg;
+    border:           1px solid;
+    border-color:     @bordercol;
+    border-radius:    14px;
+    width:            680px;
+    padding:          12px;
+    location:         center;
+    anchor:           center;
+}
+
+mainbox {
+    background-color: transparent;
+    spacing:          8px;
+    children:         [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: @bgalt;
+    border-radius:    10px;
+    padding:          10px 14px;
+    spacing:          8px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    background-color: transparent;
+    text-color:       @fgdim;
+    vertical-align:   0.5;
+}
+
+entry {
+    background-color:  transparent;
+    text-color:        @fg;
+    placeholder:       "Search apps…";
+    placeholder-color: @fgdim;
+    vertical-align:    0.5;
+    cursor:            text;
+}
+
+listview {
+    background-color: transparent;
+    columns:          1;
+    lines:            8;
+    scrollbar:        false;
+    spacing:          2px;
+    fixed-height:     false;
+}
+
+element {
+    background-color: transparent;
+    border-radius:    8px;
+    padding:          7px 10px;
+    spacing:          12px;
+    orientation:      horizontal;
+    children:         [ element-icon, element-text ];
+    cursor:           pointer;
+}
+
+element.selected.normal,
+element.selected.urgent,
+element.selected.active {
+    background-color: @bgsel;
+}
+
+element-icon {
+    size:           32px;
+    vertical-align: 0.5;
+    cursor:         inherit;
+}
+
+element-text {
+    background-color: transparent;
+    text-color:       @fg;
+    vertical-align:   0.5;
+    cursor:           inherit;
+}

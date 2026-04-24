@@ -1,0 +1,55 @@
+#!/bin/sh
+
+lock_session() {
+    if command -v hyprlock >/dev/null 2>&1; then
+        hyprlock --config ~/.config/hypr/hyprlock.conf
+    elif command -v swaylock >/dev/null 2>&1; then
+        swaylock
+    else
+        loginctl lock-session
+    fi
+}
+
+confirm() {
+    choice=$(printf '%s\n' 'No' 'Yes' | rofi -dmenu -p "$1")
+    [ "$choice" = "Yes" ]
+}
+
+case "${1:-}" in
+    lock)
+        lock_session
+        exit 0
+        ;;
+    shutdown)
+        confirm "Shut down?" && systemctl poweroff
+        exit 0
+        ;;
+    reboot)
+        confirm "Reboot?" && systemctl reboot
+        exit 0
+        ;;
+    logout)
+        confirm "Log out?" && hyprctl dispatch exit
+        exit 0
+        ;;
+esac
+
+choice=$(printf '%s\n' 'Lock' 'Suspend' 'Log out' 'Restart' 'Power off' | rofi -dmenu -p "System")
+
+case "$choice" in
+    Lock)
+        lock_session
+        ;;
+    Suspend)
+        systemctl suspend
+        ;;
+    "Log out")
+        confirm "Log out?" && hyprctl dispatch exit
+        ;;
+    Restart)
+        confirm "Reboot?" && systemctl reboot
+        ;;
+    "Power off")
+        confirm "Shut down?" && systemctl poweroff
+        ;;
+esac

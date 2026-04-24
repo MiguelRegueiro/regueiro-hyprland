@@ -1,0 +1,9 @@
+#!/bin/sh
+CLEAR="Clear all history"
+selection=$({ echo "$CLEAR"; cliphist list; } | rofi -dmenu -p "Clipboard" -i)
+[ -n "$selection" ] || exit 0
+if [ "$selection" = "$CLEAR" ]; then
+    cliphist wipe
+else
+    printf '%s' "$selection" | cliphist decode | wl-copy
+fi

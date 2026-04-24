@@ -1,0 +1,14 @@
+configuration {
+    modi:                   "drun";
+    show-icons:             true;
+    drun-match-fields:      "name";
+    drun-display-format:    "{name}";
+    terminal:               "kitty";
+    case-sensitive:         false;
+    cycle:                  true;
+    sort:                   true;
+    sorting-method:         "fzf";
+    steal-focus:            true;
+}
+
+@theme "~/.config/rofi/theme.rasi"

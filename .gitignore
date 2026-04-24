@@ -1,0 +1,5 @@
+# fish local state
+fish/.config/fish/fish_variables
+
+# fcitx5 cache
+fcitx5/.config/fcitx5/conf/cached*
