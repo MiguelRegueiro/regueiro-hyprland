@@ -129,7 +129,7 @@ Item {
                                 radius: 3
                                 color: "transparent"
                                 border.width: 1.5
-                                border.color: batteryInfo.percent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+                                border.color: batteryInfo.percent <= 15 ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
 
                                 // Fill
                                 Rectangle {
@@ -166,7 +166,7 @@ Item {
                                 width: 3
                                 height: 5
                                 radius: 1
-                                color: batteryInfo.percent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+                                color: batteryInfo.percent <= 15 ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
                             }
                         }
 

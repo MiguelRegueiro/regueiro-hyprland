@@ -22,7 +22,7 @@ PanelWindow {
     margins.bottom: Theme.borderSize + 16
 
     implicitWidth: 280
-    implicitHeight: 56
+    implicitHeight: 60
 
     mask: Region {}
 
@@ -62,7 +62,7 @@ PanelWindow {
         id: osdRect
         anchors.centerIn: parent
         width: 280
-        height: 56
+        height: 60
         radius: Theme.barCornerRadius
         color: Theme.barBg
         border.color: Theme.barBorder
@@ -90,13 +90,13 @@ PanelWindow {
                 muted: audioService.muted
                 volumePercent: audioService.volumePercent
                 iconColor: Theme.textPrimary
-                height: 18
+                height: 20
                 Layout.alignment: Qt.AlignVCenter
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 4
+                height: 6
                 radius: 2
                 color: Theme.hoverBg
 
