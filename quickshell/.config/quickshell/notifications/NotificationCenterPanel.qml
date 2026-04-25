@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Effects
 import "../theme/Theme.js" as Theme
@@ -341,14 +342,14 @@ Item {
                         top: parent.top
                         left: parent.left
                         right: parent.right
-                        topMargin: root.attachTop
+                        topMargin: Math.max(0, root.attachTop - 6)
                     }
 
                     Item {
                         width: parent.width
-                        height: 62
+                        height: 54
 
-                        Row {
+                        RowLayout {
                             anchors {
                                 left: parent.left
                                 leftMargin: 14
@@ -373,9 +374,9 @@ Item {
                                 }
                             }
 
-                            Row {
-                                anchors.verticalCenter: parent.verticalCenter
+                            RowLayout {
                                 spacing: 8
+                                Layout.alignment: Qt.AlignVCenter
 
                                 Text {
                                     text: "Notifications"
@@ -386,9 +387,10 @@ Item {
                                 }
 
                                 Rectangle {
-                                    width: Math.max(22, countText.implicitWidth + 12)
-                                    height: 22
-                                    radius: 11
+                                    Layout.alignment: Qt.AlignVCenter
+                                    width: Math.max(24, countText.implicitWidth + 14)
+                                    height: 24
+                                    radius: 12
                                     color: Theme.hoverBg
                                     border.width: 1
                                     border.color: Theme.qsEdgeSoft
@@ -399,7 +401,7 @@ Item {
                                         text: String(root.notificationStore.count)
                                         color: Theme.textDim
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 10
+                                        font.pixelSize: 11
                                         font.weight: Font.DemiBold
                                     }
                                 }
@@ -413,32 +415,21 @@ Item {
                                 verticalCenter: parent.verticalCenter
                             }
                             visible: root.notificationStore.count > 0
-                            width: clearRow.implicitWidth + 18
-                            height: 32
-                            radius: 10
+                            width: clearText.implicitWidth + 24
+                            height: 34
+                            radius: 11
                             color: clearHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
                             border.width: 1
                             border.color: Theme.qsEdgeSoft
 
-                            Row {
-                                id: clearRow
+                            Text {
+                                id: clearText
                                 anchors.centerIn: parent
-                                spacing: 6
-
-                                Text {
-                                    text: "󰆴"
-                                    font.family: Theme.fontIcons
-                                    font.pixelSize: 11
-                                    color: Theme.textDim
-                                }
-
-                                Text {
-                                    text: "Clear"
-                                    color: Theme.textDim
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 11
-                                    font.weight: Font.DemiBold
-                                }
+                                text: "Clear"
+                                color: Theme.textDim
+                                font.family: Theme.fontUi
+                                font.pixelSize: 12
+                                font.weight: Font.DemiBold
                             }
 
                             HoverHandler {
@@ -503,15 +494,6 @@ Item {
                                 font.weight: Font.DemiBold
                             }
 
-                            Text {
-                                width: parent.width
-                                horizontalAlignment: Text.AlignHCenter
-                                wrapMode: Text.WordWrap
-                                text: "You're all caught up for now."
-                                color: Theme.textDisabled
-                                font.family: Theme.fontUi
-                                font.pixelSize: 12
-                            }
                         }
 
                         ListView {

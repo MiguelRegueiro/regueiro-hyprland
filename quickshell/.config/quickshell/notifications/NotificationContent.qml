@@ -71,24 +71,14 @@ Item {
                 verticalAlignment: Text.AlignVCenter
             }
 
-            Rectangle {
+            Text {
                 visible: root.timestampText.length > 0
-                radius: 9
-                color: Theme.hoverBg
-                border.width: 1
-                border.color: Theme.qsEdgeSoft
-                implicitWidth: timeText.implicitWidth + 10
-                implicitHeight: root.compact ? 18 : 20
-
-                Text {
-                    id: timeText
-                    anchors.centerIn: parent
-                    text: root.timestampText
-                    color: Theme.textDim
-                    font.family: Theme.fontUi
-                    font.pixelSize: 10
-                    font.weight: Font.Medium
-                }
+                text: root.timestampText
+                color: Theme.textDim
+                font.family: Theme.fontUi
+                font.pixelSize: root.compact ? 11 : 12
+                font.weight: Font.Medium
+                verticalAlignment: Text.AlignVCenter
             }
 
             Rectangle {

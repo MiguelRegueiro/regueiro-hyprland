@@ -14,8 +14,8 @@ Item {
     readonly property var notif: item ? item.notif : null
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
-    readonly property color toastSurfaceColor: Qt.rgba(0.11, 0.11, 0.11, 1.0)
-    readonly property color toastSurfaceHoverColor: Qt.rgba(0.145, 0.145, 0.145, 1.0)
+    readonly property color toastSurfaceColor: Theme.popupBg
+    readonly property color toastSurfaceHoverColor: Qt.rgba(0.10, 0.10, 0.10, 1.0)
 
     property real revealProgress: 0
     property bool exiting: false
@@ -88,22 +88,22 @@ Item {
                 fill: parent
             }
             implicitHeight: content.implicitHeight + 34
-            radius: Theme.qsRadius + 1
+            radius: Theme.qsRadius + 3
             color: toastHover.hovered && root.canActivate
                 ? root.toastSurfaceHoverColor
                 : root.toastSurfaceColor
             border.width: 1
             border.color: root.isCritical
                 ? Qt.rgba(1, 0.48, 0.39, 0.26)
-                : (toastHover.hovered && root.canActivate ? Theme.qsEdge : Theme.qsEdgeSoft)
+                : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.06))
             layer.enabled: true
             layer.effect: MultiEffect {
                 shadowEnabled: true
-                shadowColor: Qt.rgba(0, 0, 0, 0.42 * root.revealProgress)
-                shadowBlur: 0.62
-                shadowVerticalOffset: 8
+                shadowColor: Qt.rgba(0, 0, 0, 0.38 * root.revealProgress)
+                shadowBlur: 1.02
+                shadowVerticalOffset: 1
                 shadowHorizontalOffset: 0
-                blurMax: 24
+                blurMax: 44
             }
 
             Behavior on color {
@@ -142,19 +142,6 @@ Item {
                     bottomMargin: 1
                 }
                 color: Theme.red
-            }
-
-            Rectangle {
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
-                    topMargin: 1
-                }
-                height: 1
-                color: root.isCritical
-                    ? Qt.rgba(1, 0.48, 0.39, 0.18)
-                    : Qt.rgba(1, 1, 1, 0.05)
             }
 
             NotificationContent {
