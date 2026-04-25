@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import "../components" as Components
@@ -19,10 +20,10 @@ PanelWindow {
     color: "transparent"
 
     anchors.bottom: true
-    margins.bottom: Theme.borderSize + 16
+    margins.bottom: Theme.borderSize - 4
 
-    implicitWidth: 280
-    implicitHeight: 60
+    implicitWidth: 320
+    implicitHeight: 100
 
     mask: Region {}
 
@@ -63,8 +64,8 @@ PanelWindow {
         anchors.centerIn: parent
         width: 280
         height: 60
-        radius: Theme.barCornerRadius
-        color: Theme.barBg
+        radius: 30
+        color: Theme.popupBg
         border.color: Theme.barBorder
         border.width: 1
 
@@ -78,6 +79,14 @@ PanelWindow {
         }
 
         layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.5)
+            shadowBlur: 0.75
+            shadowVerticalOffset: 8
+            shadowHorizontalOffset: 0
+            blurMax: 32
+        }
 
         RowLayout {
             anchors {
@@ -97,7 +106,7 @@ PanelWindow {
             Rectangle {
                 Layout.fillWidth: true
                 height: 6
-                radius: 2
+                radius: 3
                 color: Theme.hoverBg
 
                 property real fillFraction: audioService.muted ? 0 : Math.min(1, audioService.volumePercent / 100)
