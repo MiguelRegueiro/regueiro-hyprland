@@ -117,109 +117,6 @@ FocusScope {
     }
 
     Item {
-        id: fuseMotionFrame
-        width: root.width
-        height: root.height
-        y: motionFrame.y
-        scale: motionFrame.scale
-        transformOrigin: Item.TopRight
-        opacity: motionFrame.opacity
-        z: -1
-
-        Item {
-            anchors.top: parent.top
-            anchors.right: parent.right
-            width: Math.max(1, root.clipSurfaceWidth)
-            height: Math.max(1, root.clipSurfaceHeight)
-            clip: !root.audioOutputPopupOpen
-
-            Shape {
-                id: fusedSurface
-                anchors.top: parent.top
-                anchors.right: parent.right
-                width: root.width
-                height: root.height
-                preferredRendererType: Shape.CurveRenderer
-
-                readonly property real bodyLeftX: root.fuseLeftOverhang
-                readonly property real borderInnerRightX: width - Theme.borderSize
-                readonly property real bodyBottomY: root.bodyHeight
-                readonly property real junctionY: root.fuseTopInset
-
-                // Top-left: panel body left edge × bar bottom
-                ShapePath {
-                    fillColor: Theme.menuBg
-                    strokeColor: Theme.menuBg
-                    strokeWidth: 1.6
-                    capStyle: ShapePath.RoundCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: fusedSurface.bodyLeftX; y: fusedSurface.junctionY }
-                    PathLine { x: 0; y: fusedSurface.junctionY }
-                    PathArc {
-                        x: fusedSurface.bodyLeftX
-                        y: fusedSurface.junctionY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Clockwise
-                    }
-                    PathLine { x: fusedSurface.bodyLeftX; y: fusedSurface.junctionY }
-                }
-
-                // Bottom-right: panel bottom × screen border inner right edge
-                ShapePath {
-                    fillColor: Theme.menuBg
-                    strokeColor: Theme.menuBg
-                    strokeWidth: 1.6
-                    capStyle: ShapePath.RoundCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: fusedSurface.borderInnerRightX; y: fusedSurface.bodyBottomY }
-                    PathLine { x: fusedSurface.borderInnerRightX - Theme.barCornerRadius; y: fusedSurface.bodyBottomY }
-                    PathArc {
-                        x: fusedSurface.borderInnerRightX
-                        y: fusedSurface.bodyBottomY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Clockwise
-                    }
-                    PathLine { x: fusedSurface.borderInnerRightX; y: fusedSurface.bodyBottomY }
-                }
-
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: Theme.qsEdge
-                    strokeWidth: 1.1
-                    capStyle: ShapePath.FlatCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: 0; y: fusedSurface.junctionY }
-                    PathArc {
-                        x: fusedSurface.bodyLeftX
-                        y: fusedSurface.junctionY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Clockwise
-                    }
-                }
-
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: Theme.qsEdge
-                    strokeWidth: 1.1
-                    capStyle: ShapePath.FlatCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: fusedSurface.borderInnerRightX - Theme.barCornerRadius; y: fusedSurface.bodyBottomY }
-                    PathArc {
-                        x: fusedSurface.borderInnerRightX
-                        y: fusedSurface.bodyBottomY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Clockwise
-                    }
-                }
-            }
-        }
-    }
-
-    Item {
         id: motionFrame
         width: root.width
         height: root.height
@@ -264,6 +161,38 @@ FocusScope {
                 Shape {
                     anchors.fill: parent
                     preferredRendererType: Shape.CurveRenderer
+
+                    ShapePath {
+                        fillColor: Theme.menuBg
+                        strokeColor: "transparent"
+                        strokeWidth: -1
+                        PathMove { x: 0; y: root.fuseTopInset }
+                        PathLine { x: -root.fuseLeftOverhang; y: root.fuseTopInset }
+                        PathArc {
+                            x: 0
+                            y: root.topFuseJoinY
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Clockwise
+                        }
+                        PathLine { x: 0; y: root.fuseTopInset }
+                    }
+
+                    ShapePath {
+                        fillColor: Theme.menuBg
+                        strokeColor: "transparent"
+                        strokeWidth: -1
+                        PathMove { x: frame.width - Theme.borderSize; y: frame.height }
+                        PathLine { x: root.bottomFuseJoinX; y: frame.height }
+                        PathArc {
+                            x: frame.width - Theme.borderSize
+                            y: frame.height + Theme.barCornerRadius
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Clockwise
+                        }
+                        PathLine { x: frame.width - Theme.borderSize; y: frame.height }
+                    }
 
                     ShapePath {
                         fillColor: Theme.menuBg
@@ -336,6 +265,38 @@ FocusScope {
                             radiusX: root.animTopRightRadius
                             radiusY: root.animTopRightRadius
                             direction: PathArc.Counterclockwise
+                        }
+                    }
+
+                    ShapePath {
+                        fillColor: "transparent"
+                        strokeColor: Theme.qsEdge
+                        strokeWidth: 1.1
+                        capStyle: ShapePath.FlatCap
+                        joinStyle: ShapePath.RoundJoin
+                        PathMove { x: -root.fuseLeftOverhang; y: root.fuseTopInset }
+                        PathArc {
+                            x: 0
+                            y: root.topFuseJoinY
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Clockwise
+                        }
+                    }
+
+                    ShapePath {
+                        fillColor: "transparent"
+                        strokeColor: Theme.qsEdge
+                        strokeWidth: 1.1
+                        capStyle: ShapePath.FlatCap
+                        joinStyle: ShapePath.RoundJoin
+                        PathMove { x: root.bottomFuseJoinX; y: frame.height }
+                        PathArc {
+                            x: frame.width - Theme.borderSize
+                            y: frame.height + Theme.barCornerRadius
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Clockwise
                         }
                     }
                 }

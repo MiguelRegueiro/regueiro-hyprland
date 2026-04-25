@@ -124,87 +124,6 @@ Item {
                 blocking: false
             }
 
-            Shape {
-                id: fusedSurface
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: root.width
-                height: root.height
-                preferredRendererType: Shape.CurveRenderer
-
-                readonly property real panelLeftX: root.fuseOverhang
-                readonly property real panelRightX: width - root.fuseOverhang
-                readonly property real junctionY: root.fuseTopInset
-
-                ShapePath {
-                    fillColor: Theme.menuBg
-                    strokeColor: Theme.menuBg
-                    strokeWidth: 1.6
-                    capStyle: ShapePath.RoundCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: fusedSurface.panelLeftX; y: fusedSurface.junctionY }
-                    PathLine { x: 0; y: fusedSurface.junctionY }
-                    PathArc {
-                        x: fusedSurface.panelLeftX
-                        y: fusedSurface.junctionY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Clockwise
-                    }
-                    PathLine { x: fusedSurface.panelLeftX; y: fusedSurface.junctionY }
-                }
-
-                ShapePath {
-                    fillColor: Theme.menuBg
-                    strokeColor: Theme.menuBg
-                    strokeWidth: 1.6
-                    capStyle: ShapePath.RoundCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: fusedSurface.panelRightX; y: fusedSurface.junctionY }
-                    PathLine { x: fusedSurface.width; y: fusedSurface.junctionY }
-                    PathArc {
-                        x: fusedSurface.panelRightX
-                        y: fusedSurface.junctionY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Counterclockwise
-                    }
-                    PathLine { x: fusedSurface.panelRightX; y: fusedSurface.junctionY }
-                }
-
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: Theme.qsEdge
-                    strokeWidth: 1.1
-                    capStyle: ShapePath.FlatCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: 0; y: fusedSurface.junctionY }
-                    PathArc {
-                        x: fusedSurface.panelLeftX
-                        y: fusedSurface.junctionY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Clockwise
-                    }
-                }
-
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: Theme.qsEdge
-                    strokeWidth: 1.1
-                    capStyle: ShapePath.FlatCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathMove { x: fusedSurface.width; y: fusedSurface.junctionY }
-                    PathArc {
-                        x: fusedSurface.panelRightX
-                        y: fusedSurface.junctionY + Theme.barCornerRadius
-                        radiusX: Theme.barCornerRadius
-                        radiusY: Theme.barCornerRadius
-                        direction: PathArc.Counterclockwise
-                    }
-                }
-            }
-
             Item {
                 id: frame
                 anchors.top: parent.top
@@ -215,6 +134,38 @@ Item {
                 Shape {
                     anchors.fill: parent
                     preferredRendererType: Shape.CurveRenderer
+
+                    ShapePath {
+                        fillColor: Theme.menuBg
+                        strokeColor: "transparent"
+                        strokeWidth: -1
+                        PathMove { x: 0; y: root.fuseTopInset }
+                        PathLine { x: -root.fuseOverhang; y: root.fuseTopInset }
+                        PathArc {
+                            x: 0
+                            y: root.topFuseJoinY
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Clockwise
+                        }
+                        PathLine { x: 0; y: root.fuseTopInset }
+                    }
+
+                    ShapePath {
+                        fillColor: Theme.menuBg
+                        strokeColor: "transparent"
+                        strokeWidth: -1
+                        PathMove { x: frame.width; y: root.fuseTopInset }
+                        PathLine { x: frame.width + root.fuseOverhang; y: root.fuseTopInset }
+                        PathArc {
+                            x: frame.width
+                            y: root.topFuseJoinY
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Counterclockwise
+                        }
+                        PathLine { x: frame.width; y: root.fuseTopInset }
+                    }
 
                     ShapePath {
                         fillColor: Theme.menuBg
@@ -326,6 +277,38 @@ Item {
                             direction: PathArc.Counterclockwise
                         }
                         PathLine { x: frame.width; y: 0 }
+                    }
+
+                    ShapePath {
+                        fillColor: "transparent"
+                        strokeColor: Theme.qsEdge
+                        strokeWidth: 1.1
+                        capStyle: ShapePath.FlatCap
+                        joinStyle: ShapePath.RoundJoin
+                        PathMove { x: -root.fuseOverhang; y: root.fuseTopInset }
+                        PathArc {
+                            x: 0
+                            y: root.topFuseJoinY
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Clockwise
+                        }
+                    }
+
+                    ShapePath {
+                        fillColor: "transparent"
+                        strokeColor: Theme.qsEdge
+                        strokeWidth: 1.1
+                        capStyle: ShapePath.FlatCap
+                        joinStyle: ShapePath.RoundJoin
+                        PathMove { x: frame.width + root.fuseOverhang; y: root.fuseTopInset }
+                        PathArc {
+                            x: frame.width
+                            y: root.topFuseJoinY
+                            radiusX: Theme.barCornerRadius
+                            radiusY: Theme.barCornerRadius
+                            direction: PathArc.Counterclockwise
+                        }
                     }
                 }
 
