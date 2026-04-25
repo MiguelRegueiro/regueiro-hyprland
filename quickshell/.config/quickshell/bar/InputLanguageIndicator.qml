@@ -40,8 +40,9 @@ Rectangle {
     Process {
         id: langProc
         command: ["bash", "-c",
-            "e=$(ibus engine 2>/dev/null); " +
-            "if echo \"$e\" | grep -qiE 'anthy|jp|ja|mozc'; then echo JP; else echo ES; fi"]
+            "if ! fcitx5-remote --check >/dev/null 2>&1; then echo ES; " +
+            "else e=$(fcitx5-remote -n 2>/dev/null); " +
+            "if [ \"$e\" = 'mozc' ]; then echo JP; else echo ES; fi; fi"]
         stdout: StdioCollector {
             id: langOut
             onStreamFinished: {
@@ -51,7 +52,7 @@ Rectangle {
         }
     }
 
-    Process { id: toggleProc; command: [Quickshell.env("HOME") + "/.config/hypr/scripts/ibus-toggle.sh"] }
+    Process { id: toggleProc; command: [Quickshell.env("HOME") + "/.config/hypr/scripts/fcitx-toggle.sh"] }
 
     HoverHandler {
         id: hover

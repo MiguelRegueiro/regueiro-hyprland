@@ -9,7 +9,7 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 - **Launcher** — [Rofi](https://github.com/davatorium/rofi)
 - **Wallpaper** — [hyprpaper](https://github.com/hyprwm/hyprpaper)
 - **Lock screen** — [hyprlock](https://github.com/hyprwm/hyprlock)
-- **Input method** — [ibus](https://github.com/ibus/ibus)
+- **Input method** — [Fcitx 5](https://fcitx-im.org/wiki/Fcitx_5/en)
 - **Terminal** — [Kitty](https://sw.kovidgoyal.net/kitty/)
 - **Shell** — [Fish](https://fishshell.com/) + [Starship](https://starship.rs/)
 
@@ -21,7 +21,7 @@ sudo pacman -S git stow \
                quickshell \
                rofi \
                kitty fish starship fastfetch btop \
-               ibus ibus-anthy fcitx5 \
+               fcitx5 fcitx5-mozc fcitx5-gtk fcitx5-qt fcitx5-configtool \
                nautilus \
                networkmanager \
                bluez bluez-utils blueman \
@@ -89,9 +89,11 @@ The footer button opens `blueman-manager`, which comes from `blueman`, so keep `
 
 ### Input method
 
-The current setup uses **IBus** with Spanish and Anthy (`ibus` + `ibus-anthy`).
-The `fcitx5/` folder is kept intentionally as an alternative Japanese input-method path while I decide which stack I want long term.
-It is not enabled by default in the current Hyprland session, but the package is listed above because that config is kept on purpose.
+The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5` + `fcitx5-mozc`).
+For broad app coverage on Hyprland/Wayland, keep the GTK and Qt integration packages installed too: `fcitx5-gtk` and `fcitx5-qt`.
+The session exports `XMODIFIERS=@im=fcitx`, `GTK_IM_MODULE=fcitx`, and `QT_IM_MODULE=fcitx`, and also sets `GLFW_IM_MODULE=ibus` because Kitty uses GLFW.
+The top-bar language indicator now toggles between Spanish and Mozc through `fcitx5-remote`, and `Super+Space` switches `ES` / `JP`.
+After the first install or after changing the IM env vars, log out and back in once so the session picks up the new input-method setup.
 
 ### Optional keybind-only apps
 
@@ -107,5 +109,5 @@ If you do not use those apps, either skip them or change the matching binds in `
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell rofi fish starship fastfetch kitty hypridle
+stow hypr quickshell rofi fish starship fastfetch kitty hypridle fcitx5
 ```

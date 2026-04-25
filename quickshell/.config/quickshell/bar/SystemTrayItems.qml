@@ -21,6 +21,7 @@ Row {
 
             readonly property string itemId: (modelData.id || "").toLowerCase()
             visible: !itemId.includes("blueman") && !itemId.includes("nm-applet")
+                && !itemId.includes("fcitx")
                 && (modelData.status !== Status.Passive || modelData.onlyMenu)
 
             height: trayRow.barHeight - 8

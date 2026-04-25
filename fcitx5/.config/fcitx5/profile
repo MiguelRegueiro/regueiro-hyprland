@@ -2,13 +2,19 @@
 # Group Name
 Name=Default
 # Layout
-Default Layout=us
+Default Layout=es
 # Default Input Method
-DefaultIM=keyboard-us
+DefaultIM=mozc
 
 [Groups/0/Items/0]
 # Name
-Name=keyboard-us
+Name=keyboard-es
+# Layout
+Layout=
+
+[Groups/0/Items/1]
+# Name
+Name=mozc
 # Layout
 Layout=
 
