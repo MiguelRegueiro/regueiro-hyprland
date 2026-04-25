@@ -14,11 +14,17 @@ Item {
     property int pipewireVolume: sinkAudio ? Math.min(100, Math.round(sinkAudio.volume * 100)) : -1
     property int polledVolume: 0
     property bool polledMuted: false
+    property int optimisticVolumePercent: -1
+    property bool optimisticMuted: false
+    readonly property bool hasDirectSinkControl: !!sinkAudio
+    readonly property bool optimisticStateActive: optimisticVolumePercent >= 0
     readonly property var currentSink: defaultSink
     readonly property string currentSinkName: sinkDisplayName(currentSink)
     readonly property string currentSinkIcon: sinkIconText(currentSink)
-    readonly property int volumePercent: pipewireVolume >= 0 ? pipewireVolume : polledVolume
-    readonly property bool muted: sinkAudio ? (sinkAudio.muted || polledMuted) : polledMuted
+    readonly property int actualVolumePercent: pipewireVolume >= 0 ? pipewireVolume : polledVolume
+    readonly property bool actualMuted: sinkAudio ? sinkAudio.muted : polledMuted
+    readonly property int volumePercent: optimisticStateActive ? optimisticVolumePercent : actualVolumePercent
+    readonly property bool muted: optimisticStateActive ? optimisticMuted : actualMuted
     readonly property string volumeIcon: {
         if (muted || volumePercent <= 0)
             return "󰖁"
@@ -244,28 +250,72 @@ Item {
     }
 
     function refresh() {
+        if (root.hasDirectSinkControl)
+            return
+
         if (!volumePoll.running)
             volumePoll.running = true
     }
 
+    function setOptimisticState(nextPercent, nextMuted) {
+        root.optimisticVolumePercent = Math.max(0, Math.min(100, Math.round(nextPercent)))
+        root.optimisticMuted = !!nextMuted
+        optimisticStateReset.restart()
+    }
+
+    function clearOptimisticState() {
+        optimisticStateReset.stop()
+        root.optimisticVolumePercent = -1
+        root.optimisticMuted = false
+    }
+
     function setVolumePercent(percent) {
-        setVolume.command = ["wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", Math.max(0, Math.min(100, percent)) + "%"]
+        const nextPercent = Number(percent)
+        if (isNaN(nextPercent))
+            return
+
+        const clamped = Math.max(0, Math.min(100, nextPercent))
+        root.setOptimisticState(clamped, false)
+
+        if (root.hasDirectSinkControl) {
+            sinkAudio.muted = false
+            sinkAudio.volume = clamped / 100
+            return
+        }
+
+        setVolume.command = ["wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", clamped + "%"]
         setVolume.running = true
         refreshSoon.restart()
     }
 
     function adjustVolume(deltaPercent) {
-        if (deltaPercent > 0)
-            volumeUp.running = true
-        else
-            volumeDown.running = true
+        const delta = Number(deltaPercent)
+        if (!delta)
+            return
 
-        refreshSoon.restart()
+        const basePercent = root.optimisticStateActive ? root.optimisticVolumePercent : root.actualVolumePercent
+        root.setVolumePercent(basePercent + delta)
     }
 
     function toggleMute() {
+        const nextMuted = !root.muted
+        root.setOptimisticState(root.volumePercent, nextMuted)
+
+        if (root.hasDirectSinkControl) {
+            sinkAudio.muted = nextMuted
+            return
+        }
+
         muteToggle.running = true
         refreshSoon.restart()
+    }
+
+    function adjustVolumeStep(stepPercent) {
+        const parsed = Number(stepPercent)
+        if (!isNaN(parsed) && parsed !== 0)
+            root.adjustVolume(parsed)
+        else
+            root.adjustVolume(2)
     }
 
     function setAudioSink(node) {
@@ -344,10 +394,18 @@ Item {
         onTriggered: root.refresh()
     }
 
+    Timer {
+        id: optimisticStateReset
+        interval: 700
+        repeat: false
+        onTriggered: root.clearOptimisticState()
+    }
+
     Connections {
         target: Pipewire
 
         function onDefaultAudioSinkChanged() {
+            root.clearOptimisticState()
             root.updateSinks()
             refreshSoon.restart()
         }
@@ -404,11 +462,32 @@ Item {
         }
     }
 
-    Process { id: volumeUp; command: ["wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", "5%+"] }
-    Process { id: volumeDown; command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-"] }
+    Process { id: volumeUp; command: ["wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", "2%+"] }
+    Process { id: volumeDown; command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "2%-"] }
     Process { id: muteToggle; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"] }
     Process { id: setDefaultSink; command: ["echo"] }
     Process { id: setVolume; command: ["echo"] }
+
+    IpcHandler {
+        target: "audio"
+
+        function increase(stepPercent: string) {
+            root.adjustVolumeStep(stepPercent)
+        }
+
+        function decrease(stepPercent: string) {
+            const parsed = Number(stepPercent)
+            root.adjustVolume(!isNaN(parsed) && parsed !== 0 ? -parsed : -2)
+        }
+
+        function set(percent: string) {
+            root.setVolumePercent(percent)
+        }
+
+        function toggleMute() {
+            root.toggleMute()
+        }
+    }
 
     Component.onCompleted: root.updateSinks()
 }

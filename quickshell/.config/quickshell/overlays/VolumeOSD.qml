@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 PanelWindow {
@@ -26,14 +27,11 @@ PanelWindow {
     mask: Region {}
 
     property bool osdVisible: false
+    property int _lastVolume: -1
 
     Component.onCompleted: {
         _lastVolume = audioService.volumePercent
-        _lastMuted = audioService.muted
     }
-
-    property int _lastVolume: -1
-    property bool _lastMuted: false
 
     Connections {
         target: audioService
@@ -44,7 +42,6 @@ PanelWindow {
             }
         }
         function onMutedChanged() {
-            root._lastMuted = audioService.muted
             root.show()
         }
     }
@@ -62,6 +59,7 @@ PanelWindow {
     }
 
     Rectangle {
+        id: osdRect
         anchors.centerIn: parent
         width: 280
         height: 56
@@ -71,8 +69,12 @@ PanelWindow {
         border.width: 1
 
         opacity: root.osdVisible ? 1.0 : 0.0
+
         Behavior on opacity {
-            NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+            NumberAnimation {
+                duration: osdRect.opacity >= 1.0 ? 220 : 0
+                easing.type: Easing.OutQuad
+            }
         }
 
         layer.enabled: true
@@ -84,11 +86,12 @@ PanelWindow {
             }
             spacing: 12
 
-            Text {
-                text: audioService.volumeIcon
-                font.family: Theme.fontIcons
-                font.pixelSize: 20
-                color: Theme.textPrimary
+            Components.VolumeIcon {
+                muted: audioService.muted
+                volumePercent: audioService.volumePercent
+                iconColor: Theme.textPrimary
+                height: 18
+                Layout.alignment: Qt.AlignVCenter
             }
 
             Rectangle {
@@ -97,15 +100,13 @@ PanelWindow {
                 radius: 2
                 color: Theme.hoverBg
 
+                property real fillFraction: audioService.muted ? 0 : Math.min(1, audioService.volumePercent / 100)
+
                 Rectangle {
-                    width: parent.width * (audioService.muted ? 0 : Math.min(1, audioService.volumePercent / 100))
+                    width: parent.width * parent.fillFraction
                     height: parent.height
                     radius: parent.radius
                     color: Theme.accent
-
-                    Behavior on width {
-                        NumberAnimation { duration: 100 }
-                    }
                 }
             }
 
