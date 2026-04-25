@@ -25,8 +25,10 @@ Item {
 
     property bool audioOutputPopupOpen: false
     property bool powerMenuOpen: false
+    readonly property bool popupLayerOpen: root.powerMenuOpen || root.audioOutputPopupOpen
+    readonly property real audioOutputPopupGap: 10
     readonly property real audioOutputPopupBottom: audioOutputPopup.y + audioOutputPopup.height
-    readonly property real audioOutputPopupTopInViewport: mapToItem(null, 0, volumeRow.y + volumeRow.height - 14).y
+    readonly property real audioOutputPopupTopInViewport: mapToItem(null, 0, volumeRow.y + volumeRow.height + audioOutputPopupGap).y
     readonly property real audioOutputPopupMaxHeight: Math.max(180, viewportHeight - audioOutputPopupTopInViewport - Theme.borderSize - 12)
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen
         ? Math.max(0, audioOutputPopupBottom - root.implicitHeight + 12)
@@ -64,10 +66,17 @@ Item {
         id: contentLayout
 
         width: parent.width
+        opacity: root.popupLayerOpen ? 0.82 : 1
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         spacing: 12
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 110
+            }
+        }
 
         RowLayout {
             id: headerRow
@@ -241,10 +250,10 @@ Item {
                     anchors.fill: parent
                     radius: 19
                     color: root.powerMenuOpen
-                        ? Qt.rgba(0.208, 0.518, 0.894, 0.18)
+                        ? Qt.rgba(1, 1, 1, 0.14)
                         : (powerButtonHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg)
                     border.width: 1
-                    border.color: root.powerMenuOpen ? Theme.accent : Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.powerMenuOpen ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.08)
 
                     Behavior on color {
                         ColorAnimation { duration: 110 }
@@ -260,7 +269,7 @@ Item {
                         text: "󰐥"
                         font.family: Theme.fontIcons
                         font.pixelSize: 17
-                        color: root.powerMenuOpen ? "white" : Theme.textPrimary
+                        color: Theme.textPrimary
                     }
                 }
 
@@ -501,8 +510,8 @@ Item {
             id: audioOutputPopup
             audioService: root.audioService
             maxPopupHeight: root.audioOutputPopupMaxHeight
-            x: Math.max(0, root.width - width)
-            y: volumeRow.y + volumeRow.height - 14
+            x: Math.max(0, Math.round((root.width - width) / 2))
+            y: volumeRow.y + volumeRow.height + root.audioOutputPopupGap
             onSinkChosen: root.audioOutputPopupRequest(false)
         }
     }

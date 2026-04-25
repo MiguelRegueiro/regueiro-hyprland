@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell.Io
 import "../../theme/Theme.js" as Theme
 
@@ -9,7 +10,7 @@ Item {
     signal actionTriggered()
 
     implicitWidth: 248
-    implicitHeight: popupColumn.implicitHeight + 14
+    implicitHeight: popupColumn.implicitHeight + 20
     width: implicitWidth
     height: implicitHeight
 
@@ -17,24 +18,45 @@ Item {
         {
             actionId: "suspend",
             label: "Suspend",
-            icon: "\uf186",
-            iconOffsetX: 0
+            icon: "\udb81\udd94",
+            iconOffsetX: 0,
+            iconPixelSize: 15
         },
         {
             actionId: "reboot",
             label: "Reboot",
             icon: "\uf2f9",
-            iconOffsetX: 1
+            iconOffsetX: 1,
+            iconPixelSize: 15
         },
         {
             actionId: "shutdown",
             label: "Shut Down",
             icon: "\uf011",
-            iconOffsetX: 0
+            iconOffsetX: 0,
+            iconPixelSize: 15
         }
     ]
 
     property string pendingAction: ""
+
+    function actionChipFill(actionId, active, hovered) {
+        return active
+            ? Qt.rgba(1, 1, 1, 0.14)
+            : (hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+    }
+
+    function actionChipBorder(actionId, active, hovered) {
+        return active
+            ? Qt.rgba(1, 1, 1, 0.12)
+            : (hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+    }
+
+    function actionIconColor(actionId) {
+        if (actionId === "reboot")
+            return Qt.rgba(0.96, 0.96, 0.97, 0.86)
+        return Theme.textPrimary
+    }
 
     function runAction(actionId) {
         if (root.pendingAction !== "")
@@ -60,10 +82,19 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.menuBg
-        border.color: Theme.qsEdge
+        color: Theme.popupBg
+        border.color: Qt.rgba(1, 1, 1, 0.08)
         border.width: 1
-        radius: Theme.qsRadius
+        radius: Theme.qsRadius + 5
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.48)
+            shadowBlur: 1.08
+            shadowVerticalOffset: 1
+            shadowHorizontalOffset: 0
+            blurMax: 52
+        }
     }
 
     ColumnLayout {
@@ -71,10 +102,10 @@ Item {
 
         anchors {
             fill: parent
-            leftMargin: 7
-            rightMargin: 7
-            topMargin: 7
-            bottomMargin: 7
+            leftMargin: 10
+            rightMargin: 10
+            topMargin: 10
+            bottomMargin: 10
         }
         spacing: 8
 
@@ -90,12 +121,12 @@ Item {
                 height: 50
                 radius: height / 2
                 color: actionRow.active
-                    ? Theme.hoverBgStrong
+                    ? Qt.rgba(1, 1, 1, 0.15)
                     : (rowHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg)
                 border.width: 1
                 border.color: actionRow.active
-                    ? Qt.rgba(1, 1, 1, 0.14)
-                    : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.05))
+                    ? Qt.rgba(1, 1, 1, 0.10)
+                    : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
 
                 readonly property bool active: root.pendingAction === modelData.actionId
 
@@ -119,17 +150,17 @@ Item {
                         Layout.preferredWidth: 30
                         Layout.preferredHeight: 30
                         radius: 15
-                        color: actionRow.active
-                            ? Qt.rgba(1, 1, 1, 0.12)
-                            : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+                        color: root.actionChipFill(modelData.actionId, actionRow.active, rowHover.hovered)
+                        border.width: 1
+                        border.color: root.actionChipBorder(modelData.actionId, actionRow.active, rowHover.hovered)
 
                         Text {
                             anchors.centerIn: parent
                             anchors.horizontalCenterOffset: modelData.iconOffsetX || 0
                             text: modelData.icon
                             font.family: Theme.fontIcons
-                            font.pixelSize: 15
-                            color: Theme.textPrimary
+                            font.pixelSize: modelData.iconPixelSize || 15
+                            color: root.actionIconColor(modelData.actionId)
                         }
                     }
 

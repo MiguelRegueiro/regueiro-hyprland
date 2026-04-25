@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import "../../theme/Theme.js" as Theme
 
 Item {
@@ -9,12 +10,12 @@ Item {
     property real maxPopupHeight: 560
     signal sinkChosen()
     readonly property real listSpacing: 8
-    readonly property real listFooterHeight: 4
+    readonly property real listFooterHeight: 8
 
-    readonly property real cardHeight: headerContent.height + resolvedListHeight + 38
+    readonly property real cardHeight: headerContent.height + resolvedListHeight + 40
     readonly property real availableListHeight: Math.max(44, maxPopupHeight - headerContent.height - 32)
 
-    implicitWidth: 362
+    implicitWidth: 348
     implicitHeight: cardHeight
     width: implicitWidth
     height: implicitHeight
@@ -41,11 +42,20 @@ Item {
         y: 0
         width: parent.width
         height: popupRoot.cardHeight
-        radius: Theme.qsRadius
-        color: Theme.menuBg
-        border.color: Theme.qsEdge
+        radius: Theme.qsRadius + 5
+        color: Theme.popupBg
+        border.color: Qt.rgba(1, 1, 1, 0.07)
         border.width: 1
         clip: true
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.46)
+            shadowBlur: 1.04
+            shadowVerticalOffset: 1
+            shadowHorizontalOffset: 0
+            blurMax: 48
+        }
 
         Column {
             id: headerContent
@@ -116,11 +126,11 @@ Item {
                 height: secondaryText.length > 0 ? 56 : 48
                 radius: height / 2
                 color: active
-                    ? Theme.hoverBgStrong
+                    ? Qt.rgba(1, 1, 1, 0.15)
                     : (rowHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg)
                 border.color: active
-                    ? Qt.rgba(1, 1, 1, 0.14)
-                    : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.05))
+                    ? Qt.rgba(1, 1, 1, 0.10)
+                    : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
                 border.width: 1
 
                 Row {
@@ -137,8 +147,8 @@ Item {
                         radius: 14
                         anchors.verticalCenter: parent.verticalCenter
                         color: active
-                            ? Qt.rgba(1, 1, 1, 0.12)
-                            : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+                            ? Qt.rgba(1, 1, 1, 0.13)
+                            : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.045))
 
                         Text {
                             anchors.centerIn: parent
@@ -202,6 +212,14 @@ Item {
                     id: rowHover
                     blocking: false
                     cursorShape: Qt.PointingHandCursor
+                }
+
+                Behavior on color {
+                    ColorAnimation { duration: 85 }
+                }
+
+                Behavior on border.color {
+                    ColorAnimation { duration: 85 }
                 }
             }
 

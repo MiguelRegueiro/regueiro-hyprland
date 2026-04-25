@@ -187,10 +187,10 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             radius: height / 2
             color: row.actionButtonActive
-                ? Theme.hoverBgStrong
+                ? Qt.rgba(1, 1, 1, 0.14)
                 : (actionHover.hovered ? Theme.hoverBgStrong : Qt.rgba(1, 1, 1, 0.06))
             border.width: 1
-            border.color: row.actionButtonActive ? Theme.accent : Qt.rgba(1, 1, 1, 0.08)
+            border.color: row.actionButtonActive ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.08)
 
             Text {
                 anchors.centerIn: parent
