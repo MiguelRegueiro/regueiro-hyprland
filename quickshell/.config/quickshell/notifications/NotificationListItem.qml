@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell.Services.Notifications
 import "../theme/Theme.js" as Theme
 
@@ -12,10 +13,12 @@ Item {
     readonly property var notif: item ? item.notif : null
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
-    property color cardColor: cardHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
+    property color cardColor: root.canActivate && cardHover.hovered
+        ? Qt.rgba(0.115, 0.115, 0.115, 0.98)
+        : Qt.rgba(0.098, 0.098, 0.098, 0.96)
     property color cardBorderColor: root.isCritical
-        ? Qt.rgba(1, 0.48, 0.39, 0.26)
-        : (cardHover.hovered ? Theme.qsEdge : Theme.qsEdgeSoft)
+        ? Qt.rgba(1, 0.48, 0.39, root.canActivate && cardHover.hovered ? 0.24 : 0.19)
+        : (root.canActivate && cardHover.hovered ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.10))
 
     width: ListView.view ? ListView.view.width : 0
     implicitHeight: card.implicitHeight
@@ -40,12 +43,21 @@ Item {
     Rectangle {
         id: card
         width: parent.width
-        implicitHeight: content.implicitHeight + 30
-        radius: Theme.qsRadius + 2
+        implicitHeight: content.implicitHeight + 26
+        radius: Theme.qsRadius + 1
         color: root.cardColor
         border.width: 1
         border.color: root.cardBorderColor
         clip: true
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, root.canActivate && cardHover.hovered ? 0.18 : 0.12)
+            shadowBlur: 0.55
+            shadowVerticalOffset: 1
+            shadowHorizontalOffset: 0
+            blurMax: 24
+        }
 
         MouseArea {
             anchors.fill: parent
@@ -58,32 +70,20 @@ Item {
             }
         }
 
-        Rectangle {
-            visible: root.isCritical
-            width: 3
-            radius: 2
-            anchors {
-                left: parent.left
-                top: parent.top
-                bottom: parent.bottom
-                margins: 1
-            }
-            color: Theme.red
-        }
-
         NotificationContent {
             id: content
             anchors {
                 left: parent.left
                 right: parent.right
                 top: parent.top
-                margins: 16
-                leftMargin: root.isCritical ? 20 : 16
+                margins: 14
                 topMargin: 14
             }
-            width: parent.width - (root.isCritical ? 36 : 32)
+            width: parent.width - 28
             notificationStore: root.notificationStore
             notif: root.notif
+            minimalChrome: true
+            emphasizeCriticalSummary: true
             timestampText: {
                 root.timeTick
                 return root.item ? root.notificationStore.timeAgo(root.item.time) : ""

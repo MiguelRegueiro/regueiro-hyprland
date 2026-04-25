@@ -9,32 +9,35 @@ Item {
     required property var notificationStore
     required property var notif
     property bool compact: false
+    property bool minimalChrome: false
     property bool emphasizeCriticalSummary: false
     property string timestampText: ""
     signal dismissRequested()
 
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
-    readonly property int iconSize: root.compact ? 28 : 34
-    readonly property int closeSize: root.compact ? 24 : 28
+    readonly property int iconSize: root.minimalChrome ? 26 : (root.compact ? 28 : 34)
+    readonly property int closeSize: root.minimalChrome ? 18 : (root.compact ? 24 : 28)
 
     implicitHeight: contentColumn.implicitHeight
 
     ColumnLayout {
         id: contentColumn
         width: parent.width
-        spacing: root.compact ? 8 : 10
+        spacing: root.minimalChrome ? 8 : (root.compact ? 8 : 10)
 
         RowLayout {
             width: parent.width
-            spacing: root.compact ? 8 : 10
+            spacing: root.minimalChrome ? 8 : (root.compact ? 8 : 10)
 
             Rectangle {
                 Layout.preferredWidth: root.iconSize
                 Layout.preferredHeight: Layout.preferredWidth
                 Layout.alignment: Qt.AlignTop
-                radius: root.compact ? 10 : 12
-                color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.12) : Theme.hoverBg
-                border.width: 1
+                radius: root.minimalChrome ? 8 : (root.compact ? 10 : 12)
+                color: root.minimalChrome
+                    ? "transparent"
+                    : (root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.12) : Theme.hoverBg)
+                border.width: root.minimalChrome ? 0 : 1
                 border.color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.24) : Theme.qsEdgeSoft
 
                 readonly property string iconOverride: root.notif
@@ -45,7 +48,7 @@ Item {
                     visible: parent.iconOverride.length > 0 || !iconImage.visible
                     text: parent.iconOverride.length > 0 ? parent.iconOverride : "󰂚"
                     font.family: Theme.fontIcons
-                    font.pixelSize: root.compact ? 12 : 15
+                    font.pixelSize: root.minimalChrome ? 14 : (root.compact ? 12 : 15)
                     color: root.isCritical ? Theme.red : Theme.textDim
                 }
 
@@ -65,36 +68,35 @@ Item {
                 text: root.notif ? (root.notif.appName || "Notification") : ""
                 color: Theme.textDim
                 font.family: Theme.fontUi
-                font.pixelSize: root.compact ? 11 : 12
+                font.pixelSize: root.minimalChrome ? 12 : (root.compact ? 11 : 12)
                 font.weight: Font.Medium
                 elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
             }
 
             Text {
+                Layout.alignment: Qt.AlignVCenter
                 visible: root.timestampText.length > 0
                 text: root.timestampText
                 color: Theme.textDim
                 font.family: Theme.fontUi
-                font.pixelSize: root.compact ? 11 : 12
+                font.pixelSize: root.minimalChrome ? 12 : (root.compact ? 11 : 12)
                 font.weight: Font.Medium
                 verticalAlignment: Text.AlignVCenter
             }
 
-            Rectangle {
+            Item {
                 width: root.closeSize
                 height: width
-                radius: width / 2
-                color: closeHover.hovered ? Theme.hoverBgStrong : Theme.hoverBg
-                border.width: 1
-                border.color: closeHover.hovered ? Theme.qsEdge : Theme.qsEdgeSoft
+                Layout.alignment: Qt.AlignVCenter
 
                 Text {
                     anchors.centerIn: parent
+                    anchors.verticalCenterOffset: 1
                     text: "󰅖"
                     font.family: Theme.fontIcons
-                    font.pixelSize: root.compact ? 9 : 10
-                    color: Theme.textDim
+                    font.pixelSize: root.minimalChrome ? 11 : (root.compact ? 9 : 10)
+                    color: closeHover.hovered ? Theme.textPrimary : Theme.textDim
                 }
 
                 HoverHandler {

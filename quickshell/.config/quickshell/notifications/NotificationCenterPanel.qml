@@ -330,32 +330,15 @@ Item {
 
                     Item {
                         width: parent.width
-                        height: 54
+                        height: 48
 
                         RowLayout {
                             anchors {
                                 left: parent.left
-                                leftMargin: 14
+                                leftMargin: 16
                                 verticalCenter: parent.verticalCenter
                             }
-                            spacing: 12
-
-                            Rectangle {
-                                width: 32
-                                height: 32
-                                radius: 10
-                                color: Theme.qsRowBg
-                                border.width: 1
-                                border.color: Theme.qsEdgeSoft
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "󰂚"
-                                    font.family: Theme.fontIcons
-                                    font.pixelSize: 14
-                                    color: Theme.textDim
-                                }
-                            }
+                            spacing: 10
 
                             RowLayout {
                                 spacing: 8
@@ -374,42 +357,39 @@ Item {
                                     width: Math.max(24, countText.implicitWidth + 14)
                                     height: 24
                                     radius: 12
-                                    color: Theme.hoverBg
-                                    border.width: 1
-                                    border.color: Theme.qsEdgeSoft
+                                    color: Theme.qsRowBg
+                                    border.width: 0
 
                                     Text {
                                         id: countText
-                                        anchors.centerIn: parent
+                                        anchors.fill: parent
                                         text: String(root.notificationStore.count)
-                                        color: Theme.textDim
+                                        color: Theme.textPrimary
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 11
+                                        font.pixelSize: 12
                                         font.weight: Font.DemiBold
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
                                     }
                                 }
                             }
                         }
 
-                        Rectangle {
+                        Item {
                             anchors {
                                 right: parent.right
-                                rightMargin: 14
+                                rightMargin: 16
                                 verticalCenter: parent.verticalCenter
                             }
                             visible: root.notificationStore.count > 0
-                            width: clearText.implicitWidth + 24
-                            height: 34
-                            radius: 11
-                            color: clearHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
-                            border.width: 1
-                            border.color: Theme.qsEdgeSoft
+                            width: clearText.implicitWidth + 8
+                            height: clearText.implicitHeight + 4
 
                             Text {
                                 id: clearText
                                 anchors.centerIn: parent
                                 text: "Clear"
-                                color: Theme.textDim
+                                color: clearHover.hovered ? Theme.textPrimary : Theme.textDim
                                 font.family: Theme.fontUi
                                 font.pixelSize: 12
                                 font.weight: Font.DemiBold
@@ -450,22 +430,12 @@ Item {
                             }
                             spacing: 12
 
-                            Rectangle {
+                            Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                width: 68
-                                height: 68
-                                radius: 20
-                                color: Theme.qsRowBg
-                                border.width: 1
-                                border.color: Theme.qsEdgeSoft
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "󰂜"
-                                    font.family: Theme.fontIcons
-                                    font.pixelSize: 30
-                                    color: Theme.textDisabled
-                                }
+                                text: "󰂜"
+                                font.family: Theme.fontIcons
+                                font.pixelSize: 28
+                                color: Theme.textDisabled
                             }
 
                             Text {
@@ -490,7 +460,7 @@ Item {
                             }
                             visible: root.notificationStore.count > 0
                             model: root.notificationStore.notifications
-                            spacing: 10
+                            spacing: 8
                             clip: true
                             boundsBehavior: Flickable.StopAtBounds
 
