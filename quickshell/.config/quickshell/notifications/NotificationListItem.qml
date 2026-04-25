@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Services.Notifications
 import "../theme/Theme.js" as Theme
 
 Item {
@@ -6,72 +7,88 @@ Item {
 
     required property var notificationStore
     required property var item
-    property int listIndex: -1
     property int timeTick: 0
 
     readonly property var notif: item ? item.notif : null
+    readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
-    readonly property int resolvedIndex: {
-        if (!root.item || !root.notif)
-            return -1
-
-        for (let i = 0; i < root.notificationStore.notifications.length; ++i) {
-            const entry = root.notificationStore.notifications[i]
-            if (entry.notif.id === root.notif.id)
-                return i
-        }
-
-        return root.listIndex
-    }
+    property color cardColor: cardHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
+    property color cardBorderColor: root.isCritical
+        ? Qt.rgba(1, 0.48, 0.39, 0.26)
+        : (cardHover.hovered ? Theme.qsEdge : Theme.qsEdgeSoft)
 
     width: ListView.view ? ListView.view.width : 0
-    implicitHeight: column.implicitHeight
+    implicitHeight: card.implicitHeight
 
-    Column {
-        id: column
+    Behavior on cardColor {
+        ColorAnimation {
+            duration: Theme.hoverAnimDuration
+        }
+    }
+
+    Behavior on cardBorderColor {
+        ColorAnimation {
+            duration: Theme.hoverAnimDuration
+        }
+    }
+
+    HoverHandler {
+        id: cardHover
+        blocking: false
+    }
+
+    Rectangle {
+        id: card
         width: parent.width
+        implicitHeight: content.implicitHeight + 30
+        radius: Theme.qsRadius + 2
+        color: root.cardColor
+        border.width: 1
+        border.color: root.cardBorderColor
+        clip: true
 
-        Rectangle {
-            visible: root.resolvedIndex > 0
-            width: parent.width
-            height: 1
-            color: Theme.qsEdgeSoft
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.canActivate
+            hoverEnabled: root.canActivate
+            cursorShape: root.canActivate ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: {
+                if (root.notif)
+                    root.notificationStore.invokeDefault(root.notif)
+            }
         }
 
         Rectangle {
-            width: parent.width
-            height: content.implicitHeight + 20
-            color: "transparent"
-
-            MouseArea {
-                anchors.fill: parent
-                enabled: root.canActivate
-                cursorShape: Qt.ArrowCursor
-                onClicked: {
-                    if (root.notif)
-                        root.notificationStore.invokeDefault(root.notif)
-                }
+            visible: root.isCritical
+            width: 3
+            radius: 2
+            anchors {
+                left: parent.left
+                top: parent.top
+                bottom: parent.bottom
+                margins: 1
             }
+            color: Theme.red
+        }
 
-            NotificationContent {
-                id: content
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                    margins: 14
-                    topMargin: 10
-                }
-                width: parent.width - 28
-                notificationStore: root.notificationStore
-                notif: root.notif
-                compact: true
-                timestampText: {
-                    root.timeTick
-                    return root.item ? root.notificationStore.timeAgo(root.item.time) : ""
-                }
-                onDismissRequested: root.notificationStore.dismiss(root.item)
+        NotificationContent {
+            id: content
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 16
+                leftMargin: root.isCritical ? 20 : 16
+                topMargin: 14
             }
+            width: parent.width - (root.isCritical ? 36 : 32)
+            notificationStore: root.notificationStore
+            notif: root.notif
+            timestampText: {
+                root.timeTick
+                return root.item ? root.notificationStore.timeAgo(root.item.time) : ""
+            }
+            onDismissRequested: root.notificationStore.dismiss(root.item)
         }
     }
 }

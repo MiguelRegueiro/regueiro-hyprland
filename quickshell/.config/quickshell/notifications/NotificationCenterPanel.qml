@@ -346,8 +346,7 @@ Item {
 
                     Item {
                         width: parent.width
-                        height: 48
-                        visible: root.notificationStore.count > 0
+                        height: 62
 
                         Row {
                             anchors {
@@ -355,30 +354,54 @@ Item {
                                 leftMargin: 14
                                 verticalCenter: parent.verticalCenter
                             }
-                            spacing: 8
-
-                            Text {
-                                text: "Notifications"
-                                color: Theme.textPrimary
-                                font.family: Theme.fontUi
-                                font.pixelSize: 13
-                                font.weight: Font.DemiBold
-                            }
+                            spacing: 12
 
                             Rectangle {
-                                width: Math.max(18, countText.implicitWidth + 10)
-                                height: 18
-                                radius: 9
-                                color: Theme.hoverBg
+                                width: 32
+                                height: 32
+                                radius: 10
+                                color: Theme.qsRowBg
+                                border.width: 1
+                                border.color: Theme.qsEdgeSoft
 
                                 Text {
-                                    id: countText
                                     anchors.centerIn: parent
-                                    text: String(root.notificationStore.count)
+                                    text: "󰂚"
+                                    font.family: Theme.fontIcons
+                                    font.pixelSize: 14
                                     color: Theme.textDim
+                                }
+                            }
+
+                            Row {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 8
+
+                                Text {
+                                    text: "Notifications"
+                                    color: Theme.textPrimary
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 10
+                                    font.pixelSize: 14
                                     font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: Math.max(22, countText.implicitWidth + 12)
+                                    height: 22
+                                    radius: 11
+                                    color: Theme.hoverBg
+                                    border.width: 1
+                                    border.color: Theme.qsEdgeSoft
+
+                                    Text {
+                                        id: countText
+                                        anchors.centerIn: parent
+                                        text: String(root.notificationStore.count)
+                                        color: Theme.textDim
+                                        font.family: Theme.fontUi
+                                        font.pixelSize: 10
+                                        font.weight: Font.DemiBold
+                                    }
                                 }
                             }
                         }
@@ -389,19 +412,33 @@ Item {
                                 rightMargin: 14
                                 verticalCenter: parent.verticalCenter
                             }
-                            width: clearText.implicitWidth + 20
-                            height: 28
-                            radius: Theme.radiusSmall
-                            color: clearHover.hovered ? Theme.hoverBgStrong : Theme.hoverBg
+                            visible: root.notificationStore.count > 0
+                            width: clearRow.implicitWidth + 18
+                            height: 32
+                            radius: 10
+                            color: clearHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
+                            border.width: 1
+                            border.color: Theme.qsEdgeSoft
 
-                            Text {
-                                id: clearText
+                            Row {
+                                id: clearRow
                                 anchors.centerIn: parent
-                                text: "Clear All"
-                                color: Theme.textDim
-                                font.family: Theme.fontUi
-                                font.pixelSize: 11
-                                font.weight: Font.DemiBold
+                                spacing: 6
+
+                                Text {
+                                    text: "󰆴"
+                                    font.family: Theme.fontIcons
+                                    font.pixelSize: 11
+                                    color: Theme.textDim
+                                }
+
+                                Text {
+                                    text: "Clear"
+                                    color: Theme.textDim
+                                    font.family: Theme.fontUi
+                                    font.pixelSize: 11
+                                    font.weight: Font.DemiBold
+                                }
                             }
 
                             HoverHandler {
@@ -416,50 +453,79 @@ Item {
                     }
 
                     Rectangle {
-                        width: parent.width
+                        width: parent.width - 28
                         height: 1
+                        anchors.horizontalCenter: parent.horizontalCenter
                         color: Theme.qsEdgeSoft
-                        visible: root.notificationStore.count > 0
                     }
 
                     Item {
                         width: parent.width
                         implicitHeight: root.notificationStore.count === 0
-                            ? emptyState.implicitHeight
-                            : Math.min(notificationList.contentHeight, 480)
+                            ? emptyState.implicitHeight + 40
+                            : Math.min(notificationList.contentHeight + 26, 526)
                         clip: true
 
                         Column {
                             id: emptyState
                             visible: root.notificationStore.count === 0
-                            width: parent.width
-                            topPadding: 36
-                            bottomPadding: 36
-                            spacing: 8
+                            width: parent.width - 48
+                            anchors {
+                                horizontalCenter: parent.horizontalCenter
+                                verticalCenter: parent.verticalCenter
+                            }
+                            spacing: 12
 
-                            Text {
+                            Rectangle {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: "󰂜"
-                                font.family: Theme.fontIcons
-                                font.pixelSize: 30
-                                color: Theme.textDisabled
+                                width: 68
+                                height: 68
+                                radius: 20
+                                color: Theme.qsRowBg
+                                border.width: 1
+                                border.color: Theme.qsEdgeSoft
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰂜"
+                                    font.family: Theme.fontIcons
+                                    font.pixelSize: 30
+                                    color: Theme.textDisabled
+                                }
                             }
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: "No notifications"
+                                color: Theme.textPrimary
+                                font.family: Theme.fontUi
+                                font.pixelSize: 14
+                                font.weight: Font.DemiBold
+                            }
+
+                            Text {
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                                text: "You're all caught up for now."
                                 color: Theme.textDisabled
                                 font.family: Theme.fontUi
-                                font.pixelSize: 13
+                                font.pixelSize: 12
                             }
                         }
 
                         ListView {
                             id: notificationList
-                            anchors.fill: parent
+                            anchors {
+                                fill: parent
+                                leftMargin: 12
+                                rightMargin: 12
+                                topMargin: 12
+                                bottomMargin: 14
+                            }
                             visible: root.notificationStore.count > 0
                             model: root.notificationStore.notifications
-                            spacing: 0
+                            spacing: 10
                             clip: true
                             boundsBehavior: Flickable.StopAtBounds
 

@@ -14,22 +14,28 @@ Item {
     signal dismissRequested()
 
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
+    readonly property int iconSize: root.compact ? 28 : 34
+    readonly property int closeSize: root.compact ? 24 : 28
 
     implicitHeight: contentColumn.implicitHeight
 
     ColumnLayout {
         id: contentColumn
         width: parent.width
-        spacing: root.compact ? 3 : 4
+        spacing: root.compact ? 8 : 10
 
         RowLayout {
             width: parent.width
-            spacing: 6
+            spacing: root.compact ? 8 : 10
 
-            Item {
-                Layout.preferredWidth: root.compact ? 16 : 18
+            Rectangle {
+                Layout.preferredWidth: root.iconSize
                 Layout.preferredHeight: Layout.preferredWidth
-                Layout.alignment: Qt.AlignVCenter
+                Layout.alignment: Qt.AlignTop
+                radius: root.compact ? 10 : 12
+                color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.12) : Theme.hoverBg
+                border.width: 1
+                border.color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.24) : Theme.qsEdgeSoft
 
                 readonly property string iconOverride: root.notif
                     ? root.notificationStore.iconOverride(root.notif.appName, root.notif.appIcon) : ""
@@ -39,13 +45,14 @@ Item {
                     visible: parent.iconOverride.length > 0 || !iconImage.visible
                     text: parent.iconOverride.length > 0 ? parent.iconOverride : "󰂚"
                     font.family: Theme.fontIcons
-                    font.pixelSize: root.compact ? 12 : 14
-                    color: Theme.textDim
+                    font.pixelSize: root.compact ? 12 : 15
+                    color: root.isCritical ? Theme.red : Theme.textDim
                 }
 
                 Image {
                     id: iconImage
                     anchors.fill: parent
+                    anchors.margins: 4
                     source: parent.iconOverride.length === 0 && root.notif && root.notif.appIcon.length > 0
                         ? ("image://icon/" + root.notif.appIcon) : ""
                     fillMode: Image.PreserveAspectFit
@@ -58,23 +65,39 @@ Item {
                 text: root.notif ? (root.notif.appName || "Notification") : ""
                 color: Theme.textDim
                 font.family: Theme.fontUi
-                font.pixelSize: 12
+                font.pixelSize: root.compact ? 11 : 12
+                font.weight: Font.Medium
                 elide: Text.ElideRight
-            }
-
-            Text {
-                visible: root.timestampText.length > 0
-                text: root.timestampText
-                color: Theme.textDisabled
-                font.family: Theme.fontUi
-                font.pixelSize: 10
+                verticalAlignment: Text.AlignVCenter
             }
 
             Rectangle {
-                width: root.compact ? 20 : 22
+                visible: root.timestampText.length > 0
+                radius: 9
+                color: Theme.hoverBg
+                border.width: 1
+                border.color: Theme.qsEdgeSoft
+                implicitWidth: timeText.implicitWidth + 10
+                implicitHeight: root.compact ? 18 : 20
+
+                Text {
+                    id: timeText
+                    anchors.centerIn: parent
+                    text: root.timestampText
+                    color: Theme.textDim
+                    font.family: Theme.fontUi
+                    font.pixelSize: 10
+                    font.weight: Font.Medium
+                }
+            }
+
+            Rectangle {
+                width: root.closeSize
                 height: width
                 radius: width / 2
-                color: closeHover.hovered ? Theme.hoverBgStrong : "transparent"
+                color: closeHover.hovered ? Theme.hoverBgStrong : Theme.hoverBg
+                border.width: 1
+                border.color: closeHover.hovered ? Theme.qsEdge : Theme.qsEdgeSoft
 
                 Text {
                     anchors.centerIn: parent
@@ -100,10 +123,10 @@ Item {
             text: root.notif ? root.notif.summary : ""
             color: root.emphasizeCriticalSummary && root.isCritical ? Theme.red : Theme.textPrimary
             font.family: Theme.fontUi
-            font.pixelSize: 14
+            font.pixelSize: root.compact ? 14 : 15
             font.weight: Font.DemiBold
             wrapMode: Text.WordWrap
-            maximumLineCount: 3
+            maximumLineCount: root.compact ? 2 : 3
             elide: Text.ElideRight
             visible: text.length > 0
         }
@@ -113,13 +136,13 @@ Item {
             text: root.notif ? root.notif.body : ""
             color: Theme.textDim
             font.family: Theme.fontUi
-            font.pixelSize: 13
+            font.pixelSize: root.compact ? 12 : 13
             wrapMode: Text.WordWrap
-            maximumLineCount: 5
+            maximumLineCount: root.compact ? 4 : 6
             elide: Text.ElideRight
             visible: text.length > 0
             textFormat: Text.StyledText
-            lineHeight: 1.25
+            lineHeight: 1.28
         }
     }
 }
