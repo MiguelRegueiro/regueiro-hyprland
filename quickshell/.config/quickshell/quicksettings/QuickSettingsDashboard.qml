@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
 import "widgets" as Widgets
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 Item {
@@ -384,7 +385,7 @@ Item {
                 Layout.fillWidth: true
                 backgroundRadius: 18
                 z: root.audioOutputPopupOpen ? 100 : 0
-                iconText: root.audioService.volumeIcon
+                iconOverride: volIconComponent
                 label: root.audioService.currentSinkName.length > 0 ? root.audioService.currentSinkName : "Output device"
                 value: root.audioService.volumePercent / 100
                 muted: root.audioService.muted
@@ -411,6 +412,16 @@ Item {
             Widgets.ApplicationVolumeList {
                 Layout.fillWidth: true
             }
+        }
+    }
+
+    Component {
+        id: volIconComponent
+        Components.VolumeIcon {
+            muted: root.audioService.muted
+            volumePercent: root.audioService.volumePercent
+            iconColor: root.audioService.muted ? Theme.textDisabled : Theme.textDim
+            height: 16
         }
     }
 

@@ -48,7 +48,7 @@ Item {
                 // Back button
                 Rectangle {
                     readonly property bool hovered: backHover.hovered
-                    width: 44; height: 44; radius: 12
+                    width: 44; height: 44; radius: 22
                     color: hovered ? Theme.hoverBgStrong : Theme.qsRowBg
                     Behavior on color { ColorAnimation { duration: 110 } }
                     Text {
@@ -77,6 +77,7 @@ Item {
                     color: root.btOn ? Theme.accent : Theme.textDim
                     Layout.preferredWidth: 24; horizontalAlignment: Text.AlignHCenter
                 }
+                Item { width: 3 }
                 Text {
                     Layout.fillWidth: true; text: "Bluetooth"
                     font.family: Theme.fontUi; font.pixelSize: 14
@@ -85,14 +86,14 @@ Item {
                 
                 // Toggle pill
                 Rectangle {
-                    width: 40; height: 22; radius: 11
+                    width: 48; height: 26; radius: 13
                     color: root.btOn ? Theme.accent : Qt.rgba(1,1,1,0.15)
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: 80 } }
                     Rectangle {
-                        width: 16; height: 16; radius: 8; color: "white"
+                        width: 20; height: 20; radius: 10; color: "white"
                         anchors.verticalCenter: parent.verticalCenter
                         x: root.btOn ? parent.width - width - 3 : 3
-                        Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                        Behavior on x { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
                     }
                     MouseArea {
                         anchors.fill: parent; preventStealing: true; cursorShape: Qt.ArrowCursor
@@ -316,6 +317,7 @@ Item {
     }
 
     function toggle() {
+        btOn = !btOn
         btToggleProc.running = true
         afterToggle.start()
     }

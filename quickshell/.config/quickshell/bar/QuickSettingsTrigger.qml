@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import Quickshell.Services.UPower
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 Rectangle {
@@ -90,12 +91,11 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        Text {
-            text: root.audioService.volumeIcon
-            font.family: Theme.fontIcons
-            font.pixelSize: 14
-            font.weight: Font.DemiBold
-            color: root.audioService.muted ? Theme.textDisabled : Theme.textPrimary
+        Components.VolumeIcon {
+            muted: root.audioService.muted
+            volumePercent: root.audioService.volumePercent
+            iconColor: root.audioService.muted ? Theme.textDisabled : Theme.textPrimary
+            height: 13
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -133,21 +133,28 @@ Rectangle {
                     radius: 2.5
                     color: "transparent"
                     border.width: 1.5
-                    border.color: root.batteryPercent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+                    border.color: root.batteryPercent <= 15 ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
 
-                    Rectangle {
+                    Item {
                         anchors {
-                            left: parent.left
-                            top: parent.top
-                            bottom: parent.bottom
-                            margins: 2
+                            fill: parent
+                            margins: 2.5
                         }
-                        width: Math.max(0, (parent.width - 4) * root.batteryPercent / 100)
-                        radius: 1
-                        color: root.batteryCharging || root.batteryFull ? Theme.green : root.batteryPercent <= 15 ? Theme.red : Theme.textPrimary
+                        clip: true
 
-                        Behavior on width {
-                            NumberAnimation { duration: 200 }
+                        Rectangle {
+                            anchors {
+                                left: parent.left
+                                top: parent.top
+                                bottom: parent.bottom
+                            }
+                            width: parent.width * root.batteryPercent / 100
+                            radius: 1
+                            color: root.batteryCharging || root.batteryFull ? Theme.green : root.batteryPercent <= 15 ? Theme.red : Theme.textPrimary
+
+                            Behavior on width {
+                                NumberAnimation { duration: 200 }
+                            }
                         }
                     }
 
@@ -167,7 +174,7 @@ Rectangle {
                     width: 2.5
                     height: 4
                     radius: 1
-                    color: root.batteryPercent <= 15 ? Theme.red : Qt.rgba(1, 1, 1, 0.55)
+                    color: root.batteryPercent <= 15 ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
                 }
             }
 

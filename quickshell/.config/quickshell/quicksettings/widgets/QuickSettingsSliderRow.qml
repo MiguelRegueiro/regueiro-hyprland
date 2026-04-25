@@ -11,6 +11,7 @@ Item {
     height: 56
 
     property string iconText: "󰕾"
+    property Component iconOverride: null
     property string label: ""
     property real value: 1.0       // 0.0–1.0
     property bool muted: false
@@ -69,12 +70,19 @@ Item {
             radius: 6
             color: "transparent"
 
-            Text {
+            Loader {
                 anchors.centerIn: parent
-                text: row.iconText
-                font.family: Theme.fontIcons
-                font.pixelSize: 16
-                color: row.muted ? Theme.textDisabled : Theme.textDim
+                sourceComponent: row.iconOverride !== null ? row.iconOverride : defaultIcon
+            }
+
+            Component {
+                id: defaultIcon
+                Text {
+                    text: row.iconText
+                    font.family: Theme.fontIcons
+                    font.pixelSize: 16
+                    color: row.muted ? Theme.textDisabled : Theme.textDim
+                }
             }
 
             MouseArea {
