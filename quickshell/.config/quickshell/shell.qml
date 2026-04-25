@@ -161,6 +161,7 @@ ShellRoot {
 
                 targetScreen: modelData
                 audioService: audioServiceState
+                brightnessService: brightnessServiceState
             }
         }
     }

@@ -11,6 +11,7 @@ PanelWindow {
 
     required property var targetScreen
     required property var audioService
+    required property var brightnessService
 
     screen: targetScreen
     exclusiveZone: 0
@@ -28,6 +29,7 @@ PanelWindow {
     mask: Region {}
 
     property bool osdVisible: false
+    property string currentMode: "volume"
     property int _lastVolume: -1
 
     Component.onCompleted: {
@@ -39,15 +41,23 @@ PanelWindow {
         function onVolumePercentChanged() {
             if (root._lastVolume !== audioService.volumePercent) {
                 root._lastVolume = audioService.volumePercent
-                root.show()
+                root.showMode("volume")
             }
         }
         function onMutedChanged() {
-            root.show()
+            root.showMode("volume")
         }
     }
 
-    function show() {
+    Connections {
+        target: brightnessService
+        function onAdjusted() {
+            root.showMode("brightness")
+        }
+    }
+
+    function showMode(mode) {
+        currentMode = mode
         osdVisible = true
         hideTimer.restart()
     }
@@ -93,14 +103,30 @@ PanelWindow {
                 fill: parent
                 margins: 16
             }
-            spacing: 12
+            spacing: 3
 
-            Components.VolumeIcon {
-                muted: audioService.muted
-                volumePercent: audioService.volumePercent
-                iconColor: Theme.textPrimary
-                height: 20
+            Item {
+                implicitWidth: 30
+                implicitHeight: 20
                 Layout.alignment: Qt.AlignVCenter
+
+                Components.VolumeIcon {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.currentMode === "volume"
+                    muted: audioService.muted
+                    volumePercent: audioService.volumePercent
+                    iconColor: Theme.textPrimary
+                    height: 20
+                }
+
+                Components.BrightnessIcon {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.currentMode === "brightness"
+                    iconColor: Theme.textPrimary
+                    height: 20
+                }
             }
 
             Rectangle {
@@ -109,22 +135,26 @@ PanelWindow {
                 radius: 3
                 color: Theme.hoverBg
 
-                property real fillFraction: audioService.muted ? 0 : Math.min(1, audioService.volumePercent / 100)
+                property real fillFraction: root.currentMode === "brightness"
+                    ? Math.min(1, brightnessService.percent / 100)
+                    : (audioService.muted ? 0 : Math.min(1, audioService.volumePercent / 100))
 
                 Rectangle {
                     width: parent.width * parent.fillFraction
                     height: parent.height
                     radius: parent.radius
-                    color: Theme.accent
+                    color: Theme.textPrimary
                 }
             }
 
             Text {
-                text: audioService.muted ? "Muted" : audioService.volumePercent + "%"
+                text: root.currentMode === "brightness"
+                    ? brightnessService.percent + "%"
+                    : (audioService.muted ? "Muted" : audioService.volumePercent + "%")
                 font.family: Theme.fontUi
                 font.pixelSize: 13
                 color: Theme.textDim
-                Layout.minimumWidth: 42
+                Layout.leftMargin: 6
                 horizontalAlignment: Text.AlignRight
             }
         }

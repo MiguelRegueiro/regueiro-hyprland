@@ -5,8 +5,16 @@ Item {
     id: root
 
     property int percent: 0
+    property int rawValue: 0
     property int maxValue: 0
     readonly property bool available: maxValue > 0
+
+    signal adjusted()
+
+    // Edit this list to change the brightness stops.
+    // All values are percentages (0–100). Tune freely.
+    readonly property var stops: [2, 4, 8, 12, 18, 26, 36, 50, 66, 80, 90, 100]
+
     readonly property string iconText: {
         if (percent < 34)
             return "󰃞"
@@ -21,17 +29,34 @@ Item {
     }
 
     function setPercent(nextPercent) {
-        setBrightness.command = ["brightnessctl", "set", Math.max(0, Math.min(100, nextPercent)) + "%"]
+        const clamped = Math.max(0, Math.min(100, Math.round(nextPercent)))
+        root.percent = clamped
+        root.rawValue = root.maxValue > 0 ? Math.round(clamped * root.maxValue / 100) : 0
+        setBrightness.command = ["brightnessctl", "set", clamped + "%"]
         setBrightness.running = true
+        root.adjusted()
         refreshSoon.restart()
     }
 
-    function adjust(stepPercent) {
-        if (stepPercent > 0)
-            brightnessUp.running = true
-        else
-            brightnessDown.running = true
+    function adjust(direction) {
+        if (root.maxValue <= 0) return
+        const current = root.percent
+        let target
 
+        if (direction > 0) {
+            target = root.stops.find(s => s > current)
+        } else {
+            const below = root.stops.filter(s => s < current)
+            target = below.length > 0 ? below[below.length - 1] : undefined
+        }
+
+        if (target === undefined) return
+
+        root.percent = target
+        root.rawValue = Math.round(target * root.maxValue / 100)
+        setBrightness.command = ["brightnessctl", "set", target + "%"]
+        setBrightness.running = true
+        root.adjusted()
         refreshSoon.restart()
     }
 
@@ -59,17 +84,28 @@ Item {
                 const parts = brightnessOut.text.trim().split(" ")
                 const current = parseInt(parts[0]) || 0
                 const max = parseInt(parts[1]) || 0
-
                 root.maxValue = max
-                if (max > 0)
-                    root.percent = Math.round(current * 100 / max)
-                else
-                    root.percent = 0
+                root.rawValue = current
+                root.percent = max > 0 ? Math.round(current * 100 / max) : 0
             }
         }
     }
 
-    Process { id: brightnessUp; command: ["brightnessctl", "set", "5%+"] }
-    Process { id: brightnessDown; command: ["brightnessctl", "set", "5%-"] }
     Process { id: setBrightness; command: ["echo"] }
+
+    IpcHandler {
+        target: "brightness"
+
+        function increase() {
+            root.adjust(1)
+        }
+
+        function decrease() {
+            root.adjust(-1)
+        }
+
+        function set(percent: string) {
+            root.setPercent(Number(percent))
+        }
+    }
 }

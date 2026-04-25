@@ -376,7 +376,12 @@ Item {
                 Layout.fillWidth: true
                 backgroundRadius: 18
                 visible: root.brightnessService.available
-                iconText: root.brightnessService.iconText
+                iconOverride: Component {
+                    Components.BrightnessIcon {
+                        iconColor: Theme.textDim
+                        height: 16
+                    }
+                }
                 label: ""
                 value: root.brightnessService.percent / 100
                 muted: false
