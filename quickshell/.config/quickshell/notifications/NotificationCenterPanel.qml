@@ -73,9 +73,9 @@ Item {
             to: ""
             NumberAnimation {
                 property: "reveal"
-                duration: 165
+                duration: 145
                 easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.3, 0, 0.8, 0.15, 1.0, 1.0]
+                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1.0, 1.0]
             }
         }
     ]

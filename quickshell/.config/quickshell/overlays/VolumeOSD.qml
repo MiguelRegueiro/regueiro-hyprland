@@ -83,7 +83,7 @@ PanelWindow {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: osdRect.opacity >= 1.0 ? 220 : 0
+                duration: osdRect.opacity >= 1.0 ? 110 : 0
                 easing.type: Easing.OutQuad
             }
         }
