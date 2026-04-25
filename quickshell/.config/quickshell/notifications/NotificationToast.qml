@@ -15,7 +15,7 @@ Item {
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
     readonly property color toastSurfaceColor: Theme.popupBg
-    readonly property color toastSurfaceHoverColor: Qt.rgba(0.10, 0.10, 0.10, 1.0)
+    readonly property color toastSurfaceHoverColor: Qt.rgba(0.088, 0.088, 0.088, 1.0)
 
     property real revealProgress: 0
     property bool exiting: false
@@ -94,16 +94,16 @@ Item {
                 : root.toastSurfaceColor
             border.width: 1
             border.color: root.isCritical
-                ? Qt.rgba(1, 0.48, 0.39, 0.26)
-                : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.06))
+                ? Qt.rgba(1, 0.48, 0.39, toastHover.hovered && root.canActivate ? 0.30 : 0.26)
+                : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.11) : Theme.barBorder)
             layer.enabled: true
             layer.effect: MultiEffect {
                 shadowEnabled: true
-                shadowColor: Qt.rgba(0, 0, 0, 0.38 * root.revealProgress)
-                shadowBlur: 1.02
-                shadowVerticalOffset: 1
+                shadowColor: Qt.rgba(0, 0, 0, 0.52 * root.revealProgress)
+                shadowBlur: 0.96
+                shadowVerticalOffset: 6
                 shadowHorizontalOffset: 0
-                blurMax: 44
+                blurMax: 42
             }
 
             Behavior on color {
