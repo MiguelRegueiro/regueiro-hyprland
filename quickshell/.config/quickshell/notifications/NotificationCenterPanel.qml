@@ -100,11 +100,11 @@ Item {
         layer.enabled: true
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.5 * root.reveal)
-            shadowBlur: 0.75
-            shadowVerticalOffset: 8
+            shadowColor: Qt.rgba(0, 0, 0, 0.70 * root.reveal)
+            shadowBlur: 0.88
+            shadowVerticalOffset: 4
             shadowHorizontalOffset: 0
-            blurMax: 32
+            blurMax: 48
         }
 
         HoverHandler {

@@ -145,10 +145,10 @@ PanelWindow {
         anchors.fill: shadowSource
         source: shadowSource
         horizontalOffset: 0
-        verticalOffset: 3
-        radius: 20
-        samples: 41
-        color: Qt.rgba(0, 0, 0, 0.3)
+        verticalOffset: 0
+        radius: 28
+        samples: 57
+        color: Qt.rgba(0, 0, 0, 0.50)
         spread: 0
         transparentBorder: true
         cached: true
@@ -204,7 +204,7 @@ PanelWindow {
 
         ShapePath {
             fillColor: "transparent"
-            strokeColor: Qt.rgba(1, 1, 1, 0.16)
+            strokeColor: Qt.rgba(1, 1, 1, 0.08)
             strokeWidth: 1.2
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.RoundJoin

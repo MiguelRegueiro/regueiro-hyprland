@@ -147,7 +147,7 @@ Item {
                     }
 
                     handle: Rectangle {
-                        x: slider.leftPadding + slider.visualPosition * slider.availableWidth - width / 2
+                        x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
                         y: slider.topPadding + slider.availableHeight / 2 - height / 2
                         width: 18; height: 18; radius: 9
                         color: "white"
