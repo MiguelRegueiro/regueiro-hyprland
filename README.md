@@ -91,9 +91,19 @@ The footer button opens `blueman-manager`, which comes from `blueman`, so keep `
 
 The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5` + `fcitx5-mozc`).
 For broad app coverage on Hyprland/Wayland, keep the GTK and Qt integration packages installed too: `fcitx5-gtk` and `fcitx5-qt`.
-The session exports `XMODIFIERS=@im=fcitx`, `GTK_IM_MODULE=fcitx`, and `QT_IM_MODULE=fcitx`, and also sets `GLFW_IM_MODULE=ibus` because Kitty uses GLFW.
+The session exports `XMODIFIERS=@im=fcitx` and `QT_IM_MODULE=fcitx`, and also sets `GLFW_IM_MODULE=ibus` because Kitty uses GLFW.
+GTK uses the native Wayland frontend for modern apps, while the repo's GTK settings files keep `fcitx` configured for GTK apps that still run through X11/XWayland.
 The top-bar language indicator now toggles between Spanish and Mozc through `fcitx5-remote`, and `Super+Space` switches `ES` / `JP`.
 After the first install or after changing the IM env vars, log out and back in once so the session picks up the new input-method setup.
+If `stow gtk` conflicts with existing `~/.config/gtk-3.0/settings.ini` or `~/.config/gtk-4.0/settings.ini`, back them up and retry:
+
+```sh
+mv ~/.config/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini.bak
+mv ~/.config/gtk-4.0/settings.ini ~/.config/gtk-4.0/settings.ini.bak
+stow gtk
+```
+
+If you want to keep existing GTK settings instead, merge `gtk-im-module=fcitx` into those files manually.
 
 ### Optional keybind-only apps
 
@@ -109,5 +119,5 @@ If you do not use those apps, either skip them or change the matching binds in `
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell rofi fish starship fastfetch kitty hypridle fcitx5
+stow hypr quickshell rofi fish starship fastfetch kitty hypridle fcitx5 gtk
 ```
