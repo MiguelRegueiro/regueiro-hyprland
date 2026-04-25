@@ -23,13 +23,38 @@ Rectangle {
     property bool showMenuIndicator: hasMenu
     property bool showIconChip: hasMenu
     property real iconCenterOffsetX: 0
+    readonly property bool hovered: tileHover.hovered
 
     signal clicked()
     signal menuClicked()
 
     color: {
-        if (!interactive) return Theme.qsRowBg
-        return toggled ? Theme.tileActiveBg : Theme.qsRowBg
+        if (tile.toggled)
+            return tile.hovered ? Theme.tileActiveBgHover : Theme.tileActiveBg
+
+        return tile.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+    }
+    border.width: 1
+    border.color: {
+        if (tile.toggled)
+            return tile.hovered ? Theme.tileActiveBorderHover : Theme.tileActiveBorder
+
+        return tile.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+    }
+
+    Behavior on color {
+        ColorAnimation { duration: Theme.hoverAnimDuration }
+    }
+
+    Behavior on border.color {
+        ColorAnimation { duration: Theme.hoverAnimDuration }
+    }
+
+    HoverHandler {
+        id: tileHover
+        blocking: false
+        enabled: tile.interactive
+        cursorShape: Qt.ArrowCursor
     }
 
     RowLayout {
@@ -43,9 +68,23 @@ Rectangle {
             id: iconCircle
             width: 36; height: 36; radius: 18
             color: {
-                if (!tile.interactive || !tile.showIconChip) return "transparent"
-                if (tile.toggled) return Qt.rgba(1, 1, 1, 0.1)
-                return Qt.rgba(1, 1, 1, 0.05)
+                if (!tile.showIconChip) return "transparent"
+                if (tile.toggled) return Qt.rgba(1, 1, 1, tile.hovered ? 0.13 : 0.10)
+                return tile.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+            }
+            border.width: tile.showIconChip ? 1 : 0
+            border.color: {
+                if (!tile.showIconChip) return "transparent"
+                if (tile.toggled) return Qt.rgba(1, 1, 1, tile.hovered ? 0.13 : 0.10)
+                return tile.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+            }
+
+            Behavior on color {
+                ColorAnimation { duration: Theme.hoverAnimDuration }
+            }
+
+            Behavior on border.color {
+                ColorAnimation { duration: Theme.hoverAnimDuration }
             }
 
             Text {
@@ -65,14 +104,16 @@ Rectangle {
             Text {
                 text: tile.label
                 font.family: Theme.fontUi; font.pixelSize: 13; font.weight: Font.Medium
-                color: tile.toggled ? "white" : Theme.textPrimary
+                color: tile.interactive ? (tile.toggled ? "white" : Theme.textPrimary) : Theme.textDim
                 elide: Text.ElideRight; Layout.fillWidth: true
             }
             Text {
                 visible: text.length > 0
                 text: tile.sublabel
                 font.family: Theme.fontUi; font.pixelSize: 11
-                color: tile.toggled ? Qt.rgba(1, 1, 1, 0.7) : Theme.textDim
+                color: tile.interactive
+                    ? (tile.toggled ? Qt.rgba(1, 1, 1, 0.76) : Theme.textDim)
+                    : Theme.textDisabled
                 elide: Text.ElideRight; Layout.fillWidth: true
             }
         }

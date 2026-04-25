@@ -49,6 +49,12 @@ Canvas {
         var r2    = h * 0.42
         var r3    = h * 0.58
         var sweep = Math.PI * 58 / 180   // ±58°
+        var waveStrokeWidth = Math.max(1, h * 0.09)
+
+        // Center the speaker+waves footprint inside the canvas so the icon
+        // reads optically centered in circular button backgrounds.
+        var contentRight = ax + r3 + waveStrokeWidth / 2
+        var xOffset = (width - contentRight) / 2
 
         var r = Math.round(iconColor.r * 255)
         var g = Math.round(iconColor.g * 255)
@@ -64,21 +70,21 @@ Canvas {
         // Dim colour for inactive wave arcs
         var dimCs = "rgba(" + r + "," + g + "," + b + "," + (a * 0.22) + ")"
 
-        ctx.lineWidth = Math.max(1, h * 0.09)
+        ctx.lineWidth = waveStrokeWidth
         ctx.lineCap   = "round"
 
         // Body + cone — dimmed when muted
         ctx.fillStyle = speakerCs
         ctx.beginPath()
-        ctx.moveTo(0, cy - bH / 2 + bR)
-        ctx.arcTo(0, cy - bH / 2,  bR, cy - bH / 2, bR)
-        ctx.lineTo(bW, cy - bH / 2)
-        ctx.lineTo(ax, tipTop)
-        ctx.lineTo(ax, tipBot)
-        ctx.lineTo(bW, cy + bH / 2)
-        ctx.lineTo(bR, cy + bH / 2)
-        ctx.arcTo(0, cy + bH / 2, 0, cy + bH / 2 - bR, bR)
-        ctx.lineTo(0, cy - bH / 2 + bR)
+        ctx.moveTo(xOffset, cy - bH / 2 + bR)
+        ctx.arcTo(xOffset, cy - bH / 2,  xOffset + bR, cy - bH / 2, bR)
+        ctx.lineTo(xOffset + bW, cy - bH / 2)
+        ctx.lineTo(xOffset + ax, tipTop)
+        ctx.lineTo(xOffset + ax, tipBot)
+        ctx.lineTo(xOffset + bW, cy + bH / 2)
+        ctx.lineTo(xOffset + bR, cy + bH / 2)
+        ctx.arcTo(xOffset, cy + bH / 2, xOffset, cy + bH / 2 - bR, bR)
+        ctx.lineTo(xOffset, cy - bH / 2 + bR)
         ctx.closePath()
         ctx.fill()
 
@@ -86,13 +92,13 @@ Canvas {
         var waves = waveCount
 
         ctx.strokeStyle = waves >= 1 ? cs : dimCs
-        ctx.beginPath(); ctx.arc(ax, cy, r1, -sweep, sweep); ctx.stroke()
+        ctx.beginPath(); ctx.arc(xOffset + ax, cy, r1, -sweep, sweep); ctx.stroke()
 
         ctx.strokeStyle = waves >= 2 ? cs : dimCs
-        ctx.beginPath(); ctx.arc(ax, cy, r2, -sweep, sweep); ctx.stroke()
+        ctx.beginPath(); ctx.arc(xOffset + ax, cy, r2, -sweep, sweep); ctx.stroke()
 
         ctx.strokeStyle = waves >= 3 ? cs : dimCs
-        ctx.beginPath(); ctx.arc(ax, cy, r3, -sweep, sweep); ctx.stroke()
+        ctx.beginPath(); ctx.arc(xOffset + ax, cy, r3, -sweep, sweep); ctx.stroke()
 
         // Muted: white diagonal slash across the whole icon
         if (muted) {
@@ -101,8 +107,8 @@ Canvas {
             ctx.lineWidth   = Math.max(1.2, h * 0.11)
             ctx.lineCap     = "round"
             ctx.beginPath()
-            ctx.moveTo(margin,         h - margin)
-            ctx.lineTo(width - margin, margin)
+            ctx.moveTo(xOffset + margin, h - margin)
+            ctx.lineTo(xOffset + contentRight - margin, margin)
             ctx.stroke()
         }
     }

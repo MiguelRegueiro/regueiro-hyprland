@@ -42,14 +42,14 @@ Item {
 
     function actionChipFill(actionId, active, hovered) {
         return active
-            ? Qt.rgba(1, 1, 1, 0.14)
-            : (hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+            ? Qt.rgba(1, 1, 1, 0.12)
+            : (hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
     }
 
     function actionChipBorder(actionId, active, hovered) {
         return active
             ? Qt.rgba(1, 1, 1, 0.12)
-            : (hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+            : (hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
     }
 
     function actionIconColor(actionId) {
@@ -83,7 +83,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: Theme.popupBg
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        border.color: Qt.rgba(1, 1, 1, 0.11)
         border.width: 1
         radius: Theme.qsRadius + 5
         layer.enabled: true
@@ -121,12 +121,12 @@ Item {
                 height: 50
                 radius: height / 2
                 color: actionRow.active
-                    ? Qt.rgba(1, 1, 1, 0.15)
-                    : (rowHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg)
+                    ? Qt.rgba(0.122, 0.122, 0.122, 0.98)
+                    : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                 border.width: 1
                 border.color: actionRow.active
-                    ? Qt.rgba(1, 1, 1, 0.10)
-                    : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
+                    ? Qt.rgba(1, 1, 1, 0.14)
+                    : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                 readonly property bool active: root.pendingAction === modelData.actionId
 

@@ -37,9 +37,9 @@ Item {
             Layout.fillWidth: true
             height: 52
             radius: 18
-            color: Theme.qsRowBg
+            color: Theme.qsCardBg
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.05)
+            border.color: Theme.qsCardBorder
 
             RowLayout {
                 anchors { fill: parent; leftMargin: 4; rightMargin: 8 }
@@ -49,8 +49,11 @@ Item {
                 Rectangle {
                     readonly property bool hovered: backHover.hovered
                     width: 44; height: 44; radius: 22
-                    color: hovered ? Theme.hoverBgStrong : Theme.qsRowBg
+                    color: hovered ? Theme.qsCardChipBgHover : "transparent"
+                    border.width: hovered ? 1 : 0
+                    border.color: Theme.qsCardChipBorderHover
                     Behavior on color { ColorAnimation { duration: 110 } }
+                    Behavior on border.color { ColorAnimation { duration: 110 } }
                     Text {
                         anchors.centerIn: parent
                         text: "󰁍"
@@ -87,8 +90,11 @@ Item {
                 // Toggle pill
                 Rectangle {
                     width: 48; height: 26; radius: 13
-                    color: root.btOn ? Theme.accent : Qt.rgba(1,1,1,0.15)
+                    color: root.btOn ? Theme.tileActiveBg : Theme.qsCardChipBg
+                    border.width: 1
+                    border.color: root.btOn ? Theme.tileActiveBorder : Theme.qsCardChipBorder
                     Behavior on color { ColorAnimation { duration: 80 } }
+                    Behavior on border.color { ColorAnimation { duration: 80 } }
                     Rectangle {
                         width: 20; height: 20; radius: 10; color: "white"
                         anchors.verticalCenter: parent.verticalCenter
@@ -141,9 +147,13 @@ Item {
                         readonly property bool _acting:  root._actingMac  === modelData.mac
                         readonly property bool _hasResult: root._resultMac === modelData.mac
 
-                        color: btHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
+                        color: devRow.modelData.connected
+                            ? Qt.rgba(0.122, 0.122, 0.122, 0.98)
+                            : (btHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                         border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.05)
+                        border.color: devRow.modelData.connected
+                            ? Qt.rgba(1, 1, 1, 0.14)
+                            : (btHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                         RowLayout {
                             anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
@@ -155,10 +165,15 @@ Item {
                                 radius: 14
                                 color: devRow.modelData.connected
                                     ? Qt.rgba(1, 1, 1, 0.12)
-                                    : (btHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+                                    : (btHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+                                border.width: 1
+                                border.color: devRow.modelData.connected
+                                    ? Qt.rgba(1, 1, 1, 0.12)
+                                    : (btHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
 
                                 Text {
                                     anchors.centerIn: parent
+                                    anchors.horizontalCenterOffset: 1
                                     text: "󰂯"
                                     font.family: Theme.fontIcons; font.pixelSize: 15
                                     color: devRow.modelData.connected ? Theme.textPrimary : Theme.textDim
@@ -201,14 +216,15 @@ Item {
 
                                 color: {
                                     if (hasResult) {
-                                        return ok ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 0.35, 0.35, 0.14)
+                                        return ok ? Theme.qsCardChipBgHover : Qt.rgba(1, 0.35, 0.35, 0.14)
                                     }
-                                    if (busy) return Qt.rgba(1, 1, 1, 0.06)
-                                    return connected ? Qt.rgba(1, 1, 1, 0.12)
-                                                     : Qt.rgba(1, 1, 1, 0.08)
+                                    if (busy) return Theme.qsCardChipBg
+                                    return connected
+                                        ? Theme.qsCardChipBgHover
+                                        : (btnMouse.containsMouse ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
                                 }
                                 border.width: 1
-                                border.color: Qt.rgba(1, 1, 1, 0.08)
+                                border.color: btnMouse.containsMouse ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
 
                                 Text {
                                     id: btnLabel
@@ -237,6 +253,7 @@ Item {
                                     anchors.fill: parent
                                     preventStealing: true
                                     cursorShape: Qt.ArrowCursor
+                                    hoverEnabled: true
                                     enabled: !actionBtn.busy && !actionBtn.hasResult
                                     onClicked: {
                                         root._resultMac = ""
@@ -267,9 +284,9 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     visible: root.btOn && root._devices.length === 0
-                    height: 48; radius: 18; color: Theme.qsRowBg
+                    height: 48; radius: 18; color: Theme.qsCardBg
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.05)
+                    border.color: Theme.qsCardBorder
                     Text {
                         anchors.centerIn: parent; text: "No paired devices"
                         font.family: Theme.fontUi; font.pixelSize: 12; color: Theme.textDisabled
@@ -282,12 +299,16 @@ Item {
 
         // Footer with Search button
         Rectangle {
+            id: footerButton
             Layout.fillWidth: true
             height: 48
             radius: 18
-            color: Theme.qsRowBg
+            color: searchMouse.containsMouse ? Theme.qsCardBgHover : Theme.qsCardBg
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.05)
+            border.color: searchMouse.containsMouse ? Theme.qsCardBorderHover : Theme.qsCardBorder
+
+            Behavior on color { ColorAnimation { duration: 110 } }
+            Behavior on border.color { ColorAnimation { duration: 110 } }
 
             RowLayout {
                 anchors.centerIn: parent
@@ -309,6 +330,7 @@ Item {
                 anchors.fill: parent
                 preventStealing: true
                 cursorShape: Qt.ArrowCursor
+                hoverEnabled: true
                 onClicked: {
                     searchProc.running = true
                 }

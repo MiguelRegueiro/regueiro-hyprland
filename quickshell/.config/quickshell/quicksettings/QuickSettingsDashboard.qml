@@ -66,7 +66,7 @@ Item {
         id: contentLayout
 
         width: parent.width
-        opacity: root.popupLayerOpen ? 0.82 : 1
+        opacity: root.popupLayerOpen ? 0.72 : 1
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -114,9 +114,9 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 38
                     radius: 19
-                    color: Theme.qsRowBg
+                    color: Theme.qsCardBg
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.08)
+                    border.color: Theme.qsCardBorder
                     width: pillRow.implicitWidth + 20
 
                     RowLayout {
@@ -203,11 +203,15 @@ Item {
 
                     anchors.fill: parent
                     radius: 19
-                    color: lockButtonHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
+                    color: lockButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.08)
+                    border.color: lockButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
 
                     Behavior on color {
+                        ColorAnimation { duration: 110 }
+                    }
+
+                    Behavior on border.color {
                         ColorAnimation { duration: 110 }
                     }
 
@@ -250,10 +254,12 @@ Item {
                     anchors.fill: parent
                     radius: 19
                     color: root.powerMenuOpen
-                        ? Qt.rgba(1, 1, 1, 0.14)
-                        : (powerButtonHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg)
+                        ? Theme.qsCardBgHover
+                        : (powerButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                     border.width: 1
-                    border.color: root.powerMenuOpen ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.powerMenuOpen
+                        ? Theme.qsCardBorderHover
+                        : (powerButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                     Behavior on color {
                         ColorAnimation { duration: 110 }

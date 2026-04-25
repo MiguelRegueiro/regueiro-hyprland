@@ -44,7 +44,7 @@ Item {
         height: popupRoot.cardHeight
         radius: Theme.qsRadius + 5
         color: Theme.popupBg
-        border.color: Qt.rgba(1, 1, 1, 0.07)
+        border.color: Qt.rgba(1, 1, 1, 0.11)
         border.width: 1
         clip: true
         layer.enabled: true
@@ -126,11 +126,11 @@ Item {
                 height: secondaryText.length > 0 ? 56 : 48
                 radius: height / 2
                 color: active
-                    ? Qt.rgba(1, 1, 1, 0.15)
-                    : (rowHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg)
+                    ? Qt.rgba(0.122, 0.122, 0.122, 0.98)
+                    : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                 border.color: active
-                    ? Qt.rgba(1, 1, 1, 0.10)
-                    : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
+                    ? Qt.rgba(1, 1, 1, 0.14)
+                    : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
                 border.width: 1
 
                 Row {
@@ -147,8 +147,12 @@ Item {
                         radius: 14
                         anchors.verticalCenter: parent.verticalCenter
                         color: active
-                            ? Qt.rgba(1, 1, 1, 0.13)
-                            : (rowHover.hovered ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.045))
+                            ? Qt.rgba(1, 1, 1, 0.12)
+                            : (rowHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+                        border.width: 1
+                        border.color: active
+                            ? Qt.rgba(1, 1, 1, 0.12)
+                            : (rowHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
 
                         Text {
                             anchors.centerIn: parent

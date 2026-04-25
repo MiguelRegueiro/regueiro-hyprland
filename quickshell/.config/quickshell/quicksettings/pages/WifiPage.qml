@@ -342,9 +342,9 @@ FocusScope {
             Layout.fillWidth: true
             height: 52
             radius: 18
-            color: Theme.qsRowBg
+            color: Theme.qsCardBg
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.05)
+            border.color: Theme.qsCardBorder
             z: 3
 
             RowLayout {
@@ -355,8 +355,11 @@ FocusScope {
                 Rectangle {
                     readonly property bool hovered: backHover.hovered
                     width: 44; height: 44; radius: 22
-                    color: hovered ? Theme.hoverBgStrong : Theme.qsRowBg
+                    color: hovered ? Theme.qsCardChipBgHover : "transparent"
+                    border.width: hovered ? 1 : 0
+                    border.color: Theme.qsCardChipBorderHover
                     Behavior on color { ColorAnimation { duration: 110 } }
+                    Behavior on border.color { ColorAnimation { duration: 110 } }
                     Text {
                         anchors.centerIn: parent
                         text: "󰁍"
@@ -398,8 +401,11 @@ FocusScope {
                 // Toggle pill
                 Rectangle {
                     width: 48; height: 26; radius: 13
-                    color: root.wifiOn ? Theme.accent : Qt.rgba(1,1,1,0.15)
+                    color: root.wifiOn ? Theme.tileActiveBg : Theme.qsCardChipBg
+                    border.width: 1
+                    border.color: root.wifiOn ? Theme.tileActiveBorder : Theme.qsCardChipBorder
                     Behavior on color { ColorAnimation { duration: 80 } }
+                    Behavior on border.color { ColorAnimation { duration: 80 } }
                     Rectangle {
                         width: 20; height: 20; radius: 10; color: "white"
                         anchors.verticalCenter: parent.verticalCenter
@@ -434,8 +440,8 @@ FocusScope {
             visible: root.promptOpen()
             height: visible ? passContent.implicitHeight + 24 : 0
             radius: 18
-            color: Theme.menuBg
-            border.color: Theme.qsEdge
+            color: Theme.popupBg
+            border.color: Qt.rgba(1, 1, 1, 0.11)
             border.width: 1
             clip: true
             z: 5 // Ensure it's on top of the list content
@@ -474,8 +480,8 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
                     radius: 14
-                    color: Qt.rgba(1, 1, 1, 0.08)
-                    border.color: passField.activeFocus ? Theme.accent : Qt.rgba(1, 1, 1, 0.14)
+                    color: Theme.qsCardBg
+                    border.color: passField.activeFocus ? Theme.tileActiveBorderHover : Theme.qsCardBorder
                     border.width: 1
 
                     TextInput {
@@ -536,6 +542,8 @@ FocusScope {
                             verticalCenter: parent.verticalCenter
                         }
                         color: eyeHover.hovered ? Theme.hoverBgStrong : "transparent"
+                        border.width: eyeHover.hovered ? 1 : 0
+                        border.color: Theme.qsCardChipBorderHover
 
                         Text {
                             anchors.centerIn: parent
@@ -576,9 +584,9 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 34
                         radius: 17
-                        color: cancelHover.hovered ? Theme.qsRowBgHover : Qt.rgba(1, 1, 1, 0.06)
+                        color: cancelHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
                         border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.08)
+                        border.color: cancelHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
 
                         Text {
                             anchors.centerIn: parent
@@ -608,7 +616,7 @@ FocusScope {
                         opacity: root._connecting ? 0.5 : 1.0
                         color: connectHover.hovered && !root._connecting ? Theme.tileActiveBgHover : Theme.tileActiveBg
                         border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.10)
+                        border.color: connectHover.hovered && !root._connecting ? Theme.tileActiveBorderHover : Theme.tileActiveBorder
 
                         Text {
                             anchors.centerIn: parent
@@ -675,6 +683,7 @@ FocusScope {
                         readonly property bool selectedForPrompt: root.promptOpen() && root._connectSsid === modelData.ssid
                         readonly property bool rememberedProfile: root._hasSavedProfile(modelData.ssid)
                         readonly property bool savedProfile: !modelData.active && rememberedProfile
+                        readonly property bool showSecurityIcon: secureNetwork && !rememberedProfile && !modelData.active
                         readonly property bool forgetPending: root._forgetConfirmSsid === modelData.ssid
                         readonly property bool forgetBusy: root._forgetBusySsid === modelData.ssid
                         readonly property bool forgetHasResult: root._forgetResultSsid === modelData.ssid
@@ -682,13 +691,13 @@ FocusScope {
                         readonly property bool forgetActionVisible: rememberedProfile
                             && (wifiHover.hovered || forgetPending || forgetBusy || forgetHasResult)
                         color: modelData.active
-                            ? Theme.hoverBgStrong
-                            : (selectedForPrompt ? Qt.rgba(1, 1, 1, 0.10)
-                                                 : (wifiHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg))
+                            ? Qt.rgba(0.122, 0.122, 0.122, 0.98)
+                            : (selectedForPrompt ? Theme.qsCardBgHover
+                                                 : (wifiHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg))
                         border.width: 1
                         border.color: modelData.active
                             ? Qt.rgba(1, 1, 1, 0.14)
-                            : (selectedForPrompt ? Theme.accent : Qt.rgba(1, 1, 1, 0.05))
+                            : (selectedForPrompt ? Theme.tileActiveBorder : (wifiHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder))
 
                         MouseArea {
                             anchors.fill: parent
@@ -722,10 +731,16 @@ FocusScope {
                                 radius: 14
                                 color: modelData.active
                                     ? Qt.rgba(1, 1, 1, 0.12)
-                                    : (wifiHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.05))
+                                    : (wifiHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+                                border.width: 1
+                                border.color: modelData.active
+                                    ? Qt.rgba(1, 1, 1, 0.12)
+                                    : (wifiHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
 
                                 Text {
                                     anchors.centerIn: parent
+                                    anchors.horizontalCenterOffset: 0.5
+                                    anchors.verticalCenterOffset: 1
                                     text: root._sigIcon(modelData.signal || 0)
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 15
@@ -757,13 +772,6 @@ FocusScope {
                                 }
                             }
 
-                            Text {
-                                visible: wifiRow.secureNetwork
-                                text: "󰌾"
-                                font.family: Theme.fontIcons
-                                font.pixelSize: 12
-                                color: Theme.textDim
-                            }
                             Item {
                                 z: 1
                                 Layout.alignment: Qt.AlignVCenter
@@ -780,18 +788,18 @@ FocusScope {
 
                                     Rectangle {
                                         visible: wifiRow.forgetPending
-                                        implicitWidth: 56
-                                        implicitHeight: 28
-                                        radius: 14
-                                        color: Qt.rgba(1, 1, 1, 0.06)
+                                        implicitWidth: 60
+                                        implicitHeight: 30
+                                        radius: 15
+                                        color: Theme.qsCardChipBg
                                         border.width: 1
-                                        border.color: Qt.rgba(1, 1, 1, 0.08)
+                                        border.color: Theme.qsCardChipBorder
 
                                         Text {
                                             anchors.centerIn: parent
                                             text: "Cancel"
                                             font.family: Theme.fontUi
-                                            font.pixelSize: 10
+                                            font.pixelSize: 11
                                             font.weight: Font.Medium
                                             color: Theme.textPrimary
                                         }
@@ -806,22 +814,22 @@ FocusScope {
 
                                     Rectangle {
                                         id: forgetButton
-                                        implicitWidth: wifiRow.forgetBusy ? 78 : (wifiRow.forgetPending ? 58 : 62)
-                                        implicitHeight: 28
-                                        radius: 14
+                                        implicitWidth: wifiRow.forgetBusy ? 84 : (wifiRow.forgetPending ? 62 : 68)
+                                        implicitHeight: 30
+                                        radius: 15
                                         color: {
                                             if (wifiRow.forgetHasResult)
-                                                return wifiRow.forgetOk ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 0.35, 0.35, 0.14)
+                                                return wifiRow.forgetOk ? Theme.qsCardChipBgHover : Qt.rgba(1, 0.35, 0.35, 0.14)
                                             if (wifiRow.forgetPending)
                                                 return Qt.rgba(1, 0.35, 0.35, 0.16)
                                             if (wifiRow.forgetBusy)
-                                                return Qt.rgba(1, 1, 1, 0.06)
-                                            return Qt.rgba(1, 1, 1, 0.08)
+                                                return Theme.qsCardChipBg
+                                            return wifiHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
                                         }
                                         border.width: 1
                                         border.color: wifiRow.forgetPending
                                             ? Qt.rgba(1, 0.45, 0.45, 0.22)
-                                            : Qt.rgba(1, 1, 1, 0.08)
+                                            : (wifiHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
 
                                         Text {
                                             anchors.centerIn: parent
@@ -831,7 +839,7 @@ FocusScope {
                                                 return "Forget"
                                             }
                                             font.family: Theme.fontUi
-                                            font.pixelSize: 10
+                                            font.pixelSize: 11
                                             font.weight: Font.Medium
                                             color: {
                                                 if (wifiRow.forgetHasResult)
@@ -863,22 +871,36 @@ FocusScope {
                                     id: savedChip
                                     anchors.centerIn: parent
                                     visible: wifiRow.savedProfile && !wifiRow.forgetActionVisible
-                                    implicitWidth: savedLabel.implicitWidth + 12
-                                    implicitHeight: 20
-                                    radius: 10
-                                    color: Qt.rgba(1, 1, 1, 0.06)
+                                    implicitWidth: savedLabel.implicitWidth + 14
+                                    implicitHeight: 22
+                                    radius: 11
+                                    color: Theme.qsCardChipBg
                                     border.width: 1
-                                    border.color: Qt.rgba(1, 1, 1, 0.08)
+                                    border.color: Theme.qsCardChipBorderHover
 
                                     Text {
                                         id: savedLabel
                                         anchors.centerIn: parent
                                         text: "Saved"
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 10
+                                        font.pixelSize: 11
                                         font.weight: Font.Medium
-                                        color: Theme.accent
+                                        color: Theme.textPrimary
                                     }
+                                }
+                            }
+                            Item {
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.preferredWidth: wifiRow.showSecurityIcon ? 12 : 0
+                                Layout.preferredHeight: 14
+                                visible: wifiRow.showSecurityIcon
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰌾"
+                                    font.family: Theme.fontIcons
+                                    font.pixelSize: 12
+                                    color: Theme.textDim
                                 }
                             }
                             Text {

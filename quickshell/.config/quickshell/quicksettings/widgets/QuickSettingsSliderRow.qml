@@ -24,6 +24,7 @@ Item {
     property int emitInterval: 36
     readonly property bool showLabel: label.length > 0
     readonly property bool dragging: slider.pressed
+    readonly property bool hovered: rowHover.hovered
     property real _displayValue: 0
     property real _pendingValue: 0
 
@@ -56,7 +57,23 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: row.backgroundRadius
-        color: Theme.qsRowBg
+        color: row.dragging || row.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+        border.width: 1
+        border.color: row.dragging || row.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+
+        Behavior on color {
+            ColorAnimation { duration: Theme.hoverAnimDuration }
+        }
+
+        Behavior on border.color {
+            ColorAnimation { duration: Theme.hoverAnimDuration }
+        }
+    }
+
+    HoverHandler {
+        id: rowHover
+        blocking: false
+        cursorShape: Qt.ArrowCursor
     }
 
     RowLayout {
@@ -65,10 +82,24 @@ Item {
 
         // Icon / mute button
         Rectangle {
-            width: 28
-            height: 28
-            radius: 6
-            color: "transparent"
+            width: 32
+            height: 32
+            radius: 16
+            color: muteBtnMouse.containsMouse && row.showMute
+                ? Theme.qsCardChipBgHover
+                : Theme.qsCardChipBg
+            border.width: 1
+            border.color: muteBtnMouse.containsMouse && row.showMute
+                ? Theme.qsCardChipBorderHover
+                : Theme.qsCardChipBorder
+
+            Behavior on color {
+                ColorAnimation { duration: Theme.hoverAnimDuration }
+            }
+
+            Behavior on border.color {
+                ColorAnimation { duration: Theme.hoverAnimDuration }
+            }
 
             Loader {
                 anchors.centerIn: parent
@@ -81,7 +112,7 @@ Item {
                     text: row.iconText
                     font.family: Theme.fontIcons
                     font.pixelSize: 16
-                    color: row.muted ? Theme.textDisabled : Theme.textDim
+                    color: row.muted ? Theme.textDisabled : Theme.textPrimary
                 }
             }
 
@@ -90,6 +121,7 @@ Item {
                 anchors.fill: parent
                 cursorShape: Qt.ArrowCursor
                 visible: row.showMute
+                hoverEnabled: true
                 onClicked: row.muteClicked()
             }
         }
@@ -135,7 +167,7 @@ Item {
                         width: slider.availableWidth
                         height: 8
                         radius: 4
-                        color: Qt.rgba(1, 1, 1, 0.12)
+                        color: Qt.rgba(1, 1, 1, 0.14)
 
                         Rectangle {
                             width: slider.visualPosition * parent.width
@@ -187,10 +219,20 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             radius: height / 2
             color: row.actionButtonActive
-                ? Qt.rgba(1, 1, 1, 0.14)
-                : (actionHover.hovered ? Theme.hoverBgStrong : Qt.rgba(1, 1, 1, 0.06))
+                ? Theme.qsCardChipBgHover
+                : (actionHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
             border.width: 1
-            border.color: row.actionButtonActive ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.08)
+            border.color: row.actionButtonActive
+                ? Theme.qsCardChipBorderHover
+                : (actionHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
+
+            Behavior on color {
+                ColorAnimation { duration: Theme.hoverAnimDuration }
+            }
+
+            Behavior on border.color {
+                ColorAnimation { duration: Theme.hoverAnimDuration }
+            }
 
             Text {
                 anchors.centerIn: parent

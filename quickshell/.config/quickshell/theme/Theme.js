@@ -54,6 +54,14 @@ var qsEdgeSoft  = Qt.rgba(1, 1, 1, 0.06)
 var qsGlow      = Qt.rgba(0.28, 0.49, 0.88, 0.08)
 var qsRowBg     = Qt.rgba(1, 1, 1, 0.08)
 var qsRowBgHover = Qt.rgba(1, 1, 1, 0.12)
+var qsCardBg    = Qt.rgba(0.094, 0.094, 0.094, 0.96)
+var qsCardBgHover = Qt.rgba(0.112, 0.112, 0.112, 0.98)
+var qsCardBorder = Qt.rgba(1, 1, 1, 0.10)
+var qsCardBorderHover = Qt.rgba(1, 1, 1, 0.13)
+var qsCardChipBg = Qt.rgba(1, 1, 1, 0.05)
+var qsCardChipBgHover = Qt.rgba(1, 1, 1, 0.09)
+var qsCardChipBorder = Qt.rgba(1, 1, 1, 0.08)
+var qsCardChipBorderHover = Qt.rgba(1, 1, 1, 0.11)
 
 // Notification center
 var ncWidth     = 460
@@ -65,5 +73,7 @@ var ncSurfaceBottomLeftRadius  = barCornerRadius + 6
 var ncSurfaceBottomRightRadius = barCornerRadius + 6
 
 // Tile active state — accent blue (#3584e4) at two opacities
-var tileActiveBg      = Qt.rgba(0.208, 0.518, 0.894, 0.85)
-var tileActiveBgHover = Qt.rgba(0.208, 0.518, 0.894, 1.0)
+var tileActiveBg      = Qt.rgba(0.208, 0.518, 0.894, 0.82)
+var tileActiveBgHover = Qt.rgba(0.208, 0.518, 0.894, 0.92)
+var tileActiveBorder  = Qt.rgba(0.82, 0.90, 1.0, 0.18)
+var tileActiveBorderHover = Qt.rgba(0.84, 0.92, 1.0, 0.22)

@@ -9,7 +9,9 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: 102
     radius: 18
-    color: Theme.qsRowBg
+    color: Theme.qsCardBg
+    border.width: 1
+    border.color: Theme.qsCardBorder
 
     property bool playerctlAvailable: false
     property string playerId: ""
@@ -94,7 +96,9 @@ Rectangle {
             width: 36
             height: 36
             radius: 14
-            color: row.hasPlayer ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
+            color: row.hasPlayer ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+            border.width: 1
+            border.color: row.hasPlayer ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
 
             Text {
                 anchors.centerIn: parent
@@ -195,7 +199,9 @@ Rectangle {
         width: 38
         height: 38
         radius: 19
-        color: btn.hovered && btn.enabled ? Theme.hoverBgStrong : Theme.hoverBg
+        color: btn.hovered && btn.enabled ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+        border.width: 1
+        border.color: btn.hovered && btn.enabled ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
         opacity: btn.enabled ? 1 : 0.45
 
         Text {
