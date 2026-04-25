@@ -102,7 +102,7 @@ Rectangle {
         Text {
             text: root.audioService.volumePercent + "%"
             font.family: Theme.fontUi
-            font.pixelSize: 12
+            font.pixelSize: 13
             font.weight: Font.DemiBold
             color: root.audioService.muted ? Theme.textDisabled : Theme.textPrimary
             anchors.verticalCenter: parent.verticalCenter
@@ -121,16 +121,16 @@ Rectangle {
             }
 
             Item {
-                width: 22
-                height: 10
+                width: 24
+                height: 12
                 anchors.verticalCenter: parent.verticalCenter
 
                 Rectangle {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 19
-                    height: 10
-                    radius: 2.5
+                    width: 21
+                    height: 12
+                    radius: 3
                     color: "transparent"
                     border.width: 1.5
                     border.color: root.batteryPercent <= 15 ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
@@ -141,6 +141,13 @@ Rectangle {
                             margins: 2.5
                         }
                         clip: true
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 1
+                            visible: root.batteryCharging && !root.batteryFull
+                            color: Qt.rgba(0.18, 0.72, 0.36, 0.26)
+                        }
 
                         Rectangle {
                             anchors {
@@ -163,16 +170,16 @@ Rectangle {
                         visible: root.batteryCharging && !root.batteryFull
                         text: "󱐋"
                         font.family: Theme.fontIcons
-                        font.pixelSize: 7
-                        color: "black"
+                        font.pixelSize: 8
+                        color: Qt.rgba(0, 0, 0, 0.9)
                     }
                 }
 
                 Rectangle {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 2.5
-                    height: 4
+                    width: 3
+                    height: 5
                     radius: 1
                     color: root.batteryPercent <= 15 ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
                 }
@@ -181,7 +188,7 @@ Rectangle {
             Text {
                 text: root.batteryPercent + "%"
                 font.family: Theme.fontUi
-                font.pixelSize: 12
+                font.pixelSize: 13
                 font.weight: Font.DemiBold
                 color: Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter

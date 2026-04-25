@@ -20,10 +20,11 @@ Rectangle {
     Text {
         id: langLabel
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: 1
         text: langBtn._lang
         color: Theme.textDim
         font.family: Theme.fontUi
-        font.pixelSize: 11
+        font.pixelSize: 12
         font.weight: Font.Bold
         font.letterSpacing: 0.5
     }

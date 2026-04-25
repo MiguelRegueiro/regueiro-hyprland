@@ -1,4 +1,5 @@
 import QtQuick
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 Rectangle {
@@ -25,18 +26,16 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 5
 
-        Text {
-            text: root.brightnessService.iconText
-            font.family: Theme.fontIcons
-            font.pixelSize: 14
-            color: Theme.textDim
+        Components.BrightnessIcon {
+            iconColor: Theme.textDim
+            height: 15
             anchors.verticalCenter: parent.verticalCenter
         }
 
         Text {
             text: root.brightnessService.percent + "%"
             font.family: Theme.fontUi
-            font.pixelSize: 12
+            font.pixelSize: 13
             color: Theme.textDim
             anchors.verticalCenter: parent.verticalCenter
         }

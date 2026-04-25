@@ -43,7 +43,7 @@ Row {
                 text: modelData.name
                 color: modelData.active ? Theme.textPrimary : Theme.textDim
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 14
                 font.weight: modelData.active ? Font.Bold : Font.Normal
             }
 

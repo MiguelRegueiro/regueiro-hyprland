@@ -100,7 +100,7 @@ Row {
             Text {
                 text: root.cpuPct + "%"
                 font.family: Theme.fontUi
-                font.pixelSize: 12
+                font.pixelSize: 13
                 font.weight: Font.DemiBold
                 color: root.cpuPct >= 90 ? Theme.red
                      : root.cpuPct >= 70 ? Theme.yellow
@@ -141,7 +141,7 @@ Row {
             Text {
                 text: root.ramUsedGb.toFixed(1) + "G"
                 font.family: Theme.fontUi
-                font.pixelSize: 12
+                font.pixelSize: 13
                 font.weight: Font.DemiBold
                 color: Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter

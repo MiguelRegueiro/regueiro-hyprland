@@ -141,19 +141,35 @@ Item {
                                 border.color: batteryInfo.percent <= 15 ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
 
                                 // Fill
-                                Rectangle {
+                                Item {
                                     anchors {
                                         left: parent.left
                                         top: parent.top
                                         bottom: parent.bottom
                                         margins: 2.5
                                     }
-                                    width: Math.max(0, (parent.width - 5) * batteryInfo.percent / 100)
-                                    radius: 1.5
-                                    color: batteryInfo.charging || batteryInfo.full ? Theme.green : batteryInfo.percent <= 15 ? Theme.red : Theme.textPrimary
+                                    width: parent.width - 5
 
-                                    Behavior on width {
-                                        NumberAnimation { duration: 200 }
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: 1.5
+                                        visible: batteryInfo.charging && !batteryInfo.full
+                                        color: Qt.rgba(0.18, 0.72, 0.36, 0.26)
+                                    }
+
+                                    Rectangle {
+                                        anchors {
+                                            left: parent.left
+                                            top: parent.top
+                                            bottom: parent.bottom
+                                        }
+                                        width: Math.max(0, parent.width * batteryInfo.percent / 100)
+                                        radius: 1.5
+                                        color: batteryInfo.charging || batteryInfo.full ? Theme.green : batteryInfo.percent <= 15 ? Theme.red : Theme.textPrimary
+
+                                        Behavior on width {
+                                            NumberAnimation { duration: 200 }
+                                        }
                                     }
                                 }
 
@@ -164,7 +180,7 @@ Item {
                                     text: "󱐋"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 8
-                                    color: "black"
+                                    color: Qt.rgba(0, 0, 0, 0.9)
                                 }
                             }
 

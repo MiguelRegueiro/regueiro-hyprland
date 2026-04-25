@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import "../theme/Theme.js" as Theme
@@ -77,7 +78,7 @@ PanelWindow {
             }
         }
 
-        Row {
+        RowLayout {
             id: rightRow
             anchors {
                 right: parent.right
@@ -86,34 +87,26 @@ PanelWindow {
             }
             spacing: 0
 
-            Loader {
-                active: bar.targetScreen.name === "eDP-1"
-                height: Theme.barHeight
-                width: active && item ? item.implicitWidth : 0
-                sourceComponent: Component {
-                    BrightnessIndicator {
-                        barHeight: Theme.barHeight
-                        brightnessService: bar.brightnessService
-                    }
-                }
-            }
-
             BarIconButton {
+                Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
                 iconText: "󰅌"
                 onClicked: clipHistoryMenu.running = true
             }
 
             SystemTrayItems {
+                Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
             }
 
             InputLanguageIndicator {
+                Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
             }
 
             QuickSettingsTrigger {
                 id: quickSettingsTrigger
+                Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
                 audioService: bar.audioService
                 onClicked: bar.quickSettingsClicked()
