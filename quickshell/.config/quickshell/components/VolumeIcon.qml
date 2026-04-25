@@ -45,11 +45,11 @@ Canvas {
 
         // Arc waves — centred at the cone tip
         var ax    = bW + cW
-        var r1    = h * 0.26
-        var r2    = h * 0.42
-        var r3    = h * 0.58
+        var r1    = h * 0.24
+        var r2    = h * 0.45
+        var r3    = h * 0.66
         var sweep = Math.PI * 58 / 180   // ±58°
-        var waveStrokeWidth = Math.max(1, h * 0.09)
+        var waveStrokeWidth = Math.max(1.15, h * 0.105)
 
         // Center the speaker+waves footprint inside the canvas so the icon
         // reads optically centered in circular button backgrounds.
