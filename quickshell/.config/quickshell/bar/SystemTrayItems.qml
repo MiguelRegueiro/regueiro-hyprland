@@ -20,7 +20,7 @@ Row {
             required property SystemTrayItem modelData
 
             readonly property string itemId: (modelData.id || "").toLowerCase()
-            visible: !itemId.includes("blueman") && !itemId.includes("nm-applet")
+            visible: !itemId.includes("blueman")
                 && !itemId.includes("fcitx")
                 && (modelData.status !== Status.Passive || modelData.onlyMenu)
 

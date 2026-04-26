@@ -85,14 +85,14 @@ sudo systemctl enable --now power-profiles-daemon
 ### Wi-Fi handling
 
 Wi-Fi is handled directly inside the QuickShell quick settings panel through `nmcli`.
-`nm-applet` is not autostarted in this setup, so secured networks use the custom QuickShell password prompt and inline error states instead of the GTK NetworkManager dialog.
+No NetworkManager applet is used in this setup, so secured networks use the custom QuickShell password prompt and inline error states instead of a separate GTK dialog.
 On Arch, the package is `networkmanager`, but the binaries you actually use are `nmcli` and `NetworkManager`.
 
 ### Bluetooth handling
 
 The Bluetooth submenu is handled directly with `bluetoothctl`, so `bluez` + `bluez-utils` are the core Bluetooth dependencies.
 It currently lists paired devices and lets you connect/disconnect them inline from QuickShell.
-The footer button opens `blueman-manager`, which comes from `blueman`, so keep `blueman` installed if you want the external Bluetooth settings/pairing app.
+`blueman` is also part of this setup: `blueman-applet` is autostarted, and the footer button opens `blueman-manager` for the external Bluetooth settings/pairing UI.
 
 ### Input method
 
