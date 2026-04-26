@@ -14,9 +14,6 @@ PanelWindow {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
-
-    signal outsidePressed()
-
     property bool hasBar: true
     property bool quickSettingsVisible: false
     property bool quickSettingsCursorInside: false
@@ -28,29 +25,23 @@ PanelWindow {
     readonly property real quickSettingsRegionWidth: quickSettingsPanel.inputRegion.width
     readonly property real quickSettingsRegionHeight: quickSettingsPanel.inputRegion.height
 
+    signal outsidePressed()
+
     function updateQuickSettingsCursor(rawText) {
-        const match = rawText.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/)
+        const match = rawText.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
         if (!match) {
-            root.quickSettingsCursorInside = false
-            return
+            root.quickSettingsCursorInside = false;
+            return ;
         }
-
-        const cursorX = Number(match[1])
-        const cursorY = Number(match[2])
-        const panelLeft = Number(root.targetScreen.x) + quickSettingsPanel.x - 18
-        const panelTop = Number(root.targetScreen.y) + quickSettingsPanel.y - 18
-        const panelRight = panelLeft + quickSettingsPanel.width + 36
-        const panelBottom = panelTop + quickSettingsPanel.height + 36
-
-        const barTriggerLeft = Number(root.targetScreen.x) + quickSettingsPanel.x
-        const inBarTrigger = cursorY >= Number(root.targetScreen.y)
-            && cursorY < Number(root.targetScreen.y) + Theme.barHeight
-            && cursorX >= barTriggerLeft
-
-        root.quickSettingsCursorInside = root.quickSettingsVisible
-            && (inBarTrigger
-                || (cursorX >= panelLeft && cursorX <= panelRight
-                    && cursorY >= panelTop && cursorY <= panelBottom))
+        const cursorX = Number(match[1]);
+        const cursorY = Number(match[2]);
+        const panelLeft = Number(root.targetScreen.x) + quickSettingsPanel.x - 18;
+        const panelTop = Number(root.targetScreen.y) + quickSettingsPanel.y - 18;
+        const panelRight = panelLeft + quickSettingsPanel.width + 36;
+        const panelBottom = panelTop + quickSettingsPanel.height + 36;
+        const barTriggerLeft = Number(root.targetScreen.x) + quickSettingsPanel.x;
+        const inBarTrigger = cursorY >= Number(root.targetScreen.y) && cursorY < Number(root.targetScreen.y) + Theme.barHeight && cursorX >= barTriggerLeft;
+        root.quickSettingsCursorInside = root.quickSettingsVisible && (inBarTrigger || (cursorX >= panelLeft && cursorX <= panelRight && cursorY >= panelTop && cursorY <= panelBottom));
     }
 
     screen: targetScreen
@@ -73,7 +64,8 @@ PanelWindow {
     // instead of deactivating the IM due to "no text-input client".
     // Real text fields (WiFi password etc.) steal focus from this when clicked.
     TextInput {
-        width: 1; height: 1
+        width: 1
+        height: 1
         opacity: 0
         focus: true
         cursorVisible: false
@@ -84,6 +76,7 @@ PanelWindow {
 
     Item {
         id: shadowSource
+
         anchors.fill: parent
         visible: false
 
@@ -99,37 +92,63 @@ PanelWindow {
                 capStyle: ShapePath.FlatCap
                 joinStyle: ShapePath.RoundJoin
 
-                PathMove { x: Theme.borderSize + Theme.barCornerRadius; y: root.innerTopY }
-                PathLine { x: root.width - Theme.borderSize - Theme.barCornerRadius; y: root.innerTopY }
+                PathMove {
+                    x: Theme.borderSize + Theme.barCornerRadius
+                    y: root.innerTopY
+                }
+
+                PathLine {
+                    x: root.width - Theme.borderSize - Theme.barCornerRadius
+                    y: root.innerTopY
+                }
+
                 PathQuad {
                     x: root.width - Theme.borderSize
                     y: root.innerTopY + Theme.barCornerRadius
                     controlX: root.width - Theme.borderSize
                     controlY: root.innerTopY
                 }
-                PathLine { x: root.width - Theme.borderSize; y: root.height - Theme.borderSize - Theme.barCornerRadius }
+
+                PathLine {
+                    x: root.width - Theme.borderSize
+                    y: root.height - Theme.borderSize - Theme.barCornerRadius
+                }
+
                 PathQuad {
                     x: root.width - Theme.borderSize - Theme.barCornerRadius
                     y: root.height - Theme.borderSize
                     controlX: root.width - Theme.borderSize
                     controlY: root.height - Theme.borderSize
                 }
-                PathLine { x: Theme.borderSize + Theme.barCornerRadius; y: root.height - Theme.borderSize }
+
+                PathLine {
+                    x: Theme.borderSize + Theme.barCornerRadius
+                    y: root.height - Theme.borderSize
+                }
+
                 PathQuad {
                     x: Theme.borderSize
                     y: root.height - Theme.borderSize - Theme.barCornerRadius
                     controlX: Theme.borderSize
                     controlY: root.height - Theme.borderSize
                 }
-                PathLine { x: Theme.borderSize; y: root.innerTopY + Theme.barCornerRadius }
+
+                PathLine {
+                    x: Theme.borderSize
+                    y: root.innerTopY + Theme.barCornerRadius
+                }
+
                 PathQuad {
                     x: Theme.borderSize + Theme.barCornerRadius
                     y: root.innerTopY
                     controlX: Theme.borderSize
                     controlY: root.innerTopY
                 }
+
             }
+
         }
+
     }
 
     Timer {
@@ -139,7 +158,8 @@ PanelWindow {
         triggeredOnStart: true
         onTriggered: {
             if (!cursorPosProc.running)
-                cursorPosProc.running = true
+                cursorPosProc.running = true;
+
         }
     }
 
@@ -153,6 +173,7 @@ PanelWindow {
 
             onStreamFinished: root.updateQuickSettingsCursor(cursorPosOut.text.trim())
         }
+
     }
 
     DropShadow {
@@ -162,7 +183,7 @@ PanelWindow {
         verticalOffset: 0
         radius: 28
         samples: 57
-        color: Qt.rgba(0, 0, 0, 0.50)
+        color: Qt.rgba(0, 0, 0, 0.5)
         spread: 0
         transparentBorder: true
         cached: true
@@ -179,41 +200,84 @@ PanelWindow {
             strokeColor: "transparent"
             strokeWidth: 0
 
-            PathMove { x: 0; y: root.topY }
-            PathLine { x: root.width; y: root.topY }
-            PathLine { x: root.width; y: root.height }
-            PathLine { x: 0; y: root.height }
-            PathLine { x: 0; y: root.topY }
+            PathMove {
+                x: 0
+                y: root.topY
+            }
 
-            PathMove { x: Theme.borderSize + Theme.barCornerRadius; y: root.innerTopY }
-            PathLine { x: root.width - Theme.borderSize - Theme.barCornerRadius; y: root.innerTopY }
+            PathLine {
+                x: root.width
+                y: root.topY
+            }
+
+            PathLine {
+                x: root.width
+                y: root.height
+            }
+
+            PathLine {
+                x: 0
+                y: root.height
+            }
+
+            PathLine {
+                x: 0
+                y: root.topY
+            }
+
+            PathMove {
+                x: Theme.borderSize + Theme.barCornerRadius
+                y: root.innerTopY
+            }
+
+            PathLine {
+                x: root.width - Theme.borderSize - Theme.barCornerRadius
+                y: root.innerTopY
+            }
+
             PathQuad {
                 x: root.width - Theme.borderSize
                 y: root.innerTopY + Theme.barCornerRadius
                 controlX: root.width - Theme.borderSize
                 controlY: root.innerTopY
             }
-            PathLine { x: root.width - Theme.borderSize; y: root.height - Theme.borderSize - Theme.barCornerRadius }
+
+            PathLine {
+                x: root.width - Theme.borderSize
+                y: root.height - Theme.borderSize - Theme.barCornerRadius
+            }
+
             PathQuad {
                 x: root.width - Theme.borderSize - Theme.barCornerRadius
                 y: root.height - Theme.borderSize
                 controlX: root.width - Theme.borderSize
                 controlY: root.height - Theme.borderSize
             }
-            PathLine { x: Theme.borderSize + Theme.barCornerRadius; y: root.height - Theme.borderSize }
+
+            PathLine {
+                x: Theme.borderSize + Theme.barCornerRadius
+                y: root.height - Theme.borderSize
+            }
+
             PathQuad {
                 x: Theme.borderSize
                 y: root.height - Theme.borderSize - Theme.barCornerRadius
                 controlX: Theme.borderSize
                 controlY: root.height - Theme.borderSize
             }
-            PathLine { x: Theme.borderSize; y: root.innerTopY + Theme.barCornerRadius }
+
+            PathLine {
+                x: Theme.borderSize
+                y: root.innerTopY + Theme.barCornerRadius
+            }
+
             PathQuad {
                 x: Theme.borderSize + Theme.barCornerRadius
                 y: root.innerTopY
                 controlX: Theme.borderSize
                 controlY: root.innerTopY
             }
+
         }
 
         ShapePath {
@@ -224,12 +288,16 @@ PanelWindow {
             joinStyle: ShapePath.RoundJoin
 
             // Top edge: shrinks toward fillet start as QS panel reveals
-            PathMove { x: Theme.borderSize + Theme.barCornerRadius; y: root.innerTopY }
-            PathLine {
-                x: (root.width - Theme.borderSize - Theme.barCornerRadius) * (1 - quickSettingsPanel.revealProgress)
-                   + quickSettingsPanel.x * quickSettingsPanel.revealProgress
+            PathMove {
+                x: Theme.borderSize + Theme.barCornerRadius
                 y: root.innerTopY
             }
+
+            PathLine {
+                x: (root.width - Theme.borderSize - Theme.barCornerRadius) * (1 - quickSettingsPanel.revealProgress) + quickSettingsPanel.x * quickSettingsPanel.revealProgress
+                y: root.innerTopY
+            }
+
             PathQuad {
                 x: root.width - Theme.borderSize
                 y: root.innerTopY + Theme.barCornerRadius
@@ -237,38 +305,55 @@ PanelWindow {
                 controlY: root.innerTopY
             }
             // Right edge: first segment ends at panel bottom when QS reveals, then jumps over fillet
+
             PathLine {
                 x: root.width - Theme.borderSize
-                y: (root.height - Theme.borderSize - Theme.barCornerRadius) * (1 - quickSettingsPanel.revealProgress)
-                   + (quickSettingsPanel.y + quickSettingsPanel.bodyHeight) * quickSettingsPanel.revealProgress
+                y: (root.height - Theme.borderSize - Theme.barCornerRadius) * (1 - quickSettingsPanel.revealProgress) + (quickSettingsPanel.y + quickSettingsPanel.bodyHeight) * quickSettingsPanel.revealProgress
             }
+
             PathMove {
                 x: root.width - Theme.borderSize
-                y: (root.height - Theme.borderSize - Theme.barCornerRadius) * (1 - quickSettingsPanel.revealProgress)
-                   + (quickSettingsPanel.y + quickSettingsPanel.bodyHeight + Theme.barCornerRadius) * quickSettingsPanel.revealProgress
+                y: (root.height - Theme.borderSize - Theme.barCornerRadius) * (1 - quickSettingsPanel.revealProgress) + (quickSettingsPanel.y + quickSettingsPanel.bodyHeight + Theme.barCornerRadius) * quickSettingsPanel.revealProgress
             }
-            PathLine { x: root.width - Theme.borderSize; y: root.height - Theme.borderSize - Theme.barCornerRadius }
+
+            PathLine {
+                x: root.width - Theme.borderSize
+                y: root.height - Theme.borderSize - Theme.barCornerRadius
+            }
+
             PathQuad {
                 x: root.width - Theme.borderSize - Theme.barCornerRadius
                 y: root.height - Theme.borderSize
                 controlX: root.width - Theme.borderSize
                 controlY: root.height - Theme.borderSize
             }
-            PathLine { x: Theme.borderSize + Theme.barCornerRadius; y: root.height - Theme.borderSize }
+
+            PathLine {
+                x: Theme.borderSize + Theme.barCornerRadius
+                y: root.height - Theme.borderSize
+            }
+
             PathQuad {
                 x: Theme.borderSize
                 y: root.height - Theme.borderSize - Theme.barCornerRadius
                 controlX: Theme.borderSize
                 controlY: root.height - Theme.borderSize
             }
-            PathLine { x: Theme.borderSize; y: root.innerTopY + Theme.barCornerRadius }
+
+            PathLine {
+                x: Theme.borderSize
+                y: root.innerTopY + Theme.barCornerRadius
+            }
+
             PathQuad {
                 x: Theme.borderSize + Theme.barCornerRadius
                 y: root.innerTopY
                 controlX: Theme.borderSize
                 controlY: root.innerTopY
             }
+
         }
+
     }
 
     Item {
@@ -306,6 +391,7 @@ PanelWindow {
             height: Math.max(0, Math.round(parent.height - (root.quickSettingsRegionY + root.quickSettingsRegionHeight)))
             onPressed: root.outsidePressed()
         }
+
     }
 
     QuickSettings.QuickSettingsPanel {
@@ -340,9 +426,7 @@ PanelWindow {
         Region {
             x: Math.round(root.quickSettingsRegionX + root.quickSettingsRegionWidth)
             y: Math.max(0, Math.round(root.quickSettingsRegionY))
-            width: root.quickSettingsVisible
-                ? Math.max(0, Math.round(root.width - (root.quickSettingsRegionX + root.quickSettingsRegionWidth)))
-                : 0
+            width: root.quickSettingsVisible ? Math.max(0, Math.round(root.width - (root.quickSettingsRegionX + root.quickSettingsRegionWidth))) : 0
             height: root.quickSettingsVisible ? Math.max(0, Math.round(root.quickSettingsRegionHeight)) : 0
         }
 
@@ -350,10 +434,9 @@ PanelWindow {
             x: 0
             y: Math.round(root.quickSettingsRegionY + root.quickSettingsRegionHeight)
             width: root.quickSettingsVisible ? Math.round(root.width) : 0
-            height: root.quickSettingsVisible
-                ? Math.max(0, Math.round(root.height - (root.quickSettingsRegionY + root.quickSettingsRegionHeight)))
-                : 0
+            height: root.quickSettingsVisible ? Math.max(0, Math.round(root.height - (root.quickSettingsRegionY + root.quickSettingsRegionHeight))) : 0
         }
 
     }
+
 }

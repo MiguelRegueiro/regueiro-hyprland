@@ -5,19 +5,17 @@ Rectangle {
     id: langBtn
 
     required property var inputService
-
     property int barHeight: 34
+    readonly property bool hovered: hover.hovered
 
     height: barHeight - 8
     implicitWidth: Math.max(langLabel.implicitWidth + 16, 36)
     radius: Theme.radiusSmall
-    readonly property bool hovered: hover.hovered
     color: hovered ? Theme.hoverBg : "transparent"
-
-    Behavior on color { ColorAnimation { duration: Theme.hoverAnimDuration } }
 
     Text {
         id: langLabel
+
         anchors.centerIn: parent
         text: inputService.currentLabel
         color: Theme.textPrimary
@@ -29,6 +27,7 @@ Rectangle {
 
     HoverHandler {
         id: hover
+
         blocking: false
         cursorShape: Qt.ArrowCursor
     }
@@ -37,4 +36,12 @@ Rectangle {
         anchors.fill: parent
         onClicked: inputService.cycleNext()
     }
+
+    Behavior on color {
+        ColorAnimation {
+            duration: Theme.hoverAnimDuration
+        }
+
+    }
+
 }

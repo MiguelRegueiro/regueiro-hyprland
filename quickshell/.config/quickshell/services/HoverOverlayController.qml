@@ -10,43 +10,45 @@ QtObject {
     property bool panelHovered: false
     property bool extraHoldCondition: false
     property int closeDelayMs: Theme.hoverCloseDelay
+    property Timer hoverClose
 
     function togglePinned() {
-        pinned = !pinned
+        pinned = !pinned;
     }
 
     function closeImmediately() {
-        syncVisibility(true)
+        syncVisibility(true);
     }
 
     function syncVisibility(immediateClose) {
         if (pinned || triggerHovered || panelHovered || extraHoldCondition) {
-            hoverClose.stop()
-            open = true
-            return
+            hoverClose.stop();
+            open = true;
+            return ;
         }
-
         if (immediateClose) {
-            hoverClose.stop()
-            open = false
-            return
+            hoverClose.stop();
+            open = false;
+            return ;
         }
-
         if (open)
-            hoverClose.restart()
-    }
+            hoverClose.restart();
 
-    property Timer hoverClose: Timer {
-        interval: controller.closeDelayMs
-        repeat: false
-        onTriggered: {
-            if (!controller.pinned && !controller.triggerHovered && !controller.panelHovered && !controller.extraHoldCondition)
-                controller.open = false
-        }
     }
 
     onPinnedChanged: syncVisibility(!pinned)
     onTriggerHoveredChanged: syncVisibility(false)
     onPanelHoveredChanged: syncVisibility(false)
     onExtraHoldConditionChanged: syncVisibility(false)
+
+    hoverClose: Timer {
+        interval: controller.closeDelayMs
+        repeat: false
+        onTriggered: {
+            if (!controller.pinned && !controller.triggerHovered && !controller.panelHovered && !controller.extraHoldCondition)
+                controller.open = false;
+
+        }
+    }
+
 }

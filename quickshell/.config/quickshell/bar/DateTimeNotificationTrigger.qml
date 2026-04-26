@@ -7,24 +7,24 @@ Row {
     id: root
 
     required property var notificationStore
-
     property int barHeight: 34
     readonly property bool hovered: triggerHover.hovered
-
-    signal notificationCenterClicked()
-
     readonly property bool hasNotification: notificationStore.count > 0
     readonly property bool doNotDisturb: notificationStore.dnd
+
+    signal notificationCenterClicked()
 
     spacing: 0
 
     SystemClock {
         id: clock
+
         precision: SystemClock.Minutes
     }
 
     HoverHandler {
         id: triggerHover
+
         blocking: false
         cursorShape: Qt.ArrowCursor
     }
@@ -38,15 +38,14 @@ Row {
 
         Row {
             id: pillContent
+
             anchors.centerIn: parent
             spacing: 4
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.doNotDisturb ? "󰂛" : root.hasNotification ? "󰂚" : "󰂜"
-                color: root.doNotDisturb ? Theme.textDisabled
-                     : root.hasNotification ? Theme.textPrimary
-                     : Theme.textDim
+                color: root.doNotDisturb ? Theme.textDisabled : root.hasNotification ? Theme.textPrimary : Theme.textDim
                 font.family: Theme.fontIcons
                 font.pixelSize: 14
             }
@@ -66,34 +65,41 @@ Row {
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
             }
+
         }
 
         MouseArea {
+            width: parent.width / 2
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            cursorShape: Qt.ArrowCursor
+            onClicked: (mouse) => {
+                if (mouse.button === Qt.RightButton)
+                    root.notificationStore.toggleDnd();
+                else
+                    root.notificationCenterClicked();
+            }
+
             anchors {
                 left: parent.left
                 top: parent.top
                 bottom: parent.bottom
             }
-            width: parent.width / 2
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: Qt.ArrowCursor
-            onClicked: mouse => {
-                if (mouse.button === Qt.RightButton)
-                    root.notificationStore.toggleDnd()
-                else
-                    root.notificationCenterClicked()
-            }
+
         }
 
         MouseArea {
+            width: parent.width / 2
+            cursorShape: Qt.ArrowCursor
+            onClicked: root.notificationCenterClicked()
+
             anchors {
                 right: parent.right
                 top: parent.top
                 bottom: parent.bottom
             }
-            width: parent.width / 2
-            cursorShape: Qt.ArrowCursor
-            onClicked: root.notificationCenterClicked()
+
         }
+
     }
+
 }

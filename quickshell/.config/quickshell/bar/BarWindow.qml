@@ -12,7 +12,6 @@ PanelWindow {
     required property var audioService
     required property var brightnessService
     required property var inputService
-
     property bool showBar: true
 
     signal quickSettingsClicked()
@@ -22,17 +21,19 @@ PanelWindow {
 
     screen: targetScreen
     visible: showBar
+    exclusiveZone: Theme.barHeight - Theme.borderSize
+    implicitHeight: Theme.barHeight
+    color: Theme.barBg
+
     anchors {
         top: true
         left: true
         right: true
     }
-    exclusiveZone: Theme.barHeight - Theme.borderSize
-    implicitHeight: Theme.barHeight
-    color: Theme.barBg
 
     Process {
         id: clipHistoryMenu
+
         command: [Quickshell.env("HOME") + "/.config/hypr/scripts/cliphist-menu"]
     }
 
@@ -41,12 +42,14 @@ PanelWindow {
 
         Row {
             id: leftRow
+
+            spacing: 0
+
             anchors {
                 left: parent.left
                 verticalCenter: parent.verticalCenter
                 leftMargin: 4
             }
-            spacing: 0
 
             WorkspaceStrip {
                 screenName: bar.targetScreen.name
@@ -56,10 +59,12 @@ PanelWindow {
             SystemStats {
                 barHeight: Theme.barHeight
             }
+
         }
 
         DateTimeNotificationTrigger {
             id: dateTimeTrigger
+
             anchors.centerIn: parent
             barHeight: Theme.barHeight
             notificationStore: bar.notificationStore
@@ -68,6 +73,7 @@ PanelWindow {
 
         Item {
             id: notificationHotZone
+
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: Theme.ncWidth + Theme.barCornerRadius * 2
@@ -77,16 +83,19 @@ PanelWindow {
                 blocking: false
                 onHoveredChanged: bar.notificationCenterHoveredChanged(hovered)
             }
+
         }
 
         RowLayout {
             id: rightRow
+
+            spacing: 0
+
             anchors {
                 right: parent.right
                 verticalCenter: parent.verticalCenter
                 rightMargin: 4
             }
-            spacing: 0
 
             BarIconButton {
                 Layout.alignment: Qt.AlignVCenter
@@ -108,15 +117,18 @@ PanelWindow {
 
             QuickSettingsTrigger {
                 id: quickSettingsTrigger
+
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
                 audioService: bar.audioService
                 onClicked: bar.quickSettingsClicked()
             }
+
         }
 
         Item {
             id: quickSettingsHotZone
+
             x: rightRow.x + quickSettingsTrigger.x
             width: parent.width - x
             anchors.top: parent.top
@@ -127,6 +139,9 @@ PanelWindow {
                 blocking: false
                 onHoveredChanged: bar.quickSettingsHoveredChanged(hovered)
             }
+
         }
+
     }
+
 }

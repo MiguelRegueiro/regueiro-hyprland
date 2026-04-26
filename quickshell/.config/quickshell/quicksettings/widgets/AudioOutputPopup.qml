@@ -8,36 +8,37 @@ Item {
 
     required property var audioService
     property real maxPopupHeight: 560
-    signal sinkChosen()
     readonly property real listSpacing: 8
     readonly property real listFooterHeight: 8
-
     readonly property real cardHeight: headerContent.height + resolvedListHeight + 40
     readonly property real availableListHeight: Math.max(44, maxPopupHeight - headerContent.height - 32)
+    readonly property real maxListHeight: Math.min(550, availableListHeight)
+    readonly property real idealListHeight: {
+        if (!audioService || !audioService.sinks || audioService.sinks.length === 0)
+            return 44;
+
+        let total = listFooterHeight;
+        for (let i = 0; i < audioService.sinks.length; ++i) {
+            const sink = audioService.sinks[i];
+            total += audioService.sinkSecondaryName(sink).length > 0 ? 56 : 48;
+            if (i > 0)
+                total += listSpacing;
+
+        }
+        return Math.max(44, total);
+    }
+    readonly property real resolvedListHeight: Math.min(maxListHeight, idealListHeight)
+
+    signal sinkChosen()
 
     implicitWidth: 348
     implicitHeight: cardHeight
     width: implicitWidth
     height: implicitHeight
 
-    readonly property real maxListHeight: Math.min(550, availableListHeight)
-    readonly property real idealListHeight: {
-        if (!audioService || !audioService.sinks || audioService.sinks.length === 0)
-            return 44
-
-        let total = listFooterHeight
-        for (let i = 0; i < audioService.sinks.length; ++i) {
-            const sink = audioService.sinks[i]
-            total += audioService.sinkSecondaryName(sink).length > 0 ? 56 : 48
-            if (i > 0)
-                total += listSpacing
-        }
-        return Math.max(44, total)
-    }
-    readonly property real resolvedListHeight: Math.min(maxListHeight, idealListHeight)
-
     Rectangle {
         id: popup
+
         x: 0
         y: 0
         width: parent.width
@@ -48,18 +49,12 @@ Item {
         border.width: 1
         clip: true
         layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.46)
-            shadowBlur: 1.04
-            shadowVerticalOffset: 1
-            shadowHorizontalOffset: 0
-            blurMax: 48
-        }
 
         Column {
             id: headerContent
-            x: 12; y: 12
+
+            x: 12
+            y: 12
             width: parent.width - 24
             spacing: 10
 
@@ -85,10 +80,18 @@ Item {
                 height: 1
                 color: Theme.qsEdgeSoft
             }
+
         }
 
         ListView {
             id: sinkList
+
+            height: popupRoot.resolvedListHeight
+            model: popupRoot.audioService.sinks
+            spacing: popupRoot.listSpacing
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
             anchors {
                 top: headerContent.bottom
                 topMargin: 10
@@ -97,62 +100,51 @@ Item {
                 leftMargin: 14
                 rightMargin: 14
             }
-            height: popupRoot.resolvedListHeight
-            model: popupRoot.audioService.sinks
-            spacing: popupRoot.listSpacing
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
 
             ScrollBar.vertical: ScrollBar {
                 width: 4
                 policy: ScrollBar.AsNeeded
                 background: null
+
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
                     color: Qt.rgba(1, 1, 1, 0.2)
                 }
+
             }
 
             delegate: Rectangle {
                 id: sinkRow
-                required property var modelData
 
-                readonly property bool active: popupRoot.audioService.currentSink
-                    && popupRoot.audioService.currentSink.id === modelData.id
+                required property var modelData
+                readonly property bool active: popupRoot.audioService.currentSink && popupRoot.audioService.currentSink.id === modelData.id
                 readonly property string secondaryText: popupRoot.audioService.sinkSecondaryName(modelData)
 
                 width: sinkList.width
                 height: secondaryText.length > 0 ? 56 : 48
                 radius: height / 2
-                color: active
-                    ? Qt.rgba(0.122, 0.122, 0.122, 0.98)
-                    : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
-                border.color: active
-                    ? Qt.rgba(1, 1, 1, 0.14)
-                    : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+                color: active ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                border.color: active ? Qt.rgba(1, 1, 1, 0.14) : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
                 border.width: 1
 
                 Row {
+                    spacing: 10
+
                     anchors {
                         fill: parent
                         leftMargin: 10
                         rightMargin: 10
                     }
-                    spacing: 10
 
                     Rectangle {
                         width: 28
                         height: 28
                         radius: 14
                         anchors.verticalCenter: parent.verticalCenter
-                        color: active
-                            ? Qt.rgba(1, 1, 1, 0.12)
-                            : (rowHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+                        color: active ? Qt.rgba(1, 1, 1, 0.12) : (rowHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
                         border.width: 1
-                        border.color: active
-                            ? Qt.rgba(1, 1, 1, 0.12)
-                            : (rowHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
+                        border.color: active ? Qt.rgba(1, 1, 1, 0.12) : (rowHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
 
                         Text {
                             anchors.centerIn: parent
@@ -161,6 +153,7 @@ Item {
                             font.pixelSize: 15
                             color: active ? Theme.textPrimary : Theme.textDim
                         }
+
                     }
 
                     Column {
@@ -187,7 +180,9 @@ Item {
                             font.pixelSize: 10
                             elide: Text.ElideRight
                         }
+
                     }
+
                 }
 
                 Rectangle {
@@ -196,41 +191,52 @@ Item {
                     height: 8
                     radius: 4
                     color: Theme.accent
+
                     anchors {
                         right: parent.right
                         rightMargin: 10
                         verticalCenter: parent.verticalCenter
                     }
+
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.ArrowCursor
                     onClicked: {
-                        popupRoot.audioService.setAudioSink(modelData)
-                        popupRoot.sinkChosen()
+                        popupRoot.audioService.setAudioSink(modelData);
+                        popupRoot.sinkChosen();
                     }
                 }
 
                 HoverHandler {
                     id: rowHover
+
                     blocking: false
                     cursorShape: Qt.PointingHandCursor
                 }
 
                 Behavior on color {
-                    ColorAnimation { duration: Theme.outputItemColorDuration }
+                    ColorAnimation {
+                        duration: Theme.outputItemColorDuration
+                    }
+
                 }
 
                 Behavior on border.color {
-                    ColorAnimation { duration: Theme.outputItemColorDuration }
+                    ColorAnimation {
+                        duration: Theme.outputItemColorDuration
+                    }
+
                 }
+
             }
 
             footer: Item {
                 width: parent.width
                 height: popupRoot.listFooterHeight
             }
+
         }
 
         Text {
@@ -241,5 +247,16 @@ Item {
             font.family: Theme.fontUi
             font.pixelSize: 11
         }
+
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.46)
+            shadowBlur: 1.04
+            shadowVerticalOffset: 1
+            shadowHorizontalOffset: 0
+            blurMax: 48
+        }
+
     }
+
 }

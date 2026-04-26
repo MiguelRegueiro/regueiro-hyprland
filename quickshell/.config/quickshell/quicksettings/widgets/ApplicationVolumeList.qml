@@ -6,9 +6,6 @@ import "../../theme/Theme.js" as Theme
 ColumnLayout {
     id: root
 
-    Layout.fillWidth: true
-    spacing: 8
-
     property var streams: []
     property string streamsKey: ""
     property int activeDragCount: 0
@@ -41,50 +38,50 @@ ColumnLayout {
                 var pct = parseFloat(channel.value_percent);
                 if (!isNaN(pct))
                     return Math.max(0, Math.min(1, pct / 100));
-            }
 
+            }
             if (typeof channel.value === "number")
                 return Math.max(0, Math.min(1.5, channel.value / 65536));
-        }
 
+        }
         return 1;
     }
 
     function updateStreams(text) {
         var next = [];
-
         try {
             var parsed = JSON.parse(text);
             if (!Array.isArray(parsed)) {
                 root.streams = [];
                 root.streamsKey = "";
-                return;
+                return ;
             }
-
             for (var i = 0; i < parsed.length; ++i) {
                 var entry = parsed[i];
-                var props = entry.properties || {};
-
+                var props = entry.properties || {
+                };
                 next.push({
-                    id: entry.index,
-                    appName: props["application.name"] || props["application.process.binary"] || props["node.nick"] || "",
-                    mediaName: props["media.name"] || "",
-                    nodeName: props["node.name"] || "",
-                    volume: root.firstPercent(entry.volume),
-                    muted: entry.mute === true
+                    "id": entry.index,
+                    "appName": props["application.name"] || props["application.process.binary"] || props["node.nick"] || "",
+                    "mediaName": props["media.name"] || "",
+                    "nodeName": props["node.name"] || "",
+                    "volume": root.firstPercent(entry.volume),
+                    "muted": entry.mute === true
                 });
             }
         } catch (e) {
             next = [];
         }
-
         var nextKey = JSON.stringify(next);
         if (nextKey === root.streamsKey)
-            return;
+            return ;
 
         root.streams = next;
         root.streamsKey = nextKey;
     }
+
+    Layout.fillWidth: true
+    spacing: 8
 
     Timer {
         id: pollTimer
@@ -96,6 +93,7 @@ ColumnLayout {
         onTriggered: {
             if (!pollProc.running)
                 pollProc.running = true;
+
         }
     }
 
@@ -107,6 +105,7 @@ ColumnLayout {
         onTriggered: {
             if (!pollProc.running)
                 pollProc.running = true;
+
         }
     }
 
@@ -120,10 +119,20 @@ ColumnLayout {
 
             onStreamFinished: root.updateStreams(pollOut.text)
         }
+
     }
 
-    Process { id: setAppVolProc; command: ["echo"] }
-    Process { id: setAppMuteProc; command: ["echo"] }
+    Process {
+        id: setAppVolProc
+
+        command: ["echo"]
+    }
+
+    Process {
+        id: setAppMuteProc
+
+        command: ["echo"]
+    }
 
     Repeater {
         model: root.streams
@@ -142,9 +151,8 @@ ColumnLayout {
                 if (dragging && !_countedDrag) {
                     root.activeDragCount += 1;
                     _countedDrag = true;
-                    return;
+                    return ;
                 }
-
                 if (!dragging && _countedDrag) {
                     root.activeDragCount = Math.max(0, root.activeDragCount - 1);
                     _countedDrag = false;
@@ -159,11 +167,13 @@ ColumnLayout {
                 setAppMuteProc.command = ["pactl", "set-sink-input-mute", String(modelData.id), "toggle"];
                 setAppMuteProc.running = true;
             }
-
             Component.onDestruction: {
                 if (_countedDrag)
                     root.activeDragCount = Math.max(0, root.activeDragCount - 1);
+
             }
         }
+
     }
+
 }

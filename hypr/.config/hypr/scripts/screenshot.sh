@@ -13,7 +13,7 @@ mkdir -p "$dir"
 mkdir -p "$(dirname "$log_file")"
 
 log() {
-    printf '%s [%s] %s\n' "$(date +'%F %T')" "$mode" "$*" >> "$log_file"
+    printf '%s [%s] %s\n' "$(date +'%F %T')" "$mode" "$*" >>"$log_file"
 }
 
 fail() {
@@ -28,7 +28,7 @@ if [[ "$launch_delay" != "0" ]]; then
 fi
 
 copy_image() {
-    wl-copy --type image/png < "$1"
+    wl-copy --type image/png <"$1"
 }
 
 notify_saved() {
@@ -85,22 +85,22 @@ annotate_area() {
 log "start"
 
 case "$mode" in
-    full)
-        capture_full
-        ;;
-    area)
-        capture_area
-        ;;
-    window)
-        capture_window
-        ;;
-    annotate)
-        annotate_area
-        ;;
-    *)
-        echo "Usage: $0 {full|area|window|annotate}" >&2
-        exit 2
-        ;;
+full)
+    capture_full
+    ;;
+area)
+    capture_area
+    ;;
+window)
+    capture_window
+    ;;
+annotate)
+    annotate_area
+    ;;
+*)
+    echo "Usage: $0 {full|area|window|annotate}" >&2
+    exit 2
+    ;;
 esac
 
 copy_image "$file"

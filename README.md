@@ -129,3 +129,15 @@ git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprlan
 cd ~/regueiro-hyprland
 stow hypr quickshell rofi fish starship fastfetch kitty hypridle fcitx5 gtk
 ```
+
+## Formatting
+
+Use the repo scripts instead of running `qmlformat` blindly over the whole tree:
+
+```sh
+./scripts/format-configs.sh
+./scripts/check-configs.sh
+```
+
+`quickshell/.config/quickshell/services/NotificationStore.qml` is intentionally excluded from automatic `qmlformat`.
+That file stays manually formatted because forcing `qmlformat` on it caused notification regressions.

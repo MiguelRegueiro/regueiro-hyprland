@@ -7,78 +7,70 @@ import "../../theme/Theme.js" as Theme
 Item {
     id: root
 
+    readonly property var actions: [{
+        "actionId": "suspend",
+        "label": "Suspend",
+        "icon": "\udb81\udd94",
+        "iconOffsetX": 0,
+        "iconPixelSize": 15
+    }, {
+        "actionId": "reboot",
+        "label": "Reboot",
+        "icon": "\uf2f9",
+        "iconOffsetX": 1,
+        "iconPixelSize": 15
+    }, {
+        "actionId": "shutdown",
+        "label": "Shut Down",
+        "icon": "\uf011",
+        "iconOffsetX": 0,
+        "iconPixelSize": 15
+    }]
+    property string pendingAction: ""
+
     signal actionTriggered()
+
+    function actionChipFill(actionId, active, hovered) {
+        return active ? Qt.rgba(1, 1, 1, 0.12) : (hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg);
+    }
+
+    function actionChipBorder(actionId, active, hovered) {
+        return active ? Qt.rgba(1, 1, 1, 0.12) : (hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder);
+    }
+
+    function actionIconColor(actionId) {
+        if (actionId === "reboot")
+            return Qt.rgba(0.96, 0.96, 0.97, 0.86);
+
+        return Theme.textPrimary;
+    }
+
+    function runAction(actionId) {
+        if (root.pendingAction !== "")
+            return ;
+
+        root.pendingAction = actionId;
+        root.actionTriggered();
+        if (actionId === "suspend")
+            suspendProc.running = true;
+        else if (actionId === "reboot")
+            rebootProc.running = true;
+        else if (actionId === "shutdown")
+            shutdownProc.running = true;
+        else
+            root.pendingAction = "";
+    }
+
+    function clearPending(actionId) {
+        if (root.pendingAction === actionId)
+            root.pendingAction = "";
+
+    }
 
     implicitWidth: 248
     implicitHeight: popupColumn.implicitHeight + 20
     width: implicitWidth
     height: implicitHeight
-
-    readonly property var actions: [
-        {
-            actionId: "suspend",
-            label: "Suspend",
-            icon: "\udb81\udd94",
-            iconOffsetX: 0,
-            iconPixelSize: 15
-        },
-        {
-            actionId: "reboot",
-            label: "Reboot",
-            icon: "\uf2f9",
-            iconOffsetX: 1,
-            iconPixelSize: 15
-        },
-        {
-            actionId: "shutdown",
-            label: "Shut Down",
-            icon: "\uf011",
-            iconOffsetX: 0,
-            iconPixelSize: 15
-        }
-    ]
-
-    property string pendingAction: ""
-
-    function actionChipFill(actionId, active, hovered) {
-        return active
-            ? Qt.rgba(1, 1, 1, 0.12)
-            : (hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
-    }
-
-    function actionChipBorder(actionId, active, hovered) {
-        return active
-            ? Qt.rgba(1, 1, 1, 0.12)
-            : (hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
-    }
-
-    function actionIconColor(actionId) {
-        if (actionId === "reboot")
-            return Qt.rgba(0.96, 0.96, 0.97, 0.86)
-        return Theme.textPrimary
-    }
-
-    function runAction(actionId) {
-        if (root.pendingAction !== "")
-            return
-
-        root.pendingAction = actionId
-        root.actionTriggered()
-
-        if (actionId === "suspend")
-            suspendProc.running = true
-        else if (actionId === "reboot")
-            rebootProc.running = true
-        else if (actionId === "shutdown")
-            shutdownProc.running = true
-        else
-            root.pendingAction = ""
-    }
-
-    function clearPending(actionId) {
-        if (root.pendingAction === actionId)
-            root.pendingAction = ""
-    }
 
     Rectangle {
         anchors.fill: parent
@@ -87,6 +79,7 @@ Item {
         border.width: 1
         radius: Theme.qsRadius + 5
         layer.enabled: true
+
         layer.effect: MultiEffect {
             shadowEnabled: true
             shadowColor: Qt.rgba(0, 0, 0, 0.48)
@@ -95,10 +88,13 @@ Item {
             shadowHorizontalOffset: 0
             blurMax: 52
         }
+
     }
 
     ColumnLayout {
         id: popupColumn
+
+        spacing: 8
 
         anchors {
             fill: parent
@@ -107,7 +103,6 @@ Item {
             topMargin: 10
             bottomMargin: 10
         }
-        spacing: 8
 
         Repeater {
             model: root.actions
@@ -116,35 +111,23 @@ Item {
                 id: actionRow
 
                 required property var modelData
+                readonly property bool active: root.pendingAction === modelData.actionId
 
                 Layout.fillWidth: true
                 height: 50
                 radius: height / 2
-                color: actionRow.active
-                    ? Qt.rgba(0.122, 0.122, 0.122, 0.98)
-                    : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                color: actionRow.active ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                 border.width: 1
-                border.color: actionRow.active
-                    ? Qt.rgba(1, 1, 1, 0.14)
-                    : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
-
-                readonly property bool active: root.pendingAction === modelData.actionId
-
-                Behavior on color {
-                    ColorAnimation { duration: Theme.popupButtonColorDuration }
-                }
-
-                Behavior on border.color {
-                    ColorAnimation { duration: Theme.popupButtonColorDuration }
-                }
+                border.color: actionRow.active ? Qt.rgba(1, 1, 1, 0.14) : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                 RowLayout {
+                    spacing: 10
+
                     anchors {
                         fill: parent
                         leftMargin: 10
                         rightMargin: 10
                     }
-                    spacing: 10
 
                     Rectangle {
                         Layout.preferredWidth: 30
@@ -162,6 +145,7 @@ Item {
                             font.pixelSize: modelData.iconPixelSize || 15
                             color: root.actionIconColor(modelData.actionId)
                         }
+
                     }
 
                     Text {
@@ -177,10 +161,12 @@ Item {
                     Item {
                         Layout.preferredWidth: 8
                     }
+
                 }
 
                 HoverHandler {
                     id: rowHover
+
                     blocking: false
                     cursorShape: actionRow.active ? Qt.ArrowCursor : Qt.PointingHandCursor
                 }
@@ -191,41 +177,58 @@ Item {
                     enabled: !actionRow.active && root.pendingAction === ""
                     onTapped: root.runAction(modelData.actionId)
                 }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.popupButtonColorDuration
+                    }
+
+                }
+
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: Theme.popupButtonColorDuration
+                    }
+
+                }
+
             }
+
         }
+
     }
 
     Process {
         id: suspendProc
-        command: [
-            "sh", "-lc",
-            "if ! pgrep -x hyprlock >/dev/null 2>&1; then " +
-            "  hyprlock --config $HOME/.config/hypr/hyprlock.conf >/dev/null 2>&1 & " +
-            "  sleep 1; " +
-            "fi; " +
-            "systemctl suspend"
-        ]
+
+        command: ["sh", "-lc", "if ! pgrep -x hyprlock >/dev/null 2>&1; then " + "  hyprlock --config $HOME/.config/hypr/hyprlock.conf >/dev/null 2>&1 & " + "  sleep 1; " + "fi; " + "systemctl suspend"]
         onRunningChanged: {
             if (!running)
-                root.clearPending("suspend")
+                root.clearPending("suspend");
+
         }
     }
 
     Process {
         id: rebootProc
+
         command: ["systemctl", "reboot"]
         onRunningChanged: {
             if (!running)
-                root.clearPending("reboot")
+                root.clearPending("reboot");
+
         }
     }
 
     Process {
         id: shutdownProc
+
         command: ["systemctl", "poweroff"]
         onRunningChanged: {
             if (!running)
-                root.clearPending("shutdown")
+                root.clearPending("shutdown");
+
         }
     }
+
 }

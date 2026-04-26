@@ -177,19 +177,19 @@ load_runtime_state() {
     fi
 
     case "$state" in
-        0)
-            printf 'closed closed\n'
-            ;;
-        1)
-            printf 'ok inactive\n'
-            ;;
-        2)
-            printf 'ok active\n'
-            ;;
-        *)
-            echo "Unexpected fcitx5-remote state: $state" >&2
-            return 1
-            ;;
+    0)
+        printf 'closed closed\n'
+        ;;
+    1)
+        printf 'ok inactive\n'
+        ;;
+    2)
+        printf 'ok active\n'
+        ;;
+    *)
+        echo "Unexpected fcitx5-remote state: $state" >&2
+        return 1
+        ;;
     esac
 }
 
@@ -358,36 +358,36 @@ cycle_next_method() {
 }
 
 case "$action" in
-    describe|status)
-        emit_describe
-        ;;
-    current)
-        if current_method="$(load_current_method 2>/dev/null)"; then
-            printf '%s\n' "$current_method"
-        else
-            emit_describe | awk -F= '/^current=/{print $2; exit}'
-        fi
-        ;;
-    list)
-        group_name="$(resolved_group_name)"
-        if [ -n "$group_name" ]; then
-            load_group_methods "$group_name"
-        fi
-        ;;
-    switch)
-        switch_to_method "$1"
-        ;;
-    cycle-next|toggle)
-        cycle_next_method
-        ;;
-    spanish)
-        switch_to_method "$spanish_method"
-        ;;
-    japanese)
-        switch_to_method "$japanese_method"
-        ;;
-    *)
-        print_usage
-        exit 2
-        ;;
+describe | status)
+    emit_describe
+    ;;
+current)
+    if current_method="$(load_current_method 2>/dev/null)"; then
+        printf '%s\n' "$current_method"
+    else
+        emit_describe | awk -F= '/^current=/{print $2; exit}'
+    fi
+    ;;
+list)
+    group_name="$(resolved_group_name)"
+    if [ -n "$group_name" ]; then
+        load_group_methods "$group_name"
+    fi
+    ;;
+switch)
+    switch_to_method "$1"
+    ;;
+cycle-next | toggle)
+    cycle_next_method
+    ;;
+spanish)
+    switch_to_method "$spanish_method"
+    ;;
+japanese)
+    switch_to_method "$japanese_method"
+    ;;
+*)
+    print_usage
+    exit 2
+    ;;
 esac

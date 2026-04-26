@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Services.Notifications
 import "../theme/Theme.js" as Theme
 
+// Keep this file manually formatted. Forcing qmlformat on it caused notification regressions.
 Item {
     id: root
 

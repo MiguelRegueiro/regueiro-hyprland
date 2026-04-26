@@ -7,13 +7,10 @@ Item {
     property int percent: 0
     property bool charging: false
     property bool full: false
+    readonly property color stateColor: percent <= Theme.batteryLowThreshold ? Theme.red : (charging || full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
 
     width: 24
     height: 12
-
-    readonly property color stateColor: percent <= Theme.batteryLowThreshold
-        ? Theme.red
-        : (charging || full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
 
     // Body outline
     Rectangle {
@@ -27,8 +24,12 @@ Item {
         border.color: root.stateColor
 
         Item {
-            anchors { fill: parent; margins: 2.5 }
             clip: true
+
+            anchors {
+                fill: parent
+                margins: 2.5
+            }
 
             Rectangle {
                 anchors.fill: parent
@@ -38,17 +39,25 @@ Item {
             }
 
             Rectangle {
-                anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
                 width: Math.max(0, parent.width * root.percent / 100)
                 radius: 1
-                color: root.charging || root.full ? Theme.green
-                     : root.percent <= Theme.batteryLowThreshold ? Theme.red
-                     : Theme.textPrimary
+                color: root.charging || root.full ? Theme.green : root.percent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
+
+                anchors {
+                    left: parent.left
+                    top: parent.top
+                    bottom: parent.bottom
+                }
 
                 Behavior on width {
-                    NumberAnimation { duration: Theme.batteryFillDuration }
+                    NumberAnimation {
+                        duration: Theme.batteryFillDuration
+                    }
+
                 }
+
             }
+
         }
 
         Text {
@@ -59,6 +68,7 @@ Item {
             font.pixelSize: 8
             color: Qt.rgba(0, 0, 0, 0.9)
         }
+
     }
 
     // Terminal nub
@@ -70,4 +80,5 @@ Item {
         radius: 1
         color: root.stateColor
     }
+
 }

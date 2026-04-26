@@ -15,18 +15,23 @@ Rectangle {
     border.width: 1
     clip: true
 
-    Behavior on height {
-        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-    }
-
     Connections {
+        function onPasswordClearRequested() {
+            passField.text = "";
+        }
+
+        function onPasswordFocusRequested() {
+            passField.forceActiveFocus();
+        }
+
         target: root.controller
-        function onPasswordClearRequested() { passField.text = "" }
-        function onPasswordFocusRequested() { passField.forceActiveFocus() }
     }
 
     ColumnLayout {
         id: passContent
+
+        spacing: 10
+
         anchors {
             left: parent.left
             right: parent.right
@@ -35,7 +40,6 @@ Rectangle {
             rightMargin: 14
             topMargin: 12
         }
-        spacing: 10
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -58,6 +62,7 @@ Rectangle {
                 color: Theme.textDim
                 elide: Text.ElideRight
             }
+
         }
 
         Rectangle {
@@ -70,13 +75,7 @@ Rectangle {
 
             TextInput {
                 id: passField
-                anchors {
-                    left: parent.left
-                    right: eyeButton.left
-                    leftMargin: 12
-                    rightMargin: 10
-                    verticalCenter: parent.verticalCenter
-                }
+
                 font.family: Theme.fontUi
                 font.pixelSize: 13
                 color: Theme.textPrimary
@@ -88,37 +87,63 @@ Rectangle {
                 selectByMouse: true
                 activeFocusOnPress: true
                 clip: true
-                onTextEdited: if (!root.controller.connecting) root.controller.connectError = ""
-                Keys.onReturnPressed: { event.accepted = true; root.controller.doConnect(text) }
-                Keys.onEnterPressed:  { event.accepted = true; root.controller.doConnect(text) }
-                Keys.onEscapePressed: { event.accepted = true; root.controller.cancel() }
+                onTextEdited: {
+                    if (!root.controller.connecting)
+                        root.controller.connectError = "";
+
+                }
+                Keys.onReturnPressed: {
+                    event.accepted = true;
+                    root.controller.doConnect(text);
+                }
+                Keys.onEnterPressed: {
+                    event.accepted = true;
+                    root.controller.doConnect(text);
+                }
+                Keys.onEscapePressed: {
+                    event.accepted = true;
+                    root.controller.cancel();
+                }
+
+                anchors {
+                    left: parent.left
+                    right: eyeButton.left
+                    leftMargin: 12
+                    rightMargin: 10
+                    verticalCenter: parent.verticalCenter
+                }
+
             }
 
             Text {
-                anchors {
-                    left: passField.left
-                    verticalCenter: parent.verticalCenter
-                }
                 visible: passField.text.length === 0
                 text: "Enter Wi-Fi password"
                 font.family: Theme.fontUi
                 font.pixelSize: 13
                 color: Qt.rgba(1, 1, 1, 0.42)
+
+                anchors {
+                    left: passField.left
+                    verticalCenter: parent.verticalCenter
+                }
+
             }
 
             Rectangle {
                 id: eyeButton
+
                 width: 28
                 height: 28
                 radius: 14
+                color: eyeHover.hovered ? Theme.hoverBgStrong : "transparent"
+                border.width: eyeHover.hovered ? 1 : 0
+                border.color: Theme.qsCardChipBorderHover
+
                 anchors {
                     right: parent.right
                     rightMargin: 6
                     verticalCenter: parent.verticalCenter
                 }
-                color: eyeHover.hovered ? Theme.hoverBgStrong : "transparent"
-                border.width: eyeHover.hovered ? 1 : 0
-                border.color: Theme.qsCardChipBorderHover
 
                 Text {
                     anchors.centerIn: parent
@@ -130,6 +155,7 @@ Rectangle {
 
                 HoverHandler {
                     id: eyeHover
+
                     blocking: false
                     cursorShape: Qt.ArrowCursor
                 }
@@ -138,11 +164,13 @@ Rectangle {
                     acceptedButtons: Qt.LeftButton
                     gesturePolicy: TapHandler.ReleaseWithinBounds
                     onTapped: {
-                        root.controller.showPassword = !root.controller.showPassword
-                        passField.forceActiveFocus()
+                        root.controller.showPassword = !root.controller.showPassword;
+                        passField.forceActiveFocus();
                     }
                 }
+
             }
+
         }
 
         WifiStatusPill {
@@ -175,6 +203,7 @@ Rectangle {
 
                 HoverHandler {
                     id: cancelHover
+
                     blocking: false
                     cursorShape: Qt.ArrowCursor
                 }
@@ -184,13 +213,14 @@ Rectangle {
                     gesturePolicy: TapHandler.ReleaseWithinBounds
                     onTapped: root.controller.cancel()
                 }
+
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 34
                 radius: 17
-                opacity: root.controller.connecting ? 0.5 : 1.0
+                opacity: root.controller.connecting ? 0.5 : 1
                 color: connectHover.hovered && !root.controller.connecting ? Theme.tileActiveBgHover : Theme.tileActiveBg
                 border.width: 1
                 border.color: connectHover.hovered && !root.controller.connecting ? Theme.tileActiveBorderHover : Theme.tileActiveBorder
@@ -206,6 +236,7 @@ Rectangle {
 
                 HoverHandler {
                     id: connectHover
+
                     blocking: false
                     cursorShape: Qt.ArrowCursor
                 }
@@ -215,7 +246,19 @@ Rectangle {
                     gesturePolicy: TapHandler.ReleaseWithinBounds
                     onTapped: root.controller.doConnect(passField.text)
                 }
+
             }
+
         }
+
     }
+
+    Behavior on height {
+        NumberAnimation {
+            duration: 200
+            easing.type: Easing.OutCubic
+        }
+
+    }
+
 }

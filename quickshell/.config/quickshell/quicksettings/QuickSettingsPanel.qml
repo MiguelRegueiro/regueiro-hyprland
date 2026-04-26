@@ -13,7 +13,6 @@ FocusScope {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
-
     property bool open: false
     property real topOffset: 0
     property bool hovered: panelHover.hovered || boundsHover.hovered
@@ -22,16 +21,6 @@ FocusScope {
     property bool bluetoothPageOpen: false
     property bool audioOutputPopupOpen: false
     property real reveal: 0
-
-    onOpenChanged: {
-        if (!open) {
-            wifiPageOpen = false
-            bluetoothPageOpen = false
-            audioOutputPopupOpen = false
-            dashboard.powerMenuOpen = false
-        }
-    }
-
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property real surfaceTopLeftRadius: Theme.qsSurfaceTopLeftRadius
@@ -58,17 +47,23 @@ FocusScope {
     readonly property real mergedBottomRightRadius: Theme.borderSize
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomFuseJoinX: root.bodyWidth - Theme.borderSize - Theme.barCornerRadius
-    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress
-        + root.fuseLeftOverhang * root.reveal
-    readonly property real clipSurfaceHeight: root.bodyHeight * root.clipHeightProgress
-        + root.fuseBottomOverhang * root.reveal
+    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseLeftOverhang * root.reveal
+    readonly property real clipSurfaceHeight: root.bodyHeight * root.clipHeightProgress + root.fuseBottomOverhang * root.reveal
 
     function applyPowerMode(nextMode) {
-        powerMode = nextMode
-        setPowerProfile.command = ["powerprofilesctl", "set", nextMode]
-        setPowerProfile.running = true
+        powerMode = nextMode;
+        setPowerProfile.command = ["powerprofilesctl", "set", nextMode];
+        setPowerProfile.running = true;
     }
 
+    onOpenChanged: {
+        if (!open) {
+            wifiPageOpen = false;
+            bluetoothPageOpen = false;
+            audioOutputPopupOpen = false;
+            dashboard.powerMenuOpen = false;
+        }
+    }
     state: open ? "open" : ""
     implicitWidth: root.bodyWidth + root.fuseLeftOverhang
     implicitHeight: root.bodyHeight + root.fuseBottomOverhang + root.audioOutputPopupOverflow
@@ -76,29 +71,32 @@ FocusScope {
     height: implicitHeight
     visible: reveal > 0.001
     z: 30
-
     transitions: [
         Transition {
             from: ""
             to: "open"
+
             NumberAnimation {
                 target: root
                 property: "reveal"
                 duration: Theme.panelOpenDuration
                 easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.05, 0.7, 0.1, 1.0, 1.0, 1.0]
+                easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
             }
+
         },
         Transition {
             from: "open"
             to: ""
+
             NumberAnimation {
                 target: root
                 property: "reveal"
                 duration: Theme.panelCloseDuration
                 easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1.0, 1.0]
+                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
             }
+
         }
     ]
 
@@ -110,6 +108,7 @@ FocusScope {
 
     Item {
         id: inputRegion
+
         x: motionFrame.x
         y: motionFrame.y
         width: root.inputActive ? root.width : 0
@@ -119,6 +118,7 @@ FocusScope {
 
     Item {
         id: motionFrame
+
         width: root.width
         height: root.height
         y: (1 - root.reveal) * -4
@@ -126,17 +126,10 @@ FocusScope {
         transformOrigin: Item.TopRight
         opacity: root.frameOpacity
         layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.70 * root.reveal)
-            shadowBlur: 0.88
-            shadowVerticalOffset: 4
-            shadowHorizontalOffset: 0
-            blurMax: 48
-        }
 
         HoverHandler {
             id: boundsHover
+
             blocking: false
         }
 
@@ -149,11 +142,13 @@ FocusScope {
 
             HoverHandler {
                 id: panelHover
+
                 blocking: false
             }
 
             Item {
                 id: frame
+
                 anchors.top: parent.top
                 anchors.right: parent.right
                 width: root.bodyWidth
@@ -167,8 +162,17 @@ FocusScope {
                         fillColor: Theme.menuBg
                         strokeColor: "transparent"
                         strokeWidth: -1
-                        PathMove { x: 0; y: root.fuseTopInset }
-                        PathLine { x: -root.fuseLeftOverhang; y: root.fuseTopInset }
+
+                        PathMove {
+                            x: 0
+                            y: root.fuseTopInset
+                        }
+
+                        PathLine {
+                            x: -root.fuseLeftOverhang
+                            y: root.fuseTopInset
+                        }
+
                         PathArc {
                             x: 0
                             y: root.topFuseJoinY
@@ -176,15 +180,29 @@ FocusScope {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: 0; y: root.fuseTopInset }
+
+                        PathLine {
+                            x: 0
+                            y: root.fuseTopInset
+                        }
+
                     }
 
                     ShapePath {
                         fillColor: Theme.menuBg
                         strokeColor: "transparent"
                         strokeWidth: -1
-                        PathMove { x: frame.width - Theme.borderSize; y: frame.height }
-                        PathLine { x: root.bottomFuseJoinX; y: frame.height }
+
+                        PathMove {
+                            x: frame.width - Theme.borderSize
+                            y: frame.height
+                        }
+
+                        PathLine {
+                            x: root.bottomFuseJoinX
+                            y: frame.height
+                        }
+
                         PathArc {
                             x: frame.width - Theme.borderSize
                             y: frame.height + Theme.barCornerRadius
@@ -192,7 +210,12 @@ FocusScope {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: frame.width - Theme.borderSize; y: frame.height }
+
+                        PathLine {
+                            x: frame.width - Theme.borderSize
+                            y: frame.height
+                        }
+
                     }
 
                     ShapePath {
@@ -200,8 +223,16 @@ FocusScope {
                         strokeColor: "transparent"
                         strokeWidth: -1
 
-                        PathMove { x: root.mergedTopLeftRadius; y: 0 }
-                        PathLine { x: frame.width - root.animTopRightRadius; y: 0 }
+                        PathMove {
+                            x: root.mergedTopLeftRadius
+                            y: 0
+                        }
+
+                        PathLine {
+                            x: frame.width - root.animTopRightRadius
+                            y: 0
+                        }
+
                         PathArc {
                             x: frame.width
                             y: root.animTopRightRadius
@@ -209,7 +240,12 @@ FocusScope {
                             radiusY: root.animTopRightRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: frame.width; y: frame.height - root.mergedBottomRightRadius }
+
+                        PathLine {
+                            x: frame.width
+                            y: frame.height - root.mergedBottomRightRadius
+                        }
+
                         PathArc {
                             x: frame.width - root.mergedBottomRightRadius
                             y: frame.height
@@ -217,7 +253,12 @@ FocusScope {
                             radiusY: root.mergedBottomRightRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: root.surfaceBottomLeftRadius; y: frame.height }
+
+                        PathLine {
+                            x: root.surfaceBottomLeftRadius
+                            y: frame.height
+                        }
+
                         PathArc {
                             relativeX: -root.surfaceBottomLeftRadius
                             relativeY: -root.surfaceBottomLeftRadius
@@ -225,7 +266,12 @@ FocusScope {
                             radiusY: root.surfaceBottomLeftRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: 0; y: root.mergedTopLeftRadius }
+
+                        PathLine {
+                            x: 0
+                            y: root.mergedTopLeftRadius
+                        }
+
                         PathArc {
                             x: root.mergedTopLeftRadius
                             y: 0
@@ -233,6 +279,7 @@ FocusScope {
                             radiusY: root.mergedTopLeftRadius
                             direction: PathArc.Clockwise
                         }
+
                     }
 
                     ShapePath {
@@ -242,8 +289,16 @@ FocusScope {
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
 
-                        PathMove { x: root.bottomFuseJoinX; y: frame.height }
-                        PathLine { x: root.surfaceBottomLeftRadius; y: frame.height }
+                        PathMove {
+                            x: root.bottomFuseJoinX
+                            y: frame.height
+                        }
+
+                        PathLine {
+                            x: root.surfaceBottomLeftRadius
+                            y: frame.height
+                        }
+
                         PathArc {
                             relativeX: -root.surfaceBottomLeftRadius
                             relativeY: -root.surfaceBottomLeftRadius
@@ -251,15 +306,29 @@ FocusScope {
                             radiusY: root.surfaceBottomLeftRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: 0; y: root.topFuseJoinY }
+
+                        PathLine {
+                            x: 0
+                            y: root.topFuseJoinY
+                        }
+
                     }
 
                     ShapePath {
                         fillColor: Theme.menuBg
                         strokeColor: "transparent"
                         strokeWidth: -1
-                        PathMove { x: frame.width; y: 0 }
-                        PathLine { x: frame.width - root.animTopRightRadius; y: 0 }
+
+                        PathMove {
+                            x: frame.width
+                            y: 0
+                        }
+
+                        PathLine {
+                            x: frame.width - root.animTopRightRadius
+                            y: 0
+                        }
+
                         PathArc {
                             x: frame.width
                             y: root.animTopRightRadius
@@ -267,6 +336,7 @@ FocusScope {
                             radiusY: root.animTopRightRadius
                             direction: PathArc.Counterclockwise
                         }
+
                     }
 
                     ShapePath {
@@ -275,7 +345,12 @@ FocusScope {
                         strokeWidth: 1.1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
-                        PathMove { x: -root.fuseLeftOverhang; y: root.fuseTopInset }
+
+                        PathMove {
+                            x: -root.fuseLeftOverhang
+                            y: root.fuseTopInset
+                        }
+
                         PathArc {
                             x: 0
                             y: root.topFuseJoinY
@@ -283,6 +358,7 @@ FocusScope {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
+
                     }
 
                     ShapePath {
@@ -291,7 +367,12 @@ FocusScope {
                         strokeWidth: 1.1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
-                        PathMove { x: root.bottomFuseJoinX; y: frame.height }
+
+                        PathMove {
+                            x: root.bottomFuseJoinX
+                            y: frame.height
+                        }
+
                         PathArc {
                             x: frame.width - Theme.borderSize
                             y: frame.height + Theme.barCornerRadius
@@ -299,7 +380,9 @@ FocusScope {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
+
                     }
+
                 }
 
                 MouseArea {
@@ -310,7 +393,9 @@ FocusScope {
 
                 ColumnLayout {
                     id: contentLayout
+
                     spacing: 0
+
                     anchors {
                         top: parent.top
                         left: parent.left
@@ -326,22 +411,28 @@ FocusScope {
 
                     Item {
                         id: stackContainer
+
                         Layout.fillWidth: true
                         clip: !root.audioOutputPopupOpen
                         implicitHeight: {
                             if (root.wifiPageOpen)
-                                return wifiPageView.implicitHeight
+                                return wifiPageView.implicitHeight;
+
                             if (root.bluetoothPageOpen)
-                                return bluetoothPageView.implicitHeight
-                            return dashboard.implicitHeight
+                                return bluetoothPageView.implicitHeight;
+
+                            return dashboard.implicitHeight;
                         }
 
                         QuickSettingsDashboard {
                             id: dashboard
+
                             width: parent.width
                             viewportHeight: root.parent ? root.parent.height : root.height
                             audioOutputPopupOpen: root.audioOutputPopupOpen
-                            onAudioOutputPopupRequest: open => root.audioOutputPopupOpen = open
+                            onAudioOutputPopupRequest: (open) => {
+                                return root.audioOutputPopupOpen = open;
+                            }
                             x: root.submenuOpen ? -parent.width - 15 : 0
                             opacity: root.submenuOpen ? 0 : 1
                             notificationStore: root.notificationStore
@@ -351,33 +442,39 @@ FocusScope {
                             bluetoothPage: bluetoothPageView
                             powerMode: root.powerMode
                             onWifiPageRequested: {
-                                root.audioOutputPopupOpen = false
-                                root.wifiPageOpen = true
-                                root.bluetoothPageOpen = false
+                                root.audioOutputPopupOpen = false;
+                                root.wifiPageOpen = true;
+                                root.bluetoothPageOpen = false;
                             }
                             onBluetoothPageRequested: {
-                                root.audioOutputPopupOpen = false
-                                root.bluetoothPageOpen = true
-                                root.wifiPageOpen = false
+                                root.audioOutputPopupOpen = false;
+                                root.bluetoothPageOpen = true;
+                                root.wifiPageOpen = false;
                             }
-                            onPowerModeChangeRequested: mode => root.applyPowerMode(mode)
+                            onPowerModeChangeRequested: (mode) => {
+                                return root.applyPowerMode(mode);
+                            }
 
                             Behavior on x {
                                 NumberAnimation {
                                     duration: Theme.qsPageSlideDuration
                                     easing.type: Easing.OutExpo
                                 }
+
                             }
 
                             Behavior on opacity {
                                 NumberAnimation {
                                     duration: Theme.qsPageFadeDuration
                                 }
+
                             }
+
                         }
 
                         Pages.WifiPage {
                             id: wifiPageView
+
                             width: parent.width
                             x: root.wifiPageOpen ? 0 : (root.bluetoothPageOpen ? -parent.width - 20 : parent.width + 20)
                             opacity: root.wifiPageOpen ? 1 : 0
@@ -390,17 +487,21 @@ FocusScope {
                                     duration: Theme.qsPageSlideDuration
                                     easing.type: Easing.OutExpo
                                 }
+
                             }
 
                             Behavior on opacity {
                                 NumberAnimation {
                                     duration: Theme.qsPageFadeDuration
                                 }
+
                             }
+
                         }
 
                         Pages.BluetoothPage {
                             id: bluetoothPageView
+
                             width: parent.width
                             x: root.bluetoothPageOpen ? 0 : parent.width + 20
                             opacity: root.bluetoothPageOpen ? 1 : 0
@@ -412,13 +513,16 @@ FocusScope {
                                     duration: Theme.qsPageSlideDuration
                                     easing.type: Easing.OutExpo
                                 }
+
                             }
 
                             Behavior on opacity {
                                 NumberAnimation {
                                     duration: Theme.qsPageFadeDuration
                                 }
+
                             }
+
                         }
 
                         Behavior on implicitHeight {
@@ -426,15 +530,30 @@ FocusScope {
                                 duration: Theme.qsHeightDuration
                                 easing.type: Easing.OutExpo
                             }
+
                         }
+
                     }
 
                     Item {
                         height: 0
                     }
+
                 }
+
             }
+
         }
+
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.7 * root.reveal)
+            shadowBlur: 0.88
+            shadowVerticalOffset: 4
+            shadowHorizontalOffset: 0
+            blurMax: 48
+        }
+
     }
 
     Timer {
@@ -447,26 +566,39 @@ FocusScope {
 
     Process {
         id: powerProfilePoll
+
         command: ["powerprofilesctl", "get"]
+
         stdout: StdioCollector {
             id: powerProfileOut
+
             onStreamFinished: {
-                const nextMode = powerProfileOut.text.trim()
+                const nextMode = powerProfileOut.text.trim();
                 if (nextMode === "power-saver" || nextMode === "balanced" || nextMode === "performance")
-                    root.powerMode = nextMode
+                    root.powerMode = nextMode;
+
             }
         }
+
     }
 
     Process {
         id: setPowerProfile
+
         command: ["echo"]
     }
 
-    Services.WifiConnectionService { id: wifiService }
+    Services.WifiConnectionService {
+        id: wifiService
+    }
 
     states: State {
         name: "open"
-        PropertyChanges { root.reveal: 1 }
+
+        PropertyChanges {
+            root.reveal: 1
+        }
+
     }
+
 }

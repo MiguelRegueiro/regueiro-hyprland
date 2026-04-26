@@ -8,7 +8,6 @@ Rectangle {
     required property bool active
     required property bool connecting
     required property string message
-
     property color fillColor: connecting ? Theme.qsRowBgHover : Theme.qsRowBg
     property color strokeColor: connecting ? Theme.qsEdge : Theme.qsEdgeSoft
     property color labelColor: connecting ? Theme.textPrimary : Theme.red
@@ -22,26 +21,16 @@ Rectangle {
     opacity: active ? 1 : 0
     clip: true
 
-    Behavior on opacity {
-        NumberAnimation { duration: 90 }
-    }
-
-    Behavior on fillColor {
-        ColorAnimation { duration: 110 }
-    }
-
-    Behavior on strokeColor {
-        ColorAnimation { duration: 110 }
-    }
-
     RowLayout {
         id: statusRow
+
+        spacing: 8
+
         anchors {
             fill: parent
             leftMargin: 12
             rightMargin: 12
         }
-        spacing: 8
 
         Rectangle {
             width: 8
@@ -53,9 +42,23 @@ Rectangle {
             SequentialAnimation on opacity {
                 running: pill.active && pill.connecting
                 loops: Animation.Infinite
-                NumberAnimation { from: 0.95; to: 0.35; duration: 650; easing.type: Easing.InOutQuad }
-                NumberAnimation { from: 0.35; to: 0.95; duration: 650; easing.type: Easing.InOutQuad }
+
+                NumberAnimation {
+                    from: 0.95
+                    to: 0.35
+                    duration: 650
+                    easing.type: Easing.InOutQuad
+                }
+
+                NumberAnimation {
+                    from: 0.35
+                    to: 0.95
+                    duration: 650
+                    easing.type: Easing.InOutQuad
+                }
+
             }
+
         }
 
         Text {
@@ -68,5 +71,28 @@ Rectangle {
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }
+
     }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: 90
+        }
+
+    }
+
+    Behavior on fillColor {
+        ColorAnimation {
+            duration: 110
+        }
+
+    }
+
+    Behavior on strokeColor {
+        ColorAnimation {
+            duration: 110
+        }
+
+    }
+
 }

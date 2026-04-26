@@ -17,32 +17,30 @@ Row {
 
         delegate: Rectangle {
             id: trayItem
+
             required property SystemTrayItem modelData
-
             readonly property string itemId: (modelData.id || "").toLowerCase()
-            visible: !itemId.includes("blueman")
-                && !itemId.includes("fcitx")
-                && (modelData.status !== Status.Passive || modelData.onlyMenu)
+            readonly property bool hovered: hover.hovered
 
+            visible: !itemId.includes("blueman") && !itemId.includes("fcitx") && (modelData.status !== Status.Passive || modelData.onlyMenu)
             height: trayRow.barHeight - 8
             width: height
             radius: Theme.radiusSmall
-
-            readonly property bool hovered: hover.hovered
             color: hovered ? Theme.hoverBg : "transparent"
-            Behavior on color { ColorAnimation { duration: Theme.hoverAnimDuration } }
 
             Image {
                 anchors.centerIn: parent
-                width: 16; height: 16
+                width: 16
+                height: 16
                 source: trayItem.modelData.icon
                 smooth: true
                 mipmap: true
-                opacity: trayItem.modelData.status === Status.NeedsAttention ? 1.0 : 0.85
+                opacity: trayItem.modelData.status === Status.NeedsAttention ? 1 : 0.85
             }
 
             QsMenuAnchor {
                 id: menuAnchor
+
                 menu: trayItem.modelData.hasMenu ? trayItem.modelData.menu : null
                 anchor.item: trayItem
                 anchor.edges: Edges.Bottom
@@ -51,6 +49,7 @@ Row {
 
             HoverHandler {
                 id: hover
+
                 blocking: false
                 cursorShape: Qt.ArrowCursor
             }
@@ -58,20 +57,32 @@ Row {
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                onClicked: mouse => {
+                onClicked: (mouse) => {
                     if (mouse.button === Qt.MiddleButton) {
-                        trayItem.modelData.secondaryActivate()
+                        trayItem.modelData.secondaryActivate();
                     } else if (mouse.button === Qt.RightButton) {
-                        if (trayItem.modelData.hasMenu) menuAnchor.open()
-                            else trayItem.modelData.activate()
+                        if (trayItem.modelData.hasMenu)
+                            menuAnchor.open();
+                        else
+                            trayItem.modelData.activate();
                     } else {
                         if (trayItem.modelData.onlyMenu && trayItem.modelData.hasMenu)
-                            menuAnchor.open()
-                            else
-                                trayItem.modelData.activate()
+                            menuAnchor.open();
+                        else
+                            trayItem.modelData.activate();
                     }
                 }
             }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.hoverAnimDuration
+                }
+
+            }
+
         }
+
     }
+
 }

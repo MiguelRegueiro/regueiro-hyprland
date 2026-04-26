@@ -12,8 +12,8 @@ fi
 "$backend_script" cycle-next >/dev/null
 status=$?
 
-if [ $status -eq 0 ] && [ -n "$qs_bin" ]; then
+if [ "$status" -eq 0 ] && [ -n "$qs_bin" ]; then
     "$qs_bin" ipc call input refresh >/dev/null 2>&1 || true
 fi
 
-exit $status
+exit "$status"

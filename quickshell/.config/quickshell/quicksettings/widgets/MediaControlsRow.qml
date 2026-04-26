@@ -6,13 +6,6 @@ import "../../theme/Theme.js" as Theme
 Rectangle {
     id: row
 
-    Layout.fillWidth: true
-    implicitHeight: 102
-    radius: 18
-    color: Theme.qsCardBg
-    border.width: 1
-    border.color: Theme.qsCardBorder
-
     property bool playerctlAvailable: false
     property string playerId: ""
     property string playerName: ""
@@ -24,14 +17,25 @@ Rectangle {
     readonly property string subtitleText: {
         if (!hasPlayer)
             return playerctlAvailable ? "Start something and it will show up here" : "playerctl is not available";
+
         if (artist.length > 0 && playerName.length > 0)
             return artist + " • " + playerName;
+
         if (artist.length > 0)
             return artist;
+
         if (playerName.length > 0)
             return playerName;
+
         return "Media";
     }
+
+    Layout.fillWidth: true
+    implicitHeight: 102
+    radius: 18
+    color: Theme.qsCardBg
+    border.width: 1
+    border.color: Theme.qsCardBorder
 
     Timer {
         interval: Theme.audioPollSlowInterval
@@ -41,6 +45,7 @@ Rectangle {
         onTriggered: {
             if (!pollProc.running)
                 pollProc.running = true;
+
         }
     }
 
@@ -52,6 +57,7 @@ Rectangle {
         onTriggered: {
             if (!pollProc.running)
                 pollProc.running = true;
+
         }
     }
 
@@ -73,13 +79,30 @@ Rectangle {
                 row.playerName = parts.length > 5 ? parts[5] : "";
             }
         }
+
     }
 
-    Process { id: prevProc; command: ["echo"] }
-    Process { id: toggleProc; command: ["echo"] }
-    Process { id: nextProc; command: ["echo"] }
+    Process {
+        id: prevProc
+
+        command: ["echo"]
+    }
+
+    Process {
+        id: toggleProc
+
+        command: ["echo"]
+    }
+
+    Process {
+        id: nextProc
+
+        command: ["echo"]
+    }
 
     RowLayout {
+        spacing: 14
+
         anchors {
             fill: parent
             leftMargin: 16
@@ -87,7 +110,6 @@ Rectangle {
             topMargin: 14
             bottomMargin: 18
         }
-        spacing: 14
 
         Rectangle {
             id: mediaBadge
@@ -107,6 +129,7 @@ Rectangle {
                 font.pixelSize: 17
                 color: row.hasPlayer ? Theme.textPrimary : Theme.textDim
             }
+
         }
 
         ColumnLayout {
@@ -135,6 +158,7 @@ Rectangle {
                     font.pixelSize: 11
                     elide: Text.ElideRight
                 }
+
             }
 
             Item {
@@ -177,8 +201,11 @@ Rectangle {
                             actionRefresh.restart();
                         }
                     }
+
                 }
+
             }
+
         }
 
         Item {
@@ -186,6 +213,7 @@ Rectangle {
             Layout.preferredWidth: mediaBadge.width
             Layout.preferredHeight: mediaBadge.height
         }
+
     }
 
     component ControlButton: Rectangle {
@@ -194,6 +222,7 @@ Rectangle {
         required property string iconText
         property real glyphOffsetX: 0
         readonly property bool hovered: mouse.containsMouse
+
         signal clicked()
 
         width: 38
@@ -225,5 +254,7 @@ Rectangle {
             cursorShape: Qt.ArrowCursor
             onClicked: btn.clicked()
         }
+
     }
+
 }

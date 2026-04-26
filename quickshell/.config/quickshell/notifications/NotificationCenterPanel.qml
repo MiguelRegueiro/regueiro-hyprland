@@ -8,11 +8,9 @@ Item {
     id: root
 
     required property var notificationStore
-
     property bool open: false
     property real reveal: 0
     property int timeTick: 0
-
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: hoverArea.hovered || boundsHover.hovered
@@ -34,14 +32,40 @@ Item {
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real mergedTopLeftRadius: 0.001
     readonly property real mergedTopRightRadius: 0.001
-    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress
-        + root.fuseOverhang * 2 * root.reveal
+    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseOverhang * 2 * root.reveal
 
     implicitWidth: root.bodyWidth + root.fuseOverhang * 2
     implicitHeight: contentColumn.implicitHeight + root.attachTop
     width: implicitWidth
     height: implicitHeight
     visible: reveal > 0.001
+    state: open ? "open" : ""
+    transitions: [
+        Transition {
+            from: ""
+            to: "open"
+
+            NumberAnimation {
+                property: "reveal"
+                duration: Theme.panelOpenDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
+            }
+
+        },
+        Transition {
+            from: "open"
+            to: ""
+
+            NumberAnimation {
+                property: "reveal"
+                duration: Theme.panelCloseDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
+            }
+
+        }
+    ]
 
     Timer {
         interval: Theme.slowPollInterval
@@ -50,38 +74,9 @@ Item {
         onTriggered: root.timeTick += 1
     }
 
-    state: open ? "open" : ""
-
-    states: State {
-        name: "open"
-        PropertyChanges { root.reveal: 1 }
-    }
-
-    transitions: [
-        Transition {
-            from: ""
-            to: "open"
-            NumberAnimation {
-                property: "reveal"
-                duration: Theme.panelOpenDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.05, 0.7, 0.1, 1.0, 1.0, 1.0]
-            }
-        },
-        Transition {
-            from: "open"
-            to: ""
-            NumberAnimation {
-                property: "reveal"
-                duration: Theme.panelCloseDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1.0, 1.0]
-            }
-        }
-    ]
-
     Item {
         id: inputRegion
+
         x: motionFrame.x
         y: motionFrame.y
         width: root.inputActive ? root.width : 0
@@ -91,6 +86,7 @@ Item {
 
     Item {
         id: motionFrame
+
         width: root.width
         height: root.height
         y: (1 - root.reveal) * -4
@@ -98,17 +94,10 @@ Item {
         transformOrigin: Item.Top
         opacity: root.frameOpacity
         layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.70 * root.reveal)
-            shadowBlur: 0.88
-            shadowVerticalOffset: 4
-            shadowHorizontalOffset: 0
-            blurMax: 48
-        }
 
         HoverHandler {
             id: boundsHover
+
             blocking: false
         }
 
@@ -121,11 +110,13 @@ Item {
 
             HoverHandler {
                 id: hoverArea
+
                 blocking: false
             }
 
             Item {
                 id: frame
+
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: root.bodyWidth
@@ -139,8 +130,17 @@ Item {
                         fillColor: Theme.menuBg
                         strokeColor: "transparent"
                         strokeWidth: -1
-                        PathMove { x: 0; y: root.fuseTopInset }
-                        PathLine { x: -root.fuseOverhang; y: root.fuseTopInset }
+
+                        PathMove {
+                            x: 0
+                            y: root.fuseTopInset
+                        }
+
+                        PathLine {
+                            x: -root.fuseOverhang
+                            y: root.fuseTopInset
+                        }
+
                         PathArc {
                             x: 0
                             y: root.topFuseJoinY
@@ -148,15 +148,29 @@ Item {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: 0; y: root.fuseTopInset }
+
+                        PathLine {
+                            x: 0
+                            y: root.fuseTopInset
+                        }
+
                     }
 
                     ShapePath {
                         fillColor: Theme.menuBg
                         strokeColor: "transparent"
                         strokeWidth: -1
-                        PathMove { x: frame.width; y: root.fuseTopInset }
-                        PathLine { x: frame.width + root.fuseOverhang; y: root.fuseTopInset }
+
+                        PathMove {
+                            x: frame.width
+                            y: root.fuseTopInset
+                        }
+
+                        PathLine {
+                            x: frame.width + root.fuseOverhang
+                            y: root.fuseTopInset
+                        }
+
                         PathArc {
                             x: frame.width
                             y: root.topFuseJoinY
@@ -164,7 +178,12 @@ Item {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Counterclockwise
                         }
-                        PathLine { x: frame.width; y: root.fuseTopInset }
+
+                        PathLine {
+                            x: frame.width
+                            y: root.fuseTopInset
+                        }
+
                     }
 
                     ShapePath {
@@ -172,8 +191,16 @@ Item {
                         strokeColor: "transparent"
                         strokeWidth: -1
 
-                        PathMove { x: root.mergedTopLeftRadius; y: 0 }
-                        PathLine { x: frame.width - root.mergedTopRightRadius; y: 0 }
+                        PathMove {
+                            x: root.mergedTopLeftRadius
+                            y: 0
+                        }
+
+                        PathLine {
+                            x: frame.width - root.mergedTopRightRadius
+                            y: 0
+                        }
+
                         PathArc {
                             x: frame.width
                             y: root.mergedTopRightRadius
@@ -181,7 +208,12 @@ Item {
                             radiusY: root.mergedTopRightRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: frame.width; y: frame.height - root.bottomRightRadius }
+
+                        PathLine {
+                            x: frame.width
+                            y: frame.height - root.bottomRightRadius
+                        }
+
                         PathArc {
                             x: frame.width - root.bottomRightRadius
                             y: frame.height
@@ -189,7 +221,12 @@ Item {
                             radiusY: root.bottomRightRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: root.bottomLeftRadius; y: frame.height }
+
+                        PathLine {
+                            x: root.bottomLeftRadius
+                            y: frame.height
+                        }
+
                         PathArc {
                             relativeX: -root.bottomLeftRadius
                             relativeY: -root.bottomLeftRadius
@@ -197,7 +234,12 @@ Item {
                             radiusY: root.bottomLeftRadius
                             direction: PathArc.Clockwise
                         }
-                        PathLine { x: 0; y: root.mergedTopLeftRadius }
+
+                        PathLine {
+                            x: 0
+                            y: root.mergedTopLeftRadius
+                        }
+
                         PathArc {
                             x: root.mergedTopLeftRadius
                             y: 0
@@ -205,6 +247,7 @@ Item {
                             radiusY: root.mergedTopLeftRadius
                             direction: PathArc.Clockwise
                         }
+
                     }
 
                     ShapePath {
@@ -215,8 +258,15 @@ Item {
                         joinStyle: ShapePath.RoundJoin
 
                         // Left edge
-                        PathMove { x: 0; y: root.topFuseJoinY }
-                        PathLine { x: 0; y: frame.height - root.bottomLeftRadius }
+                        PathMove {
+                            x: 0
+                            y: root.topFuseJoinY
+                        }
+
+                        PathLine {
+                            x: 0
+                            y: frame.height - root.bottomLeftRadius
+                        }
 
                         // Bottom-left corner
                         PathArc {
@@ -228,7 +278,10 @@ Item {
                         }
 
                         // Bottom edge
-                        PathLine { x: frame.width - root.bottomRightRadius; y: frame.height }
+                        PathLine {
+                            x: frame.width - root.bottomRightRadius
+                            y: frame.height
+                        }
 
                         // Bottom-right corner
                         PathArc {
@@ -240,7 +293,11 @@ Item {
                         }
 
                         // Right edge
-                        PathLine { x: frame.width; y: root.topFuseJoinY }
+                        PathLine {
+                            x: frame.width
+                            y: root.topFuseJoinY
+                        }
+
                     }
 
                     ShapePath {
@@ -249,8 +306,17 @@ Item {
                         strokeWidth: 1.6
                         capStyle: ShapePath.RoundCap
                         joinStyle: ShapePath.RoundJoin
-                        PathMove { x: 0; y: 0 }
-                        PathLine { x: root.animTopLeftRadius; y: 0 }
+
+                        PathMove {
+                            x: 0
+                            y: 0
+                        }
+
+                        PathLine {
+                            x: root.animTopLeftRadius
+                            y: 0
+                        }
+
                         PathArc {
                             x: 0
                             y: root.animTopLeftRadius
@@ -258,7 +324,12 @@ Item {
                             radiusY: root.animTopLeftRadius
                             direction: PathArc.Counterclockwise
                         }
-                        PathLine { x: 0; y: 0 }
+
+                        PathLine {
+                            x: 0
+                            y: 0
+                        }
+
                     }
 
                     ShapePath {
@@ -267,8 +338,17 @@ Item {
                         strokeWidth: 1.6
                         capStyle: ShapePath.RoundCap
                         joinStyle: ShapePath.RoundJoin
-                        PathMove { x: frame.width; y: 0 }
-                        PathLine { x: frame.width - root.animTopRightRadius; y: 0 }
+
+                        PathMove {
+                            x: frame.width
+                            y: 0
+                        }
+
+                        PathLine {
+                            x: frame.width - root.animTopRightRadius
+                            y: 0
+                        }
+
                         PathArc {
                             x: frame.width
                             y: root.animTopRightRadius
@@ -276,7 +356,12 @@ Item {
                             radiusY: root.animTopRightRadius
                             direction: PathArc.Counterclockwise
                         }
-                        PathLine { x: frame.width; y: 0 }
+
+                        PathLine {
+                            x: frame.width
+                            y: 0
+                        }
+
                     }
 
                     ShapePath {
@@ -285,7 +370,12 @@ Item {
                         strokeWidth: 1.1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
-                        PathMove { x: -root.fuseOverhang; y: root.fuseTopInset }
+
+                        PathMove {
+                            x: -root.fuseOverhang
+                            y: root.fuseTopInset
+                        }
+
                         PathArc {
                             x: 0
                             y: root.topFuseJoinY
@@ -293,6 +383,7 @@ Item {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
+
                     }
 
                     ShapePath {
@@ -301,7 +392,12 @@ Item {
                         strokeWidth: 1.1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
-                        PathMove { x: frame.width + root.fuseOverhang; y: root.fuseTopInset }
+
+                        PathMove {
+                            x: frame.width + root.fuseOverhang
+                            y: root.fuseTopInset
+                        }
+
                         PathArc {
                             x: frame.width
                             y: root.topFuseJoinY
@@ -309,7 +405,9 @@ Item {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Counterclockwise
                         }
+
                     }
+
                 }
 
                 MouseArea {
@@ -320,7 +418,9 @@ Item {
 
                 Column {
                     id: contentColumn
+
                     width: parent.width
+
                     anchors {
                         top: parent.top
                         left: parent.left
@@ -333,12 +433,13 @@ Item {
                         height: 48
 
                         RowLayout {
+                            spacing: 10
+
                             anchors {
                                 left: parent.left
                                 leftMargin: 16
                                 verticalCenter: parent.verticalCenter
                             }
-                            spacing: 10
 
                             RowLayout {
                                 spacing: 8
@@ -362,6 +463,7 @@ Item {
 
                                     Text {
                                         id: countText
+
                                         anchors.fill: parent
                                         text: String(root.notificationStore.count)
                                         color: Theme.textPrimary
@@ -371,22 +473,27 @@ Item {
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
                                     }
+
                                 }
+
                             }
+
                         }
 
                         Item {
+                            visible: root.notificationStore.count > 0
+                            width: clearText.implicitWidth + 8
+                            height: clearText.implicitHeight + 4
+
                             anchors {
                                 right: parent.right
                                 rightMargin: 16
                                 verticalCenter: parent.verticalCenter
                             }
-                            visible: root.notificationStore.count > 0
-                            width: clearText.implicitWidth + 8
-                            height: clearText.implicitHeight + 4
 
                             Text {
                                 id: clearText
+
                                 anchors.centerIn: parent
                                 text: "Clear"
                                 color: clearHover.hovered ? Theme.textPrimary : Theme.textDim
@@ -397,13 +504,16 @@ Item {
 
                             HoverHandler {
                                 id: clearHover
+
                                 blocking: false
                             }
 
                             TapHandler {
                                 onTapped: root.notificationStore.dismissAll()
                             }
+
                         }
+
                     }
 
                     Rectangle {
@@ -415,20 +525,20 @@ Item {
 
                     Item {
                         width: parent.width
-                        implicitHeight: root.notificationStore.count === 0
-                            ? emptyState.implicitHeight + 40
-                            : Math.min(notificationList.contentHeight + 26, 526)
+                        implicitHeight: root.notificationStore.count === 0 ? emptyState.implicitHeight + 40 : Math.min(notificationList.contentHeight + 26, 526)
                         clip: true
 
                         Column {
                             id: emptyState
+
                             visible: root.notificationStore.count === 0
                             width: parent.width - 48
+                            spacing: 12
+
                             anchors {
                                 horizontalCenter: parent.horizontalCenter
                                 verticalCenter: parent.verticalCenter
                             }
-                            spacing: 12
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -451,6 +561,13 @@ Item {
 
                         ListView {
                             id: notificationList
+
+                            visible: root.notificationStore.count > 0
+                            model: root.notificationStore.notifications
+                            spacing: 8
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+
                             anchors {
                                 fill: parent
                                 leftMargin: 12
@@ -458,11 +575,6 @@ Item {
                                 topMargin: 12
                                 bottomMargin: 14
                             }
-                            visible: root.notificationStore.count > 0
-                            model: root.notificationStore.notifications
-                            spacing: 8
-                            clip: true
-                            boundsBehavior: Flickable.StopAtBounds
 
                             delegate: NotificationListItem {
                                 required property var modelData
@@ -471,10 +583,35 @@ Item {
                                 item: modelData
                                 timeTick: root.timeTick
                             }
+
                         }
+
                     }
+
                 }
+
             }
+
         }
+
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.7 * root.reveal)
+            shadowBlur: 0.88
+            shadowVerticalOffset: 4
+            shadowHorizontalOffset: 0
+            blurMax: 48
+        }
+
     }
+
+    states: State {
+        name: "open"
+
+        PropertyChanges {
+            root.reveal: 1
+        }
+
+    }
+
 }

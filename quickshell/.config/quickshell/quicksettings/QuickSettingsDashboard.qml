@@ -17,12 +17,6 @@ Item {
     required property var bluetoothPage
     required property string powerMode
     required property real viewportHeight
-
-    signal wifiPageRequested()
-    signal bluetoothPageRequested()
-    signal powerModeChangeRequested(string mode)
-    signal audioOutputPopupRequest(bool open)
-
     property bool audioOutputPopupOpen: false
     property bool powerMenuOpen: false
     readonly property bool popupLayerOpen: root.powerMenuOpen || root.audioOutputPopupOpen
@@ -30,37 +24,47 @@ Item {
     readonly property real audioOutputPopupBottom: audioOutputPopup.y + audioOutputPopup.height
     readonly property real audioOutputPopupTopInViewport: mapToItem(null, 0, volumeRow.y + volumeRow.height + audioOutputPopupGap).y
     readonly property real audioOutputPopupMaxHeight: Math.max(180, viewportHeight - audioOutputPopupTopInViewport - Theme.borderSize - 12)
-    readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen
-        ? Math.max(0, audioOutputPopupBottom - root.implicitHeight + 12)
-        : 0
+    readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? Math.max(0, audioOutputPopupBottom - root.implicitHeight + 12) : 0
 
-    implicitHeight: contentLayout.implicitHeight
+    signal wifiPageRequested()
+    signal bluetoothPageRequested()
+    signal powerModeChangeRequested(string mode)
+    signal audioOutputPopupRequest(bool open)
 
     function powerModeLabel() {
         if (powerMode === "power-saver")
-            return "Power Saver"
+            return "Power Saver";
+
         if (powerMode === "performance")
-            return "Performance"
+            return "Performance";
+
         if (powerMode === "balanced")
-            return "Balanced"
-        return "Unavailable"
+            return "Balanced";
+
+        return "Unavailable";
     }
 
     function powerModeIcon() {
         if (powerMode === "power-saver")
-            return "\uf06c"
+            return "\uf06c";
+
         if (powerMode === "performance")
-            return "󱐋"
-        return "\uf24e"
+            return "󱐋";
+
+        return "\uf24e";
     }
 
     function nextPowerMode() {
         if (powerMode === "balanced")
-            return "performance"
+            return "performance";
+
         if (powerMode === "performance")
-            return "power-saver"
-        return "balanced"
+            return "power-saver";
+
+        return "balanced";
     }
+
+    implicitHeight: contentLayout.implicitHeight
 
     ColumnLayout {
         id: contentLayout
@@ -72,12 +76,6 @@ Item {
         anchors.right: parent.right
         spacing: 12
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Theme.qsPageFadeDuration
-            }
-        }
-
         RowLayout {
             id: headerRow
 
@@ -85,28 +83,32 @@ Item {
             spacing: 8
 
             Item {
-                Layout.fillWidth: true
-
-                visible: batteryInfo.hasBattery
+                id: batteryInfo
 
                 property var dev: UPower.displayDevice
                 property bool hasBattery: dev && dev.percentage >= 0
                 property int percent: hasBattery ? Math.min(100, Math.round(dev.percentage * 100)) : 0
-                property bool charging: hasBattery && (dev.state === UPowerDeviceState.Charging
-                    || dev.state === UPowerDeviceState.FullyCharged)
+                property bool charging: hasBattery && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
                 property bool full: hasBattery && dev.state === UPowerDeviceState.FullyCharged
                 property real secondsLeft: hasBattery && !charging ? dev.timeToEmpty : 0
 
                 function formatTime(secs) {
-                    if (secs <= 0) return ""
-                    const h = Math.floor(secs / 3600)
-                    const m = Math.floor((secs % 3600) / 60)
-                    if (h > 0 && m > 0) return h + "h " + m + "m"
-                    if (h > 0) return h + "h"
-                    return m + "m"
+                    if (secs <= 0)
+                        return "";
+
+                    const h = Math.floor(secs / 3600);
+                    const m = Math.floor((secs % 3600) / 60);
+                    if (h > 0 && m > 0)
+                        return h + "h " + m + "m";
+
+                    if (h > 0)
+                        return h + "h";
+
+                    return m + "m";
                 }
 
-                id: batteryInfo
+                Layout.fillWidth: true
+                visible: batteryInfo.hasBattery
                 Layout.preferredHeight: 38
 
                 Rectangle {
@@ -121,6 +123,7 @@ Item {
 
                     RowLayout {
                         id: pillRow
+
                         anchors.centerIn: parent
                         spacing: 6
 
@@ -132,17 +135,24 @@ Item {
 
                         Text {
                             text: {
-                                if (batteryInfo.full) return "Charged"
-                                if (batteryInfo.charging) return batteryInfo.percent + "% · Charging"
-                                const t = batteryInfo.formatTime(batteryInfo.secondsLeft)
-                                return batteryInfo.percent + "%" + (t ? " · " + t : "")
+                                if (batteryInfo.full)
+                                    return "Charged";
+
+                                if (batteryInfo.charging)
+                                    return batteryInfo.percent + "% · Charging";
+
+                                const t = batteryInfo.formatTime(batteryInfo.secondsLeft);
+                                return batteryInfo.percent + "%" + (t ? " · " + t : "");
                             }
                             font.family: Theme.fontUi
                             font.pixelSize: 13
                             color: Theme.textDim
                         }
+
                     }
+
                 }
+
             }
 
             Item {
@@ -158,14 +168,6 @@ Item {
                     border.width: 1
                     border.color: lockButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
 
-                    Behavior on color {
-                        ColorAnimation { duration: Theme.qsPageFadeDuration }
-                    }
-
-                    Behavior on border.color {
-                        ColorAnimation { duration: Theme.qsPageFadeDuration }
-                    }
-
                     Text {
                         anchors.centerIn: parent
                         text: "󰌾"
@@ -173,10 +175,26 @@ Item {
                         font.pixelSize: 17
                         color: Theme.textPrimary
                     }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.qsPageFadeDuration
+                        }
+
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.qsPageFadeDuration
+                        }
+
+                    }
+
                 }
 
                 HoverHandler {
                     id: lockButtonHover
+
                     blocking: false
                     cursorShape: Qt.ArrowCursor
                 }
@@ -185,12 +203,14 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.ArrowCursor
                     onClicked: {
-                        root.powerMenuOpen = false
-                        root.audioOutputPopupRequest(false)
+                        root.powerMenuOpen = false;
+                        root.audioOutputPopupRequest(false);
                         if (!lockProc.running)
-                            lockProc.running = true
+                            lockProc.running = true;
+
                     }
                 }
+
             }
 
             Item {
@@ -204,21 +224,9 @@ Item {
 
                     anchors.fill: parent
                     radius: 19
-                    color: root.powerMenuOpen
-                        ? Theme.qsCardBgHover
-                        : (powerButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                    color: root.powerMenuOpen ? Theme.qsCardBgHover : (powerButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                     border.width: 1
-                    border.color: root.powerMenuOpen
-                        ? Theme.qsCardBorderHover
-                        : (powerButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
-
-                    Behavior on color {
-                        ColorAnimation { duration: Theme.qsPageFadeDuration }
-                    }
-
-                    Behavior on border.color {
-                        ColorAnimation { duration: Theme.qsPageFadeDuration }
-                    }
+                    border.color: root.powerMenuOpen ? Theme.qsCardBorderHover : (powerButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                     Text {
                         anchors.centerIn: parent
@@ -228,10 +236,26 @@ Item {
                         font.pixelSize: 17
                         color: Theme.textPrimary
                     }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.qsPageFadeDuration
+                        }
+
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.qsPageFadeDuration
+                        }
+
+                    }
+
                 }
 
                 HoverHandler {
                     id: powerButtonHover
+
                     blocking: false
                     cursorShape: Qt.ArrowCursor
                 }
@@ -241,11 +265,14 @@ Item {
                     cursorShape: Qt.ArrowCursor
                     onClicked: {
                         if (!root.powerMenuOpen)
-                            root.audioOutputPopupRequest(false)
-                        root.powerMenuOpen = !root.powerMenuOpen
+                            root.audioOutputPopupRequest(false);
+
+                        root.powerMenuOpen = !root.powerMenuOpen;
                     }
                 }
+
             }
+
         }
 
         GridLayout {
@@ -264,12 +291,12 @@ Item {
                 pillShape: true
                 showMenuIndicator: false
                 onClicked: {
-                    root.powerMenuOpen = false
-                    root.wifiPageRequested()
+                    root.powerMenuOpen = false;
+                    root.wifiPageRequested();
                 }
                 onMenuClicked: {
-                    root.powerMenuOpen = false
-                    root.wifiPageRequested()
+                    root.powerMenuOpen = false;
+                    root.wifiPageRequested();
                 }
             }
 
@@ -283,12 +310,12 @@ Item {
                 pillShape: true
                 showMenuIndicator: false
                 onClicked: {
-                    root.powerMenuOpen = false
-                    root.bluetoothPageRequested()
+                    root.powerMenuOpen = false;
+                    root.bluetoothPageRequested();
                 }
                 onMenuClicked: {
-                    root.powerMenuOpen = false
-                    root.bluetoothPageRequested()
+                    root.powerMenuOpen = false;
+                    root.bluetoothPageRequested();
                 }
             }
 
@@ -303,8 +330,8 @@ Item {
                 showIconChip: true
                 iconCenterOffsetX: root.powerMode === "balanced" ? 1 : 0
                 onClicked: {
-                    root.powerMenuOpen = false
-                    root.powerModeChangeRequested(root.nextPowerMode())
+                    root.powerMenuOpen = false;
+                    root.powerModeChangeRequested(root.nextPowerMode());
                 }
             }
 
@@ -317,10 +344,11 @@ Item {
                 pillShape: true
                 showIconChip: true
                 onClicked: {
-                    root.powerMenuOpen = false
-                    root.notificationStore.toggleDnd()
+                    root.powerMenuOpen = false;
+                    root.notificationStore.toggleDnd();
                 }
             }
+
         }
 
         ColumnLayout {
@@ -333,21 +361,27 @@ Item {
                 Layout.fillWidth: true
                 backgroundRadius: 18
                 visible: root.brightnessService.available
+                label: ""
+                value: root.brightnessService.percent / 100
+                muted: false
+                showMute: false
+                onSliderMoved: (value) => {
+                    return root.brightnessService.setPercent(Math.round(value * 100));
+                }
+                onDraggingChanged: {
+                    if (!dragging)
+                        root.brightnessService.refresh();
+
+                }
+
                 iconOverride: Component {
                     Components.BrightnessIcon {
                         iconColor: Theme.textDim
                         height: 16
                     }
+
                 }
-                label: ""
-                value: root.brightnessService.percent / 100
-                muted: false
-                showMute: false
-                onSliderMoved: value => root.brightnessService.setPercent(Math.round(value * 100))
-                onDraggingChanged: {
-                    if (!dragging)
-                        root.brightnessService.refresh()
-                }
+
             }
 
             Widgets.QuickSettingsSliderRow {
@@ -365,14 +399,17 @@ Item {
                 actionIconText: "󰅂"
                 actionIconOffsetX: 1
                 onMuteClicked: root.audioService.toggleMute()
-                onSliderMoved: value => root.audioService.setVolumePercent(Math.round(value * 100))
+                onSliderMoved: (value) => {
+                    return root.audioService.setVolumePercent(Math.round(value * 100));
+                }
                 onDraggingChanged: {
                     if (!dragging)
-                        root.audioService.refresh()
+                        root.audioService.refresh();
+
                 }
                 onActionClicked: {
-                    root.powerMenuOpen = false
-                    root.audioOutputPopupRequest(!root.audioOutputPopupOpen)
+                    root.powerMenuOpen = false;
+                    root.audioOutputPopupRequest(!root.audioOutputPopupOpen);
                 }
             }
 
@@ -383,17 +420,28 @@ Item {
             Widgets.ApplicationVolumeList {
                 Layout.fillWidth: true
             }
+
         }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.qsPageFadeDuration
+            }
+
+        }
+
     }
 
     Component {
         id: volIconComponent
+
         Components.VolumeIcon {
             muted: root.audioService.muted
             volumePercent: root.audioService.volumePercent
             iconColor: root.audioService.muted ? Theme.textDisabled : Theme.textDim
             height: 16
         }
+
     }
 
     Item {
@@ -413,15 +461,17 @@ Item {
             x: Math.max(12, Math.min(root.width - width - 6, powerAnchor.x + powerAnchor.width - width))
             y: headerRow.y + powerAnchor.height + 10
             opacity: root.powerMenuOpen ? 1 : 0
-
             onActionTriggered: root.powerMenuOpen = false
 
             Behavior on opacity {
                 NumberAnimation {
                     duration: Theme.qsPageFadeDuration
                 }
+
             }
+
         }
+
     }
 
     Item {
@@ -470,16 +520,20 @@ Item {
 
         Widgets.AudioOutputPopup {
             id: audioOutputPopup
+
             audioService: root.audioService
             maxPopupHeight: root.audioOutputPopupMaxHeight
             x: Math.max(0, Math.round((root.width - width) / 2))
             y: volumeRow.y + volumeRow.height + root.audioOutputPopupGap
             onSinkChosen: root.audioOutputPopupRequest(false)
         }
+
     }
 
     Process {
         id: lockProc
+
         command: [Quickshell.env("HOME") + "/.config/hypr/scripts/power-menu", "lock"]
     }
+
 }

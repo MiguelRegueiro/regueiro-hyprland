@@ -5,32 +5,33 @@ import "../../theme/Theme.js" as Theme
 FocusScope {
     id: root
 
-    Layout.fillWidth: true
-    implicitHeight: 460
-
     property bool wifiOn: wifiCtrl.wifiOn
     property string connectedSsid: wifiCtrl.connectedSsid
     property bool needsFocus: wifiCtrl.needsFocus
-
     required property var wifiService
+    property bool menuOpen: false
 
     signal backClicked()
 
-    property bool menuOpen: false
+    Layout.fillWidth: true
+    implicitHeight: 460
     onMenuOpenChanged: wifiCtrl.onMenuOpen(menuOpen)
 
     WifiController {
         id: wifiCtrl
+
         wifiService: root.wifiService
     }
 
     ColumnLayout {
         id: col
+
         anchors.fill: parent
         spacing: 0
 
         Rectangle {
             id: header
+
             Layout.fillWidth: true
             height: 52
             radius: 18
@@ -40,36 +41,64 @@ FocusScope {
             z: 3
 
             RowLayout {
-                anchors { fill: parent; leftMargin: 4; rightMargin: 8 }
                 spacing: 0
+
+                anchors {
+                    fill: parent
+                    leftMargin: 4
+                    rightMargin: 8
+                }
 
                 Rectangle {
                     readonly property bool hovered: backHover.hovered
-                    width: 44; height: 44; radius: 22
+
+                    width: 44
+                    height: 44
+                    radius: 22
                     color: hovered ? Theme.qsCardChipBgHover : "transparent"
                     border.width: hovered ? 1 : 0
                     border.color: Theme.qsCardChipBorderHover
-                    Behavior on color { ColorAnimation { duration: 110 } }
-                    Behavior on border.color { ColorAnimation { duration: 110 } }
+
                     Text {
                         anchors.centerIn: parent
                         text: "󰁍"
-                        font.family: Theme.fontIcons; font.pixelSize: 18
+                        font.family: Theme.fontIcons
+                        font.pixelSize: 18
                         color: Theme.textPrimary
                     }
+
                     HoverHandler {
                         id: backHover
+
                         blocking: false
                         cursorShape: Qt.ArrowCursor
                     }
+
                     TapHandler {
                         acceptedButtons: Qt.LeftButton
                         gesturePolicy: TapHandler.ReleaseWithinBounds
                         onTapped: root.backClicked()
                     }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 110
+                        }
+
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 110
+                        }
+
+                    }
+
                 }
 
-                Item { width: 8 }
+                Item {
+                    width: 8
+                }
 
                 Text {
                     text: wifiCtrl.wifiOn ? "󰤨" : "󰤭"
@@ -80,7 +109,9 @@ FocusScope {
                     horizontalAlignment: Text.AlignHCenter
                 }
 
-                Item { width: 6 }
+                Item {
+                    width: 6
+                }
 
                 Text {
                     Layout.fillWidth: true
@@ -92,30 +123,67 @@ FocusScope {
                 }
 
                 Rectangle {
-                    width: 48; height: 26; radius: 13
+                    width: 48
+                    height: 26
+                    radius: 13
                     color: wifiCtrl.wifiOn ? Theme.tileActiveBg : Theme.qsCardChipBg
                     border.width: 1
                     border.color: wifiCtrl.wifiOn ? Theme.tileActiveBorder : Theme.qsCardChipBorder
-                    Behavior on color { ColorAnimation { duration: 80 } }
-                    Behavior on border.color { ColorAnimation { duration: 80 } }
+
                     Rectangle {
-                        width: 20; height: 20; radius: 10; color: "white"
+                        width: 20
+                        height: 20
+                        radius: 10
+                        color: "white"
                         anchors.verticalCenter: parent.verticalCenter
                         x: wifiCtrl.wifiOn ? parent.width - width - 3 : 3
-                        Behavior on x { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
+
+                        Behavior on x {
+                            NumberAnimation {
+                                duration: 80
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
                     }
+
                     MouseArea {
-                        anchors.fill: parent; preventStealing: true; cursorShape: Qt.ArrowCursor; z: 2
+                        anchors.fill: parent
+                        preventStealing: true
+                        cursorShape: Qt.ArrowCursor
+                        z: 2
                         onClicked: wifiCtrl.toggle()
                     }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 80
+                        }
+
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 80
+                        }
+
+                    }
+
                 }
+
             }
+
         }
 
-        Item { height: 8; z: 3 }
+        Item {
+            height: 8
+            z: 3
+        }
 
         WifiStatusPill {
             id: outerPill
+
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Math.min(col.width - 24, outerPill.implicitWidth)
             Layout.preferredHeight: 28
@@ -124,7 +192,10 @@ FocusScope {
             message: wifiCtrl.statusText()
         }
 
-        Item { height: 8; z: 3 }
+        Item {
+            height: 8
+            z: 3
+        }
 
         WifiPasswordPrompt {
             visible: wifiCtrl.connectSsid !== "" && wifiCtrl.connectSecure
@@ -143,5 +214,7 @@ FocusScope {
             controller: wifiCtrl
             z: 1
         }
+
     }
+
 }

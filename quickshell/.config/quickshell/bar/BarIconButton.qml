@@ -9,23 +9,21 @@ Rectangle {
     property string iconText: ""
     property color iconColor: Theme.textPrimary
     property int iconSize: 13
+    readonly property bool hovered: hover.hovered
 
     signal clicked()
     signal rightClicked()
     signal scrollUp()
     signal scrollDown()
 
-    readonly property bool hovered: hover.hovered
-
     height: barHeight - 8
     implicitWidth: lbl.implicitWidth + padH * 2
     radius: Theme.radiusSmall
     color: hovered ? Theme.hoverBg : "transparent"
 
-    Behavior on color { ColorAnimation { duration: Theme.hoverAnimDuration } }
-
     Text {
         id: lbl
+
         anchors.centerIn: parent
         text: btn.iconText
         color: btn.iconColor
@@ -36,6 +34,7 @@ Rectangle {
 
     HoverHandler {
         id: hover
+
         blocking: false
         cursorShape: Qt.ArrowCursor
     }
@@ -43,10 +42,22 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: mouse => mouse.button === Qt.RightButton ? btn.rightClicked() : btn.clicked()
-        onWheel: wheel => {
-            if (wheel.angleDelta.y > 0) btn.scrollUp()
-            else btn.scrollDown()
+        onClicked: (mouse) => {
+            return mouse.button === Qt.RightButton ? btn.rightClicked() : btn.clicked();
+        }
+        onWheel: (wheel) => {
+            if (wheel.angleDelta.y > 0)
+                btn.scrollUp();
+            else
+                btn.scrollDown();
         }
     }
+
+    Behavior on color {
+        ColorAnimation {
+            duration: Theme.hoverAnimDuration
+        }
+
+    }
+
 }

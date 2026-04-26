@@ -7,13 +7,10 @@ import "../../theme/Theme.js" as Theme
 Item {
     id: row
 
-    Layout.fillWidth: true
-    height: 56
-
     property string iconText: "󰕾"
     property Component iconOverride: null
     property string label: ""
-    property real value: 1.0       // 0.0–1.0
+    property real value: 1 // 0.0–1.0
     property bool muted: false
     property bool showMute: true
     property bool showActionButton: false
@@ -39,11 +36,13 @@ Item {
     function syncFromSource() {
         if (!slider.pressed)
             row._displayValue = row.muted ? 0 : row.clampValue(row.value);
+
     }
 
+    Layout.fillWidth: true
+    height: 56
     onValueChanged: syncFromSource()
     onMutedChanged: syncFromSource()
-
     Component.onCompleted: syncFromSource()
 
     Timer {
@@ -62,44 +61,45 @@ Item {
         border.color: row.dragging || row.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
 
         Behavior on color {
-            ColorAnimation { duration: Theme.hoverAnimDuration }
+            ColorAnimation {
+                duration: Theme.hoverAnimDuration
+            }
+
         }
 
         Behavior on border.color {
-            ColorAnimation { duration: Theme.hoverAnimDuration }
+            ColorAnimation {
+                duration: Theme.hoverAnimDuration
+            }
+
         }
+
     }
 
     HoverHandler {
         id: rowHover
+
         blocking: false
         cursorShape: Qt.ArrowCursor
     }
 
     RowLayout {
-        anchors { fill: parent; leftMargin: 14; rightMargin: 14 }
         spacing: 12
+
+        anchors {
+            fill: parent
+            leftMargin: 14
+            rightMargin: 14
+        }
 
         // Icon / mute button
         Rectangle {
             width: 32
             height: 32
             radius: 16
-            color: muteBtnMouse.containsMouse && row.showMute
-                ? Theme.qsCardChipBgHover
-                : Theme.qsCardChipBg
+            color: muteBtnMouse.containsMouse && row.showMute ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
             border.width: 1
-            border.color: muteBtnMouse.containsMouse && row.showMute
-                ? Theme.qsCardChipBorderHover
-                : Theme.qsCardChipBorder
-
-            Behavior on color {
-                ColorAnimation { duration: Theme.hoverAnimDuration }
-            }
-
-            Behavior on border.color {
-                ColorAnimation { duration: Theme.hoverAnimDuration }
-            }
+            border.color: muteBtnMouse.containsMouse && row.showMute ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
 
             Loader {
                 anchors.centerIn: parent
@@ -108,22 +108,40 @@ Item {
 
             Component {
                 id: defaultIcon
+
                 Text {
                     text: row.iconText
                     font.family: Theme.fontIcons
                     font.pixelSize: 16
                     color: row.muted ? Theme.textDisabled : Theme.textPrimary
                 }
+
             }
 
             MouseArea {
                 id: muteBtnMouse
+
                 anchors.fill: parent
                 cursorShape: Qt.ArrowCursor
                 visible: row.showMute
                 hoverEnabled: true
                 onClicked: row.muteClicked()
             }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.hoverAnimDuration
+                }
+
+            }
+
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: Theme.hoverAnimDuration
+                }
+
+            }
+
         }
 
         // Label + slider
@@ -135,12 +153,13 @@ Item {
             Column {
                 id: contentCol
 
+                spacing: row.showLabel ? 4 : 0
+
                 anchors {
                     left: parent.left
                     right: parent.right
                     verticalCenter: parent.verticalCenter
                 }
-                spacing: row.showLabel ? 4 : 0
 
                 Text {
                     visible: row.showLabel
@@ -154,12 +173,34 @@ Item {
 
                 Slider {
                     id: slider
+
                     width: parent.width
                     height: 24
-                    from: 0; to: 1
+                    from: 0
+                    to: 1
                     live: true
                     value: row._displayValue
                     enabled: !row.muted
+                    onMoved: {
+                        row._displayValue = row.clampValue(value);
+                        row._pendingValue = row._displayValue;
+                        emitTimer.restart();
+                    }
+                    onValueChanged: {
+                        if (!slider.pressed)
+                            return ;
+
+                        row._displayValue = row.clampValue(value);
+                        row._pendingValue = row._displayValue;
+                        emitTimer.restart();
+                    }
+                    onPressedChanged: {
+                        if (slider.pressed)
+                            return ;
+
+                        emitTimer.stop();
+                        row.sliderMoved(row._displayValue);
+                    }
 
                     background: Rectangle {
                         x: slider.leftPadding
@@ -174,42 +215,32 @@ Item {
                             height: parent.height
                             radius: parent.radius
                             color: row.muted ? Qt.rgba(1, 1, 1, 0.25) : Theme.accent
-                            Behavior on color { ColorAnimation { duration: Theme.sliderColorDuration } }
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.sliderColorDuration
+                                }
+
+                            }
+
                         }
+
                     }
 
                     handle: Rectangle {
                         x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
                         y: slider.topPadding + slider.availableHeight / 2 - height / 2
-                        width: 18; height: 18; radius: 9
+                        width: 18
+                        height: 18
+                        radius: 9
                         color: "white"
-                        opacity: 1.0
+                        opacity: 1
                     }
 
-                    onMoved: {
-                        row._displayValue = row.clampValue(value);
-                        row._pendingValue = row._displayValue;
-                        emitTimer.restart();
-                    }
-
-                    onValueChanged: {
-                        if (!slider.pressed)
-                            return;
-
-                        row._displayValue = row.clampValue(value);
-                        row._pendingValue = row._displayValue;
-                        emitTimer.restart();
-                    }
-
-                    onPressedChanged: {
-                        if (slider.pressed)
-                            return;
-
-                        emitTimer.stop();
-                        row.sliderMoved(row._displayValue);
-                    }
                 }
+
             }
+
         }
 
         Rectangle {
@@ -218,21 +249,9 @@ Item {
             Layout.preferredHeight: 30
             Layout.alignment: Qt.AlignVCenter
             radius: height / 2
-            color: row.actionButtonActive
-                ? Theme.qsCardChipBgHover
-                : (actionHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+            color: row.actionButtonActive ? Theme.qsCardChipBgHover : (actionHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
             border.width: 1
-            border.color: row.actionButtonActive
-                ? Theme.qsCardChipBorderHover
-                : (actionHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
-
-            Behavior on color {
-                ColorAnimation { duration: Theme.hoverAnimDuration }
-            }
-
-            Behavior on border.color {
-                ColorAnimation { duration: Theme.hoverAnimDuration }
-            }
+            border.color: row.actionButtonActive ? Theme.qsCardChipBorderHover : (actionHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
 
             Text {
                 anchors.centerIn: parent
@@ -245,6 +264,7 @@ Item {
 
             HoverHandler {
                 id: actionHover
+
                 blocking: false
                 cursorShape: Qt.ArrowCursor
             }
@@ -254,6 +274,23 @@ Item {
                 cursorShape: Qt.ArrowCursor
                 onClicked: row.actionClicked()
             }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.hoverAnimDuration
+                }
+
+            }
+
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: Theme.hoverAnimDuration
+                }
+
+            }
+
         }
+
     }
+
 }

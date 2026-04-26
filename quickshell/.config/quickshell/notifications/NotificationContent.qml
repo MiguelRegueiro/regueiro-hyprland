@@ -12,16 +12,17 @@ Item {
     property bool minimalChrome: false
     property bool emphasizeCriticalSummary: false
     property string timestampText: ""
-    signal dismissRequested()
-
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property int iconSize: root.minimalChrome ? 26 : (root.compact ? 28 : 34)
     readonly property int closeSize: root.minimalChrome ? 18 : (root.compact ? 24 : 28)
+
+    signal dismissRequested()
 
     implicitHeight: contentColumn.implicitHeight
 
     ColumnLayout {
         id: contentColumn
+
         width: parent.width
         spacing: root.minimalChrome ? 8 : (root.compact ? 8 : 10)
 
@@ -30,18 +31,15 @@ Item {
             spacing: root.minimalChrome ? 8 : (root.compact ? 8 : 10)
 
             Rectangle {
+                readonly property string iconOverride: root.notif ? root.notificationStore.iconOverride(root.notif.appName, root.notif.appIcon) : ""
+
                 Layout.preferredWidth: root.iconSize
                 Layout.preferredHeight: Layout.preferredWidth
                 Layout.alignment: Qt.AlignTop
                 radius: root.minimalChrome ? 8 : (root.compact ? 10 : 12)
-                color: root.minimalChrome
-                    ? "transparent"
-                    : (root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.12) : Theme.hoverBg)
+                color: root.minimalChrome ? "transparent" : (root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.12) : Theme.hoverBg)
                 border.width: root.minimalChrome ? 0 : 1
                 border.color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.24) : Theme.qsEdgeSoft
-
-                readonly property string iconOverride: root.notif
-                    ? root.notificationStore.iconOverride(root.notif.appName, root.notif.appIcon) : ""
 
                 Text {
                     anchors.centerIn: parent
@@ -54,13 +52,14 @@ Item {
 
                 Image {
                     id: iconImage
+
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: parent.iconOverride.length === 0 && root.notif && root.notif.appIcon.length > 0
-                        ? ("image://icon/" + root.notif.appIcon) : ""
+                    source: parent.iconOverride.length === 0 && root.notif && root.notif.appIcon.length > 0 ? ("image://icon/" + root.notif.appIcon) : ""
                     fillMode: Image.PreserveAspectFit
                     visible: parent.iconOverride.length === 0 && status === Image.Ready && source.toString().length > 0
                 }
+
             }
 
             Text {
@@ -101,13 +100,16 @@ Item {
 
                 HoverHandler {
                     id: closeHover
+
                     blocking: false
                 }
 
                 TapHandler {
                     onTapped: root.dismissRequested()
                 }
+
             }
+
         }
 
         Text {
@@ -136,5 +138,7 @@ Item {
             textFormat: Text.StyledText
             lineHeight: 1.28
         }
+
     }
+
 }
