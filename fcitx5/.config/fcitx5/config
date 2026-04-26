@@ -1,3 +1,3 @@
 [Behavior]
-ActiveByDefault=False
+ActiveByDefault=True
 ShareInputState=All

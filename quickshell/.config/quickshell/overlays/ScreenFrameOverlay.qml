@@ -68,6 +68,20 @@ PanelWindow {
         right: true
     }
 
+    // Registers a zwp_text_input_v3 context for this surface so fcitx5 keeps
+    // ShareInputState=All active when this layer-shell window gets keyboard focus,
+    // instead of deactivating the IM due to "no text-input client".
+    // Real text fields (WiFi password etc.) steal focus from this when clicked.
+    TextInput {
+        width: 1; height: 1
+        opacity: 0
+        focus: true
+        cursorVisible: false
+        color: "transparent"
+        selectionColor: "transparent"
+        onTextChanged: clear()
+    }
+
     Item {
         id: shadowSource
         anchors.fill: parent

@@ -11,6 +11,7 @@ PanelWindow {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
+    required property var inputService
 
     property bool showBar: true
 
@@ -102,6 +103,7 @@ PanelWindow {
             InputLanguageIndicator {
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
+                inputService: bar.inputService
             }
 
             QuickSettingsTrigger {

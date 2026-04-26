@@ -103,6 +103,10 @@ ShellRoot {
         id: brightnessServiceState
     }
 
+    Services.InputService {
+        id: inputServiceState
+    }
+
     Variants {
         model: Quickshell.screens
         delegate: Component {
@@ -116,6 +120,7 @@ ShellRoot {
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
+                inputService: inputServiceState
 
                 onQuickSettingsClicked: root.quickSettingsPinned = !root.quickSettingsPinned
                 onNotificationCenterClicked: root.notificationCenterPinned = !root.notificationCenterPinned
@@ -173,6 +178,7 @@ ShellRoot {
                 required property var modelData
                 targetScreen: modelData
                 active: modelData.name !== "eDP-1" || !root.externalConnected
+                inputService: inputServiceState
             }
         }
     }
