@@ -167,7 +167,7 @@ Rectangle {
 
                     Text {
                         anchors.centerIn: parent
-                        visible: root.batteryCharging && !root.batteryFull
+                        visible: root.batteryCharging
                         text: "󱐋"
                         font.family: Theme.fontIcons
                         font.pixelSize: 8
