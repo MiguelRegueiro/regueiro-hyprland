@@ -1,15 +1,15 @@
 import QtQuick
 import "../theme/Theme.js" as Theme
 
-Item {
+QtObject {
     id: controller
 
+    property bool open: false
     property bool pinned: false
     property bool triggerHovered: false
     property bool panelHovered: false
+    property bool extraHoldCondition: false
     property int closeDelayMs: Theme.hoverCloseDelay
-
-    visible: false
 
     function togglePinned() {
         pinned = !pinned
@@ -20,33 +20,33 @@ Item {
     }
 
     function syncVisibility(immediateClose) {
-        if (pinned || triggerHovered || panelHovered) {
+        if (pinned || triggerHovered || panelHovered || extraHoldCondition) {
             hoverClose.stop()
-            visible = true
+            open = true
             return
         }
 
         if (immediateClose) {
             hoverClose.stop()
-            visible = false
+            open = false
             return
         }
 
-        if (visible)
+        if (open)
             hoverClose.restart()
     }
 
-    Timer {
-        id: hoverClose
+    property Timer hoverClose: Timer {
         interval: controller.closeDelayMs
         repeat: false
         onTriggered: {
-            if (!controller.pinned && !controller.triggerHovered && !controller.panelHovered)
-                controller.visible = false
+            if (!controller.pinned && !controller.triggerHovered && !controller.panelHovered && !controller.extraHoldCondition)
+                controller.open = false
         }
     }
 
     onPinnedChanged: syncVisibility(!pinned)
     onTriggerHoveredChanged: syncVisibility(false)
     onPanelHoveredChanged: syncVisibility(false)
+    onExtraHoldConditionChanged: syncVisibility(false)
 }

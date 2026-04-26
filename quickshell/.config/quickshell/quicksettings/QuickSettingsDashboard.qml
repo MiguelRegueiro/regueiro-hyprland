@@ -124,75 +124,10 @@ Item {
                         anchors.centerIn: parent
                         spacing: 6
 
-                        Item {
-                            width: 24
-                            height: 12
-
-                            // Body
-                            Rectangle {
-                                id: batteryBody
-                                anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 21
-                                height: 12
-                                radius: 3
-                                color: "transparent"
-                                border.width: 1.5
-                                border.color: batteryInfo.percent <= Theme.batteryLowThreshold ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
-
-                                // Fill
-                                Item {
-                                    anchors {
-                                        left: parent.left
-                                        top: parent.top
-                                        bottom: parent.bottom
-                                        margins: 2.5
-                                    }
-                                    width: parent.width - 5
-
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: 1.5
-                                        visible: batteryInfo.charging && !batteryInfo.full
-                                        color: Qt.rgba(0.18, 0.72, 0.36, 0.26)
-                                    }
-
-                                    Rectangle {
-                                        anchors {
-                                            left: parent.left
-                                            top: parent.top
-                                            bottom: parent.bottom
-                                        }
-                                        width: Math.max(0, parent.width * batteryInfo.percent / 100)
-                                        radius: 1.5
-                                        color: batteryInfo.charging || batteryInfo.full ? Theme.green : batteryInfo.percent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
-
-                                        Behavior on width {
-                                            NumberAnimation { duration: Theme.batteryFillDuration }
-                                        }
-                                    }
-                                }
-
-                                // Charging bolt
-                                Text {
-                                    anchors.centerIn: parent
-                                    visible: batteryInfo.charging && !batteryInfo.full
-                                    text: "󱐋"
-                                    font.family: Theme.fontIcons
-                                    font.pixelSize: 8
-                                    color: Qt.rgba(0, 0, 0, 0.9)
-                                }
-                            }
-
-                            // Terminal nub
-                            Rectangle {
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 3
-                                height: 5
-                                radius: 1
-                                color: batteryInfo.percent <= Theme.batteryLowThreshold ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
-                            }
+                        Components.BatteryIcon {
+                            percent: batteryInfo.percent
+                            charging: batteryInfo.charging
+                            full: batteryInfo.full
                         }
 
                         Text {

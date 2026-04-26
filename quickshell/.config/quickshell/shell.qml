@@ -11,83 +11,29 @@ import "theme/Theme.js" as Theme
 ShellRoot {
     id: root
 
-    property bool quickSettingsVisible: false
-    property bool quickSettingsPinned: false
-    property bool quickSettingsTriggerHovered: false
-    property bool quickSettingsPanelHovered: false
     property bool externalConnected: Quickshell.screens.length > 1
-    property bool notificationCenterVisible: false
-    property bool notificationCenterPinned: false
-    property bool notificationCenterTriggerHovered: false
-    property bool notificationCenterPanelHovered: false
+    readonly property bool quickSettingsVisible: qsController.open
+    readonly property bool notificationCenterVisible: ncController.open
 
-    function syncQuickSettingsVisibility(immediateClose = false) {
-        if (root.quickSettingsPinned || root.quickSettingsTriggerHovered || root.quickSettingsPanelHovered) {
-            quickSettingsCloseTimer.stop()
-            root.quickSettingsVisible = true
-            return
-        }
-
-        if (immediateClose) {
-            quickSettingsCloseTimer.stop()
-            root.quickSettingsVisible = false
-            return
-        }
-
-        if (root.quickSettingsVisible)
-            quickSettingsCloseTimer.restart()
+    function closeAllPanels() {
+        qsController.pinned = false
+        ncController.pinned = false
+        qsController.closeImmediately()
+        ncController.closeImmediately()
     }
 
-    function syncNotificationCenterVisibility(immediateClose = false) {
-        if (root.notificationCenterPinned || root.notificationCenterTriggerHovered || root.notificationCenterPanelHovered || notificationStoreService.holdOpen) {
-            notificationCenterCloseTimer.stop()
-            root.notificationCenterVisible = true
-            return
-        }
+    Services.HoverOverlayController { id: qsController }
 
-        if (immediateClose) {
-            notificationCenterCloseTimer.stop()
-            root.notificationCenterVisible = false
-            return
-        }
-
-        if (root.notificationCenterVisible)
-            notificationCenterCloseTimer.restart()
+    Services.HoverOverlayController {
+        id: ncController
+        extraHoldCondition: notificationStoreService.holdOpen
     }
-
-    Timer {
-        id: quickSettingsCloseTimer
-        interval: Theme.hoverCloseDelay
-        repeat: false
-        onTriggered: {
-            if (!root.quickSettingsPinned && !root.quickSettingsTriggerHovered && !root.quickSettingsPanelHovered)
-                root.quickSettingsVisible = false
-        }
-    }
-
-    Timer {
-        id: notificationCenterCloseTimer
-        interval: Theme.hoverCloseDelay
-        repeat: false
-        onTriggered: {
-            if (!root.notificationCenterPinned && !root.notificationCenterTriggerHovered && !root.notificationCenterPanelHovered)
-                root.notificationCenterVisible = false
-        }
-    }
-
-    onQuickSettingsPinnedChanged: root.syncQuickSettingsVisibility(!root.quickSettingsPinned)
-    onQuickSettingsTriggerHoveredChanged: root.syncQuickSettingsVisibility(false)
-    onQuickSettingsPanelHoveredChanged: root.syncQuickSettingsVisibility(false)
-    onNotificationCenterPinnedChanged: root.syncNotificationCenterVisibility(!root.notificationCenterPinned)
-    onNotificationCenterTriggerHoveredChanged: root.syncNotificationCenterVisibility(false)
-    onNotificationCenterPanelHoveredChanged: root.syncNotificationCenterVisibility(false)
 
     Connections {
         target: notificationStoreService
-        function onHoldOpenChanged() { root.syncNotificationCenterVisibility(false) }
         function onAllDismissed() {
-            root.notificationCenterPinned = false
-            root.syncNotificationCenterVisibility(true)
+            ncController.pinned = false
+            ncController.closeImmediately()
         }
     }
 
@@ -96,17 +42,9 @@ ShellRoot {
         popupSuppressed: root.notificationCenterVisible
     }
 
-    Services.AudioService {
-        id: audioServiceState
-    }
-
-    Services.BrightnessService {
-        id: brightnessServiceState
-    }
-
-    Services.InputService {
-        id: inputServiceState
-    }
+    Services.AudioService    { id: audioServiceState }
+    Services.BrightnessService { id: brightnessServiceState }
+    Services.InputService    { id: inputServiceState }
 
     Variants {
         model: Quickshell.screens
@@ -123,10 +61,10 @@ ShellRoot {
                 brightnessService: brightnessServiceState
                 inputService: inputServiceState
 
-                onQuickSettingsClicked: root.quickSettingsPinned = !root.quickSettingsPinned
-                onNotificationCenterClicked: root.notificationCenterPinned = !root.notificationCenterPinned
-                onQuickSettingsHoveredChanged: hovered => root.quickSettingsTriggerHovered = hovered
-                onNotificationCenterHoveredChanged: hovered => root.notificationCenterTriggerHovered = hovered
+                onQuickSettingsClicked: qsController.togglePinned()
+                onNotificationCenterClicked: ncController.togglePinned()
+                onQuickSettingsHoveredChanged: hovered => qsController.triggerHovered = hovered
+                onNotificationCenterHoveredChanged: hovered => ncController.triggerHovered = hovered
             }
         }
     }
@@ -145,15 +83,10 @@ ShellRoot {
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
-                onOutsidePressed: {
-                    root.quickSettingsPinned = false
-                    root.notificationCenterPinned = false
-                    root.syncQuickSettingsVisibility(true)
-                    root.syncNotificationCenterVisibility(true)
-                }
+                onOutsidePressed: root.closeAllPanels()
                 onQuickSettingsHoveredChanged: {
                     if (activeScreen)
-                        root.quickSettingsPanelHovered = quickSettingsHovered
+                        qsController.panelHovered = quickSettingsHovered
                 }
             }
         }
@@ -177,6 +110,7 @@ ShellRoot {
         delegate: Component {
             Overlays.InputMethodOSD {
                 required property var modelData
+
                 targetScreen: modelData
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 inputService: inputServiceState
@@ -197,15 +131,10 @@ ShellRoot {
                 notificationStore: notificationStoreService
                 notificationCenterVisible: root.notificationCenterVisible && activeScreen
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
-                onOutsidePressed: {
-                    root.quickSettingsPinned = false
-                    root.notificationCenterPinned = false
-                    root.syncQuickSettingsVisibility(true)
-                    root.syncNotificationCenterVisibility(true)
-                }
+                onOutsidePressed: root.closeAllPanels()
                 onNotificationCenterHoveredChanged: {
                     if (activeScreen)
-                        root.notificationCenterPanelHovered = notificationCenterHovered
+                        ncController.panelHovered = notificationCenterHovered
                 }
             }
         }

@@ -120,69 +120,11 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            Item {
-                width: 24
-                height: 12
+            Components.BatteryIcon {
                 anchors.verticalCenter: parent.verticalCenter
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 21
-                    height: 12
-                    radius: 3
-                    color: "transparent"
-                    border.width: 1.5
-                    border.color: root.batteryPercent <= Theme.batteryLowThreshold ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
-
-                    Item {
-                        anchors {
-                            fill: parent
-                            margins: 2.5
-                        }
-                        clip: true
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 1
-                            visible: root.batteryCharging && !root.batteryFull
-                            color: Qt.rgba(0.18, 0.72, 0.36, 0.26)
-                        }
-
-                        Rectangle {
-                            anchors {
-                                left: parent.left
-                                top: parent.top
-                                bottom: parent.bottom
-                            }
-                            width: parent.width * root.batteryPercent / 100
-                            radius: 1
-                            color: root.batteryCharging || root.batteryFull ? Theme.green : root.batteryPercent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
-
-                            Behavior on width {
-                                NumberAnimation { duration: Theme.batteryFillDuration }
-                            }
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: root.batteryCharging
-                        text: "󱐋"
-                        font.family: Theme.fontIcons
-                        font.pixelSize: 8
-                        color: Qt.rgba(0, 0, 0, 0.9)
-                    }
-                }
-
-                Rectangle {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 3
-                    height: 5
-                    radius: 1
-                    color: root.batteryPercent <= Theme.batteryLowThreshold ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
-                }
+                percent: root.batteryPercent
+                charging: root.batteryCharging
+                full: root.batteryFull
             }
 
             Text {

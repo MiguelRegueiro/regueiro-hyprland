@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell.Services.Notifications
 import "../theme/Theme.js" as Theme
+import "../utils/DateUtils.js" as DateUtils
 
 Item {
     id: root
@@ -86,7 +87,7 @@ Item {
             emphasizeCriticalSummary: true
             timestampText: {
                 root.timeTick
-                return root.item ? root.notificationStore.timeAgo(root.item.time) : ""
+                return root.item ? DateUtils.timeAgo(root.item.time) : ""
             }
             onDismissRequested: root.notificationStore.dismiss(root.item)
         }

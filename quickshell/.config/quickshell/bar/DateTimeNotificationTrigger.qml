@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import "../theme/Theme.js" as Theme
+import "../utils/DateUtils.js" as DateUtils
 
 Row {
     id: root
@@ -59,17 +60,7 @@ Row {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: {
-                    const date = clock.date
-                    if (!date)
-                        return ""
-
-                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-                    const hours = String(date.getHours()).padStart(2, "0")
-                    const minutes = String(date.getMinutes()).padStart(2, "0")
-                    return months[date.getMonth()] + " " + date.getDate() + "  " + hours + ":" + minutes
-                }
+                text: DateUtils.formatBarTime(clock.date)
                 color: Theme.textPrimary
                 font.family: Theme.fontUi
                 font.pixelSize: 14
