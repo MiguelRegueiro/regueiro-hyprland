@@ -219,11 +219,11 @@ Item {
                 }
 
                 Behavior on color {
-                    ColorAnimation { duration: 85 }
+                    ColorAnimation { duration: Theme.outputItemColorDuration }
                 }
 
                 Behavior on border.color {
-                    ColorAnimation { duration: 85 }
+                    ColorAnimation { duration: Theme.outputItemColorDuration }
                 }
             }
 

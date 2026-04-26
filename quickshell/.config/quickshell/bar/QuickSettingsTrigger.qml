@@ -34,7 +34,7 @@ Rectangle {
     }
 
     Timer {
-        interval: 3000
+        interval: Theme.networkPollInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -133,7 +133,7 @@ Rectangle {
                     radius: 3
                     color: "transparent"
                     border.width: 1.5
-                    border.color: root.batteryPercent <= 15 ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
+                    border.color: root.batteryPercent <= Theme.batteryLowThreshold ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
 
                     Item {
                         anchors {
@@ -157,10 +157,10 @@ Rectangle {
                             }
                             width: parent.width * root.batteryPercent / 100
                             radius: 1
-                            color: root.batteryCharging || root.batteryFull ? Theme.green : root.batteryPercent <= 15 ? Theme.red : Theme.textPrimary
+                            color: root.batteryCharging || root.batteryFull ? Theme.green : root.batteryPercent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
 
                             Behavior on width {
-                                NumberAnimation { duration: 200 }
+                                NumberAnimation { duration: Theme.batteryFillDuration }
                             }
                         }
                     }
@@ -181,7 +181,7 @@ Rectangle {
                     width: 3
                     height: 5
                     radius: 1
-                    color: root.batteryPercent <= 15 ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
+                    color: root.batteryPercent <= Theme.batteryLowThreshold ? Theme.red : (root.batteryCharging || root.batteryFull) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
                 }
             }
 

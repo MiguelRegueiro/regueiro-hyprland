@@ -74,7 +74,7 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: 110
+                duration: Theme.qsPageFadeDuration
             }
         }
 
@@ -138,7 +138,7 @@ Item {
                                 radius: 3
                                 color: "transparent"
                                 border.width: 1.5
-                                border.color: batteryInfo.percent <= 15 ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
+                                border.color: batteryInfo.percent <= Theme.batteryLowThreshold ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
 
                                 // Fill
                                 Item {
@@ -165,10 +165,10 @@ Item {
                                         }
                                         width: Math.max(0, parent.width * batteryInfo.percent / 100)
                                         radius: 1.5
-                                        color: batteryInfo.charging || batteryInfo.full ? Theme.green : batteryInfo.percent <= 15 ? Theme.red : Theme.textPrimary
+                                        color: batteryInfo.charging || batteryInfo.full ? Theme.green : batteryInfo.percent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
 
                                         Behavior on width {
-                                            NumberAnimation { duration: 200 }
+                                            NumberAnimation { duration: Theme.batteryFillDuration }
                                         }
                                     }
                                 }
@@ -191,7 +191,7 @@ Item {
                                 width: 3
                                 height: 5
                                 radius: 1
-                                color: batteryInfo.percent <= 15 ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
+                                color: batteryInfo.percent <= Theme.batteryLowThreshold ? Theme.red : (batteryInfo.charging || batteryInfo.full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
                             }
                         }
 
@@ -224,11 +224,11 @@ Item {
                     border.color: lockButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
 
                     Behavior on color {
-                        ColorAnimation { duration: 110 }
+                        ColorAnimation { duration: Theme.qsPageFadeDuration }
                     }
 
                     Behavior on border.color {
-                        ColorAnimation { duration: 110 }
+                        ColorAnimation { duration: Theme.qsPageFadeDuration }
                     }
 
                     Text {
@@ -278,11 +278,11 @@ Item {
                         : (powerButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                     Behavior on color {
-                        ColorAnimation { duration: 110 }
+                        ColorAnimation { duration: Theme.qsPageFadeDuration }
                     }
 
                     Behavior on border.color {
-                        ColorAnimation { duration: 110 }
+                        ColorAnimation { duration: Theme.qsPageFadeDuration }
                     }
 
                     Text {
@@ -483,7 +483,7 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: 110
+                    duration: Theme.qsPageFadeDuration
                 }
             }
         }

@@ -67,7 +67,7 @@ PanelWindow {
     color: "transparent"
 
     Timer {
-        interval: 40
+        interval: Theme.panelTickInterval
         running: root.notificationCenterVisible
         repeat: true
         triggeredOnStart: true
@@ -189,7 +189,7 @@ PanelWindow {
 
         Behavior on x {
             NumberAnimation {
-                duration: 180
+                duration: Theme.toastSlideDuration
                 easing.type: Easing.OutCubic
             }
         }

@@ -6,6 +6,7 @@ import "bar" as Bar
 import "notifications" as Notifications
 import "overlays" as Overlays
 import "services" as Services
+import "theme/Theme.js" as Theme
 
 ShellRoot {
     id: root
@@ -56,7 +57,7 @@ ShellRoot {
 
     Timer {
         id: quickSettingsCloseTimer
-        interval: 140
+        interval: Theme.hoverCloseDelay
         repeat: false
         onTriggered: {
             if (!root.quickSettingsPinned && !root.quickSettingsTriggerHovered && !root.quickSettingsPanelHovered)
@@ -66,7 +67,7 @@ ShellRoot {
 
     Timer {
         id: notificationCenterCloseTimer
-        interval: 140
+        interval: Theme.hoverCloseDelay
         repeat: false
         onTriggered: {
             if (!root.notificationCenterPinned && !root.notificationCenterTriggerHovered && !root.notificationCenterPanelHovered)
@@ -113,7 +114,7 @@ ShellRoot {
             Bar.BarWindow {
                 required property var modelData
 
-                readonly property bool activeScreen: modelData.name !== "eDP-1" || !root.externalConnected
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
 
                 targetScreen: modelData
                 showBar: activeScreen
@@ -136,7 +137,7 @@ ShellRoot {
             Overlays.ScreenFrameOverlay {
                 required property var modelData
 
-                readonly property bool activeScreen: modelData.name !== "eDP-1" || !root.externalConnected
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
 
                 targetScreen: modelData
                 hasBar: activeScreen
@@ -177,7 +178,7 @@ ShellRoot {
             Overlays.InputMethodOSD {
                 required property var modelData
                 targetScreen: modelData
-                active: modelData.name !== "eDP-1" || !root.externalConnected
+                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 inputService: inputServiceState
             }
         }
@@ -189,7 +190,7 @@ ShellRoot {
             Notifications.NotificationsOverlay {
                 required property var modelData
 
-                readonly property bool activeScreen: modelData.name !== "eDP-1" || !root.externalConnected
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
 
                 targetScreen: modelData
                 showLayer: activeScreen

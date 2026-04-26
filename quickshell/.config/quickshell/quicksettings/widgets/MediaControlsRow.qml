@@ -34,7 +34,7 @@ Rectangle {
     }
 
     Timer {
-        interval: 1500
+        interval: Theme.audioPollSlowInterval
         running: row.visible
         repeat: true
         triggeredOnStart: true
@@ -47,7 +47,7 @@ Rectangle {
     Timer {
         id: actionRefresh
 
-        interval: 180
+        interval: Theme.mediaActionRefreshDelay
         repeat: false
         onTriggered: {
             if (!pollProc.running)

@@ -2,6 +2,7 @@ import QtCore
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
+import "../theme/Theme.js" as Theme
 
 Item {
     id: root
@@ -17,7 +18,7 @@ Item {
 
     Timer {
         id: holdOpenTimer
-        interval: 500
+        interval: Theme.notificationHoldDelay
         repeat: false
     }
 

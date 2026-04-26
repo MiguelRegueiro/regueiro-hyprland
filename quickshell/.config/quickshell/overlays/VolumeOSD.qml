@@ -64,7 +64,7 @@ PanelWindow {
 
     Timer {
         id: hideTimer
-        interval: 1500
+        interval: Theme.osdTimeout
         repeat: false
         onTriggered: root.osdVisible = false
     }

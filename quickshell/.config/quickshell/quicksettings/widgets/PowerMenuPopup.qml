@@ -131,11 +131,11 @@ Item {
                 readonly property bool active: root.pendingAction === modelData.actionId
 
                 Behavior on color {
-                    ColorAnimation { duration: 90 }
+                    ColorAnimation { duration: Theme.popupButtonColorDuration }
                 }
 
                 Behavior on border.color {
-                    ColorAnimation { duration: 90 }
+                    ColorAnimation { duration: Theme.popupButtonColorDuration }
                 }
 
                 RowLayout {

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import Quickshell.Services.Pipewire
+import "../theme/Theme.js" as Theme
 
 Item {
     id: root
@@ -369,7 +370,7 @@ Item {
     }
 
     Timer {
-        interval: 500
+        interval: Theme.audioPollFastInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -377,7 +378,7 @@ Item {
     }
 
     Timer {
-        interval: 1500
+        interval: Theme.audioPollSlowInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -389,14 +390,14 @@ Item {
 
     Timer {
         id: refreshSoon
-        interval: 150
+        interval: Theme.audioRefreshDelay
         repeat: false
         onTriggered: root.refresh()
     }
 
     Timer {
         id: optimisticStateReset
-        interval: 700
+        interval: Theme.audioOptimisticReset
         repeat: false
         onTriggered: root.clearOptimisticState()
     }

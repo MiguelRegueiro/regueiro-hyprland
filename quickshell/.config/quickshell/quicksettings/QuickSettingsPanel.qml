@@ -83,7 +83,7 @@ FocusScope {
             NumberAnimation {
                 target: root
                 property: "reveal"
-                duration: 250
+                duration: Theme.panelOpenDuration
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.05, 0.7, 0.1, 1.0, 1.0, 1.0]
             }
@@ -94,7 +94,7 @@ FocusScope {
             NumberAnimation {
                 target: root
                 property: "reveal"
-                duration: 145
+                duration: Theme.panelCloseDuration
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1.0, 1.0]
             }
@@ -363,14 +363,14 @@ FocusScope {
 
                             Behavior on x {
                                 NumberAnimation {
-                                    duration: 130
+                                    duration: Theme.qsPageSlideDuration
                                     easing.type: Easing.OutExpo
                                 }
                             }
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: 110
+                                    duration: Theme.qsPageFadeDuration
                                 }
                             }
                         }
@@ -385,14 +385,14 @@ FocusScope {
 
                             Behavior on x {
                                 NumberAnimation {
-                                    duration: 130
+                                    duration: Theme.qsPageSlideDuration
                                     easing.type: Easing.OutExpo
                                 }
                             }
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: 110
+                                    duration: Theme.qsPageFadeDuration
                                 }
                             }
                         }
@@ -407,21 +407,21 @@ FocusScope {
 
                             Behavior on x {
                                 NumberAnimation {
-                                    duration: 130
+                                    duration: Theme.qsPageSlideDuration
                                     easing.type: Easing.OutExpo
                                 }
                             }
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: 110
+                                    duration: Theme.qsPageFadeDuration
                                 }
                             }
                         }
 
                         Behavior on implicitHeight {
                             NumberAnimation {
-                                duration: 120
+                                duration: Theme.qsHeightDuration
                                 easing.type: Easing.OutExpo
                             }
                         }
@@ -436,7 +436,7 @@ FocusScope {
     }
 
     Timer {
-        interval: 10000
+        interval: Theme.slowPollInterval
         running: root.visible
         repeat: true
         triggeredOnStart: true

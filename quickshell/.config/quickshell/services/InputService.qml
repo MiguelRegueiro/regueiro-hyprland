@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../theme/Theme.js" as Theme
 
 Item {
     id: root
@@ -52,7 +53,7 @@ Item {
     }
 
     Timer {
-        interval: 250
+        interval: Theme.inputPollInterval
         running: true
         repeat: true
         triggeredOnStart: true

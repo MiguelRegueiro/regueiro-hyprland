@@ -4,8 +4,8 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import "../quicksettings" as QuickSettings
 import "../theme/Theme.js" as Theme
+import "../quicksettings" as QuickSettings
 
 PanelWindow {
     id: root
@@ -133,7 +133,7 @@ PanelWindow {
     }
 
     Timer {
-        interval: 40
+        interval: Theme.panelTickInterval
         running: root.quickSettingsVisible
         repeat: true
         triggeredOnStart: true

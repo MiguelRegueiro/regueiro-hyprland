@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Io
+import "../../theme/Theme.js" as Theme
 
 ColumnLayout {
     id: root
@@ -88,7 +89,7 @@ ColumnLayout {
     Timer {
         id: pollTimer
 
-        interval: 1200
+        interval: Theme.appVolumePollInterval
         running: root.visible && root.activeDragCount === 0
         repeat: true
         triggeredOnStart: true
@@ -101,7 +102,7 @@ ColumnLayout {
     Timer {
         id: refreshSoon
 
-        interval: 150
+        interval: Theme.audioRefreshDelay
         repeat: false
         onTriggered: {
             if (!pollProc.running)

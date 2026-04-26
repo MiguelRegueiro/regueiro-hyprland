@@ -42,7 +42,7 @@ PanelWindow {
 
     Timer {
         id: hideTimer
-        interval: 1500
+        interval: Theme.osdTimeout
         repeat: false
         onTriggered: root.osdVisible = false
     }
@@ -86,7 +86,7 @@ PanelWindow {
             color: Theme.activeBg
 
             Behavior on x {
-                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Theme.osdSelectorDuration; easing.type: Easing.OutCubic }
             }
         }
 
@@ -118,7 +118,7 @@ PanelWindow {
                             font.weight: Font.Bold
                             font.letterSpacing: 1
                             color: isActive ? Theme.textPrimary : Theme.textDim
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Theme.osdTextColorDuration } }
                         }
 
                         Text {
@@ -128,7 +128,7 @@ PanelWindow {
                             font.pixelSize: 12
                             font.weight: Font.Medium
                             color: isActive ? Theme.textDim : Theme.textDisabled
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Theme.osdTextColorDuration } }
                         }
                     }
                 }

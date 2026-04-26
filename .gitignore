@@ -3,3 +3,9 @@ fish/.config/fish/fish_variables
 
 # fcitx5 cache
 fcitx5/.config/fcitx5/conf/cached*
+
+# quickshell runtime state
+quickshell/.config/quickshell/notification-times.ini
+
+# editor/AI session dirs
+.codex

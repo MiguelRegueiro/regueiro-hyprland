@@ -44,7 +44,7 @@ Item {
     visible: reveal > 0.001
 
     Timer {
-        interval: 10000
+        interval: Theme.slowPollInterval
         running: true
         repeat: true
         onTriggered: root.timeTick += 1
@@ -63,7 +63,7 @@ Item {
             to: "open"
             NumberAnimation {
                 property: "reveal"
-                duration: 250
+                duration: Theme.panelOpenDuration
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.05, 0.7, 0.1, 1.0, 1.0, 1.0]
             }
@@ -73,7 +73,7 @@ Item {
             to: ""
             NumberAnimation {
                 property: "reveal"
-                duration: 145
+                duration: Theme.panelCloseDuration
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1.0, 1.0]
             }

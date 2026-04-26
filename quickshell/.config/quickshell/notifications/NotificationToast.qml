@@ -31,7 +31,7 @@ Item {
         target: root
         property: "revealProgress"
         to: 1
-        duration: 220
+        duration: Theme.toastOpenDuration
         easing.type: Easing.OutExpo
     }
 
@@ -41,7 +41,7 @@ Item {
             target: root
             property: "revealProgress"
             to: 0
-            duration: 150
+            duration: Theme.toastCloseDuration
             easing.type: Easing.InQuart
         }
 

@@ -18,7 +18,7 @@ Row {
     property var _prevTotal: 0
 
     Timer {
-        interval: 2000
+        interval: Theme.statsFastInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -53,7 +53,7 @@ Row {
 
     // ── RAM polling ────────────────────────────────────────────
     Timer {
-        interval: 5000
+        interval: Theme.statsSlowInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -92,8 +92,8 @@ Row {
                 font.family: Theme.fontIcons
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
-                color: root.cpuPct >= 90 ? Theme.red
-                     : root.cpuPct >= 70 ? Theme.yellow
+                color: root.cpuPct >= Theme.cpuCritThreshold ? Theme.red
+                     : root.cpuPct >= Theme.cpuWarnThreshold ? Theme.yellow
                      : Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -102,8 +102,8 @@ Row {
                 font.family: Theme.fontUi
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
-                color: root.cpuPct >= 90 ? Theme.red
-                     : root.cpuPct >= 70 ? Theme.yellow
+                color: root.cpuPct >= Theme.cpuCritThreshold ? Theme.red
+                     : root.cpuPct >= Theme.cpuWarnThreshold ? Theme.yellow
                      : Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
             }

@@ -77,3 +77,52 @@ var tileActiveBg      = Qt.rgba(0.208, 0.518, 0.894, 0.82)
 var tileActiveBgHover = Qt.rgba(0.208, 0.518, 0.894, 0.92)
 var tileActiveBorder  = Qt.rgba(0.82, 0.90, 1.0, 0.18)
 var tileActiveBorderHover = Qt.rgba(0.84, 0.92, 1.0, 0.22)
+
+// Screen identity
+var primaryScreen = "eDP-1"
+
+// Timings (ms)
+var hoverCloseDelay          = 140
+var osdTimeout               = 1500
+var slowPollInterval         = 10000
+var inputPollInterval        = 250
+var networkPollInterval      = 3000
+var statsFastInterval        = 2000
+var statsSlowInterval        = 5000
+var brightnessPollInterval   = 2000
+var audioPollFastInterval    = 500
+var audioPollSlowInterval    = 1500
+var audioRefreshDelay        = 150
+var audioOptimisticReset     = 700
+var mediaActionRefreshDelay  = 180
+var notificationHoldDelay    = 500
+var brightnessRefreshDelay   = 160
+var appVolumePollInterval    = 1200
+var panelTickInterval        = 40
+
+// Widget hover color durations (ms)
+var sliderColorDuration     = 100
+var popupButtonColorDuration = 90
+var outputItemColorDuration  = 85
+
+// Panel animation durations (ms)
+var panelOpenDuration    = 250
+var panelCloseDuration   = 145
+var qsPageSlideDuration  = 130
+var qsPageFadeDuration   = 110
+var qsHeightDuration     = 120
+var batteryFillDuration  = 200
+
+// OSD animation durations (ms)
+var osdSelectorDuration  = 100
+var osdTextColorDuration = 150
+
+// Toast animation durations (ms)
+var toastOpenDuration    = 220
+var toastCloseDuration   = 150
+var toastSlideDuration   = 180
+
+// Thresholds
+var batteryLowThreshold = 15
+var cpuWarnThreshold    = 70
+var cpuCritThreshold    = 90

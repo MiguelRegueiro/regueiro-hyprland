@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme/Theme.js" as Theme
 
 Item {
     id: controller
@@ -6,7 +7,7 @@ Item {
     property bool pinned: false
     property bool triggerHovered: false
     property bool panelHovered: false
-    property int closeDelayMs: 140
+    property int closeDelayMs: Theme.hoverCloseDelay
 
     visible: false
 

@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import "../theme/Theme.js" as Theme
 
 Item {
     id: root
@@ -61,7 +62,7 @@ Item {
     }
 
     Timer {
-        interval: 2000
+        interval: Theme.brightnessPollInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -70,7 +71,7 @@ Item {
 
     Timer {
         id: refreshSoon
-        interval: 160
+        interval: Theme.brightnessRefreshDelay
         repeat: false
         onTriggered: root.refresh()
     }
