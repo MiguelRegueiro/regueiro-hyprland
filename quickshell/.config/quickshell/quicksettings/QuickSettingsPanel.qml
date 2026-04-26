@@ -4,6 +4,7 @@ import QtQuick.Shapes
 import QtQuick.Effects
 import Quickshell.Io
 import "pages" as Pages
+import "../services" as Services
 import "../theme/Theme.js" as Theme
 
 FocusScope {
@@ -381,6 +382,7 @@ FocusScope {
                             x: root.wifiPageOpen ? 0 : (root.bluetoothPageOpen ? -parent.width - 20 : parent.width + 20)
                             opacity: root.wifiPageOpen ? 1 : 0
                             menuOpen: root.wifiPageOpen
+                            wifiService: wifiService
                             onBackClicked: root.wifiPageOpen = false
 
                             Behavior on x {
@@ -460,6 +462,8 @@ FocusScope {
         id: setPowerProfile
         command: ["echo"]
     }
+
+    Services.WifiConnectionService { id: wifiService }
 
     states: State {
         name: "open"
