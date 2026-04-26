@@ -1,0 +1,6 @@
+[Environment]
+GTK_THEME=Adwaita:dark
+GTK_APPLICATION_PREFER_DARK_THEME=1
+COLORSCHEME=prefer-dark
+ICON_THEME=MacTahoe-dark
+QT_QPA_PLATFORMTHEME=gtk3
