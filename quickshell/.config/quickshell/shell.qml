@@ -169,6 +169,17 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         delegate: Component {
+            Overlays.InputMethodOSD {
+                required property var modelData
+                targetScreen: modelData
+                active: modelData.name !== "eDP-1" || !root.externalConnected
+            }
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+        delegate: Component {
             Notifications.NotificationsOverlay {
                 required property var modelData
 

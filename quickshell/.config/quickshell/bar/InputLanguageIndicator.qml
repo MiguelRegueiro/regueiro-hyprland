@@ -13,24 +13,23 @@ Rectangle {
     radius: Theme.radiusSmall
     readonly property bool hovered: hover.hovered
     color: hovered ? Theme.hoverBg : "transparent"
-    property string _lang: "ES"
+    property string _lang: "es"
 
     Behavior on color { ColorAnimation { duration: Theme.hoverAnimDuration } }
 
     Text {
         id: langLabel
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: 1
         text: langBtn._lang
-        color: Theme.textDim
+        color: Theme.textPrimary
         font.family: Theme.fontUi
-        font.pixelSize: 12
+        font.pixelSize: 15
         font.weight: Font.Bold
         font.letterSpacing: 0.5
     }
 
     Timer {
-        interval: 1500
+        interval: 250
         running: true
         repeat: true
         triggeredOnStart: true
@@ -40,14 +39,14 @@ Rectangle {
     Process {
         id: langProc
         command: ["bash", "-c",
-            "if ! fcitx5-remote --check >/dev/null 2>&1; then echo ES; " +
+            "if ! fcitx5-remote --check >/dev/null 2>&1; then echo es; " +
             "else e=$(fcitx5-remote -n 2>/dev/null); " +
-            "if [ \"$e\" = 'mozc' ]; then echo JP; else echo ES; fi; fi"]
+            "if [ \"$e\" = 'mozc' ]; then echo あ; else echo es; fi; fi"]
         stdout: StdioCollector {
             id: langOut
             onStreamFinished: {
                 var s = langOut.text.trim()
-                if (s === "JP" || s === "ES") langBtn._lang = s
+                if (s === "あ" || s === "es") langBtn._lang = s
             }
         }
     }
