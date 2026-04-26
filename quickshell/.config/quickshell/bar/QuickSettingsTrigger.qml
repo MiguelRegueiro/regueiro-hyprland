@@ -94,7 +94,7 @@ Rectangle {
         Components.VolumeIcon {
             muted: root.audioService.muted
             volumePercent: root.audioService.volumePercent
-            iconColor: root.audioService.muted ? Theme.textDisabled : Theme.textPrimary
+            iconColor: Theme.textPrimary
             height: 13
             anchors.verticalCenter: parent.verticalCenter
         }
