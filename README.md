@@ -18,6 +18,7 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 ```sh
 sudo pacman -S git stow \
                hyprland hyprpaper hyprlock hyprpicker hypridle \
+               hyprpolkitagent \
                quickshell \
                rofi \
                kitty fish starship fastfetch btop \
@@ -29,6 +30,7 @@ sudo pacman -S git stow \
                wl-clipboard cliphist wl-clip-persist \
                brightnessctl playerctl \
                jq grim slurp swappy libnotify \
+               xorg-xhost \
                power-profiles-daemon \
                flatpak \
                adw-gtk-theme
@@ -70,6 +72,11 @@ sudo systemctl enable --now NetworkManager
 sudo systemctl enable --now bluetooth
 sudo systemctl enable --now power-profiles-daemon
 ```
+
+### Privileged desktop apps
+
+`hyprpolkitagent` provides the polkit authentication prompt under Hyprland, so apps that need admin privileges, like Btrfs Assistant, can ask for your password.
+`xorg-xhost` provides the `xhost` helper some older/root X11 apps still expect under Wayland/XWayland, such as GParted.
 
 ### Monitor layout
 
