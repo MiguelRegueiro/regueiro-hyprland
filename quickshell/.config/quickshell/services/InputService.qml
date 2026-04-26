@@ -12,10 +12,17 @@ Item {
     property string currentGroup: ""
     property string backendState: "unknown"
     property string fcitxState: "unknown"
+    property int configuredMethodCount: -1
     property bool ready: false
     property string lastError: ""
     readonly property bool busy: statusProc.running || switchProc.running
+    readonly property bool hasMethods: methods.length > 0
+    readonly property bool hasConfiguredMethods: configuredMethodCount > 0
     readonly property bool isAvailable: backendState === "ok" || backendState === "closed"
+    readonly property bool hasBackendError: ready && (backendState === "missing" || backendState === "unavailable" || backendState === "error")
+    readonly property bool hasConfigurationWarning: ready && !hasBackendError && !busy && configuredMethodCount === 0
+    readonly property bool hasProblem: hasBackendError || hasConfigurationWarning
+    readonly property bool canCycle: !busy && isAvailable && hasConfiguredMethods
     readonly property int activeIndex: {
         var index = root._findMethodIndex(currentIM);
         return index >= 0 ? index : (methods.length > 0 ? 0 : -1);
@@ -31,6 +38,20 @@ Item {
     }
     readonly property string currentLabel: currentMethod.label
     readonly property string currentName: currentMethod.name
+    readonly property string indicatorLabel: {
+        if (!ready)
+            return "…";
+
+        if (hasBackendError)
+            return "IM";
+
+        if (hasConfigurationWarning)
+            return "--";
+
+        return currentLabel;
+    }
+    readonly property string statusTitle: _statusTitle()
+    readonly property string statusDetail: _statusDetail()
     readonly property string backendScript: Quickshell.env("HOME") + "/.config/hypr/scripts/fcitx-toggle.sh"
 
     signal imChanged(string newIM)
@@ -74,6 +95,7 @@ Item {
         var data = {
             "backend": "unknown",
             "fcitxState": "unknown",
+            "configuredMethodCount": -1,
             "group": "",
             "current": "",
             "methods": []
@@ -94,6 +116,8 @@ Item {
                 data.backend = value;
             else if (key === "fcitx_state")
                 data.fcitxState = value;
+            else if (key === "configured_methods")
+                data.configuredMethodCount = Math.max(0, Number(value));
             else if (key === "group")
                 data.group = value;
             else if (key === "current")
@@ -115,6 +139,53 @@ Item {
             return "fcitx5 is not running";
 
         return "Unexpected input backend status: " + backend;
+    }
+
+    function _statusTitle() {
+        if (!ready)
+            return "Loading input methods";
+
+        if (backendState === "missing")
+            return "fcitx5-remote missing";
+
+        if (backendState === "unavailable")
+            return "Fcitx not running";
+
+        if (backendState === "error")
+            return "Input backend error";
+
+        if (!hasConfiguredMethods)
+            return "No methods configured";
+
+        return currentName || "Input method";
+    }
+
+    function _statusDetail() {
+        if (!ready)
+            return "Waiting for the Fcitx backend state.";
+
+        if (backendState === "missing")
+            return "Install fcitx5-remote to enable the indicator and method switching.";
+
+        if (backendState === "unavailable")
+            return "Start fcitx5 to enable the indicator and method switching.";
+
+        if (backendState === "error")
+            return lastError.length > 0 ? lastError : "Failed to query the Fcitx backend.";
+
+        if (!hasConfiguredMethods) {
+            if (currentGroup.length > 0)
+                return "Group \"" + currentGroup + "\" has no configured methods.";
+
+            return "Add at least one method in Fcitx 5 configuration.";
+        }
+        if (currentGroup.length > 0)
+            return "Group: " + currentGroup;
+
+        if (fcitxState === "closed")
+            return "Input method is currently closed.";
+
+        return "Click to cycle methods.";
     }
 
     function _containsMethodId(methodId) {
@@ -150,31 +221,28 @@ Item {
             methods = InputMethodMetadata.buildMethods([], fallbackCurrent);
             return ;
         }
+        methods = [];
     }
 
     function _preferredCurrentIM(parsedCurrent) {
         if (parsedCurrent && parsedCurrent.length > 0)
             return parsedCurrent;
 
-        if (root._containsMethodId(currentIM))
-            return currentIM;
-
         if (methods.length > 0)
-            return methods[0].id;
+            return root._containsMethodId(currentIM) ? currentIM : methods[0].id;
 
-        return currentIM;
+        return "";
     }
 
     function _setCurrentIM(nextIM, emitChange) {
-        if (!nextIM || nextIM.length === 0)
+        var nextValue = nextIM || "";
+        if (nextValue === currentIM)
             return ;
 
-        if (nextIM !== currentIM) {
-            currentIM = nextIM;
-            if (emitChange)
-                imChanged(nextIM);
+        currentIM = nextValue;
+        if (emitChange && nextValue.length > 0)
+            imChanged(nextValue);
 
-        }
     }
 
     function _applyBackendOutput(rawText, stderrText, exitCode, emitChanges) {
@@ -189,6 +257,7 @@ Item {
         var parsed = _parseBackendOutput(rawText);
         backendState = parsed.backend;
         fcitxState = parsed.fcitxState;
+        configuredMethodCount = parsed.configuredMethodCount;
         currentGroup = parsed.group;
         _setMethods(parsed.methods, parsed.current);
         lastError = _backendMessage(parsed.backend);

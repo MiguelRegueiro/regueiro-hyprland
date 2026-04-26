@@ -200,6 +200,7 @@ emit_describe() {
     local fcitx_state
     local group_name
     local current_method=""
+    local configured_method_count=0
     local -a methods=()
     local method
 
@@ -214,6 +215,8 @@ emit_describe() {
     if [ -n "$group_name" ]; then
         mapfile -t methods < <(load_group_methods "$group_name")
     fi
+
+    configured_method_count="${#methods[@]}"
 
     if current_method="$(load_current_method 2>/dev/null)"; then
         :
@@ -235,6 +238,7 @@ emit_describe() {
 
     printf 'backend=%s\n' "$backend_state"
     printf 'fcitx_state=%s\n' "$fcitx_state"
+    printf 'configured_methods=%s\n' "$configured_method_count"
 
     if [ -n "$group_name" ]; then
         printf 'group=%s\n' "$group_name"
