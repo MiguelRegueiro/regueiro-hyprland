@@ -80,7 +80,7 @@ sudo systemctl enable --now power-profiles-daemon
 
 ### Monitor layout
 
-`hyprland.conf` has a hardcoded monitor layout for my machine. Edit the `### MONITORS ###` section to match yours before starting.
+`hypr/.config/hypr/conf/monitors.conf` has a hardcoded monitor layout for my machine. Edit it to match yours before starting.
 
 ### Wi-Fi handling
 
@@ -120,7 +120,7 @@ flatpak install flathub app.zen_browser.zen
 ```
 
 Some personal keybinds also expect `anitrack`, `elio`, `normcap`, and `runin`.
-If you do not use those apps, either skip them or change the matching binds in `hyprland.conf`.
+If you do not use those apps, either skip them or change the matching binds in `hypr/.config/hypr/conf/binds.conf`.
 
 ## Install
 
