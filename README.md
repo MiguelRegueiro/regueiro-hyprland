@@ -100,7 +100,8 @@ The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5
 For broad app coverage on Hyprland/Wayland, keep the GTK and Qt integration packages installed too: `fcitx5-gtk` and `fcitx5-qt`.
 The session exports `XMODIFIERS=@im=fcitx` and `QT_IM_MODULE=fcitx`, and also sets `GLFW_IM_MODULE=ibus` because Kitty uses GLFW.
 GTK uses the native Wayland frontend for modern apps, while the repo's GTK settings files keep `fcitx` configured for GTK apps that still run through X11/XWayland.
-The top-bar language indicator now toggles between Spanish and Mozc through `fcitx5-remote`, and `Super+Space` switches `ES` / `JP`.
+The top-bar language indicator is backed by a QuickShell input service that tracks the real Fcitx method ID and the configured method order from the current Fcitx group.
+`Super+Space` cycles through the configured group order through QuickShell first so the OSD and shell state stay in sync, and falls back to the direct Fcitx backend if QuickShell is unavailable.
 After the first install or after changing the IM env vars, log out and back in once so the session picks up the new input-method setup.
 If `stow gtk` conflicts with existing `~/.config/gtk-3.0/settings.ini` or `~/.config/gtk-4.0/settings.ini`, back them up and retry:
 

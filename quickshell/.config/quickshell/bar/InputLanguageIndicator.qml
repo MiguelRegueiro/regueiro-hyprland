@@ -19,7 +19,7 @@ Rectangle {
     Text {
         id: langLabel
         anchors.centerIn: parent
-        text: inputService.ready ? inputService.methods[inputService.activeIndex].label : "es"
+        text: inputService.currentLabel
         color: Theme.textPrimary
         font.family: Theme.fontUi
         font.pixelSize: 15
@@ -35,6 +35,6 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        onClicked: inputService.toggle()
+        onClicked: inputService.cycleNext()
     }
 }

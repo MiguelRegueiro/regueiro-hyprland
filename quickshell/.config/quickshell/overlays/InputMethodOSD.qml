@@ -31,6 +31,7 @@ PanelWindow {
     readonly property int itemH: 96
     readonly property int itemGap: 8
     readonly property int pad: 14
+    readonly property int methodCount: root.inputService.methods.length
 
     Connections {
         target: root.inputService
@@ -50,7 +51,11 @@ PanelWindow {
     Rectangle {
         id: osdCard
         anchors.centerIn: parent
-        width:  root.pad * 2 + root.itemW * root.inputService.methods.length + root.itemGap * (root.inputService.methods.length - 1)
+        width: root.pad * 2 + (
+            root.methodCount > 0
+                ? root.itemW * root.methodCount + root.itemGap * (root.methodCount - 1)
+                : root.itemW
+        )
         height: root.pad * 2 + root.itemH
         radius: 18
         color: Theme.popupBg
@@ -78,6 +83,7 @@ PanelWindow {
 
         Rectangle {
             id: selector
+            visible: root.methodCount > 0
             x: root.pad + root.inputService.activeIndex * (root.itemW + root.itemGap)
             y: root.pad
             width: root.itemW
