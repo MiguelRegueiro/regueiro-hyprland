@@ -5,5 +5,10 @@ selection=$({ echo "$CLEAR"; cliphist list; } | rofi -dmenu -p "Clipboard" -i)
 if [ "$selection" = "$CLEAR" ]; then
     cliphist wipe
 else
-    printf '%s' "$selection" | cliphist decode | wl-copy
+    tmp="$(mktemp)"
+    trap 'rm -f "$tmp"' EXIT
+    printf '%s' "$selection" | cliphist decode > "$tmp" || exit 1
+    mime="$(file --brief --mime-type "$tmp")"
+    [ "$mime" = "inode/x-empty" ] && mime="text/plain"
+    wl-copy --type "$mime" < "$tmp"
 fi

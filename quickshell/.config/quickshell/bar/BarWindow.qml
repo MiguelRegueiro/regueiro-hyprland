@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import "../theme/Theme.js" as Theme
 
 PanelWindow {
@@ -16,6 +15,7 @@ PanelWindow {
 
     signal quickSettingsClicked()
     signal notificationCenterClicked()
+    signal clipboardClicked()
     signal quickSettingsHoveredChanged(bool hovered)
     signal notificationCenterHoveredChanged(bool hovered)
 
@@ -29,12 +29,6 @@ PanelWindow {
         top: true
         left: true
         right: true
-    }
-
-    Process {
-        id: clipHistoryMenu
-
-        command: [Quickshell.env("HOME") + "/.config/hypr/scripts/cliphist-menu"]
     }
 
     Item {
@@ -101,7 +95,7 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
                 iconText: "󰅌"
-                onClicked: clipHistoryMenu.running = true
+                onClicked: bar.clipboardClicked()
             }
 
             SystemTrayItems {

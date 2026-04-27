@@ -1,8 +1,10 @@
 //@ pragma UseQApplication
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import "bar" as Bar
+import "clipboard" as Clipboard
 import "notifications" as Notifications
 import "overlays" as Overlays
 import "services" as Services
@@ -14,12 +16,62 @@ ShellRoot {
     property bool externalConnected: Quickshell.screens.length > 1
     readonly property bool quickSettingsVisible: qsController.open
     readonly property bool notificationCenterVisible: ncController.open
+    property bool clipboardVisible: false
+
+    function closeClipboard() {
+        clipboardVisible = false;
+    }
+
+    function openClipboard() {
+        qsController.pinned = false;
+        ncController.pinned = false;
+        qsController.closeImmediately();
+        ncController.closeImmediately();
+        clipboardVisible = true;
+    }
+
+    function toggleClipboard() {
+        if (clipboardVisible)
+            closeClipboard();
+        else
+            openClipboard();
+    }
+
+    function toggleQuickSettings() {
+        closeClipboard();
+        qsController.togglePinned();
+    }
 
     function closeAllPanels() {
         qsController.pinned = false;
         ncController.pinned = false;
         qsController.closeImmediately();
         ncController.closeImmediately();
+        closeClipboard();
+    }
+
+    IpcHandler {
+        target: "quicksettings"
+
+        function toggle() {
+            root.toggleQuickSettings();
+        }
+    }
+
+    IpcHandler {
+        target: "clipboard"
+
+        function toggle() {
+            root.toggleClipboard();
+        }
+
+        function open() {
+            root.openClipboard();
+        }
+
+        function close() {
+            root.closeClipboard();
+        }
     }
 
     Services.HoverOverlayController {
@@ -59,6 +111,10 @@ ShellRoot {
         id: inputServiceState
     }
 
+    Services.ClipboardService {
+        id: clipboardServiceState
+    }
+
     Variants {
         model: Quickshell.screens
 
@@ -73,8 +129,12 @@ ShellRoot {
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
                 inputService: inputServiceState
-                onQuickSettingsClicked: qsController.togglePinned()
-                onNotificationCenterClicked: ncController.togglePinned()
+                onQuickSettingsClicked: root.toggleQuickSettings()
+                onNotificationCenterClicked: {
+                    root.closeClipboard();
+                    ncController.togglePinned();
+                }
+                onClipboardClicked: root.toggleClipboard()
                 onQuickSettingsHoveredChanged: (hovered) => {
                     return qsController.triggerHovered = hovered;
                 }
@@ -164,6 +224,25 @@ ShellRoot {
                         ncController.panelHovered = notificationCenterHovered;
 
                 }
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Clipboard.ClipboardOverlay {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                showLayer: activeScreen
+                clipboardVisible: root.clipboardVisible && activeScreen
+                clipboardService: clipboardServiceState
+                onOutsidePressed: root.closeClipboard()
             }
 
         }

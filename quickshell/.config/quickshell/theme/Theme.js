@@ -72,6 +72,14 @@ var ncSurfaceTopRightRadius = barCornerRadius + 2;
 var ncSurfaceBottomLeftRadius = barCornerRadius + 6;
 var ncSurfaceBottomRightRadius = barCornerRadius + 6;
 
+// Clipboard
+var clipboardWidth = 560;
+var clipboardHeight = 620;
+var clipboardAttachBottom = borderSize;
+var clipboardBorderFuseInset = 2;
+var clipboardSurfaceTopLeftRadius = barCornerRadius + 6;
+var clipboardSurfaceTopRightRadius = barCornerRadius + 6;
+
 // Tile active state -- accent blue (#3584e4) at two opacities
 var tileActiveBg = Qt.rgba(0.208, 0.518, 0.894, 0.82);
 var tileActiveBgHover = Qt.rgba(0.208, 0.518, 0.894, 0.92);
