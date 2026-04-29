@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import "bar" as Bar
 import "clipboard" as Clipboard
+import "launcher" as Launcher
 import "notifications" as Notifications
 import "overlays" as Overlays
 import "services" as Services
@@ -17,12 +18,18 @@ ShellRoot {
     readonly property bool quickSettingsVisible: qsController.open
     readonly property bool notificationCenterVisible: ncController.open
     property bool clipboardVisible: false
+    property bool launcherVisible: false
 
     function closeClipboard() {
         clipboardVisible = false;
     }
 
+    function closeLauncher() {
+        launcherVisible = false;
+    }
+
     function openClipboard() {
+        closeLauncher();
         qsController.pinned = false;
         ncController.pinned = false;
         qsController.closeImmediately();
@@ -37,7 +44,24 @@ ShellRoot {
             openClipboard();
     }
 
+    function openLauncher() {
+        clipboardVisible = false;
+        qsController.pinned = false;
+        ncController.pinned = false;
+        qsController.closeImmediately();
+        ncController.closeImmediately();
+        launcherVisible = true;
+    }
+
+    function toggleLauncher() {
+        if (launcherVisible)
+            closeLauncher();
+        else
+            openLauncher();
+    }
+
     function toggleQuickSettings() {
+        closeLauncher();
         closeClipboard();
         qsController.togglePinned();
     }
@@ -48,6 +72,7 @@ ShellRoot {
         qsController.closeImmediately();
         ncController.closeImmediately();
         closeClipboard();
+        closeLauncher();
     }
 
     IpcHandler {
@@ -71,6 +96,22 @@ ShellRoot {
 
         function close() {
             root.closeClipboard();
+        }
+    }
+
+    IpcHandler {
+        target: "launcher"
+
+        function toggle() {
+            root.toggleLauncher();
+        }
+
+        function open() {
+            root.openLauncher();
+        }
+
+        function close() {
+            root.closeLauncher();
         }
     }
 
@@ -115,6 +156,10 @@ ShellRoot {
         id: clipboardServiceState
     }
 
+    Services.LauncherService {
+        id: launcherServiceState
+    }
+
     Variants {
         model: Quickshell.screens
 
@@ -131,6 +176,7 @@ ShellRoot {
                 inputService: inputServiceState
                 onQuickSettingsClicked: root.toggleQuickSettings()
                 onNotificationCenterClicked: {
+                    root.closeLauncher();
                     root.closeClipboard();
                     ncController.togglePinned();
                 }
@@ -224,6 +270,25 @@ ShellRoot {
                         ncController.panelHovered = notificationCenterHovered;
 
                 }
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Launcher.LauncherOverlay {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                showLayer: activeScreen
+                launcherVisible: root.launcherVisible && activeScreen
+                launcherService: launcherServiceState
+                onOutsidePressed: root.closeLauncher()
             }
 
         }

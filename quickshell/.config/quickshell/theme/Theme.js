@@ -80,6 +80,13 @@ var clipboardBorderFuseInset = 2;
 var clipboardSurfaceTopLeftRadius = barCornerRadius + 6;
 var clipboardSurfaceTopRightRadius = barCornerRadius + 6;
 
+// Launcher
+var launcherWidth = 720;
+var launcherHeight = 540;
+var launcherAttachBottom = borderSize;
+var launcherSurfaceTopLeftRadius = barCornerRadius + 6;
+var launcherSurfaceTopRightRadius = barCornerRadius + 6;
+
 // Tile active state -- accent blue (#3584e4) at two opacities
 var tileActiveBg = Qt.rgba(0.208, 0.518, 0.894, 0.82);
 var tileActiveBgHover = Qt.rgba(0.208, 0.518, 0.894, 0.92);
