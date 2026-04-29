@@ -5,99 +5,112 @@ Item {
     id: root
 
     property var entries: []
-    property var screenshotMeta: ({})
     property string lastListOutput: ""
     property bool loading: listProc.running
-    property bool mutating: copyProc.running || copyPathProc.running || deleteProc.running || wipeProc.running
+    property bool mutating: copyProc.running || deleteProc.running || wipeProc.running
     property string lastError: ""
+    // Support the documented cargo install path, manual /usr/local installs, and PATH installs.
+    property string mimeclipLauncher: 'cmd="$HOME/.cargo/bin/mimeclip"; if [ ! -x "$cmd" ]; then if [ -x /usr/local/bin/mimeclip ]; then cmd=/usr/local/bin/mimeclip; else cmd="$(command -v mimeclip 2>/dev/null || true)"; fi; fi; if [ -z "$cmd" ] || [ ! -x "$cmd" ]; then echo "mimeclip not found in $HOME/.cargo/bin, /usr/local/bin, or PATH" >&2; exit 127; fi; exec "$cmd" "$@"'
 
     signal copyCompleted(bool success)
-    signal copyPathCompleted(bool success)
     signal deleteCompleted(bool success)
     signal wipeCompleted(bool success)
 
-    function parseScreenshotMeta(output) {
-        const meta = {};
-        output.split(/\r?\n/).forEach((line) => {
-            if (line.length === 0)
-                return;
-            const parts = line.split("\t");
-            if (parts.length < 2)
-                return;
-            const id = (parts[0] || "").trim();
-            const label = (parts[1] || "").trim();
-            const path = parts.length >= 3 ? parts.slice(2).join("\t").trim() : "";
-            if (id.length === 0 || label.length === 0)
-                return;
-            meta[id] = {
-                label: label,
-                path: path
-            };
-        });
-        return meta;
+    function normalizeKind(kind) {
+        return typeof kind === "string" && kind.length > 0 ? kind.toLowerCase() : "other";
     }
 
-    function screenshotLabel(id) {
-        const entry = root.screenshotMeta[id];
-        return entry ? (entry.label || "") : "";
+    function mimeclipCommand(args) {
+        return ["bash", "-lc", root.mimeclipLauncher, "mimeclip"].concat(args);
     }
 
-    function screenshotPath(id) {
-        const entry = root.screenshotMeta[id];
-        return entry ? (entry.path || "") : "";
+    function titleCaseKind(kind) {
+        if (!kind || kind.length === 0)
+            return "Item";
+        return kind.charAt(0).toUpperCase() + kind.slice(1);
+    }
+
+    function formatDisplayTime(timestamp) {
+        if (typeof timestamp !== "string" || timestamp.length === 0)
+            return "";
+
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime()))
+            return "";
+
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+        const ss = String(date.getSeconds()).padStart(2, "0");
+        return `${hh}:${mm}:${ss}`;
+    }
+
+    function formatDisplayPreview(label, preview, kind, timestamp) {
+        const previewText = (preview || "").trim();
+        let baseText = "";
+
+        if (previewText.length > 0 && previewText.toLowerCase() !== kind) {
+            baseText = previewText;
+        } else {
+            const labelText = (label || "").trim();
+            if (labelText.length > 0 && labelText.toLowerCase() !== kind)
+                baseText = labelText;
+        }
+
+        if (baseText.length === 0)
+            baseText = kind === "other" ? "Binary" : root.titleCaseKind(kind);
+
+        if (kind !== "image")
+            return baseText;
+
+        const timeText = root.formatDisplayTime(timestamp);
+        return timeText.length > 0 ? `${baseText} · ${timeText}` : baseText;
     }
 
     function rebuildEntries() {
         root.entries = root.parseEntries(root.lastListOutput);
     }
 
-    function formatDisplayPreview(id, preview, isImage) {
-        const genericBinaryMatch = preview.match(/^\[\[\s*binary data\s+\.\.\.\s+([a-z0-9.+-]+)\s+\.\.\.\s*\]\]$/i);
-        if (genericBinaryMatch)
-            return "";
-
-        if (!isImage)
-            return preview;
-
-        const label = root.screenshotLabel(id) || "Image";
-
-        const imageBinaryMatch = preview.match(/^\[\[\s*binary data\s+(.+?)\s+([a-z0-9.+-]+)\s+(\d+x\d+)\s*\]\]$/i);
-        if (imageBinaryMatch)
-            return `${label}\n${imageBinaryMatch[2].toUpperCase()} ${imageBinaryMatch[3]} ${imageBinaryMatch[1]}`;
-
-        if (/^\[\[\s*binary data/i.test(preview))
-            return label;
-
-        return preview;
-    }
-
     function parseEntries(output) {
-        return output.split(/\r?\n/).filter((line) => line.length > 0).map((line) => {
-            const tabIndex = line.indexOf("\t");
-            const id = tabIndex >= 0 ? line.slice(0, tabIndex) : "";
-            const preview = tabIndex >= 0 ? line.slice(tabIndex + 1) : line;
-            const normalizedPreview = preview.length > 0 ? preview : "(empty)";
-            const lowered = normalizedPreview.toLowerCase();
-            const isImage = lowered.includes("image") || lowered.includes("png") || lowered.includes("jpg") || lowered.includes("jpeg") || lowered.includes("gif") || lowered.includes("webp");
-            const displayPreview = root.formatDisplayPreview(id, normalizedPreview, isImage);
-            if (displayPreview.length === 0)
-                return null;
+        if (output.trim().length === 0)
+            return [];
+
+        let parsed;
+        try {
+            parsed = JSON.parse(output);
+        } catch (error) {
+            root.lastError = "Failed to parse clipboard history";
+            return [];
+        }
+
+        if (!Array.isArray(parsed)) {
+            root.lastError = "Clipboard history returned an unexpected format";
+            return [];
+        }
+
+        return parsed.map((entry) => {
+            const id = entry.id;
+            const kind = root.normalizeKind(entry.kind);
+            const label = typeof entry.label === "string" ? entry.label : "";
+            const preview = typeof entry.preview === "string" ? entry.preview : "";
+            const timestamp = typeof entry.timestamp === "string" ? entry.timestamp : "";
+            const mimeTypes = Array.isArray(entry.mime_types) ? entry.mime_types : [];
+            const displayPreview = root.formatDisplayPreview(label, preview, kind, timestamp);
+
             return {
-                raw: line,
                 id: id,
-                preview: normalizedPreview,
+                kind: kind,
+                label: label,
+                preview: preview,
+                timestamp: timestamp,
                 displayPreview: displayPreview,
-                searchText: `${id} ${normalizedPreview} ${displayPreview}`.toLowerCase(),
-                isImage: isImage,
-                path: root.screenshotPath(id)
+                mimeTypes: mimeTypes,
+                searchText: `${id} ${kind} ${label} ${preview} ${timestamp} ${displayPreview} ${mimeTypes.join(" ")}`.toLowerCase()
             };
-        }).filter((entry) => entry !== null);
+        });
     }
 
     function refresh() {
         lastError = "";
-        if (!labelsProc.running)
-            labelsProc.running = true;
         if (!listProc.running)
             listProc.running = true;
     }
@@ -106,29 +119,15 @@ Item {
         if (!entry || copyProc.running)
             return;
         lastError = "";
-        copyProc.environment = {
-            CLIPHIST_ENTRY_ID: entry.id
-        };
+        copyProc.command = root.mimeclipCommand(["restore", String(entry.id)]);
         copyProc.running = true;
-    }
-
-    function copyPath(entry) {
-        if (!entry || !entry.path || copyPathProc.running)
-            return;
-        lastError = "";
-        copyPathProc.environment = {
-            CLIPBOARD_PATH: entry.path
-        };
-        copyPathProc.running = true;
     }
 
     function deleteEntry(entry) {
         if (!entry || deleteProc.running)
             return;
         lastError = "";
-        deleteProc.environment = {
-            CLIPHIST_ENTRY: entry.raw
-        };
+        deleteProc.command = root.mimeclipCommand(["delete", String(entry.id)]);
         deleteProc.running = true;
     }
 
@@ -142,7 +141,7 @@ Item {
     Process {
         id: listProc
 
-        command: ["cliphist", "list"]
+        command: root.mimeclipCommand(["list", "--json", "--limit", "200"])
         stdout: StdioCollector {
             id: listOut
             waitForEnd: true
@@ -158,48 +157,21 @@ Item {
     }
 
     Process {
-        id: labelsProc
-
-        command: ["bash", "-lc", "cat \"${XDG_CACHE_HOME:-$HOME/.cache}/hypr-screenshot-labels.tsv\" 2>/dev/null || true"]
-        stdout: StdioCollector {
-            id: labelsOut
-            waitForEnd: true
-            onStreamFinished: {
-                root.screenshotMeta = root.parseScreenshotMeta(labelsOut.text);
-                if (root.lastListOutput.length > 0)
-                    root.rebuildEntries();
-            }
-        }
-    }
-
-    Process {
         id: copyProc
 
-        command: ["bash", "-lc", "tmp=\"$(mktemp)\"; trap 'rm -f \"$tmp\"' EXIT; printf '%s' \"$CLIPHIST_ENTRY_ID\" | cliphist decode > \"$tmp\" || exit 1; mime=\"$(file --brief --mime-type \"$tmp\")\"; if [ \"$mime\" = \"inode/x-empty\" ]; then mime=\"text/plain\"; fi; wl-copy --type \"$mime\" < \"$tmp\""]
+        command: root.mimeclipCommand(["restore", "0"])
         onExited: (exitCode) => {
             const success = exitCode === 0;
             if (!success)
-                root.lastError = "Failed to copy clipboard entry";
+                root.lastError = "Failed to restore clipboard entry";
             root.copyCompleted(success);
-        }
-    }
-
-    Process {
-        id: copyPathProc
-
-        command: ["bash", "-lc", "ignore_file=\"${XDG_CACHE_HOME:-$HOME/.cache}/hypr-clipboard-ignore-once\"; mkdir -p \"$(dirname \"$ignore_file\")\"; printf '%s' \"$CLIPBOARD_PATH\" > \"$ignore_file\"; printf '%s' \"$CLIPBOARD_PATH\" | wl-copy --type text/plain"]
-        onExited: (exitCode) => {
-            const success = exitCode === 0;
-            if (!success)
-                root.lastError = "Failed to copy screenshot path";
-            root.copyPathCompleted(success);
         }
     }
 
     Process {
         id: deleteProc
 
-        command: ["bash", "-lc", "printf '%s' \"$CLIPHIST_ENTRY\" | cliphist delete"]
+        command: root.mimeclipCommand(["delete", "0"])
         onExited: (exitCode) => {
             const success = exitCode === 0;
             if (success)
@@ -213,7 +185,7 @@ Item {
     Process {
         id: wipeProc
 
-        command: ["cliphist", "wipe"]
+        command: root.mimeclipCommand(["clear"])
         onExited: (exitCode) => {
             const success = exitCode === 0;
             if (success)

@@ -11,7 +11,6 @@ FocusScope {
     property bool open: false
     property real reveal: 0
     property int selectedIndex: -1
-    property bool closeAfterPathCopy: false
     property bool hasOpenedOnce: false
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
@@ -51,6 +50,19 @@ FocusScope {
         root.forceActiveFocus();
         searchInput.forceActiveFocus();
         searchInput.cursorPosition = searchInput.text.length;
+    }
+
+    function iconForKind(kind) {
+        switch (kind) {
+        case "image":
+            return "󰋩";
+        case "file":
+            return "󰈔";
+        case "uri":
+            return "󰌹";
+        default:
+            return "󰅌";
+        }
     }
 
     function clampSelection() {
@@ -100,20 +112,12 @@ FocusScope {
         root.deleteEntry(entry);
     }
 
-    function copyEntryPath(entry) {
-        if (!entry || !entry.path || root.clipboardService.mutating)
-            return;
-        root.closeAfterPathCopy = true;
-        root.clipboardService.copyPath(entry);
-    }
-
     onOpenChanged: {
         if (open) {
             root.hasOpenedOnce = false;
             root.clipboardService.refresh();
             searchInput.text = "";
             root.selectedIndex = -1;
-            root.closeAfterPathCopy = false;
             Qt.callLater(root.focusSearch);
             Qt.callLater(function() {
                 root.hasOpenedOnce = true;
@@ -121,7 +125,6 @@ FocusScope {
         } else {
             searchInput.text = "";
             root.selectedIndex = -1;
-            root.closeAfterPathCopy = false;
             root.hasOpenedOnce = false;
         }
     }
@@ -218,13 +221,6 @@ FocusScope {
         function onDeleteCompleted(success) {
             if (success)
                 Qt.callLater(root.focusSearch);
-        }
-
-        function onCopyPathCompleted(success) {
-            const shouldClose = root.closeAfterPathCopy && success;
-            root.closeAfterPathCopy = false;
-            if (shouldClose)
-                root.requestClose();
         }
 
         function onWipeCompleted(success) {
@@ -700,7 +696,6 @@ FocusScope {
 
                                     readonly property bool selected: index === root.selectedIndex
                                     readonly property bool hovered: rowHover.hovered
-                                    readonly property bool hasPathAction: !!(modelData.path && modelData.path.length > 0)
                                     width: listView.width
                                     implicitHeight: Math.max(58, previewLabel.implicitHeight + 22)
                                     radius: 16
@@ -730,7 +725,7 @@ FocusScope {
 
                                             Text {
                                                 anchors.centerIn: parent
-                                                text: modelData.isImage ? "󰋩" : "󰅌"
+                                                text: root.iconForKind(modelData.kind)
                                                 font.family: Theme.fontIcons
                                                 font.pixelSize: 14
                                                 color: selected ? Theme.textPrimary : Theme.textDim
@@ -765,50 +760,13 @@ FocusScope {
                                         id: actionRow
                                         z: 2
                                         visible: hovered || selected
-                                        spacing: 8
-                                        width: deleteButton.width + (pathButton.visible ? pathButton.width + spacing : 0)
+                                        width: deleteButton.width
                                         height: 28
 
                                         anchors {
                                             right: parent.right
                                             rightMargin: 8
                                             verticalCenter: parent.verticalCenter
-                                        }
-
-                                        Rectangle {
-                                            id: pathButton
-
-                                            visible: hasPathAction
-                                            width: 42
-                                            height: 28
-                                            radius: 14
-                                            color: pathHover.hovered ? Qt.rgba(0, 0, 0, 0.18) : Qt.rgba(1, 1, 1, 0.08)
-                                            border.width: pathHover.hovered ? 1 : 0
-                                            border.color: Qt.rgba(1, 1, 1, 0.16)
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "Path"
-                                                font.family: Theme.fontUi
-                                                font.pixelSize: 11
-                                                color: selected ? Theme.textPrimary : Theme.textDim
-                                            }
-
-                                            HoverHandler {
-                                                id: pathHover
-
-                                                blocking: false
-                                                cursorShape: Qt.ArrowCursor
-                                            }
-
-                                            TapHandler {
-                                                acceptedButtons: Qt.LeftButton
-                                                gesturePolicy: TapHandler.ReleaseWithinBounds
-                                                onTapped: {
-                                                    root.selectedIndex = index;
-                                                    root.copyEntryPath(modelData);
-                                                }
-                                            }
                                         }
 
                                         Rectangle {

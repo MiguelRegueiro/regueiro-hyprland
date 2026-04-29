@@ -27,7 +27,7 @@ sudo pacman -S git stow \
                networkmanager \
                bluez bluez-utils blueman \
                pipewire pipewire-pulse wireplumber libpulse \
-               wl-clipboard cliphist wl-clip-persist \
+               wl-clipboard wl-clip-persist \
                brightnessctl playerctl \
                jq grim slurp swappy libnotify \
                xorg-xhost \
@@ -94,11 +94,20 @@ The Bluetooth submenu is handled directly with `bluetoothctl`, so `bluez` + `blu
 It currently lists paired devices and lets you connect/disconnect them inline from QuickShell.
 `blueman` is also part of this setup: `blueman-applet` is autostarted, and the footer button opens `blueman-manager` for the external Bluetooth settings/pairing UI.
 
+### Clipboard history
+
+Clipboard history is handled by [`mimeclip`](https://github.com/MiguelRegueiro/mimeclip), not `cliphist`.
+Install `mimeclip` / `mimeclipd` separately, then enable its user service:
+
+```sh
+systemctl --user enable --now mimeclipd
+```
+
 ### Input method
 
 The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5` + `fcitx5-mozc`).
 For broad app coverage on Hyprland/Wayland, keep the GTK and Qt integration packages installed too: `fcitx5-gtk` and `fcitx5-qt`.
-The session exports `XMODIFIERS=@im=fcitx` and `QT_IM_MODULE=fcitx`, and also sets `GLFW_IM_MODULE=ibus` because Kitty uses GLFW.
+The session exports `XMODIFIERS=@im=fcitx`, `QT_IM_MODULE=fcitx`, and `GLFW_IM_MODULE=fcitx` so GLFW apps such as Kitty use the same input-method backend.
 GTK uses the native Wayland frontend for modern apps, while the repo's GTK settings files keep `fcitx` configured for GTK apps that still run through X11/XWayland.
 The top-bar language indicator is backed by a QuickShell input service that tracks the real Fcitx method ID and the configured method order from the current Fcitx group.
 `Super+Space` cycles through the configured group order through QuickShell first so the OSD and shell state stay in sync, and falls back to the direct Fcitx backend if QuickShell is unavailable.
