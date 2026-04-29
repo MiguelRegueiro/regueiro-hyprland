@@ -44,7 +44,7 @@ Item {
         return `${hh}:${mm}:${ss}`;
     }
 
-    function formatDisplayPreview(label, preview, kind, timestamp) {
+    function formatDisplayPreview(label, preview, kind, createdAt) {
         const previewText = (preview || "").trim();
         let baseText = "";
 
@@ -62,7 +62,7 @@ Item {
         if (kind !== "image")
             return baseText;
 
-        const timeText = root.formatDisplayTime(timestamp);
+        const timeText = root.formatDisplayTime(createdAt);
         return timeText.length > 0 ? `${baseText} · ${timeText}` : baseText;
     }
 
@@ -92,19 +92,23 @@ Item {
             const kind = root.normalizeKind(entry.kind);
             const label = typeof entry.label === "string" ? entry.label : "";
             const preview = typeof entry.preview === "string" ? entry.preview : "";
-            const timestamp = typeof entry.timestamp === "string" ? entry.timestamp : "";
+            const createdAt = typeof entry.created_at === "string"
+                ? entry.created_at
+                : (typeof entry.timestamp === "string" ? entry.timestamp : "");
+            const lastUsedAt = typeof entry.last_used_at === "string" ? entry.last_used_at : createdAt;
             const mimeTypes = Array.isArray(entry.mime_types) ? entry.mime_types : [];
-            const displayPreview = root.formatDisplayPreview(label, preview, kind, timestamp);
+            const displayPreview = root.formatDisplayPreview(label, preview, kind, createdAt);
 
             return {
                 id: id,
                 kind: kind,
                 label: label,
                 preview: preview,
-                timestamp: timestamp,
+                createdAt: createdAt,
+                lastUsedAt: lastUsedAt,
                 displayPreview: displayPreview,
                 mimeTypes: mimeTypes,
-                searchText: `${id} ${kind} ${label} ${preview} ${timestamp} ${displayPreview} ${mimeTypes.join(" ")}`.toLowerCase()
+                searchText: `${id} ${kind} ${label} ${preview} ${createdAt} ${lastUsedAt} ${displayPreview} ${mimeTypes.join(" ")}`.toLowerCase()
             };
         });
     }
