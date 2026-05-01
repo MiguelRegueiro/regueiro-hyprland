@@ -15,7 +15,7 @@ PanelWindow {
     property bool quickSettingsVisible: false
     property bool notificationCenterCursorInside: false
     readonly property bool notificationCenterHovered: notificationCenter.hovered || root.notificationCenterCursorInside
-    readonly property real toastGap: Theme.borderSize + 8
+    readonly property real toastGap: Theme.borderSize + 28
     readonly property real quickSettingsReserveWidth: root.quickSettingsVisible ? (Theme.qsWidth + Theme.qsAttachRight + 16) : 0
     readonly property real toastX: Math.round(Math.max(root.toastGap, root.width - toastStack.width - root.toastGap - root.quickSettingsReserveWidth))
     readonly property real notificationCenterRegionX: notificationCenter.x + notificationCenter.inputRegion.x
@@ -135,7 +135,7 @@ PanelWindow {
 
         visible: !root.notificationCenterVisible && root.notificationStore.popups.length > 0
         x: root.toastX
-        y: Theme.barHeight + 8
+        y: Theme.barHeight + Theme.borderSize + 12
         width: Theme.toastWidth
         spacing: 8
 

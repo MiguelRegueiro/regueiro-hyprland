@@ -15,8 +15,8 @@ Item {
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: hoverArea.hovered || boundsHover.hovered
     readonly property real attachTop: Theme.ncAttachTop
-    readonly property real topLeftRadius:  0.001
-    readonly property real topRightRadius:  0.001
+    readonly property real topLeftRadius: 0.001
+    readonly property real topRightRadius: 0.001
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
     readonly property real revealProgress: reveal
@@ -28,17 +28,14 @@ Item {
     readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property real bodyWidth: Theme.ncWidth
     readonly property real fuseOverhang: Theme.barCornerRadius
-
     // Kept close to your original value, but isolated so the optical offset is intentional.
     // If the fuse still feels 1px too low, try changing this from 2 to 1, 0.5, or 0.
     readonly property real fuseOpticalInset: 2
     readonly property real fuseTopInset: Theme.qsBarFuseOverlap + root.fuseOpticalInset
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
-
     // A tiny top radius avoids degenerate arcs while visually behaving like a merged edge.
     readonly property real mergedTopLeftRadius: 0.001
     readonly property real mergedTopRightRadius: 0.001
-
     readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseOverhang * 2 * root.reveal
 
     implicitWidth: root.bodyWidth + root.fuseOverhang * 2
@@ -47,7 +44,6 @@ Item {
     height: implicitHeight
     visible: reveal > 0.001
     state: open ? "open" : ""
-
     transitions: [
         Transition {
             from: ""
@@ -59,6 +55,7 @@ Item {
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
             }
+
         },
         Transition {
             from: "open"
@@ -70,6 +67,7 @@ Item {
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
             }
+
         }
     ]
 
@@ -103,6 +101,7 @@ Item {
 
         HoverHandler {
             id: boundsHover
+
             blocking: false
         }
 
@@ -115,6 +114,7 @@ Item {
 
             HoverHandler {
                 id: hoverArea
+
                 blocking: false
             }
 
@@ -211,6 +211,7 @@ Item {
                             x: -root.fuseOverhang
                             y: 0
                         }
+
                     }
 
                     // One matching outline path.
@@ -280,6 +281,7 @@ Item {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
+
                     }
 
                     // Top-left merge patch.
@@ -313,6 +315,7 @@ Item {
                             x: 0
                             y: 0
                         }
+
                     }
 
                     // Top-right merge patch.
@@ -345,7 +348,9 @@ Item {
                             x: frame.width
                             y: 0
                         }
+
                     }
+
                 }
 
                 MouseArea {
@@ -411,8 +416,11 @@ Item {
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
                                     }
+
                                 }
+
                             }
+
                         }
 
                         Item {
@@ -439,13 +447,16 @@ Item {
 
                             HoverHandler {
                                 id: clearHover
+
                                 blocking: false
                             }
 
                             TapHandler {
                                 onTapped: root.notificationStore.dismissAll()
                             }
+
                         }
+
                     }
 
                     Rectangle {
@@ -488,6 +499,7 @@ Item {
                                 font.pixelSize: 14
                                 font.weight: Font.DemiBold
                             }
+
                         }
 
                         ListView {
@@ -514,20 +526,26 @@ Item {
                                 item: modelData
                                 timeTick: root.timeTick
                             }
+
                         }
+
                     }
+
                 }
+
             }
+
         }
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.7 * root.reveal)
-            shadowBlur: 0.88
-            shadowVerticalOffset: 4
+            shadowColor: Qt.rgba(0, 0, 0, 0.96 * root.reveal)
+            shadowBlur: 0.72
+            shadowVerticalOffset: 2
             shadowHorizontalOffset: 0
-            blurMax: 48
+            blurMax: 28
         }
+
     }
 
     states: State {
@@ -536,5 +554,7 @@ Item {
         PropertyChanges {
             root.reveal: 1
         }
+
     }
+
 }

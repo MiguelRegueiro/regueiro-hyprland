@@ -11,8 +11,8 @@ Item {
     readonly property var notif: item ? item.notif : null
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
-    readonly property color toastSurfaceColor: Theme.popupBg
-    readonly property color toastSurfaceHoverColor: Qt.rgba(0.088, 0.088, 0.088, 1)
+    readonly property color toastSurfaceColor: Qt.rgba(0.098, 0.098, 0.098, 1)
+    readonly property color toastSurfaceHoverColor: Qt.rgba(0.115, 0.115, 0.115, 1)
     property real revealProgress: 0
     property bool exiting: false
 
@@ -90,7 +90,7 @@ Item {
             radius: Theme.qsRadius + 3
             color: toastHover.hovered && root.canActivate ? root.toastSurfaceHoverColor : root.toastSurfaceColor
             border.width: 1
-            border.color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, toastHover.hovered && root.canActivate ? 0.3 : 0.26) : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.11) : Theme.barBorder)
+            border.color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, toastHover.hovered && root.canActivate ? 0.24 : 0.19) : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.1))
             layer.enabled: true
 
             anchors {
@@ -149,11 +149,11 @@ Item {
 
             layer.effect: MultiEffect {
                 shadowEnabled: true
-                shadowColor: Qt.rgba(0, 0, 0, 0.52 * root.revealProgress)
-                shadowBlur: 0.96
-                shadowVerticalOffset: 6
+                shadowColor: Qt.rgba(0, 0, 0, 0.92 * root.revealProgress)
+                shadowBlur: 0.72
+                shadowVerticalOffset: 2
                 shadowHorizontalOffset: 0
-                blurMax: 42
+                blurMax: 26
             }
 
             Behavior on color {

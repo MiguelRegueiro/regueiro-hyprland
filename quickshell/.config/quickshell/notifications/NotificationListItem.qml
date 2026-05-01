@@ -13,7 +13,7 @@ Item {
     readonly property var notif: item ? item.notif : null
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
-    property color cardColor: root.canActivate && cardHover.hovered ? Qt.rgba(0.115, 0.115, 0.115, 0.98) : Qt.rgba(0.098, 0.098, 0.098, 0.96)
+    property color cardColor: root.canActivate && cardHover.hovered ? Qt.rgba(0.115, 0.115, 0.115, 1) : Qt.rgba(0.098, 0.098, 0.098, 1)
     property color cardBorderColor: root.isCritical ? Qt.rgba(1, 0.48, 0.39, root.canActivate && cardHover.hovered ? 0.24 : 0.19) : (root.canActivate && cardHover.hovered ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.1))
 
     width: ListView.view ? ListView.view.width : 0
@@ -75,11 +75,11 @@ Item {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, root.canActivate && cardHover.hovered ? 0.18 : 0.12)
-            shadowBlur: 0.55
+            shadowColor: Qt.rgba(0, 0, 0, root.canActivate && cardHover.hovered ? 0.42 : 0.32)
+            shadowBlur: 0.65
             shadowVerticalOffset: 1
             shadowHorizontalOffset: 0
-            blurMax: 24
+            blurMax: 18
         }
 
     }
