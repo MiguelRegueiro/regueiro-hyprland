@@ -25,7 +25,7 @@ FocusScope {
     readonly property real animTopRightRadius: root.topRightRadius * root.reveal
     readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
     readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
+    readonly property real frameScale: 0.994 + root.reveal * 0.006
     readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property real bodyWidth: Theme.clipboardWidth
     readonly property real bodyHeight: Theme.clipboardHeight
@@ -246,7 +246,8 @@ FocusScope {
 
         width: root.width
         height: root.height
-        y: (1 - root.reveal) * 4
+        // Keep the clipboard anchored during reveal; the old 4px lift read as a second pop at the end.
+        y: 0
         scale: root.frameScale
         transformOrigin: Item.Bottom
         opacity: root.frameOpacity
