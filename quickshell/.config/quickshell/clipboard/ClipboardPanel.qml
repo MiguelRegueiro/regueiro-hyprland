@@ -23,9 +23,9 @@ FocusScope {
     readonly property real revealProgress: reveal
     readonly property real animTopLeftRadius: root.topLeftRadius * root.reveal
     readonly property real animTopRightRadius: root.topRightRadius * root.reveal
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.994 + root.reveal * 0.006
+    readonly property real clipWidthProgress: 0.88 + root.reveal * 0.12
+    readonly property real clipHeightProgress: 0.86 + root.reveal * 0.14
+    readonly property real frameScale: 0.992 + root.reveal * 0.008
     readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property real bodyWidth: Theme.clipboardWidth
     readonly property real bodyHeight: Theme.clipboardHeight
@@ -196,7 +196,7 @@ FocusScope {
             NumberAnimation {
                 target: root
                 property: "reveal"
-                duration: Theme.panelOpenDuration
+                duration: Theme.panelOpenDuration - 40
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
             }
@@ -209,7 +209,7 @@ FocusScope {
             NumberAnimation {
                 target: root
                 property: "reveal"
-                duration: Theme.panelCloseDuration
+                duration: Theme.panelCloseDuration - 20
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
             }

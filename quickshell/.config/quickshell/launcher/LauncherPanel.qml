@@ -25,8 +25,8 @@ FocusScope {
     readonly property real revealProgress: reveal
     readonly property real animTopLeftRadius: root.topLeftRadius * root.reveal
     readonly property real animTopRightRadius: root.topRightRadius * root.reveal
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.80 + root.reveal * 0.20
+    readonly property real clipWidthProgress: 0.92 + root.reveal * 0.08
+    readonly property real clipHeightProgress: 0.90 + root.reveal * 0.10
     readonly property real frameScale: 0.994 + root.reveal * 0.006
     readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property real bodyWidth: Theme.launcherWidth
@@ -184,7 +184,7 @@ FocusScope {
             NumberAnimation {
                 target: root
                 property: "reveal"
-                duration: Theme.panelOpenDuration
+                duration: Theme.panelOpenDuration - 55
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
             }
@@ -196,7 +196,7 @@ FocusScope {
             NumberAnimation {
                 target: root
                 property: "reveal"
-                duration: Theme.panelCloseDuration
+                duration: Theme.panelCloseDuration - 25
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
             }
@@ -208,7 +208,6 @@ FocusScope {
 
         width: root.width
         height: root.height
-        // Keep the launcher anchored during reveal; the old 4px lift read as a second pop at the end.
         y: 0
         scale: root.frameScale
         transformOrigin: Item.Bottom
