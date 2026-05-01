@@ -18,6 +18,9 @@ log() {
 
 fail() {
     log "error: $*"
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "Screenshot failed" "$*"
+    fi
     exit 1
 }
 
@@ -55,9 +58,20 @@ capture_full() {
     grim -o "$output" "$file"
 }
 
-capture_area() {
+capture_freeze_area() {
     local geometry
-    geometry="$(slurp -d)" || exit 0
+
+    for cmd in grim slurp; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            fail "$cmd is not installed"
+        fi
+    done
+
+    if ! geometry="$(slurp -d)"; then
+        log "area selection cancelled"
+        exit 0
+    fi
+
     log "capturing area: $geometry"
     grim -g "$geometry" "$file"
 }
@@ -74,31 +88,20 @@ capture_window() {
     grim -g "$geometry" "$file"
 }
 
-annotate_area() {
-    local geometry
-    geometry="$(slurp -d)" || exit 0
-    log "annotating area: $geometry"
-    grim -g "$geometry" - | swappy -f -
-    exit 0
-}
-
 log "start"
 
 case "$mode" in
 full)
     capture_full
     ;;
-area)
-    capture_area
+freeze-area)
+    capture_freeze_area
     ;;
 window)
     capture_window
     ;;
-annotate)
-    annotate_area
-    ;;
 *)
-    echo "Usage: $0 {full|area|window|annotate}" >&2
+    echo "Usage: $0 {full|freeze-area|window}" >&2
     exit 2
     ;;
 esac
