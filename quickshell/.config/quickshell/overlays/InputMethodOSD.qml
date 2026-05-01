@@ -152,11 +152,11 @@ PanelWindow {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.5)
-            shadowBlur: 0.75
-            shadowVerticalOffset: 8
+            shadowColor: Qt.rgba(0, 0, 0, 0.82)
+            shadowBlur: 0.7
+            shadowVerticalOffset: 6
             shadowHorizontalOffset: 0
-            blurMax: 32
+            blurMax: 56
         }
 
     }
