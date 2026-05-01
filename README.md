@@ -6,7 +6,8 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 
 - **WM** — [Hyprland](https://hyprland.org/)
 - **Bar / panels** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
-- **Launcher** — [Rofi](https://github.com/davatorium/rofi)
+- **Launcher** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
+- **Run / power menus** — [Rofi](https://github.com/davatorium/rofi)
 - **Wallpaper** — [hyprpaper](https://github.com/hyprwm/hyprpaper)
 - **Lock screen** — [hyprlock](https://github.com/hyprwm/hyprlock)
 - **Input method** — [Fcitx 5](https://fcitx-im.org/wiki/Fcitx_5/en)
