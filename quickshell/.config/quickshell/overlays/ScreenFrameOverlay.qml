@@ -26,6 +26,7 @@ PanelWindow {
     readonly property real quickSettingsRegionHeight: quickSettingsPanel.inputRegion.height
 
     signal outsidePressed()
+    signal powerActionRequested(string actionId)
 
     function updateQuickSettingsCursor(rawText) {
         const match = rawText.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
@@ -402,6 +403,9 @@ PanelWindow {
         notificationStore: root.notificationStore
         audioService: root.audioService
         brightnessService: root.brightnessService
+        onPowerActionRequested: (actionId) => {
+            return root.powerActionRequested(actionId);
+        }
     }
 
     mask: Region {

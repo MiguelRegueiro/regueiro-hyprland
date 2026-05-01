@@ -1,7 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Io
 import Quickshell.Services.UPower
 import "widgets" as Widgets
 import "../components" as Components
@@ -30,6 +28,7 @@ Item {
     signal bluetoothPageRequested()
     signal powerModeChangeRequested(string mode)
     signal audioOutputPopupRequest(bool open)
+    signal powerActionRequested(string actionId)
 
     function powerModeLabel() {
         if (powerMode === "power-saver")
@@ -160,6 +159,62 @@ Item {
                 Layout.preferredHeight: 38
 
                 Rectangle {
+                    id: logoutButton
+
+                    anchors.fill: parent
+                    radius: 19
+                    color: logoutButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+                    border.width: 1
+                    border.color: logoutButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\uf08b"
+                        font.family: Theme.fontIcons
+                        font.pixelSize: 16
+                        color: Theme.textPrimary
+                    }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.qsPageFadeDuration
+                        }
+
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.qsPageFadeDuration
+                        }
+
+                    }
+
+                }
+
+                HoverHandler {
+                    id: logoutButtonHover
+
+                    blocking: false
+                    cursorShape: Qt.ArrowCursor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.ArrowCursor
+                    onClicked: {
+                        root.powerMenuOpen = false;
+                        root.audioOutputPopupRequest(false);
+                        root.powerActionRequested("logout");
+                    }
+                }
+
+            }
+
+            Item {
+                Layout.preferredWidth: 38
+                Layout.preferredHeight: 38
+
+                Rectangle {
                     id: lockButton
 
                     anchors.fill: parent
@@ -205,9 +260,7 @@ Item {
                     onClicked: {
                         root.powerMenuOpen = false;
                         root.audioOutputPopupRequest(false);
-                        if (!lockProc.running)
-                            lockProc.running = true;
-
+                        root.powerActionRequested("lock");
                     }
                 }
 
@@ -462,6 +515,9 @@ Item {
             y: headerRow.y + powerAnchor.height + 10
             opacity: root.powerMenuOpen ? 1 : 0
             onActionTriggered: root.powerMenuOpen = false
+            onActionRequested: (actionId) => {
+                return root.powerActionRequested(actionId);
+            }
 
             Behavior on opacity {
                 NumberAnimation {
@@ -528,12 +584,6 @@ Item {
             onSinkChosen: root.audioOutputPopupRequest(false)
         }
 
-    }
-
-    Process {
-        id: lockProc
-
-        command: [Quickshell.env("HOME") + "/.config/hypr/scripts/power-menu", "lock"]
     }
 
 }

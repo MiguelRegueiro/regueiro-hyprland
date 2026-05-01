@@ -19,6 +19,93 @@ ShellRoot {
     readonly property bool notificationCenterVisible: ncController.open
     property bool clipboardVisible: false
     property bool launcherVisible: false
+    property bool powerMenuVisible: false
+    property string powerMenuMode: "menu"
+    property string powerMenuAction: ""
+    property string powerBusyAction: ""
+
+    function powerActionNeedsConfirmation(actionId) {
+        return actionId === "logout" || actionId === "reboot" || actionId === "shutdown";
+    }
+
+    function closePowerMenu() {
+        powerMenuVisible = false;
+        powerMenuMode = "menu";
+        powerMenuAction = "";
+    }
+
+    function openPowerMenu() {
+        closeAllPanels();
+        powerMenuMode = "menu";
+        powerMenuAction = "";
+        powerMenuVisible = true;
+    }
+
+    function togglePowerMenu() {
+        if (powerMenuVisible)
+            closePowerMenu();
+        else
+            openPowerMenu();
+    }
+
+    function requestPowerAction(actionId) {
+        if (powerBusyAction !== "")
+            return ;
+
+        if (actionId === "toggle") {
+            togglePowerMenu();
+            return ;
+        }
+        if (actionId === "open" || actionId === "menu") {
+            openPowerMenu();
+            return ;
+        }
+        if (actionId === "close") {
+            closePowerMenu();
+            return ;
+        }
+        if (powerActionNeedsConfirmation(actionId)) {
+            closeAllPanels();
+            powerMenuMode = "confirm";
+            powerMenuAction = actionId;
+            powerMenuVisible = true;
+            return ;
+        }
+        runPowerAction(actionId);
+    }
+
+    function confirmPowerAction() {
+        if (!powerActionNeedsConfirmation(powerMenuAction))
+            return ;
+
+        runPowerAction(powerMenuAction);
+    }
+
+    function clearPowerBusy(actionId) {
+        if (powerBusyAction === actionId)
+            powerBusyAction = "";
+
+    }
+
+    function runPowerAction(actionId) {
+        if (powerBusyAction !== "")
+            return ;
+
+        closeAllPanels();
+        powerBusyAction = actionId;
+        if (actionId === "lock" && !lockProc.running)
+            lockProc.running = true;
+        else if (actionId === "suspend" && !suspendProc.running)
+            suspendProc.running = true;
+        else if (actionId === "logout" && !logoutProc.running)
+            logoutProc.running = true;
+        else if (actionId === "reboot" && !rebootProc.running)
+            rebootProc.running = true;
+        else if (actionId === "shutdown" && !shutdownProc.running)
+            shutdownProc.running = true;
+        else
+            powerBusyAction = "";
+    }
 
     function closeClipboard() {
         clipboardVisible = false;
@@ -29,6 +116,9 @@ ShellRoot {
     }
 
     function openClipboard() {
+        if (powerMenuVisible)
+            return ;
+
         closeLauncher();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -38,6 +128,9 @@ ShellRoot {
     }
 
     function toggleClipboard() {
+        if (powerMenuVisible)
+            return ;
+
         if (clipboardVisible)
             closeClipboard();
         else
@@ -45,6 +138,9 @@ ShellRoot {
     }
 
     function openLauncher() {
+        if (powerMenuVisible)
+            return ;
+
         clipboardVisible = false;
         qsController.pinned = false;
         ncController.pinned = false;
@@ -54,6 +150,9 @@ ShellRoot {
     }
 
     function toggleLauncher() {
+        if (powerMenuVisible)
+            return ;
+
         if (launcherVisible)
             closeLauncher();
         else
@@ -61,6 +160,9 @@ ShellRoot {
     }
 
     function toggleQuickSettings() {
+        if (powerMenuVisible)
+            return ;
+
         closeLauncher();
         closeClipboard();
         qsController.togglePinned();
@@ -73,19 +175,18 @@ ShellRoot {
         ncController.closeImmediately();
         closeClipboard();
         closeLauncher();
+        closePowerMenu();
     }
 
     IpcHandler {
-        target: "quicksettings"
-
         function toggle() {
             root.toggleQuickSettings();
         }
+
+        target: "quicksettings"
     }
 
     IpcHandler {
-        target: "clipboard"
-
         function toggle() {
             root.toggleClipboard();
         }
@@ -97,11 +198,11 @@ ShellRoot {
         function close() {
             root.closeClipboard();
         }
+
+        target: "clipboard"
     }
 
     IpcHandler {
-        target: "launcher"
-
         function toggle() {
             root.toggleLauncher();
         }
@@ -112,6 +213,103 @@ ShellRoot {
 
         function close() {
             root.closeLauncher();
+        }
+
+        target: "launcher"
+    }
+
+    IpcHandler {
+        function toggle() {
+            root.togglePowerMenu();
+        }
+
+        function open() {
+            root.openPowerMenu();
+        }
+
+        function close() {
+            root.closePowerMenu();
+        }
+
+        function action(actionId: string) {
+            root.requestPowerAction(actionId);
+        }
+
+        function lock() {
+            root.requestPowerAction("lock");
+        }
+
+        function suspend() {
+            root.requestPowerAction("suspend");
+        }
+
+        function logout() {
+            root.requestPowerAction("logout");
+        }
+
+        function reboot() {
+            root.requestPowerAction("reboot");
+        }
+
+        function shutdown() {
+            root.requestPowerAction("shutdown");
+        }
+
+        target: "powermenu"
+    }
+
+    Process {
+        id: lockProc
+
+        command: ["sh", "-lc", "if command -v hyprlock >/dev/null 2>&1; then hyprlock --config \"$HOME/.config/hypr/hyprlock.conf\"; elif command -v swaylock >/dev/null 2>&1; then swaylock; else loginctl lock-session; fi"]
+        onRunningChanged: {
+            if (!running)
+                root.clearPowerBusy("lock");
+
+        }
+    }
+
+    Process {
+        id: suspendProc
+
+        command: ["sh", "-lc", "if command -v hyprlock >/dev/null 2>&1 && ! pgrep -x hyprlock >/dev/null 2>&1; then hyprlock --config \"$HOME/.config/hypr/hyprlock.conf\" >/dev/null 2>&1 & sleep 1; elif command -v swaylock >/dev/null 2>&1 && ! pgrep -x swaylock >/dev/null 2>&1; then swaylock >/dev/null 2>&1 & sleep 1; else loginctl lock-session >/dev/null 2>&1 || true; fi; systemctl suspend"]
+        onRunningChanged: {
+            if (!running)
+                root.clearPowerBusy("suspend");
+
+        }
+    }
+
+    Process {
+        id: logoutProc
+
+        command: ["hyprctl", "dispatch", "exit"]
+        onRunningChanged: {
+            if (!running)
+                root.clearPowerBusy("logout");
+
+        }
+    }
+
+    Process {
+        id: rebootProc
+
+        command: ["systemctl", "reboot"]
+        onRunningChanged: {
+            if (!running)
+                root.clearPowerBusy("reboot");
+
+        }
+    }
+
+    Process {
+        id: shutdownProc
+
+        command: ["systemctl", "poweroff"]
+        onRunningChanged: {
+            if (!running)
+                root.clearPowerBusy("shutdown");
+
         }
     }
 
@@ -208,6 +406,9 @@ ShellRoot {
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
                 onOutsidePressed: root.closeAllPanels()
+                onPowerActionRequested: (actionId) => {
+                    return root.requestPowerAction(actionId);
+                }
                 onQuickSettingsHoveredChanged: {
                     if (activeScreen)
                         qsController.panelHovered = quickSettingsHovered;
@@ -245,6 +446,31 @@ ShellRoot {
                 targetScreen: modelData
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 inputService: inputServiceState
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Overlays.PowerMenuOSD {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                active: activeScreen
+                open: root.powerMenuVisible && activeScreen
+                mode: root.powerMenuMode
+                actionId: root.powerMenuAction
+                busyAction: root.powerBusyAction
+                onActionRequested: (actionId) => {
+                    return root.requestPowerAction(actionId);
+                }
+                onConfirmRequested: root.confirmPowerAction()
+                onCancelRequested: root.closePowerMenu()
             }
 
         }

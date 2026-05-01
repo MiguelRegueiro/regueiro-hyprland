@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
-import Quickshell.Io
 import "../../theme/Theme.js" as Theme
 
 Item {
@@ -26,9 +25,9 @@ Item {
         "iconOffsetX": 0,
         "iconPixelSize": 15
     }]
-    property string pendingAction: ""
 
     signal actionTriggered()
+    signal actionRequested(string actionId)
 
     function actionChipFill(actionId, active, hovered) {
         return active ? Qt.rgba(1, 1, 1, 0.12) : (hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg);
@@ -46,25 +45,8 @@ Item {
     }
 
     function runAction(actionId) {
-        if (root.pendingAction !== "")
-            return ;
-
-        root.pendingAction = actionId;
+        root.actionRequested(actionId);
         root.actionTriggered();
-        if (actionId === "suspend")
-            suspendProc.running = true;
-        else if (actionId === "reboot")
-            rebootProc.running = true;
-        else if (actionId === "shutdown")
-            shutdownProc.running = true;
-        else
-            root.pendingAction = "";
-    }
-
-    function clearPending(actionId) {
-        if (root.pendingAction === actionId)
-            root.pendingAction = "";
-
     }
 
     implicitWidth: 248
@@ -111,7 +93,7 @@ Item {
                 id: actionRow
 
                 required property var modelData
-                readonly property bool active: root.pendingAction === modelData.actionId
+                readonly property bool active: false
 
                 Layout.fillWidth: true
                 height: 50
@@ -168,13 +150,12 @@ Item {
                     id: rowHover
 
                     blocking: false
-                    cursorShape: actionRow.active ? Qt.ArrowCursor : Qt.PointingHandCursor
+                    cursorShape: Qt.PointingHandCursor
                 }
 
                 TapHandler {
                     acceptedButtons: Qt.LeftButton
                     gesturePolicy: TapHandler.ReleaseWithinBounds
-                    enabled: !actionRow.active && root.pendingAction === ""
                     onTapped: root.runAction(modelData.actionId)
                 }
 
@@ -196,39 +177,6 @@ Item {
 
         }
 
-    }
-
-    Process {
-        id: suspendProc
-
-        command: ["sh", "-lc", "if ! pgrep -x hyprlock >/dev/null 2>&1; then " + "  hyprlock --config $HOME/.config/hypr/hyprlock.conf >/dev/null 2>&1 & " + "  sleep 1; " + "fi; " + "systemctl suspend"]
-        onRunningChanged: {
-            if (!running)
-                root.clearPending("suspend");
-
-        }
-    }
-
-    Process {
-        id: rebootProc
-
-        command: ["systemctl", "reboot"]
-        onRunningChanged: {
-            if (!running)
-                root.clearPending("reboot");
-
-        }
-    }
-
-    Process {
-        id: shutdownProc
-
-        command: ["systemctl", "poweroff"]
-        onRunningChanged: {
-            if (!running)
-                root.clearPending("shutdown");
-
-        }
     }
 
 }

@@ -50,6 +50,8 @@ FocusScope {
     readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseLeftOverhang * root.reveal
     readonly property real clipSurfaceHeight: root.bodyHeight * root.clipHeightProgress + root.fuseBottomOverhang * root.reveal
 
+    signal powerActionRequested(string actionId)
+
     function applyPowerMode(nextMode) {
         powerMode = nextMode;
         setPowerProfile.command = ["powerprofilesctl", "set", nextMode];
@@ -453,6 +455,9 @@ FocusScope {
                             }
                             onPowerModeChangeRequested: (mode) => {
                                 return root.applyPowerMode(mode);
+                            }
+                            onPowerActionRequested: (actionId) => {
+                                return root.powerActionRequested(actionId);
                             }
 
                             Behavior on x {

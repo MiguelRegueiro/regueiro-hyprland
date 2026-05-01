@@ -1,55 +1,25 @@
 #!/bin/sh
 
-lock_session() {
-    if command -v hyprlock >/dev/null 2>&1; then
-        hyprlock --config ~/.config/hypr/hyprlock.conf
-    elif command -v swaylock >/dev/null 2>&1; then
-        swaylock
-    else
-        loginctl lock-session
-    fi
-}
+action="${1:-toggle}"
 
-confirm() {
-    choice=$(printf '%s\n' 'No' 'Yes' | rofi -dmenu -p "$1")
-    [ "$choice" = "Yes" ]
-}
-
-case "${1:-}" in
-    lock)
-        lock_session
-        exit 0
+case "$action" in
+    menu)
+        action="toggle"
         ;;
-    shutdown)
-        confirm "Shut down?" && systemctl poweroff
-        exit 0
+    poweroff)
+        action="shutdown"
         ;;
-    reboot)
-        confirm "Reboot?" && systemctl reboot
-        exit 0
-        ;;
-    logout)
-        confirm "Log out?" && hyprctl dispatch exit
-        exit 0
+    restart)
+        action="reboot"
         ;;
 esac
 
-choice=$(printf '%s\n' 'Lock' 'Suspend' 'Log out' 'Restart' 'Power off' | rofi -dmenu -p "System")
-
-case "$choice" in
-    Lock)
-        lock_session
+case "$action" in
+    toggle | open | close | lock | suspend | logout | reboot | shutdown)
+        exec qs ipc call powermenu "$action"
         ;;
-    Suspend)
-        systemctl suspend
-        ;;
-    "Log out")
-        confirm "Log out?" && hyprctl dispatch exit
-        ;;
-    Restart)
-        confirm "Reboot?" && systemctl reboot
-        ;;
-    "Power off")
-        confirm "Shut down?" && systemctl poweroff
+    *)
+        printf 'Usage: %s [toggle|open|close|lock|suspend|logout|reboot|shutdown]\n' "$0" >&2
+        exit 2
         ;;
 esac
