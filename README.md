@@ -6,8 +6,8 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 
 - **WM** — [Hyprland](https://hyprland.org/)
 - **Bar / panels** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
-- **Launcher** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
-- **Run / power menus** — [Rofi](https://github.com/davatorium/rofi)
+- **Launcher / power menu** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
+- **Run menu** — [Rofi](https://github.com/davatorium/rofi)
 - **Wallpaper** — [hyprpaper](https://github.com/hyprwm/hyprpaper)
 - **Lock screen** — [hyprlock](https://github.com/hyprwm/hyprlock)
 - **Input method** — [Fcitx 5](https://fcitx-im.org/wiki/Fcitx_5/en)
@@ -30,15 +30,16 @@ sudo pacman -S git stow \
                pipewire pipewire-pulse wireplumber libpulse \
                wl-clipboard wl-clip-persist \
                brightnessctl playerctl \
-               jq grim slurp swappy libnotify \
+               jq grim slurp libnotify \
                xorg-xhost \
                power-profiles-daemon \
                flatpak \
+               adwaita-fonts cantarell-fonts \
                adw-gtk-theme
 ```
 
 > Some of these may already be installed or available under slightly different names depending on your repos/AUR helper.
-> `swappy` is only needed for annotated screenshots, and `power-profiles-daemon` is only needed for the Quick Settings power mode switcher.
+> Region screenshots use `grim` + `slurp`. `hyprpicker` is only used by the color-picker bind, `flatpak` is only needed if you keep the Zen Browser bind or want Flatpak apps in the launcher, and `power-profiles-daemon` is only needed for the Quick Settings power mode switcher.
 
 Optional / personal extras:
 
@@ -64,7 +65,7 @@ cp -r fonts/. ~/.local/share/fonts/
 fc-cache -fv
 ```
 
-QuickShell also uses **Adwaita Sans** and **Cantarell** which come with GNOME/adwaita packages.
+QuickShell uses **Adwaita Sans** and **Cantarell**. On Arch, install them explicitly with `adwaita-fonts` and `cantarell-fonts`.
 
 ### Services
 
@@ -82,6 +83,7 @@ sudo systemctl enable --now power-profiles-daemon
 ### Monitor layout
 
 `hypr/.config/hypr/conf/monitors.conf` has a hardcoded monitor layout for my machine. Edit it to match yours before starting.
+`hypr/.config/hypr/scripts/startup-monitor-focus.sh` also prefers `DP-1` at session start when it is connected; change that script if your external monitor has a different name.
 
 ### Wi-Fi handling
 
@@ -112,6 +114,7 @@ The session exports `XMODIFIERS=@im=fcitx`, `QT_IM_MODULE=fcitx`, and `GLFW_IM_M
 GTK uses the native Wayland frontend for modern apps, while the repo's GTK settings files keep `fcitx` configured for GTK apps that still run through X11/XWayland.
 The top-bar language indicator is backed by a QuickShell input service that tracks the real Fcitx method ID and the configured method order from the current Fcitx group.
 `Super+Space` cycles through the configured group order through QuickShell first so the OSD and shell state stay in sync, and falls back to the direct Fcitx backend if QuickShell is unavailable.
+The Hyprland keyboard config uses `kb_options = lv3:switch`, so Right Ctrl acts like an additional AltGr/level-3 key for symbols such as `@` on the Spanish layout.
 After the first install or after changing the IM env vars, log out and back in once so the session picks up the new input-method setup.
 If `stow gtk` conflicts with existing `~/.config/gtk-3.0/settings.ini` or `~/.config/gtk-4.0/settings.ini`, back them up and retry:
 
@@ -131,6 +134,10 @@ flatpak install flathub app.zen_browser.zen
 
 Some personal keybinds also expect `anitrack`, `elio`, `normcap`, and `runin`.
 If you do not use those apps, either skip them or change the matching binds in `hypr/.config/hypr/conf/binds.conf`.
+
+### Power menu
+
+Power actions are handled by QuickShell through `qs ipc call powermenu`, so the session power menu expects the QuickShell daemon started by Hyprland autostart to be running.
 
 ## Install
 
