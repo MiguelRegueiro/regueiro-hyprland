@@ -1,3 +1,15 @@
+[Hotkey]
+TriggerKeys=
+EnumerateWithTriggerKeys=False
+AltTriggerKeys=
+ActivateKeys=
+DeactivateKeys=
+EnumerateForwardKeys=
+EnumerateBackwardKeys=
+EnumerateSkipFirst=False
+EnumerateGroupForwardKeys=
+EnumerateGroupBackwardKeys=
+
 [Behavior]
 ActiveByDefault=True
 ShareInputState=All
