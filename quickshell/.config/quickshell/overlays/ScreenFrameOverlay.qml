@@ -17,6 +17,7 @@ PanelWindow {
     property bool hasBar: true
     property bool quickSettingsVisible: false
     property bool quickSettingsCursorInside: false
+    property bool forceOverlay: false
     readonly property bool quickSettingsHovered: quickSettingsPanel.hovered || root.quickSettingsCursorInside
     readonly property real topY: hasBar ? Theme.barHeight : 0
     readonly property real innerTopY: hasBar ? Theme.barHeight : Theme.borderSize
@@ -48,7 +49,7 @@ PanelWindow {
     screen: targetScreen
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-border"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     color: "transparent"

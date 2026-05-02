@@ -1,6 +1,7 @@
 //@ pragma UseQApplication
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "bar" as Bar
@@ -18,7 +19,11 @@ ShellRoot {
     readonly property bool quickSettingsVisible: qsController.open
     readonly property bool notificationCenterVisible: ncController.open
     property bool clipboardVisible: false
+    property bool clipboardOpening: false
+    readonly property bool clipboardRequested: clipboardVisible || clipboardOpening
     property bool launcherVisible: false
+    property bool launcherOpening: false
+    readonly property bool launcherRequested: launcherVisible || launcherOpening
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -108,10 +113,14 @@ ShellRoot {
     }
 
     function closeClipboard() {
+        clipboardOpenTimer.stop();
+        clipboardOpening = false;
         clipboardVisible = false;
     }
 
     function closeLauncher() {
+        launcherOpenTimer.stop();
+        launcherOpening = false;
         launcherVisible = false;
     }
 
@@ -124,14 +133,15 @@ ShellRoot {
         ncController.pinned = false;
         qsController.closeImmediately();
         ncController.closeImmediately();
-        clipboardVisible = true;
+        clipboardOpening = true;
+        clipboardOpenTimer.restart();
     }
 
     function toggleClipboard() {
         if (powerMenuVisible)
             return ;
 
-        if (clipboardVisible)
+        if (clipboardVisible || clipboardOpening)
             closeClipboard();
         else
             openClipboard();
@@ -141,19 +151,20 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
-        clipboardVisible = false;
+        closeClipboard();
         qsController.pinned = false;
         ncController.pinned = false;
         qsController.closeImmediately();
         ncController.closeImmediately();
-        launcherVisible = true;
+        launcherOpening = true;
+        launcherOpenTimer.restart();
     }
 
     function toggleLauncher() {
         if (powerMenuVisible)
             return ;
 
-        if (launcherVisible)
+        if (launcherVisible || launcherOpening)
             closeLauncher();
         else
             openLauncher();
@@ -216,6 +227,28 @@ ShellRoot {
         }
 
         target: "launcher"
+    }
+
+    Timer {
+        id: launcherOpenTimer
+
+        interval: 16
+        repeat: false
+        onTriggered: {
+            root.launcherVisible = true;
+            root.launcherOpening = false;
+        }
+    }
+
+    Timer {
+        id: clipboardOpenTimer
+
+        interval: 16
+        repeat: false
+        onTriggered: {
+            root.clipboardVisible = true;
+            root.clipboardOpening = false;
+        }
     }
 
     IpcHandler {
@@ -365,9 +398,13 @@ ShellRoot {
             Bar.BarWindow {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property bool fullscreenPanelChromeActive: activeScreen && (root.launcherRequested || root.clipboardRequested) && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 showBar: activeScreen
+                forceOverlay: fullscreenPanelChromeActive
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
@@ -398,9 +435,13 @@ ShellRoot {
             Overlays.ScreenFrameOverlay {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property bool fullscreenPanelChromeActive: activeScreen && (root.launcherRequested || root.clipboardRequested) && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 hasBar: activeScreen
+                forceOverlay: fullscreenPanelChromeActive
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
@@ -509,10 +550,14 @@ ShellRoot {
             Launcher.LauncherOverlay {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property bool launcherOverlayActive: activeScreen && root.launcherRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 showLayer: activeScreen
                 launcherVisible: root.launcherVisible && activeScreen
+                forceOverlay: launcherOverlayActive
                 launcherService: launcherServiceState
                 onOutsidePressed: root.closeLauncher()
             }
@@ -528,10 +573,14 @@ ShellRoot {
             Clipboard.ClipboardOverlay {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property bool clipboardOverlayActive: activeScreen && root.clipboardRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 showLayer: activeScreen
                 clipboardVisible: root.clipboardVisible && activeScreen
+                forceOverlay: clipboardOverlayActive
                 clipboardService: clipboardServiceState
                 onOutsidePressed: root.closeClipboard()
             }

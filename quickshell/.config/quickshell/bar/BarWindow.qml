@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Wayland
 import "../theme/Theme.js" as Theme
 
 PanelWindow {
@@ -12,6 +13,7 @@ PanelWindow {
     required property var brightnessService
     required property var inputService
     property bool showBar: true
+    property bool forceOverlay: false
 
     signal quickSettingsClicked()
     signal notificationCenterClicked()
@@ -22,6 +24,7 @@ PanelWindow {
     screen: targetScreen
     visible: showBar
     exclusiveZone: Theme.barHeight - Theme.borderSize
+    WlrLayershell.layer: bar.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     implicitHeight: Theme.barHeight
     color: Theme.barBg
 

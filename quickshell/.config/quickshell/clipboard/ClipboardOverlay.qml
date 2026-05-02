@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import "." as Clipboard
 import "../theme/Theme.js" as Theme
@@ -11,6 +12,7 @@ PanelWindow {
     required property var clipboardService
     property bool showLayer: true
     property bool clipboardVisible: false
+    property bool forceOverlay: false
     readonly property real clipboardRegionX: clipboardPanel.x + clipboardPanel.inputRegion.x
     readonly property real clipboardRegionY: clipboardPanel.y + clipboardPanel.inputRegion.y
     readonly property real clipboardRegionWidth: clipboardPanel.inputRegion.width
@@ -18,13 +20,25 @@ PanelWindow {
 
     signal outsidePressed()
 
+    onClipboardVisibleChanged: {
+        if (root.clipboardVisible) {
+            Qt.callLater(function() {
+                if (root.clipboardVisible)
+                    clipboardFocusGrab.active = true;
+
+            });
+        } else {
+            clipboardFocusGrab.active = false;
+        }
+    }
+
     screen: targetScreen
     visible: showLayer && (root.clipboardVisible || clipboardPanel.visible)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-clipboard"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: root.clipboardVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
     color: "transparent"
 
     anchors {
@@ -32,6 +46,17 @@ PanelWindow {
         bottom: true
         left: true
         right: true
+    }
+
+    HyprlandFocusGrab {
+        id: clipboardFocusGrab
+
+        windows: [root]
+        onCleared: {
+            if (root.clipboardVisible)
+                root.outsidePressed();
+
+        }
     }
 
     Item {

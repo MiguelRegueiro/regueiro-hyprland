@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import "." as Launcher
 import "../theme/Theme.js" as Theme
@@ -11,6 +12,7 @@ PanelWindow {
     required property var launcherService
     property bool showLayer: true
     property bool launcherVisible: false
+    property bool forceOverlay: false
     readonly property real launcherRegionX: launcherPanel.x + launcherPanel.inputRegion.x
     readonly property real launcherRegionY: launcherPanel.y + launcherPanel.inputRegion.y
     readonly property real launcherRegionWidth: launcherPanel.inputRegion.width
@@ -18,13 +20,25 @@ PanelWindow {
 
     signal outsidePressed()
 
+    onLauncherVisibleChanged: {
+        if (root.launcherVisible) {
+            Qt.callLater(function() {
+                if (root.launcherVisible)
+                    launcherFocusGrab.active = true;
+
+            });
+        } else {
+            launcherFocusGrab.active = false;
+        }
+    }
+
     screen: targetScreen
     visible: showLayer && (root.launcherVisible || launcherPanel.visible)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-launcher"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: root.launcherVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
     color: "transparent"
 
     anchors {
@@ -32,6 +46,17 @@ PanelWindow {
         bottom: true
         left: true
         right: true
+    }
+
+    HyprlandFocusGrab {
+        id: launcherFocusGrab
+
+        windows: [root]
+        onCleared: {
+            if (root.launcherVisible)
+                root.outsidePressed();
+
+        }
     }
 
     Item {
