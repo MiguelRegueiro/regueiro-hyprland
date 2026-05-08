@@ -64,7 +64,8 @@ var qsCardChipBorder = Qt.rgba(1, 1, 1, 0.08);
 var qsCardChipBorderHover = Qt.rgba(1, 1, 1, 0.11);
 
 // Notification center
-var ncWidth = 460;
+var ncWidth = 760;
+var ncBarTriggerWidth = 150;
 var toastWidth = 500;
 var ncAttachTop = qsBarFuseOverlap + 10;
 var ncSurfaceTopLeftRadius = barCornerRadius + 2;

@@ -22,19 +22,19 @@ Row {
         precision: SystemClock.Minutes
     }
 
-    HoverHandler {
-        id: triggerHover
-
-        blocking: false
-        cursorShape: Qt.ArrowCursor
-    }
-
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         height: root.barHeight - 8
         width: pillContent.implicitWidth + 20
         radius: Theme.radiusSmall
         color: Theme.barBg
+
+        HoverHandler {
+            id: triggerHover
+
+            blocking: false
+            cursorShape: Qt.ArrowCursor
+        }
 
         Row {
             id: pillContent

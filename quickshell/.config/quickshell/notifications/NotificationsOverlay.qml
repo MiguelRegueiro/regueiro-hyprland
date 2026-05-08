@@ -37,8 +37,8 @@ PanelWindow {
         const panelTop = Number(root.targetScreen.y) + notificationCenter.y - 18;
         const panelRight = panelLeft + notificationCenter.width + 36;
         const panelBottom = panelTop + notificationCenter.height + 36;
-        const ncBarLeft = Number(root.targetScreen.x) + Math.round((root.targetScreen.width - notificationCenter.width) / 2);
-        const ncBarRight = ncBarLeft + notificationCenter.width;
+        const ncBarLeft = Number(root.targetScreen.x) + Math.round((root.targetScreen.width - Theme.ncBarTriggerWidth) / 2);
+        const ncBarRight = ncBarLeft + Theme.ncBarTriggerWidth;
         const inBarTrigger = cursorY >= Number(root.targetScreen.y) && cursorY < Number(root.targetScreen.y) + Theme.barHeight && cursorX >= ncBarLeft && cursorX <= ncBarRight;
         root.notificationCenterCursorInside = root.notificationCenterVisible && (inBarTrigger || (cursorX >= panelLeft && cursorX <= panelRight && cursorY >= panelTop && cursorY <= panelBottom));
     }

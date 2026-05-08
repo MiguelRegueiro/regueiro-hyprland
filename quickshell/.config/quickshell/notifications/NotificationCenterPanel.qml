@@ -27,6 +27,7 @@ Item {
     readonly property real frameScale: 0.988 + root.reveal * 0.012
     readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property real bodyWidth: Theme.ncWidth
+    readonly property real calendarWidth: 268
     readonly property real fuseOverhang: Theme.barCornerRadius
     // Kept close to your original value, but isolated so the optical offset is intentional.
     // If the fuse still feels 1px too low, try changing this from 2 to 1, 0.5, or 0.
@@ -371,50 +372,173 @@ Item {
                         topMargin: Math.max(0, root.attachTop - 6)
                     }
 
-                    Item {
+                    RowLayout {
                         width: parent.width
-                        height: 48
+                        spacing: 0
 
-                        RowLayout {
-                            spacing: 10
+                        Column {
+                            id: notificationsColumn
 
-                            anchors {
-                                left: parent.left
-                                leftMargin: 16
-                                verticalCenter: parent.verticalCenter
-                            }
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
 
-                            RowLayout {
-                                spacing: 8
-                                Layout.alignment: Qt.AlignVCenter
+                            Item {
+                                width: parent.width
+                                height: 48
 
-                                Text {
-                                    text: "Notifications"
-                                    color: Theme.textPrimary
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 14
-                                    font.weight: Font.DemiBold
+                                RowLayout {
+                                    spacing: 10
+
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        Text {
+                                            text: "Notifications"
+                                            color: Theme.textPrimary
+                                            font.family: Theme.fontUi
+                                            font.pixelSize: 14
+                                            font.weight: Font.DemiBold
+                                        }
+
+                                        Rectangle {
+                                            Layout.alignment: Qt.AlignVCenter
+                                            width: Math.max(24, countText.implicitWidth + 14)
+                                            height: 24
+                                            radius: 12
+                                            color: Theme.qsRowBg
+                                            border.width: 0
+
+                                            Text {
+                                                id: countText
+
+                                                anchors.fill: parent
+                                                text: String(root.notificationStore.count)
+                                                color: Theme.textPrimary
+                                                font.family: Theme.fontUi
+                                                font.pixelSize: 12
+                                                font.weight: Font.DemiBold
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                            }
+
+                                        }
+
+                                    }
+
                                 }
 
                                 Rectangle {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    width: Math.max(24, countText.implicitWidth + 14)
-                                    height: 24
-                                    radius: 12
-                                    color: Theme.qsRowBg
-                                    border.width: 0
+                                    visible: root.notificationStore.count > 0
+                                    width: clearText.implicitWidth + 18
+                                    height: 28
+                                    radius: 8
+                                    color: clearHover.hovered ? Theme.qsRowBg : "transparent"
+
+                                    anchors {
+                                        right: parent.right
+                                        rightMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
 
                                     Text {
-                                        id: countText
+                                        id: clearText
 
-                                        anchors.fill: parent
-                                        text: String(root.notificationStore.count)
-                                        color: Theme.textPrimary
+                                        anchors.centerIn: parent
+                                        text: "Clear"
+                                        color: clearHover.hovered ? Theme.textPrimary : Theme.textDim
                                         font.family: Theme.fontUi
                                         font.pixelSize: 12
                                         font.weight: Font.DemiBold
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    HoverHandler {
+                                        id: clearHover
+
+                                        blocking: false
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+
+                                    TapHandler {
+                                        onTapped: root.notificationStore.dismissAll()
+                                    }
+
+                                }
+
+                            }
+
+                            Rectangle {
+                                width: parent.width - 28
+                                height: 1
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                color: Theme.qsEdgeSoft
+                            }
+
+                            Item {
+                                width: parent.width
+                                implicitHeight: root.notificationStore.count === 0 ? Math.max(emptyState.implicitHeight + 40, calendar.implicitHeight - 49) : Math.min(notificationList.contentHeight + 26, 526)
+                                clip: true
+
+                                Column {
+                                    id: emptyState
+
+                                    visible: root.notificationStore.count === 0
+                                    width: parent.width - 48
+                                    spacing: 12
+
+                                    anchors {
+                                        horizontalCenter: parent.horizontalCenter
+                                        verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Text {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: "󰂜"
+                                        font.family: Theme.fontIcons
+                                        font.pixelSize: 28
+                                        color: Theme.textDisabled
+                                    }
+
+                                    Text {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: "No notifications"
+                                        color: Theme.textPrimary
+                                        font.family: Theme.fontUi
+                                        font.pixelSize: 14
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                }
+
+                                ListView {
+                                    id: notificationList
+
+                                    visible: root.notificationStore.count > 0
+                                    model: root.notificationStore.notifications
+                                    spacing: 8
+                                    clip: true
+                                    boundsBehavior: Flickable.StopAtBounds
+
+                                    anchors {
+                                        fill: parent
+                                        leftMargin: 12
+                                        rightMargin: 12
+                                        topMargin: 12
+                                        bottomMargin: 14
+                                    }
+
+                                    delegate: NotificationListItem {
+                                        required property var modelData
+
+                                        notificationStore: root.notificationStore
+                                        item: modelData
+                                        timeTick: root.timeTick
                                     }
 
                                 }
@@ -423,110 +547,22 @@ Item {
 
                         }
 
-                        Item {
-                            visible: root.notificationStore.count > 0
-                            width: clearText.implicitWidth + 8
-                            height: clearText.implicitHeight + 4
-
-                            anchors {
-                                right: parent.right
-                                rightMargin: 16
-                                verticalCenter: parent.verticalCenter
-                            }
-
-                            Text {
-                                id: clearText
-
-                                anchors.centerIn: parent
-                                text: "Clear"
-                                color: clearHover.hovered ? Theme.textPrimary : Theme.textDim
-                                font.family: Theme.fontUi
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
-                            }
-
-                            HoverHandler {
-                                id: clearHover
-
-                                blocking: false
-                            }
-
-                            TapHandler {
-                                onTapped: root.notificationStore.dismissAll()
-                            }
-
+                        Rectangle {
+                            Layout.preferredWidth: 1
+                            Layout.preferredHeight: Math.max(notificationsColumn.implicitHeight, calendar.implicitHeight) - 30
+                            Layout.alignment: Qt.AlignTop
+                            Layout.topMargin: 15
+                            color: Theme.qsEdgeSoft
                         }
 
-                    }
+                        CalendarMonth {
+                            id: calendar
 
-                    Rectangle {
-                        width: parent.width - 28
-                        height: 1
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: Theme.qsEdgeSoft
-                    }
-
-                    Item {
-                        width: parent.width
-                        implicitHeight: root.notificationStore.count === 0 ? emptyState.implicitHeight + 40 : Math.min(notificationList.contentHeight + 26, 526)
-                        clip: true
-
-                        Column {
-                            id: emptyState
-
-                            visible: root.notificationStore.count === 0
-                            width: parent.width - 48
-                            spacing: 12
-
-                            anchors {
-                                horizontalCenter: parent.horizontalCenter
-                                verticalCenter: parent.verticalCenter
-                            }
-
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: "󰂜"
-                                font.family: Theme.fontIcons
-                                font.pixelSize: 28
-                                color: Theme.textDisabled
-                            }
-
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: "No notifications"
-                                color: Theme.textPrimary
-                                font.family: Theme.fontUi
-                                font.pixelSize: 14
-                                font.weight: Font.DemiBold
-                            }
-
-                        }
-
-                        ListView {
-                            id: notificationList
-
-                            visible: root.notificationStore.count > 0
-                            model: root.notificationStore.notifications
-                            spacing: 8
-                            clip: true
-                            boundsBehavior: Flickable.StopAtBounds
-
-                            anchors {
-                                fill: parent
-                                leftMargin: 12
-                                rightMargin: 12
-                                topMargin: 12
-                                bottomMargin: 14
-                            }
-
-                            delegate: NotificationListItem {
-                                required property var modelData
-
-                                notificationStore: root.notificationStore
-                                item: modelData
-                                timeTick: root.timeTick
-                            }
-
+                            Layout.preferredWidth: root.calendarWidth
+                            Layout.leftMargin: 16
+                            Layout.rightMargin: 16
+                            Layout.bottomMargin: 16
+                            Layout.alignment: Qt.AlignTop
                         }
 
                     }

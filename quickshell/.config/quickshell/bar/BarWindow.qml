@@ -66,21 +66,7 @@ PanelWindow {
             barHeight: Theme.barHeight
             notificationStore: bar.notificationStore
             onNotificationCenterClicked: bar.notificationCenterClicked()
-        }
-
-        Item {
-            id: notificationHotZone
-
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: Theme.ncWidth + Theme.barCornerRadius * 2
-            x: Math.round((parent.width - width) / 2)
-
-            HoverHandler {
-                blocking: false
-                onHoveredChanged: bar.notificationCenterHoveredChanged(hovered)
-            }
-
+            onHoveredChanged: bar.notificationCenterHoveredChanged(hovered)
         }
 
         RowLayout {
