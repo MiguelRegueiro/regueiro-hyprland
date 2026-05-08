@@ -46,6 +46,17 @@ Item {
         return character === " " || character === "-" || character === "_" || character === "." || character === "/" || character === ":" || character === "+" || character === "(" || character === ")";
     }
 
+    function idShortText(idLower) {
+        if (idLower.length === 0)
+            return "";
+
+        const lastDot = idLower.lastIndexOf(".");
+        if (lastDot < 0 || lastDot === idLower.length - 1)
+            return idLower;
+
+        return idLower.slice(lastDot + 1);
+    }
+
     function initialsText(value) {
         const text = root.normalizedSearchText(value);
         if (text.length === 0)
@@ -242,6 +253,7 @@ Item {
             "genericNameLower": genericNameLower,
             "commentLower": commentLower,
             "idLower": idLower,
+            "idShortLower": root.idShortText(idLower),
             "keywordsLower": keywordsLower,
             "categoriesLower": categoriesLower,
             "nameInitials": root.initialsText(name),
@@ -362,7 +374,7 @@ Item {
         if (entry.nameLower === query)
             score += 2600;
 
-        if (entry.idLower === query)
+        if (entry.idLower === query || entry.idShortLower === query)
             score += 2400;
 
         if (entry.nameCompact === compactQuery && compactQuery.length >= root.minimumFuzzyQueryLength)
@@ -374,7 +386,7 @@ Item {
         if (entry.genericNameLower.startsWith(query))
             score += 1200;
 
-        if (entry.idLower.startsWith(query))
+        if (entry.idLower.startsWith(query) || entry.idShortLower.startsWith(query))
             score += 1100;
 
         if (entry.commentLower.startsWith(query))
@@ -528,6 +540,18 @@ Item {
                 return root.compareDefaultEntries(left, right);
             });
             return rankedEntries.slice(0, root.maxResults);
+        }
+        if (normalizedQuery.length === 1) {
+            const prefixMatches = [];
+            for (const entry of root.entries) {
+                if (entry.nameLower.startsWith(normalizedQuery) || entry.idShortLower.startsWith(normalizedQuery) || entry.nameInitials.startsWith(normalizedQuery))
+                    prefixMatches.push(entry);
+
+            }
+            prefixMatches.sort((left, right) => {
+                return root.compareDefaultEntries(left, right);
+            });
+            return prefixMatches.slice(0, root.maxResults);
         }
         const words = normalizedQuery.split(/\s+/).filter((word) => {
             return word.length > 0;

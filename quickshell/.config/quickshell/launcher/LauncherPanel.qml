@@ -93,7 +93,7 @@ FocusScope {
             root.hasOpenedOnce = false;
             root.launcherService.clearError();
             searchInput.text = "";
-            root.selectedIndex = -1;
+            root.selectedIndex = 0;
             Qt.callLater(root.focusSearch);
             Qt.callLater(function() {
                 root.hasOpenedOnce = true;
@@ -640,7 +640,7 @@ FocusScope {
                                     readonly property bool hovered: rowHover.hovered
                                     readonly property bool hasSubtitle: modelData.subtitle.length > 0
                                     width: listView.width
-                                    implicitHeight: hasSubtitle ? 66 : 56
+                                    implicitHeight: hasSubtitle ? 74 : 64
                                     radius: 16
                                     color: selected ? Qt.rgba(1, 1, 1, 0.10) : hovered ? Theme.qsCardBgHover : Theme.qsCardBg
                                     border.width: 1
@@ -657,18 +657,24 @@ FocusScope {
                                         anchors.fill: parent
                                         anchors.leftMargin: 10
                                         anchors.rightMargin: 12
-                                        anchors.topMargin: 10
-                                        anchors.bottomMargin: 10
+                                        anchors.topMargin: 6
+                                        anchors.bottomMargin: 6
                                         spacing: 10
 
                                         Item {
                                             Layout.alignment: Qt.AlignVCenter
-                                            Layout.preferredWidth: 40
-                                            Layout.preferredHeight: 40
+                                            Layout.preferredWidth: 52
+                                            Layout.preferredHeight: 52
 
-                                            IconImage {
+                                            Image {
                                                 anchors.centerIn: parent
-                                                implicitSize: 32
+                                                width: 52
+                                                height: 52
+                                                fillMode: Image.PreserveAspectFit
+                                                sourceSize.width: 256
+                                                sourceSize.height: 256
+                                                smooth: true
+                                                mipmap: true
                                                 asynchronous: true
                                                 source: Quickshell.iconPath(modelData.icon, "application-x-executable")
                                             }
