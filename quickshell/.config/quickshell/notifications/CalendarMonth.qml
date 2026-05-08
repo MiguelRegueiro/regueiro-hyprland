@@ -7,6 +7,9 @@ Item {
     id: root
 
     property int monthOffset: 0
+    property int selectedYear: -1
+    property int selectedMonth: -1
+    property int selectedDay: -1
     readonly property var today: clock.date
     readonly property var visibleMonth: new Date(root.today.getFullYear(), root.today.getMonth() + root.monthOffset, 1)
     readonly property int visibleYear: root.visibleMonth.getFullYear()
@@ -17,6 +20,7 @@ Item {
     readonly property var weekdayNamesLong: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     readonly property string monthTitle: `${root.monthNames[root.visibleMonthIndex]} ${root.visibleYear}`
     readonly property string todayTitle: `${root.weekdayNamesLong[root.today.getDay()]}, ${root.monthNames[root.today.getMonth()]} ${root.today.getDate()}`
+    readonly property bool todayButtonEnabled: root.monthOffset !== 0 || !root.isSelectedDay(root.today)
 
     function cellDate(index) {
         return new Date(root.visibleYear, root.visibleMonthIndex, index - root.firstWeekday + 1);
@@ -26,6 +30,21 @@ Item {
         return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
     }
 
+    function isSelectedDay(value) {
+        return root.selectedYear === value.getFullYear() && root.selectedMonth === value.getMonth() && root.selectedDay === value.getDate();
+    }
+
+    function selectDate(value) {
+        root.selectedYear = value.getFullYear();
+        root.selectedMonth = value.getMonth();
+        root.selectedDay = value.getDate();
+    }
+
+    function activateDate(value) {
+        root.selectDate(value);
+        root.monthOffset = (value.getFullYear() - root.today.getFullYear()) * 12 + value.getMonth() - root.today.getMonth();
+    }
+
     implicitHeight: content.implicitHeight
 
     SystemClock {
@@ -33,6 +52,8 @@ Item {
 
         precision: SystemClock.Minutes
     }
+
+    Component.onCompleted: root.selectDate(root.today)
 
     Column {
         id: content
@@ -201,6 +222,16 @@ Item {
             rowSpacing: 4
             readonly property real dayWidth: Math.max(1, Math.floor((width - columnSpacing * 6) / 7))
 
+            WheelHandler {
+                onWheel: (event) => {
+                    if (event.angleDelta.y > 0)
+                        root.monthOffset -= 1;
+                    else if (event.angleDelta.y < 0)
+                        root.monthOffset += 1;
+
+                }
+            }
+
             Repeater {
                 model: 42
 
@@ -209,31 +240,34 @@ Item {
                     readonly property var dateValue: root.cellDate(index)
                     readonly property bool inVisibleMonth: dateValue.getMonth() === root.visibleMonthIndex
                     readonly property bool isToday: root.isSameDay(dateValue, root.today)
+                    readonly property bool selected: root.isSelectedDay(dateValue)
                     readonly property bool isWeekend: dateValue.getDay() === 0 || dateValue.getDay() === 6
-                    readonly property color restingColor: isToday ? Theme.tileActiveBg : "transparent"
-                    readonly property color hoverColor: isToday ? Theme.tileActiveBgHover : Theme.qsRowBg
 
                     width: dayGrid.dayWidth
                     height: 32
                     radius: 8
-                    color: dayHover.hovered && inVisibleMonth ? hoverColor : restingColor
-                    border.width: isToday ? 1 : 0
+                    color: selected ? Theme.tileActiveBg : dayHover.hovered && inVisibleMonth ? Theme.qsRowBg : "transparent"
+                    border.width: isToday && !selected ? 1 : 0
                     border.color: Theme.tileActiveBorderHover
 
                     Text {
                         anchors.centerIn: parent
                         text: String(parent.dateValue.getDate())
-                        color: parent.isToday ? Theme.textPrimary : parent.inVisibleMonth ? (parent.isWeekend ? Theme.textDim : Theme.textPrimary) : Theme.textDisabled
+                        color: parent.selected ? Theme.textPrimary : parent.inVisibleMonth ? (parent.isWeekend ? Theme.textDim : Theme.textPrimary) : Theme.textDisabled
                         font.family: Theme.fontUi
                         font.pixelSize: 12
-                        font.weight: parent.isToday ? Font.DemiBold : Font.Medium
+                        font.weight: parent.selected || parent.isToday ? Font.DemiBold : Font.Medium
                     }
 
                     HoverHandler {
                         id: dayHover
 
                         blocking: false
-                        cursorShape: Qt.ArrowCursor
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    TapHandler {
+                        onTapped: root.activateDate(dateValue)
                     }
 
                 }
@@ -246,10 +280,10 @@ Item {
             width: parent.width
             height: 36
             radius: 8
-            color: todayHover.hovered && root.monthOffset !== 0 ? Theme.qsRowBgHover : Theme.qsRowBg
+            color: todayHover.hovered && root.todayButtonEnabled ? Theme.qsRowBgHover : Theme.qsRowBg
             border.width: 1
-            border.color: todayHover.hovered && root.monthOffset !== 0 ? Theme.qsCardBorderHover : Theme.qsCardBorder
-            opacity: root.monthOffset === 0 ? 0.45 : 1
+            border.color: todayHover.hovered && root.todayButtonEnabled ? Theme.qsCardBorderHover : Theme.qsCardBorder
+            opacity: root.todayButtonEnabled ? 1 : 0.45
 
             Text {
                 anchors.centerIn: parent
@@ -263,14 +297,14 @@ Item {
             HoverHandler {
                 id: todayHover
 
-                enabled: root.monthOffset !== 0
+                enabled: root.todayButtonEnabled
                 blocking: false
-                cursorShape: root.monthOffset !== 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                cursorShape: root.todayButtonEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
             }
 
             TapHandler {
-                enabled: root.monthOffset !== 0
-                onTapped: root.monthOffset = 0
+                enabled: root.todayButtonEnabled
+                onTapped: root.activateDate(root.today)
             }
 
             Behavior on color {
