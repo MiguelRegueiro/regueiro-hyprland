@@ -24,6 +24,7 @@ ShellRoot {
     property bool launcherVisible: false
     property bool launcherOpening: false
     readonly property bool launcherRequested: launcherVisible || launcherOpening
+    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -174,9 +175,48 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
+        const openingFromDrawer = root.launcherRequested || root.clipboardRequested;
+        const openingFromOtherMenu = root.notificationCenterVisible;
         closeLauncher();
         closeClipboard();
-        qsController.togglePinned();
+        ncController.closeImmediately();
+        if (openingFromDrawer) {
+            Qt.callLater(function() {
+                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested) {
+                    qsController.pinned = true;
+                    qsController.syncVisibility(false);
+                }
+            });
+        } else if (openingFromOtherMenu) {
+            qsController.pinned = true;
+            qsController.syncVisibility(false);
+        } else {
+            qsController.togglePinned();
+        }
+    }
+
+    function toggleNotificationCenter() {
+        if (powerMenuVisible)
+            return ;
+
+        const openingFromDrawer = root.launcherRequested || root.clipboardRequested;
+        const openingFromOtherMenu = root.quickSettingsVisible;
+        closeLauncher();
+        closeClipboard();
+        qsController.closeImmediately();
+        if (openingFromDrawer) {
+            Qt.callLater(function() {
+                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested) {
+                    ncController.pinned = true;
+                    ncController.syncVisibility(false);
+                }
+            });
+        } else if (openingFromOtherMenu) {
+            ncController.pinned = true;
+            ncController.syncVisibility(false);
+        } else {
+            ncController.togglePinned();
+        }
     }
 
     function closeAllPanels() {
@@ -348,11 +388,14 @@ ShellRoot {
 
     Services.HoverOverlayController {
         id: qsController
+
+        inhibited: root.launcherRequested || root.clipboardRequested || root.powerMenuVisible
     }
 
     Services.HoverOverlayController {
         id: ncController
 
+        inhibited: root.launcherRequested || root.clipboardRequested || root.powerMenuVisible
         extraHoldCondition: notificationStoreService.holdOpen
     }
 
@@ -400,7 +443,7 @@ ShellRoot {
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool fullscreenPanelChromeActive: activeScreen && (root.launcherRequested || root.clipboardRequested) && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 showBar: activeScreen
@@ -410,16 +453,18 @@ ShellRoot {
                 brightnessService: brightnessServiceState
                 inputService: inputServiceState
                 onQuickSettingsClicked: root.toggleQuickSettings()
-                onNotificationCenterClicked: {
-                    root.closeLauncher();
-                    root.closeClipboard();
-                    ncController.togglePinned();
-                }
+                onNotificationCenterClicked: root.toggleNotificationCenter()
                 onClipboardClicked: root.toggleClipboard()
                 onQuickSettingsHoveredChanged: (hovered) => {
+                    if (hovered)
+                        ncController.closeImmediately();
+
                     return qsController.triggerHovered = hovered;
                 }
                 onNotificationCenterHoveredChanged: (hovered) => {
+                    if (hovered)
+                        qsController.closeImmediately();
+
                     return ncController.triggerHovered = hovered;
                 }
             }
@@ -437,7 +482,7 @@ ShellRoot {
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool fullscreenPanelChromeActive: activeScreen && (root.launcherRequested || root.clipboardRequested) && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 hasBar: activeScreen
@@ -447,6 +492,8 @@ ShellRoot {
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
                 onOutsidePressed: root.closeAllPanels()
+                onQuickSettingsRequested: root.toggleQuickSettings()
+                onNotificationCenterRequested: root.toggleNotificationCenter()
                 onPowerActionRequested: (actionId) => {
                     return root.requestPowerAction(actionId);
                 }
@@ -525,13 +572,19 @@ ShellRoot {
             Notifications.NotificationsOverlay {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property bool notificationOverlayActive: activeScreen && root.notificationCenterVisible && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 showLayer: activeScreen
+                forceOverlay: notificationOverlayActive
                 notificationStore: notificationStoreService
                 notificationCenterVisible: root.notificationCenterVisible && activeScreen
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
                 onOutsidePressed: root.closeAllPanels()
+                onQuickSettingsRequested: root.toggleQuickSettings()
+                onNotificationCenterRequested: root.toggleNotificationCenter()
                 onNotificationCenterHoveredChanged: {
                     if (activeScreen)
                         ncController.panelHovered = notificationCenterHovered;
@@ -560,6 +613,8 @@ ShellRoot {
                 forceOverlay: launcherOverlayActive
                 launcherService: launcherServiceState
                 onOutsidePressed: root.closeLauncher()
+                onQuickSettingsRequested: root.toggleQuickSettings()
+                onNotificationCenterRequested: root.toggleNotificationCenter()
             }
 
         }
@@ -583,6 +638,8 @@ ShellRoot {
                 forceOverlay: clipboardOverlayActive
                 clipboardService: clipboardServiceState
                 onOutsidePressed: root.closeClipboard()
+                onQuickSettingsRequested: root.toggleQuickSettings()
+                onNotificationCenterRequested: root.toggleNotificationCenter()
             }
 
         }

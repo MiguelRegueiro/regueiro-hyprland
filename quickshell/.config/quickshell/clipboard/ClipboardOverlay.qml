@@ -19,6 +19,28 @@ PanelWindow {
     readonly property real clipboardRegionHeight: clipboardPanel.inputRegion.height
 
     signal outsidePressed()
+    signal quickSettingsRequested()
+    signal notificationCenterRequested()
+
+    function routeBarPress(mouse) {
+        if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
+            return false;
+
+        const ncLeft = Math.round((root.width - Theme.ncBarTriggerWidth) / 2);
+        const ncRight = ncLeft + Theme.ncBarTriggerWidth;
+        if (mouse.x >= ncLeft && mouse.x <= ncRight) {
+            root.notificationCenterRequested();
+            return true;
+        }
+
+        const qsLeft = Math.max(0, root.width - Theme.qsBarTriggerWidth);
+        if (mouse.x >= qsLeft) {
+            root.quickSettingsRequested();
+            return true;
+        }
+
+        return false;
+    }
 
     onClipboardVisibleChanged: {
         if (root.clipboardVisible) {
@@ -69,7 +91,12 @@ PanelWindow {
             width: parent.width
             height: Math.max(0, Math.round(root.clipboardRegionY))
             acceptedButtons: Qt.AllButtons
-            onPressed: root.outsidePressed()
+            onPressed: (mouse) => {
+                if (root.forceOverlay && root.routeBarPress(mouse))
+                    return ;
+
+                root.outsidePressed();
+            }
         }
 
         MouseArea {
