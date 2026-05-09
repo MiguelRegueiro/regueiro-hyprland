@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Effects
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 Item {
@@ -50,11 +51,10 @@ Item {
             from: ""
             to: "open"
 
-            NumberAnimation {
+            Components.Anim {
                 property: "reveal"
-                duration: Theme.panelOpenDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
+                curve: Components.Anim.DefaultSpatial
+                duration: Theme.panelOpenSpatialDuration
             }
 
         },
@@ -62,11 +62,10 @@ Item {
             from: "open"
             to: ""
 
-            NumberAnimation {
+            Components.Anim {
                 property: "reveal"
+                curve: Components.Anim.EmphasizedAccel
                 duration: Theme.panelCloseDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
             }
 
         }

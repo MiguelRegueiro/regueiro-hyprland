@@ -4,6 +4,7 @@ import QtQuick.Shapes
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 FocusScope {
@@ -27,7 +28,7 @@ FocusScope {
     readonly property real animTopRightRadius: root.topRightRadius * root.reveal
     readonly property real clipWidthProgress: 0.92 + root.reveal * 0.08
     readonly property real clipHeightProgress: 0.90 + root.reveal * 0.10
-    readonly property real frameScale: 0.994 + root.reveal * 0.006
+    readonly property real frameScale: 0.988 + root.reveal * 0.012
     readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property real bodyWidth: Theme.launcherWidth
     readonly property real bodyHeight: Theme.launcherHeight
@@ -181,24 +182,22 @@ FocusScope {
             from: ""
             to: "open"
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
-                duration: Theme.panelOpenDuration - 55
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
+                curve: Components.Anim.DefaultSpatial
+                duration: Theme.panelOpenSpatialDuration
             }
         },
         Transition {
             from: "open"
             to: ""
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
+                curve: Components.Anim.EmphasizedAccel
                 duration: Theme.panelCloseDuration - 25
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
             }
         }
     ]
@@ -208,7 +207,7 @@ FocusScope {
 
         width: root.width
         height: root.height
-        y: 0
+        y: (1 - root.reveal) * 4
         scale: root.frameScale
         transformOrigin: Item.Bottom
         opacity: root.frameOpacity

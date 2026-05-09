@@ -5,6 +5,7 @@ import QtQuick.Effects
 import Quickshell.Io
 import "pages" as Pages
 import "../services" as Services
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 FocusScope {
@@ -78,12 +79,11 @@ FocusScope {
             from: ""
             to: "open"
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
-                duration: Theme.panelOpenDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1]
+                curve: Components.Anim.DefaultSpatial
+                duration: Theme.panelOpenSpatialDuration
             }
 
         },
@@ -91,12 +91,11 @@ FocusScope {
             from: "open"
             to: ""
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
+                curve: Components.Anim.EmphasizedAccel
                 duration: Theme.panelCloseDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.4, 0, 0.85, 0.3, 1, 1]
             }
 
         }

@@ -125,10 +125,39 @@ var outputItemColorDuration = 85;
 // Panel animation durations (ms)
 var panelOpenDuration = 250;
 var panelCloseDuration = 145;
+var panelOpenSpatialDuration = 380; // organic open with spring overshoot (DefaultSpatial)
 var qsPageSlideDuration = 130;
 var qsPageFadeDuration = 110;
 var qsHeightDuration = 120;
 var batteryFillDuration = 200;
+
+// Material 3 motion curves (caelestia-derived)
+// Each entry is a flat array of cubic Bezier control points: [c1x, c1y, c2x, c2y, endX, endY, ...].
+// Spatial curves have c1.y > 1 -> overshoot, used for organic spring-like motion on opens.
+var curveStandard          = [0.2, 0, 0, 1, 1, 1];
+var curveStandardAccel     = [0.3, 0, 1, 1, 1, 1];
+var curveStandardDecel     = [0, 0, 0, 1, 1, 1];
+var curveEmphasized        = [0.05, 0, 2/15, 0.06, 1/6, 0.4, 5/24, 0.82, 0.25, 1, 1, 1];
+var curveEmphasizedAccel   = [0.3, 0, 0.8, 0.15, 1, 1];
+var curveEmphasizedDecel   = [0.05, 0.7, 0.1, 1, 1, 1];
+var curveDefaultSpatial    = [0.38, 1.21, 0.22, 1, 1, 1];
+var curveFastSpatial       = [0.42, 1.67, 0.21, 0.9, 1, 1];
+var curveSlowSpatial       = [0.39, 1.29, 0.35, 0.98, 1, 1];
+var curveDefaultEffects    = [0.34, 0.8, 0.34, 1, 1, 1];
+var curveFastEffects       = [0.31, 0.94, 0.34, 1, 1, 1];
+var curveSlowEffects       = [0.34, 0.88, 0.34, 1, 1, 1];
+
+// M3 motion durations (ms)
+var animDurSmall            = 200;
+var animDurNormal           = 400;
+var animDurLarge            = 600;
+var animDurExtraLarge       = 1000;
+var animDurFastSpatial      = 350;
+var animDurDefaultSpatial   = 500;
+var animDurSlowSpatial      = 650;
+var animDurFastEffects      = 150;
+var animDurDefaultEffects   = 200;
+var animDurSlowEffects      = 300;
 
 // OSD animation durations (ms)
 var osdSelectorDuration = 100;
