@@ -177,19 +177,23 @@ ShellRoot {
 
         const openingFromDrawer = root.launcherRequested || root.clipboardRequested;
         const openingFromOtherMenu = root.notificationCenterVisible;
+        const openingFromTransientMenu = openingFromOtherMenu && ncController.transientOpen;
         closeLauncher();
         closeClipboard();
         ncController.closeImmediately();
         if (openingFromDrawer) {
             Qt.callLater(function() {
                 if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested) {
-                    qsController.pinned = true;
-                    qsController.syncVisibility(false);
+                    qsController.openTransient();
                 }
             });
         } else if (openingFromOtherMenu) {
-            qsController.pinned = true;
-            qsController.syncVisibility(false);
+            if (openingFromTransientMenu) {
+                qsController.openTransient();
+            } else {
+                qsController.pinned = true;
+                qsController.syncVisibility(false);
+            }
         } else {
             qsController.togglePinned();
         }
@@ -201,19 +205,23 @@ ShellRoot {
 
         const openingFromDrawer = root.launcherRequested || root.clipboardRequested;
         const openingFromOtherMenu = root.quickSettingsVisible;
+        const openingFromTransientMenu = openingFromOtherMenu && qsController.transientOpen;
         closeLauncher();
         closeClipboard();
         qsController.closeImmediately();
         if (openingFromDrawer) {
             Qt.callLater(function() {
                 if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested) {
-                    ncController.pinned = true;
-                    ncController.syncVisibility(false);
+                    ncController.openTransient();
                 }
             });
         } else if (openingFromOtherMenu) {
-            ncController.pinned = true;
-            ncController.syncVisibility(false);
+            if (openingFromTransientMenu) {
+                ncController.openTransient();
+            } else {
+                ncController.pinned = true;
+                ncController.syncVisibility(false);
+            }
         } else {
             ncController.togglePinned();
         }
