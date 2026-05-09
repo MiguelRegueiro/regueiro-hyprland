@@ -12,12 +12,15 @@ PanelWindow {
     required property var audioService
     required property var brightnessService
     required property var inputService
+    required property var externalDrivesService
+    readonly property var externalDrives: externalDrivesService && externalDrivesService.drives ? externalDrivesService.drives : []
     property bool showBar: true
     property bool forceOverlay: false
 
     signal quickSettingsClicked()
     signal notificationCenterClicked()
     signal clipboardClicked()
+    signal externalDrivesClicked()
     signal quickSettingsHoveredChanged(bool hovered)
     signal notificationCenterHoveredChanged(bool hovered)
 
@@ -78,6 +81,19 @@ PanelWindow {
                 right: parent.right
                 verticalCenter: parent.verticalCenter
                 rightMargin: 4
+            }
+
+            BarIconButton {
+                Layout.alignment: Qt.AlignVCenter
+                barHeight: Theme.barHeight
+                iconText: ""
+                iconColor: Theme.textPrimary
+                onClicked: bar.externalDrivesClicked()
+                onRightClicked: {
+                    if (bar.externalDrivesService)
+                        bar.externalDrivesService.refresh();
+
+                }
             }
 
             BarIconButton {

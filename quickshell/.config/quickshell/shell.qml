@@ -24,7 +24,8 @@ ShellRoot {
     property bool launcherVisible: false
     property bool launcherOpening: false
     readonly property bool launcherRequested: launcherVisible || launcherOpening
-    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible
+    property bool externalDrivesMenuVisible: false
+    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -129,6 +130,7 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
+        closeExternalDrivesMenu();
         closeLauncher();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -152,6 +154,7 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
+        closeExternalDrivesMenu();
         closeClipboard();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -171,19 +174,42 @@ ShellRoot {
             openLauncher();
     }
 
+    function closeExternalDrivesMenu() {
+        externalDrivesMenuVisible = false;
+    }
+
+    function toggleExternalDrivesMenu() {
+        if (powerMenuVisible)
+            return ;
+
+        if (externalDrivesMenuVisible) {
+            closeExternalDrivesMenu();
+            return ;
+        }
+        closeClipboard();
+        closeLauncher();
+        qsController.pinned = false;
+        ncController.pinned = false;
+        qsController.closeImmediately();
+        ncController.closeImmediately();
+        externalDrivesServiceState.refresh();
+        externalDrivesMenuVisible = true;
+    }
+
     function toggleQuickSettings() {
         if (powerMenuVisible)
             return ;
 
-        const openingFromDrawer = root.launcherRequested || root.clipboardRequested;
+        const openingFromDrawer = root.launcherRequested || root.clipboardRequested || root.externalDrivesMenuVisible;
         const openingFromOtherMenu = root.notificationCenterVisible;
         const openingFromTransientMenu = openingFromOtherMenu && ncController.transientOpen;
+        closeExternalDrivesMenu();
         closeLauncher();
         closeClipboard();
         ncController.closeImmediately();
         if (openingFromDrawer) {
             Qt.callLater(function() {
-                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested) {
+                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested && !root.externalDrivesMenuVisible) {
                     qsController.openTransient();
                 }
             });
@@ -203,15 +229,16 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
-        const openingFromDrawer = root.launcherRequested || root.clipboardRequested;
+        const openingFromDrawer = root.launcherRequested || root.clipboardRequested || root.externalDrivesMenuVisible;
         const openingFromOtherMenu = root.quickSettingsVisible;
         const openingFromTransientMenu = openingFromOtherMenu && qsController.transientOpen;
+        closeExternalDrivesMenu();
         closeLauncher();
         closeClipboard();
         qsController.closeImmediately();
         if (openingFromDrawer) {
             Qt.callLater(function() {
-                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested) {
+                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested && !root.externalDrivesMenuVisible) {
                     ncController.openTransient();
                 }
             });
@@ -234,6 +261,7 @@ ShellRoot {
         ncController.closeImmediately();
         closeClipboard();
         closeLauncher();
+        closeExternalDrivesMenu();
         closePowerMenu();
     }
 
@@ -438,6 +466,10 @@ ShellRoot {
         id: clipboardServiceState
     }
 
+    Services.ExternalDrivesService {
+        id: externalDrivesServiceState
+    }
+
     Services.LauncherService {
         id: launcherServiceState
     }
@@ -460,9 +492,11 @@ ShellRoot {
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
                 inputService: inputServiceState
+                externalDrivesService: externalDrivesServiceState
                 onQuickSettingsClicked: root.toggleQuickSettings()
                 onNotificationCenterClicked: root.toggleNotificationCenter()
                 onClipboardClicked: root.toggleClipboard()
+                onExternalDrivesClicked: root.toggleExternalDrivesMenu()
                 onQuickSettingsHoveredChanged: (hovered) => {
                     if (hovered)
                         ncController.closeImmediately();
@@ -475,6 +509,24 @@ ShellRoot {
 
                     return ncController.triggerHovered = hovered;
                 }
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Bar.ExternalDrivesMenu {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                driveService: externalDrivesServiceState
+                open: root.externalDrivesMenuVisible && activeScreen
+                onCloseRequested: root.closeExternalDrivesMenu()
             }
 
         }
