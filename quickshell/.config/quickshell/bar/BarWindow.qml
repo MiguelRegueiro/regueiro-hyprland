@@ -83,11 +83,9 @@ PanelWindow {
                 rightMargin: 4
             }
 
-            BarIconButton {
+            ExternalDriveButton {
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
-                iconText: ""
-                iconColor: Theme.textPrimary
                 onClicked: bar.externalDrivesClicked()
                 onRightClicked: {
                     if (bar.externalDrivesService)
