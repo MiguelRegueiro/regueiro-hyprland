@@ -27,6 +27,10 @@ var green = "#8ff0a4";
 var yellow = "#f8e45c";
 var red = "#ff7b63";
 var blue = "#78aeed";
+var urgentAccent = Qt.rgba(0.47, 0.68, 0.93, 0.72);
+var urgentBg = Qt.rgba(0.47, 0.68, 0.93, 0.06);
+var urgentBorder = Qt.rgba(0.47, 0.68, 0.93, 0.16);
+var urgentBorderHover = Qt.rgba(0.47, 0.68, 0.93, 0.22);
 
 // Radius
 var radiusSmall = 7;

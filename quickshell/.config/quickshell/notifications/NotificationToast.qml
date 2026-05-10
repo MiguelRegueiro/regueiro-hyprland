@@ -90,7 +90,7 @@ Item {
             radius: Theme.qsRadius + 3
             color: toastHover.hovered && root.canActivate ? root.toastSurfaceHoverColor : root.toastSurfaceColor
             border.width: 1
-            border.color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, toastHover.hovered && root.canActivate ? 0.24 : 0.19) : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.1))
+            border.color: root.isCritical ? (toastHover.hovered && root.canActivate ? Theme.urgentBorderHover : Theme.urgentBorder) : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.1))
             layer.enabled: true
 
             anchors {
@@ -109,30 +109,12 @@ Item {
                 }
             }
 
-            Rectangle {
-                visible: root.isCritical
-                width: 3
-                radius: 2
-                color: Theme.red
-
-                anchors {
-                    left: parent.left
-                    top: parent.top
-                    bottom: parent.bottom
-                    leftMargin: 1
-                    topMargin: 1
-                    bottomMargin: 1
-                }
-
-            }
-
             NotificationContent {
                 id: content
 
-                width: parent.width - (root.isCritical ? 36 : 32)
+                width: parent.width - 32
                 notificationStore: root.notificationStore
                 notif: root.notif
-                emphasizeCriticalSummary: true
                 onDismissRequested: root.dismiss()
 
                 anchors {
@@ -140,7 +122,6 @@ Item {
                     right: parent.right
                     top: parent.top
                     margins: 16
-                    leftMargin: root.isCritical ? 20 : 16
                     topMargin: 14
                     bottomMargin: 18
                 }

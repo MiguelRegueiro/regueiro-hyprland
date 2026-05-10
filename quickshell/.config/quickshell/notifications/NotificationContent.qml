@@ -10,7 +10,6 @@ Item {
     required property var notif
     property bool compact: false
     property bool minimalChrome: false
-    property bool emphasizeCriticalSummary: false
     property string timestampText: ""
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property int iconSize: root.minimalChrome ? 26 : (root.compact ? 28 : 34)
@@ -37,9 +36,9 @@ Item {
                 Layout.preferredHeight: Layout.preferredWidth
                 Layout.alignment: Qt.AlignTop
                 radius: root.minimalChrome ? 8 : (root.compact ? 10 : 12)
-                color: root.minimalChrome ? "transparent" : (root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.12) : Theme.hoverBg)
+                color: root.minimalChrome ? "transparent" : (root.isCritical ? Theme.urgentBg : Theme.hoverBg)
                 border.width: root.minimalChrome ? 0 : 1
-                border.color: root.isCritical ? Qt.rgba(1, 0.48, 0.39, 0.24) : Theme.qsEdgeSoft
+                border.color: root.isCritical ? Theme.urgentBorder : Theme.qsEdgeSoft
 
                 Text {
                     anchors.centerIn: parent
@@ -47,7 +46,7 @@ Item {
                     text: parent.iconOverride.length > 0 ? parent.iconOverride : "󰂚"
                     font.family: Theme.fontIcons
                     font.pixelSize: root.minimalChrome ? 14 : (root.compact ? 12 : 15)
-                    color: root.isCritical ? Theme.red : Theme.textDim
+                    color: root.isCritical ? Theme.urgentAccent : Theme.textDim
                 }
 
                 Image {
@@ -115,7 +114,7 @@ Item {
         Text {
             Layout.fillWidth: true
             text: root.notif ? root.notif.summary : ""
-            color: root.emphasizeCriticalSummary && root.isCritical ? Theme.red : Theme.textPrimary
+            color: Theme.textPrimary
             font.family: Theme.fontUi
             font.pixelSize: root.compact ? 14 : 15
             font.weight: Font.DemiBold
