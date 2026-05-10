@@ -12,10 +12,27 @@ Item {
     property bool minimalChrome: false
     property string timestampText: ""
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
+    readonly property string imageSource: notificationImageSource()
+    readonly property bool hasImage: imageSource.length > 0
+    readonly property int imageSize: !hasImage ? 0 : (root.minimalChrome ? Theme.notificationImageMinimalSize : (root.compact ? Theme.notificationImageCompactSize : Theme.notificationImageSize))
     readonly property int iconSize: root.minimalChrome ? 26 : (root.compact ? 28 : 34)
     readonly property int closeSize: root.minimalChrome ? 18 : (root.compact ? 24 : 28)
 
     signal dismissRequested()
+
+    function notificationImageSource() {
+        if (!root.notif || !root.notif.image)
+            return "";
+
+        const source = String(root.notif.image);
+        if (source.length === 0)
+            return "";
+
+        if (source.startsWith("/") || source.startsWith("~"))
+            return "file://" + source;
+
+        return source;
+    }
 
     implicitHeight: contentColumn.implicitHeight
 
@@ -111,31 +128,70 @@ Item {
 
         }
 
-        Text {
+        RowLayout {
             Layout.fillWidth: true
-            text: root.notif ? root.notif.summary : ""
-            color: Theme.textPrimary
-            font.family: Theme.fontUi
-            font.pixelSize: root.compact ? 14 : 15
-            font.weight: Font.DemiBold
-            wrapMode: Text.WordWrap
-            maximumLineCount: root.compact ? 2 : 3
-            elide: Text.ElideRight
-            visible: text.length > 0
-        }
+            spacing: root.hasImage ? (root.minimalChrome ? 10 : 12) : 0
 
-        Text {
-            Layout.fillWidth: true
-            text: root.notif ? root.notif.body : ""
-            color: Theme.textDim
-            font.family: Theme.fontUi
-            font.pixelSize: root.compact ? 12 : 13
-            wrapMode: Text.WordWrap
-            maximumLineCount: root.compact ? 4 : 6
-            elide: Text.ElideRight
-            visible: text.length > 0
-            textFormat: Text.StyledText
-            lineHeight: 1.28
+            Rectangle {
+                id: imagePreview
+
+                Layout.preferredWidth: root.hasImage ? root.imageSize : 0
+                Layout.preferredHeight: root.hasImage ? root.imageSize : 0
+                Layout.alignment: Qt.AlignTop
+                visible: root.hasImage
+                radius: 8
+                color: Qt.rgba(1, 1, 1, 0.04)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.08)
+                clip: true
+
+                Image {
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    source: root.imageSource
+                    asynchronous: true
+                    cache: false
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    mipmap: true
+                }
+
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                spacing: root.minimalChrome ? 6 : 7
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.notif ? root.notif.summary : ""
+                    color: Theme.textPrimary
+                    font.family: Theme.fontUi
+                    font.pixelSize: root.compact ? 14 : 15
+                    font.weight: Font.DemiBold
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: root.compact ? 2 : 3
+                    elide: Text.ElideRight
+                    visible: text.length > 0
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.notif ? root.notif.body : ""
+                    color: Theme.textDim
+                    font.family: Theme.fontUi
+                    font.pixelSize: root.compact ? 12 : 13
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: root.compact ? 3 : 5
+                    elide: Text.ElideRight
+                    visible: text.length > 0
+                    textFormat: Text.StyledText
+                    lineHeight: 1.28
+                }
+
+            }
+
         }
 
     }

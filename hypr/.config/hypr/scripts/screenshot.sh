@@ -36,7 +36,11 @@ copy_image() {
 
 notify_saved() {
     if command -v notify-send >/dev/null 2>&1; then
-        notify-send "Screenshot saved" "$1"
+        notify-send \
+            -a "Screenshot" \
+            -i "image-x-generic" \
+            -h "string:image-path:$1" \
+            "Screenshot saved" "$1"
     fi
 }
 
