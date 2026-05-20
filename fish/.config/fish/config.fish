@@ -19,6 +19,10 @@ if test -f /etc/os-release
 end
 
 fish_add_path $HOME/.local/bin
+if command -sq zoxide
+    zoxide init fish | source
+end
+
 if command -sq starship
     starship init fish | source
 end

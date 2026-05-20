@@ -675,7 +675,7 @@ FocusScope {
                                                 smooth: true
                                                 mipmap: true
                                                 asynchronous: true
-                                                source: Quickshell.iconPath(modelData.icon, "application-x-executable")
+                                                source: root.launcherService.resolveIconSource(modelData.icon)
                                             }
                                         }
 

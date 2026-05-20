@@ -19,6 +19,11 @@ Item {
     })
     property var lastLaunchTimes: ({
     })
+    property var iconPathOverrides: ({
+    })
+    property var pendingIconLookups: []
+    property bool iconLookupRunning: false
+    readonly property string genericIconFallback: "application-x-executable"
     readonly property url launcherStatsLocation: Qt.resolvedUrl(Quickshell.statePath("launcher-usage.ini"))
     // Matches the repo's current Hyprland terminal command.
     property var terminalCommand: ["kitty"]
@@ -663,6 +668,59 @@ Item {
         }
     }
 
+    function resolveIconSource(iconName) {
+        if (typeof iconName !== "string" || iconName.length === 0)
+            return Quickshell.iconPath("", root.genericIconFallback);
+
+        if (iconName.charAt(0) === "/") {
+            const direct = Quickshell.iconPath(iconName, "");
+            if (direct.length > 0)
+                return direct;
+
+            return iconName;
+        }
+        const qtResolved = Quickshell.iconPath(iconName, "");
+        if (qtResolved.length > 0)
+            return qtResolved;
+
+        const cached = root.iconPathOverrides[iconName];
+        if (typeof cached === "string") {
+            if (cached.length > 0)
+                return cached;
+
+            return Quickshell.iconPath(iconName, root.genericIconFallback);
+        }
+        Qt.callLater(root.requestIconLookup, iconName);
+        return Quickshell.iconPath(iconName, root.genericIconFallback);
+    }
+
+    function requestIconLookup(iconName) {
+        if (typeof iconName !== "string" || iconName.length === 0)
+            return ;
+
+        if (root.iconPathOverrides[iconName] !== undefined)
+            return ;
+
+        if (root.pendingIconLookups.indexOf(iconName) !== -1)
+            return ;
+
+        root.pendingIconLookups = root.pendingIconLookups.concat([iconName]);
+        root.processNextIconLookup();
+    }
+
+    function processNextIconLookup() {
+        if (root.iconLookupRunning || root.pendingIconLookups.length === 0)
+            return ;
+
+        const queue = root.pendingIconLookups.slice();
+        const nextName = queue.shift();
+        root.pendingIconLookups = queue;
+        iconLookupProc.targetName = nextName;
+        iconLookupProc.command = ["sh", Quickshell.shellPath("scripts/launcher-resolve-icon.sh"), nextName];
+        root.iconLookupRunning = true;
+        iconLookupProc.running = true;
+    }
+
     Component.onCompleted: root.refreshVisibility()
 
     Settings {
@@ -702,6 +760,30 @@ Item {
             onStreamFinished: {
                 root.hiddenEntryIds = root.parseHiddenEntryIds(visibilityOut.text);
             }
+        }
+
+    }
+
+    Process {
+        id: iconLookupProc
+
+        property string targetName: ""
+
+        onExited: {
+            const path = iconLookupOut.text.trim();
+            const updated = ({
+            });
+            for (const key in root.iconPathOverrides) updated[key] = root.iconPathOverrides[key]
+            updated[iconLookupProc.targetName] = path;
+            root.iconPathOverrides = updated;
+            root.iconLookupRunning = false;
+            Qt.callLater(root.processNextIconLookup);
+        }
+
+        stdout: StdioCollector {
+            id: iconLookupOut
+
+            waitForEnd: true
         }
 
     }
