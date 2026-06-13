@@ -79,3 +79,4 @@ function fish_greeting
         fastfetch
     end
 end
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv fish)"
