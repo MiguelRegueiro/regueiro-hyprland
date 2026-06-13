@@ -200,28 +200,16 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
-        const openingFromDrawer = root.launcherRequested || root.clipboardRequested || root.externalDrivesMenuVisible;
-        const openingFromOtherMenu = root.notificationCenterVisible;
-        const openingFromTransientMenu = openingFromOtherMenu && ncController.transientOpen;
+        const shouldClose = qsController.open;
         closeExternalDrivesMenu();
         closeLauncher();
         closeClipboard();
         ncController.closeImmediately();
-        if (openingFromDrawer) {
-            Qt.callLater(function() {
-                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested && !root.externalDrivesMenuVisible) {
-                    qsController.openTransient();
-                }
-            });
-        } else if (openingFromOtherMenu) {
-            if (openingFromTransientMenu) {
-                qsController.openTransient();
-            } else {
-                qsController.pinned = true;
-                qsController.syncVisibility(false);
-            }
+        if (shouldClose) {
+            qsController.closeImmediately();
         } else {
-            qsController.togglePinned();
+            qsController.pinned = true;
+            qsController.syncVisibility(false);
         }
     }
 
@@ -229,28 +217,16 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
-        const openingFromDrawer = root.launcherRequested || root.clipboardRequested || root.externalDrivesMenuVisible;
-        const openingFromOtherMenu = root.quickSettingsVisible;
-        const openingFromTransientMenu = openingFromOtherMenu && qsController.transientOpen;
+        const shouldClose = ncController.open;
         closeExternalDrivesMenu();
         closeLauncher();
         closeClipboard();
         qsController.closeImmediately();
-        if (openingFromDrawer) {
-            Qt.callLater(function() {
-                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested && !root.externalDrivesMenuVisible) {
-                    ncController.openTransient();
-                }
-            });
-        } else if (openingFromOtherMenu) {
-            if (openingFromTransientMenu) {
-                ncController.openTransient();
-            } else {
-                ncController.pinned = true;
-                ncController.syncVisibility(false);
-            }
+        if (shouldClose) {
+            ncController.closeImmediately();
         } else {
-            ncController.togglePinned();
+            ncController.pinned = true;
+            ncController.syncVisibility(false);
         }
     }
 
