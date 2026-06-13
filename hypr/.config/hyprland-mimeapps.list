@@ -5,7 +5,7 @@
 inode/directory=org.gnome.Nautilus.desktop
 
 # Plain text
-text/plain=org.gnome.TextEditor.desktop
+text/plain=org.kde.kate.desktop
 application/x-zerosize=org.gnome.TextEditor.desktop
 
 # Markdown
@@ -13,40 +13,40 @@ text/markdown=com.github.fabiocolacio.marker.desktop
 text/x-markdown=com.github.fabiocolacio.marker.desktop
 
 # Code and structured text
-application/javascript=org.kde.kate.desktop
-application/json=org.kde.kate.desktop
-application/toml=org.kde.kate.desktop
-application/x-desktop=org.kde.kate.desktop
-application/x-php=org.kde.kate.desktop
-application/x-shellscript=org.kde.kate.desktop
-application/x-subrip=org.kde.kate.desktop
-application/x-yaml=org.kde.kate.desktop
-application/xml=org.kde.kate.desktop
-text/css=org.kde.kate.desktop
-text/javascript=org.kde.kate.desktop
+application/javascript=nvim.desktop
+application/json=nvim.desktop
+application/toml=nvim.desktop
+application/x-desktop=nvim.desktop
+application/x-php=nvim.desktop
+application/x-shellscript=nvim.desktop
+application/x-subrip=nvim.desktop
+application/x-yaml=nvim.desktop
+application/xml=nvim.desktop
+text/css=nvim.desktop
+text/javascript=nvim.desktop
 text/rust=org.kde.kate.desktop
-text/x-c=org.kde.kate.desktop
-text/x-c++=org.kde.kate.desktop
-text/x-c++hdr=org.kde.kate.desktop
-text/x-c++src=org.kde.kate.desktop
-text/x-chdr=org.kde.kate.desktop
-text/x-cmake=org.kde.kate.desktop
-text/x-csrc=org.kde.kate.desktop
-text/x-diff=org.kde.kate.desktop
-text/x-go=org.kde.kate.desktop
-text/x-ini=org.kde.kate.desktop
-text/x-java=org.kde.kate.desktop
-text/x-lua=org.kde.kate.desktop
-text/x-makefile=org.kde.kate.desktop
-text/x-patch=org.kde.kate.desktop
-text/x-perl=org.kde.kate.desktop
-text/x-php=org.kde.kate.desktop
-text/x-python=org.kde.kate.desktop
-text/x-ruby=org.kde.kate.desktop
-text/x-shellscript=org.kde.kate.desktop
-text/x-toml=org.kde.kate.desktop
-text/yaml=org.kde.kate.desktop
-text/xml=org.kde.kate.desktop
+text/x-c=nvim.desktop
+text/x-c++=nvim.desktop
+text/x-c++hdr=nvim.desktop
+text/x-c++src=nvim.desktop
+text/x-chdr=nvim.desktop
+text/x-cmake=nvim.desktop
+text/x-csrc=nvim.desktop
+text/x-diff=nvim.desktop
+text/x-go=nvim.desktop
+text/x-ini=nvim.desktop
+text/x-java=nvim.desktop
+text/x-lua=nvim.desktop
+text/x-makefile=nvim.desktop
+text/x-patch=nvim.desktop
+text/x-perl=nvim.desktop
+text/x-php=nvim.desktop
+text/x-python=nvim.desktop
+text/x-ruby=nvim.desktop
+text/x-shellscript=nvim.desktop
+text/x-toml=nvim.desktop
+text/yaml=nvim.desktop
+text/xml=nvim.desktop
 
 # Documents
 application/pdf=org.gnome.Papers.desktop
