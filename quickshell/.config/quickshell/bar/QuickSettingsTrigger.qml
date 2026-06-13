@@ -9,6 +9,7 @@ Rectangle {
 
     required property var audioService
     property int barHeight: 34
+    property bool menuOpen: false
     readonly property bool hovered: triggerHover.hovered
     property var batteryDevice: UPower.displayDevice
     property int batteryPercent: batteryDevice ? Math.min(100, Math.round(batteryDevice.percentage * 100)) : -1
@@ -18,10 +19,10 @@ Rectangle {
 
     signal clicked()
 
-    height: barHeight - 6
+    height: Math.min(barHeight, Theme.barItemHeight)
     implicitWidth: contentRow.implicitWidth + 28
     radius: Theme.radiusSmall
-    color: Theme.barBg
+    color: hovered && !menuOpen ? Theme.hoverBg : "transparent"
 
     HoverHandler {
         id: triggerHover
@@ -141,6 +142,15 @@ Rectangle {
         onWheel: (wheel) => {
             return root.audioService.adjustVolume(wheel.angleDelta.y > 0 ? 5 : -5);
         }
+    }
+
+    Behavior on color {
+        enabled: !root.menuOpen
+
+        ColorAnimation {
+            duration: Theme.hoverAnimDuration
+        }
+
     }
 
 }

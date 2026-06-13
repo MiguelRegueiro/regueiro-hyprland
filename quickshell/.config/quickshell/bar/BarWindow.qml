@@ -16,6 +16,8 @@ PanelWindow {
     readonly property var externalDrives: externalDrivesService && externalDrivesService.drives ? externalDrivesService.drives : []
     property bool showBar: true
     property bool forceOverlay: false
+    property bool quickSettingsOpen: false
+    property bool notificationCenterOpen: false
 
     signal quickSettingsClicked()
     signal notificationCenterClicked()
@@ -47,7 +49,7 @@ PanelWindow {
 
             anchors {
                 left: parent.left
-                verticalCenter: parent.verticalCenter
+                top: parent.top
                 leftMargin: 4
             }
 
@@ -65,8 +67,13 @@ PanelWindow {
         DateTimeNotificationTrigger {
             id: dateTimeTrigger
 
-            anchors.centerIn: parent
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                top: parent.top
+            }
+
             barHeight: Theme.barHeight
+            menuOpen: bar.notificationCenterOpen
             notificationStore: bar.notificationStore
             onNotificationCenterClicked: bar.notificationCenterClicked()
             onHoveredChanged: bar.notificationCenterHoveredChanged(hovered)
@@ -79,8 +86,7 @@ PanelWindow {
 
             anchors {
                 right: parent.right
-                verticalCenter: parent.verticalCenter
-                rightMargin: 4
+                top: parent.top
             }
 
             ExternalDriveButton {
@@ -117,24 +123,9 @@ PanelWindow {
 
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
+                menuOpen: bar.quickSettingsOpen
                 audioService: bar.audioService
                 onClicked: bar.quickSettingsClicked()
-            }
-
-        }
-
-        Item {
-            id: quickSettingsHotZone
-
-            x: rightRow.x + quickSettingsTrigger.x
-            width: parent.width - x
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            z: 20
-
-            HoverHandler {
-                blocking: false
-                onHoveredChanged: bar.quickSettingsHoveredChanged(hovered)
             }
 
         }

@@ -16,7 +16,7 @@ Rectangle {
     signal scrollUp()
     signal scrollDown()
 
-    height: barHeight - 8
+    height: Math.min(barHeight, Theme.barItemHeight)
     implicitWidth: lbl.implicitWidth + padH * 2
     radius: Theme.radiusSmall
     color: hovered ? Theme.hoverBg : "transparent"

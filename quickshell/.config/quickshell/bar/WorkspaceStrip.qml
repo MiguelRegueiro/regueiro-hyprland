@@ -24,7 +24,7 @@ Row {
 
             // Only show workspaces belonging to this bar's screen
             visible: modelData.monitor !== null && modelData.monitor.name === screenName
-            height: barHeight - 8
+            height: Math.min(barHeight, Theme.barItemHeight)
             width: visible ? Math.max(wsLabel.implicitWidth + 14, 28) : 0
             radius: Theme.radiusSmall
             color: {

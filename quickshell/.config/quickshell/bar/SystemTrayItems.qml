@@ -23,7 +23,7 @@ Row {
             readonly property bool hovered: hover.hovered
 
             visible: !itemId.includes("blueman") && !itemId.includes("fcitx") && (modelData.status !== Status.Passive || modelData.onlyMenu)
-            height: trayRow.barHeight - 8
+            height: Math.min(trayRow.barHeight, Theme.barItemHeight)
             width: height
             radius: Theme.radiusSmall
             color: hovered ? Theme.hoverBg : "transparent"

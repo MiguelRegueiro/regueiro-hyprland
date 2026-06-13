@@ -8,6 +8,7 @@ Row {
 
     required property var notificationStore
     property int barHeight: 34
+    property bool menuOpen: false
     readonly property bool hovered: triggerHover.hovered
     readonly property bool hasNotification: notificationStore.count > 0
     readonly property bool doNotDisturb: notificationStore.dnd
@@ -24,10 +25,10 @@ Row {
 
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
-        height: root.barHeight - 8
+        height: Math.min(root.barHeight, Theme.barItemHeight)
         width: pillContent.implicitWidth + 20
         radius: Theme.radiusSmall
-        color: Theme.barBg
+        color: root.hovered && !root.menuOpen ? Theme.hoverBg : "transparent"
 
         HoverHandler {
             id: triggerHover
@@ -96,6 +97,15 @@ Row {
                 right: parent.right
                 top: parent.top
                 bottom: parent.bottom
+            }
+
+        }
+
+        Behavior on color {
+            enabled: !root.menuOpen
+
+            ColorAnimation {
+                duration: Theme.hoverAnimDuration
             }
 
         }

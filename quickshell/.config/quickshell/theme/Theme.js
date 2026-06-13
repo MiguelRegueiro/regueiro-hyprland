@@ -6,7 +6,8 @@ var screenFrameBg = Qt.rgba(0, 0, 0, 1.0);
 var menuBg = Qt.rgba(0, 0, 0, 1.0);
 var popupBg = Qt.rgba(0.075, 0.075, 0.075, 1.0);
 var barBorder = Qt.rgba(1, 1, 1, 0.08);
-var barHeight = 34;
+var barHeight = 28;
+var barItemHeight = 26;
 var barCornerRadius = 16; // matches hyprland rounding = 16
 var borderSize = 14; // screen frame thickness -- matches hyprland gaps_out
 

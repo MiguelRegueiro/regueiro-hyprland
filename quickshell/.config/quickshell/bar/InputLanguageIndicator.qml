@@ -30,7 +30,7 @@ Item {
     readonly property color labelColor: backendError ? Theme.red : (configWarning ? Theme.yellow : Theme.textPrimary)
     readonly property bool showTooltip: hovered && (inputService.statusTitle.length > 0 || inputService.statusDetail.length > 0)
 
-    height: barHeight - 8
+    height: Math.min(barHeight, Theme.barItemHeight)
     implicitWidth: trigger.implicitWidth
     implicitHeight: height
 

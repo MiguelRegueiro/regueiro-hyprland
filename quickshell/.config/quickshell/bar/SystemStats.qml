@@ -85,7 +85,7 @@ Row {
 
     // ── CPU display ────────────────────────────────────────────
     Rectangle {
-        height: root.barHeight - 8
+        height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: cpuRow.implicitWidth + 20
         radius: Theme.radiusSmall
         color: cpuHover.hovered ? Theme.hoverBg : "transparent"
@@ -135,7 +135,7 @@ Row {
 
     // ── RAM display ────────────────────────────────────────────
     Rectangle {
-        height: root.barHeight - 8
+        height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: ramRow.implicitWidth + 20
         radius: Theme.radiusSmall
         color: ramHover.hovered ? Theme.hoverBg : "transparent"

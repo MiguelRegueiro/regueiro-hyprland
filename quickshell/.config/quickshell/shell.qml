@@ -488,6 +488,8 @@ ShellRoot {
                 targetScreen: modelData
                 showBar: activeScreen
                 forceOverlay: fullscreenPanelChromeActive
+                quickSettingsOpen: root.quickSettingsVisible
+                notificationCenterOpen: root.notificationCenterVisible
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
@@ -498,16 +500,10 @@ ShellRoot {
                 onClipboardClicked: root.toggleClipboard()
                 onExternalDrivesClicked: root.toggleExternalDrivesMenu()
                 onQuickSettingsHoveredChanged: (hovered) => {
-                    if (hovered)
-                        ncController.closeImmediately();
-
-                    return qsController.triggerHovered = hovered;
+                    qsController.triggerHovered = false;
                 }
                 onNotificationCenterHoveredChanged: (hovered) => {
-                    if (hovered)
-                        qsController.closeImmediately();
-
-                    return ncController.triggerHovered = hovered;
+                    ncController.triggerHovered = false;
                 }
             }
 

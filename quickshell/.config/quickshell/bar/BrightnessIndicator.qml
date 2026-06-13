@@ -9,7 +9,7 @@ Rectangle {
     property int barHeight: 34
     readonly property bool hovered: hover.hovered
 
-    height: barHeight - 8
+    height: Math.min(barHeight, Theme.barItemHeight)
     implicitWidth: brightnessRow.implicitWidth + 20
     radius: Theme.radiusSmall
     color: hovered ? Theme.hoverBg : "transparent"
