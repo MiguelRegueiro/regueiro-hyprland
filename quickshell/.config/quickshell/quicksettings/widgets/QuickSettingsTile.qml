@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 
 // GNOME 43+ style horizontal tile
@@ -17,6 +18,7 @@ Rectangle {
     property bool showMenuIndicator: hasMenu
     property bool showIconChip: hasMenu
     property real iconCenterOffsetX: 0
+    property bool pressed: false
     readonly property bool hovered: tileHover.hovered
 
     signal clicked()
@@ -26,6 +28,8 @@ Rectangle {
     Layout.minimumWidth: 0
     Layout.preferredWidth: 0
     height: 64
+    scale: !interactive ? 1 : (pressed ? 0.985 : (hovered ? 1.012 : 1))
+    transformOrigin: Item.Center
     radius: pillShape ? height / 2 : Theme.qsRadius
     color: {
         if (tile.toggled)
@@ -61,6 +65,8 @@ Rectangle {
 
             width: 36
             height: 36
+            scale: tile.toggled ? (tile.hovered ? 1.04 : 1.025) : (tile.hovered ? 1.025 : 1)
+            transformOrigin: Item.Center
             radius: 18
             color: {
                 if (!tile.showIconChip)
@@ -101,6 +107,14 @@ Rectangle {
             Behavior on border.color {
                 ColorAnimation {
                     duration: Theme.hoverAnimDuration
+                }
+
+            }
+
+            Behavior on scale {
+                Components.Anim {
+                    curve: Components.Anim.FastEffects
+                    duration: Theme.animDurFastEffects
                 }
 
             }
@@ -158,6 +172,7 @@ Rectangle {
         anchors.fill: parent
         enabled: tile.interactive
         cursorShape: Qt.ArrowCursor
+        onPressedChanged: tile.pressed = tileActionArea.pressed
         onClicked: {
             if (tile.hasMenu)
                 tile.menuClicked();
@@ -191,6 +206,14 @@ Rectangle {
     Behavior on border.color {
         ColorAnimation {
             duration: Theme.hoverAnimDuration
+        }
+
+    }
+
+    Behavior on scale {
+        Components.Anim {
+            curve: Components.Anim.FastEffects
+            duration: Theme.animDurFastEffects
         }
 
     }

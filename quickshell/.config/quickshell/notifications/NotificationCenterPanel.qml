@@ -23,10 +23,10 @@ Item {
     readonly property real revealProgress: reveal
     readonly property real animTopLeftRadius: root.topLeftRadius * root.reveal
     readonly property real animTopRightRadius: root.topRightRadius * root.reveal
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
-    readonly property real frameOpacity: 0.72 + root.reveal * 0.28
+    readonly property real clipWidthProgress: 0.76 + root.reveal * 0.24
+    readonly property real clipHeightProgress: 0.66 + root.reveal * 0.34
+    readonly property real frameScale: 0.965 + root.reveal * 0.035
+    readonly property real frameOpacity: 0.48 + root.reveal * 0.52
     readonly property real bodyWidth: Theme.ncWidth
     readonly property real calendarWidth: 268
     readonly property real fuseOverhang: Theme.barCornerRadius
@@ -93,7 +93,7 @@ Item {
 
         width: root.width
         height: root.height
-        y: (1 - root.reveal) * -4
+        y: (1 - root.reveal) * -10
         scale: root.frameScale
         transformOrigin: Item.Top
         opacity: root.frameOpacity

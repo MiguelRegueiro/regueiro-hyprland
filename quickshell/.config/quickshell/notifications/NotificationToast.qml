@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell.Services.Notifications
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 
 Item {
@@ -40,7 +41,8 @@ Item {
         property: "revealProgress"
         to: 1
         duration: Theme.toastOpenDuration
-        easing.type: Easing.OutExpo
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Theme.curveDefaultEffects
     }
 
     SequentialAnimation {
@@ -74,6 +76,8 @@ Item {
         width: parent.width
         implicitHeight: body.implicitHeight
         radius: Theme.qsRadius + 1
+        scale: toastHover.hovered && root.canActivate ? 1.006 : 1
+        transformOrigin: Item.Center
         color: "transparent"
         border.width: 0
 
@@ -151,6 +155,13 @@ Item {
 
             }
 
+        }
+
+        Behavior on scale {
+            Components.Anim {
+                curve: Components.Anim.DefaultEffects
+                duration: Theme.hoverAnimDuration
+            }
         }
 
     }

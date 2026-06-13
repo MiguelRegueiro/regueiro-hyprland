@@ -27,14 +27,14 @@ PanelWindow {
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
-    readonly property real frameOpacity: 0.72 + root.reveal * 0.28
+    readonly property real clipWidthProgress: 0.76 + root.reveal * 0.24
+    readonly property real clipHeightProgress: 0.66 + root.reveal * 0.34
+    readonly property real frameScale: 0.965 + root.reveal * 0.035
+    readonly property real frameOpacity: 0.48 + root.reveal * 0.52
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property real clipSurfaceWidth: root.menuWidth * root.clipWidthProgress + root.fuseOverhang * 2 * root.reveal
-    readonly property int openDuration: 260
-    readonly property int closeDuration: 110
+    readonly property int openDuration: 360
+    readonly property int closeDuration: Theme.panelCloseDuration
 
     signal closeRequested()
 
@@ -79,7 +79,7 @@ PanelWindow {
 
                 Components.Anim {
                     property: "reveal"
-                    curve: Components.Anim.FastSpatial
+                    curve: Components.Anim.DefaultSpatial
                     duration: root.openDuration
                 }
 
@@ -111,7 +111,7 @@ PanelWindow {
 
             width: externalPanel.width
             height: externalPanel.height
-            y: (1 - root.reveal) * -4
+            y: (1 - root.reveal) * -10
             scale: root.frameScale
             transformOrigin: Item.Top
             opacity: root.frameOpacity
@@ -404,6 +404,8 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     implicitHeight: 92
                                     radius: Theme.qsRadius + 1
+                                    scale: hovered ? 1.006 : 1
+                                    transformOrigin: Item.Center
                                     color: hovered ? Qt.rgba(0.115, 0.115, 0.115, 1) : Theme.qsCardBg
                                     border.width: 1
                                     border.color: hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
@@ -413,6 +415,13 @@ PanelWindow {
                                         id: rowHover
 
                                         blocking: false
+                                    }
+
+                                    Behavior on scale {
+                                        Components.Anim {
+                                            curve: Components.Anim.DefaultEffects
+                                            duration: Theme.hoverAnimDuration
+                                        }
                                     }
 
                                     ColumnLayout {

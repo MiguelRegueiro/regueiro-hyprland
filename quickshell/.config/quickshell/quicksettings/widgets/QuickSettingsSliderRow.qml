@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
+import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 
 // Slider row: [icon]  [label]  [slider]  [mute button]
@@ -41,6 +42,8 @@ Item {
 
     Layout.fillWidth: true
     height: 56
+    scale: row.dragging ? 1.006 : (row.hovered ? 1.004 : 1)
+    transformOrigin: Item.Center
     onValueChanged: syncFromSource()
     onMutedChanged: syncFromSource()
     Component.onCompleted: syncFromSource()
@@ -223,6 +226,16 @@ Item {
 
                             }
 
+                            Behavior on width {
+                                enabled: !slider.pressed
+
+                                Components.Anim {
+                                    curve: Components.Anim.FastEffects
+                                    duration: Theme.animDurFastEffects
+                                }
+
+                            }
+
                         }
 
                     }
@@ -232,9 +245,19 @@ Item {
                         y: slider.topPadding + slider.availableHeight / 2 - height / 2
                         width: 18
                         height: 18
+                        scale: slider.pressed ? 1.16 : (row.hovered ? 1.08 : 1)
+                        transformOrigin: Item.Center
                         radius: 9
                         color: "white"
                         opacity: 1
+
+                        Behavior on scale {
+                            Components.Anim {
+                                curve: Components.Anim.FastEffects
+                                duration: Theme.animDurFastEffects
+                            }
+
+                        }
                     }
 
                 }
@@ -293,4 +316,11 @@ Item {
 
     }
 
+    Behavior on scale {
+        Components.Anim {
+            curve: Components.Anim.FastEffects
+            duration: Theme.animDurFastEffects
+        }
+
+    }
 }

@@ -23,12 +23,10 @@ FocusScope {
     readonly property real bottomLeftRadius: 0.001
     readonly property real bottomRightRadius: 0.001
     readonly property real revealProgress: reveal
-    readonly property real animTopLeftRadius: root.topLeftRadius * root.reveal
-    readonly property real animTopRightRadius: root.topRightRadius * root.reveal
-    readonly property real clipWidthProgress: 0.88 + root.reveal * 0.12
-    readonly property real clipHeightProgress: 0.86 + root.reveal * 0.14
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
-    readonly property real frameOpacity: 0.72 + root.reveal * 0.28
+    readonly property real clipWidthProgress: 1
+    readonly property real clipHeightProgress: 1
+    readonly property real frameScale: 0.975 + root.reveal * 0.025
+    readonly property real frameOpacity: 0.50 + root.reveal * 0.50
     readonly property real bodyWidth: Theme.clipboardWidth
     readonly property real bodyHeight: Theme.clipboardHeight
     readonly property real fuseOverhang: Theme.barCornerRadius
@@ -212,7 +210,7 @@ FocusScope {
                 target: root
                 property: "reveal"
                 curve: Components.Anim.DefaultSpatial
-                duration: Theme.panelOpenSpatialDuration
+                duration: Theme.panelOpenDuration
             }
 
         },
@@ -224,7 +222,7 @@ FocusScope {
                 target: root
                 property: "reveal"
                 curve: Components.Anim.EmphasizedAccel
-                duration: Theme.panelCloseDuration - 20
+                duration: Theme.panelCloseDuration
             }
 
         }
@@ -266,7 +264,7 @@ FocusScope {
 
         width: root.width
         height: root.height
-        y: (1 - root.reveal) * 4
+        y: (1 - root.reveal) * 12
         scale: root.frameScale
         transformOrigin: Item.Bottom
         opacity: root.frameOpacity
@@ -307,7 +305,7 @@ FocusScope {
                     ShapePath {
                         fillColor: Theme.menuBg
                         strokeColor: "transparent"
-                        strokeWidth: 0
+                        strokeWidth: -1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
 
@@ -825,7 +823,6 @@ FocusScope {
                                             }
                                         }
                                     }
-
                                 }
                             }
 

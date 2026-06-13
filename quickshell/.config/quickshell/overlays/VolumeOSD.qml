@@ -78,6 +78,8 @@ PanelWindow {
         border.color: Theme.barBorder
         border.width: 1
         opacity: root.osdVisible ? 1 : 0
+        scale: root.osdVisible ? 1 : 0.96
+        transformOrigin: Item.Center
         layer.enabled: true
 
         RowLayout {
@@ -142,11 +144,16 @@ PanelWindow {
         }
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: osdRect.opacity >= 1 ? 110 : 0
-                easing.type: Easing.OutQuad
+            Components.Anim {
+                curve: Components.Anim.DefaultEffects
+                duration: Theme.animDurDefaultEffects
             }
-
+        }
+        Behavior on scale {
+            Components.Anim {
+                curve: Components.Anim.DefaultEffects
+                duration: Theme.animDurDefaultEffects
+            }
         }
 
         layer.effect: MultiEffect {

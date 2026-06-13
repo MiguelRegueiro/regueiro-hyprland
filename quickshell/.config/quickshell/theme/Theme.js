@@ -20,7 +20,7 @@ var textDisabled = Qt.rgba(0.965, 0.961, 0.957, 0.35);
 var hoverBg = Qt.rgba(1, 1, 1, 0.11);
 var hoverBgStrong = Qt.rgba(1, 1, 1, 0.17);
 var activeBg = Qt.rgba(1, 1, 1, 0.18);
-var hoverAnimDuration = 75;
+var hoverAnimDuration = 105;
 
 // State colors
 var accent = "#3584e4";
@@ -131,12 +131,12 @@ var popupButtonColorDuration = 90;
 var outputItemColorDuration = 85;
 
 // Panel animation durations (ms)
-var panelOpenDuration = 250;
-var panelCloseDuration = 145;
-var panelOpenSpatialDuration = 380; // organic open with spring overshoot (DefaultSpatial)
-var qsPageSlideDuration = 130;
-var qsPageFadeDuration = 110;
-var qsHeightDuration = 120;
+var panelOpenDuration = 280;
+var panelCloseDuration = 155;
+var panelOpenSpatialDuration = 430; // organic open with spring overshoot (DefaultSpatial)
+var qsPageSlideDuration = 210;
+var qsPageFadeDuration = 145;
+var qsHeightDuration = 180;
 var batteryFillDuration = 200;
 
 // Material 3 motion curves (caelestia-derived)

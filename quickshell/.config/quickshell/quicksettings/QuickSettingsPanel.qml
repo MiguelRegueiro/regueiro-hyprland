@@ -30,10 +30,10 @@ FocusScope {
     readonly property real surfaceBottomRightRadius: Theme.qsSurfaceBottomRightRadius
     readonly property real attachTop: Theme.qsAttachTop
     readonly property real attachRight: Theme.qsAttachRight
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
-    readonly property real frameOpacity: 0.72 + root.reveal * 0.28
+    readonly property real clipWidthProgress: 0.76 + root.reveal * 0.24
+    readonly property real clipHeightProgress: 0.68 + root.reveal * 0.32
+    readonly property real frameScale: 0.965 + root.reveal * 0.035
+    readonly property real frameOpacity: 0.46 + root.reveal * 0.54
     readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
     readonly property real revealProgress: reveal
@@ -122,7 +122,7 @@ FocusScope {
 
         width: root.width
         height: root.height
-        y: (1 - root.reveal) * -4
+        y: (1 - root.reveal) * -10
         scale: root.frameScale
         transformOrigin: Item.TopRight
         opacity: root.frameOpacity
@@ -396,6 +396,7 @@ FocusScope {
                     id: contentLayout
 
                     spacing: 0
+                    opacity: Math.min(1, root.reveal * 1.35)
 
                     anchors {
                         top: parent.top
@@ -460,16 +461,17 @@ FocusScope {
                             }
 
                             Behavior on x {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageSlideDuration
-                                    easing.type: Easing.OutExpo
+                                    curve: Components.Anim.DefaultSpatial
                                 }
 
                             }
 
                             Behavior on opacity {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageFadeDuration
+                                    curve: Components.Anim.DefaultEffects
                                 }
 
                             }
@@ -487,16 +489,17 @@ FocusScope {
                             onBackClicked: root.wifiPageOpen = false
 
                             Behavior on x {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageSlideDuration
-                                    easing.type: Easing.OutExpo
+                                    curve: Components.Anim.DefaultSpatial
                                 }
 
                             }
 
                             Behavior on opacity {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageFadeDuration
+                                    curve: Components.Anim.DefaultEffects
                                 }
 
                             }
@@ -513,16 +516,17 @@ FocusScope {
                             onBackClicked: root.bluetoothPageOpen = false
 
                             Behavior on x {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageSlideDuration
-                                    easing.type: Easing.OutExpo
+                                    curve: Components.Anim.DefaultSpatial
                                 }
 
                             }
 
                             Behavior on opacity {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageFadeDuration
+                                    curve: Components.Anim.DefaultEffects
                                 }
 
                             }
@@ -530,9 +534,9 @@ FocusScope {
                         }
 
                         Behavior on implicitHeight {
-                            NumberAnimation {
+                            Components.Anim {
                                 duration: Theme.qsHeightDuration
-                                easing.type: Easing.OutExpo
+                                curve: Components.Anim.DefaultEffects
                             }
 
                         }
