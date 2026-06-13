@@ -13,6 +13,7 @@ FocusScope {
     property real reveal: 0
     property int selectedIndex: -1
     property bool hasOpenedOnce: false
+    property bool closeAfterCopy: false
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: panelHover.hovered || boundsHover.hovered
@@ -90,10 +91,10 @@ FocusScope {
     }
 
     function activateEntry(entry) {
-        if (!entry)
+        if (!entry || root.clipboardService.mutating)
             return;
+        root.closeAfterCopy = true;
         root.clipboardService.copyEntry(entry);
-        root.requestClose();
     }
 
     function activateSelection() {
@@ -183,6 +184,19 @@ FocusScope {
         onTriggered: root.clipboardService.refresh()
     }
 
+    Timer {
+        id: closeAfterCopyTimer
+
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (root.closeAfterCopy) {
+                root.closeAfterCopy = false;
+                root.requestClose();
+            }
+        }
+    }
+
     state: open ? "open" : ""
     implicitWidth: root.bodyWidth + root.fuseOverhang * 2
     implicitHeight: root.bodyHeight + root.attachBottom
@@ -217,6 +231,13 @@ FocusScope {
     ]
 
     Connections {
+        function onCopyCompleted(success) {
+            if (success)
+                closeAfterCopyTimer.restart();
+            else
+                root.closeAfterCopy = false;
+        }
+
         function onDeleteCompleted(success) {
             if (success)
                 Qt.callLater(root.focusSearch);
