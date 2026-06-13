@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import "../theme/Theme.js" as Theme
 
@@ -21,6 +20,10 @@ Item {
     readonly property string monthTitle: `${root.monthNames[root.visibleMonthIndex]} ${root.visibleYear}`
     readonly property string todayTitle: `${root.weekdayNamesLong[root.today.getDay()]}, ${root.monthNames[root.today.getMonth()]} ${root.today.getDate()}`
     readonly property bool todayButtonEnabled: root.monthOffset !== 0 || !root.isSelectedDay(root.today)
+    readonly property int calendarColumns: 7
+    readonly property real calendarSpacing: 4
+    readonly property real calendarCellWidth: Math.max(1, Math.floor((root.width - root.calendarSpacing * (root.calendarColumns - 1)) / root.calendarColumns))
+    readonly property real calendarGridWidth: root.calendarCellWidth * root.calendarColumns + root.calendarSpacing * (root.calendarColumns - 1)
 
     function cellDate(index) {
         return new Date(root.visibleYear, root.visibleMonthIndex, index - root.firstWeekday + 1);
@@ -190,84 +193,99 @@ Item {
 
         }
 
-        RowLayout {
+        Item {
             width: parent.width
-            spacing: 4
+            height: weekdayRow.implicitHeight
 
-            Repeater {
-                model: root.weekdayNames
+            Row {
+                id: weekdayRow
 
-                delegate: Text {
-                    required property string modelData
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: root.calendarGridWidth
+                spacing: root.calendarSpacing
 
-                    Layout.fillWidth: true
-                    text: modelData
-                    color: Theme.textDisabled
-                    font.family: Theme.fontUi
-                    font.pixelSize: 10
-                    font.weight: Font.DemiBold
-                    horizontalAlignment: Text.AlignHCenter
+                Repeater {
+                    model: root.weekdayNames
+
+                    delegate: Text {
+                        required property string modelData
+
+                        width: root.calendarCellWidth
+                        text: modelData
+                        color: Theme.textDisabled
+                        font.family: Theme.fontUi
+                        font.pixelSize: 10
+                        font.weight: Font.DemiBold
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
                 }
-
             }
 
         }
 
-        Grid {
-            id: dayGrid
-
+        Item {
             width: parent.width
-            columns: 7
-            columnSpacing: 4
-            rowSpacing: 4
-            readonly property real dayWidth: Math.max(1, Math.floor((width - columnSpacing * 6) / 7))
+            height: dayGrid.implicitHeight
 
-            WheelHandler {
-                onWheel: (event) => {
-                    if (event.angleDelta.y > 0)
-                        root.monthOffset -= 1;
-                    else if (event.angleDelta.y < 0)
-                        root.monthOffset += 1;
+            Grid {
+                id: dayGrid
 
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: root.calendarGridWidth
+                columns: root.calendarColumns
+                columnSpacing: root.calendarSpacing
+                rowSpacing: root.calendarSpacing
+                readonly property real dayWidth: root.calendarCellWidth
+
+                WheelHandler {
+                    onWheel: (event) => {
+                        if (event.angleDelta.y > 0)
+                            root.monthOffset -= 1;
+                        else if (event.angleDelta.y < 0)
+                            root.monthOffset += 1;
+
+                    }
                 }
-            }
 
-            Repeater {
-                model: 42
+                Repeater {
+                    model: 42
 
-                delegate: Rectangle {
-                    required property int index
-                    readonly property var dateValue: root.cellDate(index)
-                    readonly property bool inVisibleMonth: dateValue.getMonth() === root.visibleMonthIndex
-                    readonly property bool isToday: root.isSameDay(dateValue, root.today)
-                    readonly property bool selected: root.isSelectedDay(dateValue)
-                    readonly property bool isWeekend: dateValue.getDay() === 0 || dateValue.getDay() === 6
+                    delegate: Rectangle {
+                        required property int index
+                        readonly property var dateValue: root.cellDate(index)
+                        readonly property bool inVisibleMonth: dateValue.getMonth() === root.visibleMonthIndex
+                        readonly property bool isToday: root.isSameDay(dateValue, root.today)
+                        readonly property bool selected: root.isSelectedDay(dateValue)
+                        readonly property bool isWeekend: dateValue.getDay() === 0 || dateValue.getDay() === 6
 
-                    width: dayGrid.dayWidth
-                    height: 32
-                    radius: 8
-                    color: selected ? Theme.tileActiveBg : dayHover.hovered && inVisibleMonth ? Theme.qsRowBg : "transparent"
-                    border.width: isToday && !selected ? 1 : 0
-                    border.color: Theme.tileActiveBorderHover
+                        width: dayGrid.dayWidth
+                        height: 32
+                        radius: 8
+                        color: selected ? Theme.tileActiveBg : dayHover.hovered && inVisibleMonth ? Theme.qsRowBg : "transparent"
+                        border.width: isToday && !selected ? 1 : 0
+                        border.color: Theme.tileActiveBorderHover
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: String(parent.dateValue.getDate())
-                        color: parent.selected ? Theme.textPrimary : parent.inVisibleMonth ? (parent.isWeekend ? Theme.textDim : Theme.textPrimary) : Theme.textDisabled
-                        font.family: Theme.fontUi
-                        font.pixelSize: 12
-                        font.weight: parent.selected || parent.isToday ? Font.DemiBold : Font.Medium
-                    }
+                        Text {
+                            anchors.centerIn: parent
+                            text: String(parent.dateValue.getDate())
+                            color: parent.selected ? Theme.textPrimary : parent.inVisibleMonth ? (parent.isWeekend ? Theme.textDim : Theme.textPrimary) : Theme.textDisabled
+                            font.family: Theme.fontUi
+                            font.pixelSize: 12
+                            font.weight: parent.selected || parent.isToday ? Font.DemiBold : Font.Medium
+                        }
 
-                    HoverHandler {
-                        id: dayHover
+                        HoverHandler {
+                            id: dayHover
 
-                        blocking: false
-                        cursorShape: Qt.PointingHandCursor
-                    }
+                            blocking: false
+                            cursorShape: Qt.PointingHandCursor
+                        }
 
-                    TapHandler {
-                        onTapped: root.activateDate(dateValue)
+                        TapHandler {
+                            onTapped: root.activateDate(dateValue)
+                        }
+
                     }
 
                 }
