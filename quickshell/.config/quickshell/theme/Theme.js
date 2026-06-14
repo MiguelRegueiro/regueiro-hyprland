@@ -131,9 +131,9 @@ var popupButtonColorDuration = 90;
 var outputItemColorDuration = 85;
 
 // Panel animation durations (ms)
-var panelOpenDuration = 280;
-var panelCloseDuration = 155;
-var panelOpenSpatialDuration = 430; // organic open with spring overshoot (DefaultSpatial)
+var panelOpenDuration = 420;
+var panelCloseDuration = 190;
+var panelOpenSpatialDuration = 460;
 var qsPageSlideDuration = 210;
 var qsPageFadeDuration = 145;
 var qsHeightDuration = 180;

@@ -30,10 +30,6 @@ FocusScope {
     readonly property real surfaceBottomRightRadius: Theme.qsSurfaceBottomRightRadius
     readonly property real attachTop: Theme.qsAttachTop
     readonly property real attachRight: Theme.qsAttachRight
-    readonly property real clipWidthProgress: 0.76 + root.reveal * 0.24
-    readonly property real clipHeightProgress: 0.68 + root.reveal * 0.32
-    readonly property real frameScale: 0.965 + root.reveal * 0.035
-    readonly property real frameOpacity: 0.46 + root.reveal * 0.54
     readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
     readonly property real revealProgress: reveal
@@ -48,8 +44,9 @@ FocusScope {
     readonly property real mergedBottomRightRadius: Theme.borderSize
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomFuseJoinX: root.bodyWidth - Theme.borderSize - Theme.barCornerRadius
-    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseLeftOverhang * root.reveal
-    readonly property real clipSurfaceHeight: root.bodyHeight * root.clipHeightProgress + root.fuseBottomOverhang * root.reveal
+    readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseLeftOverhang
+    readonly property real clipSurfaceHeight: root.bodyHeight + root.fuseBottomOverhang
+    readonly property real surfaceOffsetY: -(1 - root.reveal) * root.clipSurfaceHeight
 
     signal powerActionRequested(string actionId)
 
@@ -82,7 +79,7 @@ FocusScope {
             Components.Anim {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.DefaultSpatial
+                curve: Components.Anim.EmphasizedDecel
                 duration: Theme.panelOpenSpatialDuration
             }
 
@@ -121,43 +118,43 @@ FocusScope {
         id: motionFrame
 
         width: root.width
-        height: root.height
-        y: (1 - root.reveal) * -10
-        scale: root.frameScale
-        transformOrigin: Item.TopRight
-        opacity: root.frameOpacity
+        height: Math.max(1, root.height)
+        y: 0
         layer.enabled: true
 
-        HoverHandler {
-            id: boundsHover
-
-            blocking: false
-        }
-
-        Item {
-            anchors.top: parent.top
-            anchors.right: parent.right
-            width: Math.max(1, root.clipSurfaceWidth)
-            height: Math.max(1, root.clipSurfaceHeight)
-            clip: !root.audioOutputPopupOpen
-
             HoverHandler {
-                id: panelHover
+                id: boundsHover
 
                 blocking: false
             }
 
             Item {
-                id: frame
-
                 anchors.top: parent.top
                 anchors.right: parent.right
-                width: root.bodyWidth
-                height: root.bodyHeight
+                width: Math.max(1, root.clipSurfaceWidth)
+                height: Math.max(1, root.clipSurfaceHeight)
+                clip: !root.audioOutputPopupOpen
 
-                Shape {
-                    anchors.fill: parent
-                    preferredRendererType: Shape.CurveRenderer
+                HoverHandler {
+                    id: panelHover
+
+                    blocking: false
+                }
+
+                Item {
+                    id: frame
+
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    width: root.bodyWidth
+                    height: root.bodyHeight
+                    transform: Translate {
+                        y: root.surfaceOffsetY
+                    }
+
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
                         fillColor: Theme.menuBg
@@ -396,7 +393,6 @@ FocusScope {
                     id: contentLayout
 
                     spacing: 0
-                    opacity: Math.min(1, root.reveal * 1.35)
 
                     anchors {
                         top: parent.top
@@ -555,7 +551,7 @@ FocusScope {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.7 * root.reveal)
+            shadowColor: Qt.rgba(0, 0, 0, 0.7)
             shadowBlur: 0.88
             shadowVerticalOffset: 4
             shadowHorizontalOffset: 0

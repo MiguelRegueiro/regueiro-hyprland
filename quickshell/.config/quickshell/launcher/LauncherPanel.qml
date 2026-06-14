@@ -24,18 +24,15 @@ FocusScope {
     readonly property real bottomLeftRadius: 0.001
     readonly property real bottomRightRadius: 0.001
     readonly property real revealProgress: reveal
-    readonly property real clipWidthProgress: 1
-    readonly property real clipHeightProgress: 1
-    readonly property real frameScale: 0.975 + root.reveal * 0.025
-    readonly property real frameOpacity: 0.50 + root.reveal * 0.50
     readonly property real bodyWidth: Theme.launcherWidth
     readonly property real bodyHeight: Theme.launcherHeight
     readonly property real fuseOverhang: Theme.barCornerRadius
     readonly property real fuseOpticalInset: 2
     readonly property real fuseBottomInset: root.attachBottom
     readonly property real bottomFuseJoinY: frame.height - root.fuseBottomInset - Theme.barCornerRadius
-    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseOverhang * 2 * root.reveal
-    readonly property real clipSurfaceHeight: root.bodyHeight * root.clipHeightProgress + root.attachBottom * root.reveal
+    readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
+    readonly property real clipSurfaceHeight: root.bodyHeight + root.attachBottom
+    readonly property real surfaceOffsetY: (1 - root.reveal) * root.clipSurfaceHeight
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: root.launcherService.searchEntries(root.searchQuery)
 
@@ -183,8 +180,8 @@ FocusScope {
             Components.Anim {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.DefaultSpatial
-                duration: Theme.panelOpenDuration
+                curve: Components.Anim.EmphasizedDecel
+                duration: Theme.panelOpenSpatialDuration
             }
         },
         Transition {
@@ -204,43 +201,43 @@ FocusScope {
         id: motionFrame
 
         width: root.width
-        height: root.height
-        y: (1 - root.reveal) * 12
-        scale: root.frameScale
-        transformOrigin: Item.Bottom
-        opacity: root.frameOpacity
+        height: Math.max(1, root.height)
+        y: 0
         layer.enabled: true
 
-        HoverHandler {
-            id: boundsHover
-
-            blocking: false
-        }
-
-        Item {
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.max(1, root.clipSurfaceWidth)
-            height: Math.max(1, root.clipSurfaceHeight)
-            clip: true
-
             HoverHandler {
-                id: panelHover
+                id: boundsHover
 
                 blocking: false
             }
 
             Item {
-                id: frame
-
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: root.bodyWidth
-                height: root.bodyHeight
+                width: Math.max(1, root.clipSurfaceWidth)
+                height: Math.max(1, root.clipSurfaceHeight)
+                clip: true
 
-                Shape {
-                    anchors.fill: parent
-                    preferredRendererType: Shape.CurveRenderer
+                HoverHandler {
+                    id: panelHover
+
+                    blocking: false
+                }
+
+                Item {
+                    id: frame
+
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: root.bodyWidth
+                    height: root.bodyHeight
+                    transform: Translate {
+                        y: root.surfaceOffsetY
+                    }
+
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
                         fillColor: Theme.menuBg
@@ -786,7 +783,7 @@ FocusScope {
 
                 layer.effect: MultiEffect {
                     shadowEnabled: true
-                    shadowColor: Qt.rgba(0, 0, 0, 0.72 * root.reveal)
+                    shadowColor: Qt.rgba(0, 0, 0, 0.72)
                     shadowBlur: 0.88
                     shadowVerticalOffset: -4
                     shadowHorizontalOffset: 0

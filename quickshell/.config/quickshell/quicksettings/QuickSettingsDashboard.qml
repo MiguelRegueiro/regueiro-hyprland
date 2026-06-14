@@ -500,7 +500,7 @@ Item {
     }
 
     Item {
-        visible: root.powerMenuOpen
+        visible: root.powerMenuOpen || powerMenu.visible
         anchors.fill: parent
         z: 200
 
@@ -515,17 +515,10 @@ Item {
 
             x: Math.max(12, Math.min(root.width - width - 6, powerAnchor.x + powerAnchor.width - width))
             y: headerRow.y + powerAnchor.height + 10
-            opacity: root.powerMenuOpen ? 1 : 0
+            open: root.powerMenuOpen
             onActionTriggered: root.powerMenuOpen = false
             onActionRequested: (actionId) => {
                 return root.powerActionRequested(actionId);
-            }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.qsPageFadeDuration
-                }
-
             }
 
         }
@@ -533,7 +526,7 @@ Item {
     }
 
     Item {
-        visible: root.audioOutputPopupOpen
+        visible: root.audioOutputPopupOpen || audioOutputPopup.visible
         x: 0
         y: 0
         width: root.width
@@ -583,6 +576,7 @@ Item {
             maxPopupHeight: root.audioOutputPopupMaxHeight
             x: Math.max(0, Math.round((root.width - width) / 2))
             y: volumeRow.y + volumeRow.height + root.audioOutputPopupGap
+            open: root.audioOutputPopupOpen
             onSinkChosen: root.audioOutputPopupRequest(false)
         }
 
