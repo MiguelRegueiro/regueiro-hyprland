@@ -9,6 +9,10 @@ Item {
     property int selectedYear: -1
     property int selectedMonth: -1
     property int selectedDay: -1
+    property bool followToday: true
+    property int lastTodayYear: -1
+    property int lastTodayMonth: -1
+    property int lastTodayDay: -1
     readonly property var today: clock.date
     readonly property var visibleMonth: new Date(root.today.getFullYear(), root.today.getMonth() + root.monthOffset, 1)
     readonly property int visibleYear: root.visibleMonth.getFullYear()
@@ -45,7 +49,33 @@ Item {
 
     function activateDate(value) {
         root.selectDate(value);
+        root.followToday = root.isSameDay(value, root.today);
         root.monthOffset = (value.getFullYear() - root.today.getFullYear()) * 12 + value.getMonth() - root.today.getMonth();
+    }
+
+    function captureToday() {
+        root.lastTodayYear = root.today.getFullYear();
+        root.lastTodayMonth = root.today.getMonth();
+        root.lastTodayDay = root.today.getDate();
+    }
+
+    function selectedLastToday() {
+        return root.selectedYear === root.lastTodayYear && root.selectedMonth === root.lastTodayMonth && root.selectedDay === root.lastTodayDay;
+    }
+
+    function handleTodayChanged() {
+        const previousTodayKnown = root.lastTodayYear >= 0;
+        const dateChanged = !previousTodayKnown || root.today.getFullYear() !== root.lastTodayYear || root.today.getMonth() !== root.lastTodayMonth || root.today.getDate() !== root.lastTodayDay;
+        if (!dateChanged)
+            return ;
+
+        const shouldFollowToday = root.followToday || root.selectedLastToday();
+        root.captureToday();
+        if (shouldFollowToday) {
+            root.selectDate(root.today);
+            root.monthOffset = 0;
+            root.followToday = true;
+        }
     }
 
     implicitHeight: content.implicitHeight
@@ -56,7 +86,12 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    Component.onCompleted: root.selectDate(root.today)
+    Component.onCompleted: {
+        root.selectDate(root.today);
+        root.captureToday();
+    }
+
+    onTodayChanged: root.handleTodayChanged()
 
     Column {
         id: content
