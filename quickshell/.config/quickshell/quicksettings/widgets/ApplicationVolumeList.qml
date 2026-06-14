@@ -37,7 +37,7 @@ ColumnLayout {
             if (typeof channel.value_percent === "string") {
                 var pct = parseFloat(channel.value_percent);
                 if (!isNaN(pct))
-                    return Math.max(0, Math.min(1, pct / 100));
+                    return Math.max(0, Math.min(1.5, pct / 100));
 
             }
             if (typeof channel.value === "number")
@@ -146,6 +146,8 @@ ColumnLayout {
             iconText: "󰎇"
             label: root.streamLabel(modelData)
             value: modelData.volume
+            maxValue: Math.max(1, modelData.volume)
+            stepSize: 0.02
             muted: modelData.muted
             onDraggingChanged: {
                 if (dragging && !_countedDrag) {

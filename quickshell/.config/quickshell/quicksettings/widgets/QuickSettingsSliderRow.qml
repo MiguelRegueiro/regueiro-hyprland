@@ -21,6 +21,7 @@ Item {
     property real backgroundRadius: Theme.radiusSmall
     property int emitInterval: 36
     property real stepSize: 0
+    property real maxValue: 1
     readonly property bool showLabel: label.length > 0
     readonly property bool dragging: slider.pressed
     readonly property bool hovered: rowHover.hovered
@@ -33,7 +34,7 @@ Item {
     signal actionClicked()
 
     function clampValue(val) {
-        return Math.max(0, Math.min(1, val));
+        return Math.max(0, Math.min(Math.max(0.01, row.maxValue), val));
     }
 
     function snapValue(val) {
@@ -209,7 +210,7 @@ Item {
                     width: parent.width
                     height: 24
                     from: 0
-                    to: 1
+                    to: Math.max(0.01, row.maxValue)
                     stepSize: row.stepSize
                     live: true
                     value: row._displayValue
