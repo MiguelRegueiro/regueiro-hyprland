@@ -451,9 +451,11 @@ Item {
                 actionButtonActive: root.audioOutputPopupOpen
                 actionIconText: "󰅂"
                 actionIconOffsetX: 1
+                stepSize: root.audioService.volumeStepPercent / 100
+                emitInterval: 0
                 onMuteClicked: root.audioService.toggleMute()
                 onSliderMoved: (value) => {
-                    return root.audioService.setVolumePercent(Math.round(value * 100));
+                    return root.audioService.setVolumePercent(value * 100);
                 }
                 onDraggingChanged: {
                     if (!dragging)

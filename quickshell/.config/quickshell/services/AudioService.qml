@@ -18,6 +18,7 @@ Item {
     property bool polledMuted: false
     property int optimisticVolumePercent: -1
     property bool optimisticMuted: false
+    readonly property int volumeStepPercent: 2
     readonly property bool hasDirectSinkControl: !!sinkAudio
     readonly property bool optimisticStateActive: optimisticVolumePercent >= 0
     readonly property var currentSink: defaultSink
@@ -250,12 +251,20 @@ Item {
         root.optimisticMuted = false;
     }
 
+    function snapVolumePercent(percent) {
+        const nextPercent = Number(percent);
+        if (isNaN(nextPercent))
+            return 0;
+
+        return Math.max(0, Math.min(100, Math.round(nextPercent / root.volumeStepPercent) * root.volumeStepPercent));
+    }
+
     function setVolumePercent(percent) {
         const nextPercent = Number(percent);
         if (isNaN(nextPercent))
             return ;
 
-        const clamped = Math.max(0, Math.min(100, nextPercent));
+        const clamped = root.snapVolumePercent(nextPercent);
         root.setOptimisticState(clamped, false);
         if (root.hasDirectSinkControl) {
             sinkAudio.muted = false;
