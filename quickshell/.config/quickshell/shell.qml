@@ -463,6 +463,7 @@ ShellRoot {
 
                 targetScreen: modelData
                 showBar: activeScreen
+                externalConnected: root.externalConnected
                 forceOverlay: fullscreenPanelChromeActive
                 quickSettingsOpen: root.quickSettingsVisible
                 notificationCenterOpen: root.notificationCenterVisible

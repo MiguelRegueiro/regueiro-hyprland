@@ -13,6 +13,7 @@ PanelWindow {
     required property var brightnessService
     required property var inputService
     required property var externalDrivesService
+    property bool externalConnected: false
     readonly property var externalDrives: externalDrivesService && externalDrivesService.drives ? externalDrivesService.drives : []
     property bool showBar: true
     property bool forceOverlay: false
@@ -56,6 +57,7 @@ PanelWindow {
             WorkspaceStrip {
                 screenName: bar.targetScreen.name
                 barHeight: Theme.barHeight
+                externalConnected: bar.externalConnected
             }
 
             SystemStats {
