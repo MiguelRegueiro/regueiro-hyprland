@@ -27,7 +27,7 @@ sudo pacman -S git stow \
                nautilus \
                networkmanager \
                bluez bluez-utils blueman \
-               pipewire pipewire-pulse wireplumber libpulse \
+               pipewire pipewire-pulse wireplumber libpulse libcanberra sound-theme-freedesktop \
                wl-clipboard wl-clip-persist \
                brightnessctl playerctl \
                jq grim slurp libnotify \

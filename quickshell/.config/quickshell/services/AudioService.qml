@@ -19,6 +19,8 @@ Item {
     property int optimisticVolumePercent: -1
     property bool optimisticMuted: false
     readonly property int volumeStepPercent: 2
+    readonly property int volumeFeedbackDelayMs: 28
+    readonly property int volumeFeedbackQuietMs: 180
     readonly property bool hasDirectSinkControl: !!sinkAudio
     readonly property bool optimisticStateActive: optimisticVolumePercent >= 0
     readonly property var currentSink: defaultSink
@@ -259,20 +261,48 @@ Item {
         return Math.max(0, Math.min(100, Math.round(nextPercent / root.volumeStepPercent) * root.volumeStepPercent));
     }
 
+    function requestVolumeFeedback() {
+        if (root.muted || root.volumePercent <= 0)
+            return ;
+
+        if (volumeFeedbackDelay.running || volumeFeedbackQuiet.running || volumeFeedback.running) {
+            volumeFeedbackQuiet.restart();
+            return ;
+        }
+        volumeFeedbackDelay.restart();
+        volumeFeedbackQuiet.restart();
+    }
+
+    function playVolumeFeedback() {
+        if (root.muted || root.volumePercent <= 0 || volumeFeedback.running)
+            return ;
+
+        volumeFeedback.running = true;
+    }
+
     function setVolumePercent(percent) {
         const nextPercent = Number(percent);
         if (isNaN(nextPercent))
             return ;
 
+        const previousPercent = root.volumePercent;
+        const previousMuted = root.muted;
         const clamped = root.snapVolumePercent(nextPercent);
+        const shouldPlayFeedback = clamped > 0 && (clamped !== previousPercent || previousMuted);
         root.setOptimisticState(clamped, false);
         if (root.hasDirectSinkControl) {
             sinkAudio.muted = false;
             sinkAudio.volume = clamped / 100;
+            if (shouldPlayFeedback)
+                root.requestVolumeFeedback();
+
             return ;
         }
         setVolume.command = ["wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", clamped + "%"];
         setVolume.running = true;
+        if (shouldPlayFeedback)
+            root.requestVolumeFeedback();
+
         refreshSoon.restart();
     }
 
@@ -390,6 +420,21 @@ Item {
         onTriggered: root.clearOptimisticState()
     }
 
+    Timer {
+        id: volumeFeedbackDelay
+
+        interval: root.volumeFeedbackDelayMs
+        repeat: false
+        onTriggered: root.playVolumeFeedback()
+    }
+
+    Timer {
+        id: volumeFeedbackQuiet
+
+        interval: root.volumeFeedbackQuietMs
+        repeat: false
+    }
+
     Connections {
         function onDefaultAudioSinkChanged() {
             root.clearOptimisticState();
@@ -493,6 +538,12 @@ Item {
         id: setVolume
 
         command: ["echo"]
+    }
+
+    Process {
+        id: volumeFeedback
+
+        command: ["bash", "-c", "canberra-gtk-play -i audio-volume-change -d 'Volume changed' 2>/dev/null || paplay /usr/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null || true"]
     }
 
     IpcHandler {
