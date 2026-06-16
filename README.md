@@ -7,7 +7,6 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 - **WM** — [Hyprland](https://hyprland.org/)
 - **Bar / panels** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
 - **Launcher / power menu** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
-- **Run menu** — [Rofi](https://github.com/davatorium/rofi)
 - **Wallpaper** — [hyprpaper](https://github.com/hyprwm/hyprpaper)
 - **Lock screen** — [hyprlock](https://github.com/hyprwm/hyprlock)
 - **Input method** — [Fcitx 5](https://fcitx-im.org/wiki/Fcitx_5/en)
@@ -21,7 +20,6 @@ sudo pacman -S git stow \
                hyprland hyprpaper hyprlock hyprpicker hypridle \
                hyprpolkitagent \
                quickshell \
-               rofi \
                kitty fish starship fastfetch btop \
                fcitx5 fcitx5-mozc fcitx5-gtk fcitx5-qt fcitx5-configtool \
                nautilus \
@@ -144,7 +142,7 @@ Power actions are handled by QuickShell through `qs ipc call powermenu`, so the 
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell rofi fish starship fastfetch kitty hypridle fcitx5 gtk
+stow hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk
 ```
 
 ## Formatting
