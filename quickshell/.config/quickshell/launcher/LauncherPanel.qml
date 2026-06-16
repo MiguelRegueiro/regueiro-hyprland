@@ -22,6 +22,7 @@ FocusScope {
     readonly property real attachBottom: Theme.launcherAttachBottom
     readonly property real topLeftRadius: Theme.launcherSurfaceTopLeftRadius
     readonly property real topRightRadius: Theme.launcherSurfaceTopRightRadius
+    readonly property int openDuration: Theme.panelCloseDuration
     readonly property real bottomLeftRadius: 0.001
     readonly property real bottomRightRadius: 0.001
     readonly property real revealProgress: reveal
@@ -285,7 +286,7 @@ FocusScope {
                 target: root
                 property: "reveal"
                 curve: Components.Anim.EmphasizedDecel
-                duration: Theme.panelOpenSpatialDuration
+                duration: root.openDuration
             }
         },
         Transition {

@@ -22,8 +22,7 @@ ShellRoot {
     property bool clipboardOpening: false
     readonly property bool clipboardRequested: clipboardVisible || clipboardOpening
     property bool launcherVisible: false
-    property bool launcherOpening: false
-    readonly property bool launcherRequested: launcherVisible || launcherOpening
+    readonly property bool launcherRequested: launcherVisible
     property bool externalDrivesMenuVisible: false
     readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible
     property bool powerMenuVisible: false
@@ -121,8 +120,6 @@ ShellRoot {
     }
 
     function closeLauncher() {
-        launcherOpenTimer.stop();
-        launcherOpening = false;
         launcherVisible = false;
     }
 
@@ -160,15 +157,14 @@ ShellRoot {
         ncController.pinned = false;
         qsController.closeImmediately();
         ncController.closeImmediately();
-        launcherOpening = true;
-        launcherOpenTimer.restart();
+        launcherVisible = true;
     }
 
     function toggleLauncher() {
         if (powerMenuVisible)
             return ;
 
-        if (launcherVisible || launcherOpening)
+        if (launcherVisible)
             closeLauncher();
         else
             openLauncher();
@@ -279,17 +275,6 @@ ShellRoot {
         }
 
         target: "launcher"
-    }
-
-    Timer {
-        id: launcherOpenTimer
-
-        interval: 16
-        repeat: false
-        onTriggered: {
-            root.launcherVisible = true;
-            root.launcherOpening = false;
-        }
     }
 
     Timer {
