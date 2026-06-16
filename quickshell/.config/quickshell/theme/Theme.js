@@ -83,8 +83,8 @@ var ncSurfaceBottomLeftRadius = barCornerRadius + 6;
 var ncSurfaceBottomRightRadius = barCornerRadius + 6;
 
 // Clipboard
-var clipboardWidth = 560;
-var clipboardHeight = 620;
+var clipboardWidth = 620;
+var clipboardHeight = 560;
 var clipboardAttachBottom = borderSize;
 var clipboardBorderFuseInset = 2;
 var clipboardSurfaceTopLeftRadius = barCornerRadius + 6;

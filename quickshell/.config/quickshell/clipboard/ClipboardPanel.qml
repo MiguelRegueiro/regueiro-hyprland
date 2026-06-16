@@ -62,6 +62,19 @@ FocusScope {
         }
     }
 
+    function entryCountText(count) {
+        return count === 1 ? "1 entry" : `${count} entries`;
+    }
+
+    function visibleEntryCountText() {
+        const total = root.clipboardService.entries.length;
+        const visible = root.filteredEntries.length;
+        if (root.searchQuery.length > 0 && visible !== total)
+            return `${visible} of ${root.entryCountText(total)}`;
+
+        return root.entryCountText(total);
+    }
+
     function clampSelection() {
         if (root.filteredEntries.length === 0) {
             root.selectedIndex = -1;
@@ -521,33 +534,43 @@ FocusScope {
 
                     anchors {
                         fill: parent
-                        leftMargin: 14
-                        rightMargin: 14
+                        leftMargin: 16
+                        rightMargin: 16
                         topMargin: 14
-                        bottomMargin: 16
+                        bottomMargin: 14
                     }
 
-                    spacing: 12
+                    spacing: 10
 
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 16
-                        color: Theme.qsCardBg
-                        border.width: 1
-                        border.color: searchInput.activeFocus ? Theme.tileActiveBorderHover : Theme.qsCardBorder
+                        color: searchInput.activeFocus ? Qt.rgba(1, 1, 1, 0.105) : Qt.rgba(1, 1, 1, 0.058)
+                        border.width: 0
+                        layer.enabled: searchInput.activeFocus
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: Qt.rgba(0, 0, 0, 0.34)
+                            shadowBlur: 0.28
+                            shadowVerticalOffset: 2
+                            shadowHorizontalOffset: 0
+                            blurMax: 16
+                        }
 
                         Text {
-                            text: "󰍉"
-                            font.family: Theme.fontIcons
-                            font.pixelSize: 14
-                            color: Theme.textDim
+                            id: searchIcon
 
                             anchors {
                                 left: parent.left
-                                leftMargin: 14
+                                leftMargin: 15
                                 verticalCenter: parent.verticalCenter
                             }
+
+                            text: "󰍉"
+                            font.family: Theme.fontIcons
+                            font.pixelSize: 14
+                            color: searchInput.activeFocus ? Theme.textPrimary : Theme.textDim
                         }
 
                         TextInput {
@@ -565,9 +588,9 @@ FocusScope {
                             onTextEdited: root.selectedIndex = 0
 
                             anchors {
-                                left: parent.left
-                                right: clearSearch.left
-                                leftMargin: 38
+                                left: searchIcon.right
+                                right: countLabel.left
+                                leftMargin: 12
                                 rightMargin: 8
                                 verticalCenter: parent.verticalCenter
                             }
@@ -575,13 +598,29 @@ FocusScope {
 
                         Text {
                             visible: searchInput.text.length === 0
-                            text: "Type to search clipboard"
+                            text: "Search"
                             color: Theme.textDisabled
                             font.family: Theme.fontUi
                             font.pixelSize: 13
 
                             anchors {
                                 left: searchInput.left
+                                verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        Text {
+                            id: countLabel
+
+                            text: root.visibleEntryCountText()
+                            color: Theme.textDim
+                            font.family: Theme.fontUi
+                            font.pixelSize: 12
+                            verticalAlignment: Text.AlignVCenter
+
+                            anchors {
+                                right: clearSearch.left
+                                rightMargin: 8
                                 verticalCenter: parent.verticalCenter
                             }
                         }
@@ -632,10 +671,9 @@ FocusScope {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: 20
-                        color: Theme.popupBg
-                        border.width: 1
-                        border.color: Theme.qsEdge
+                        radius: 0
+                        color: "transparent"
+                        border.width: 0
                         clip: true
 
                         Item {
@@ -699,10 +737,10 @@ FocusScope {
 
                                 anchors {
                                     fill: parent
-                                    leftMargin: 16
-                                    rightMargin: 16
-                                    topMargin: 10
-                                    bottomMargin: 10
+                                    leftMargin: 4
+                                    rightMargin: 4
+                                    topMargin: 4
+                                    bottomMargin: 4
                                 }
 
                                 delegate: Rectangle {
@@ -711,12 +749,12 @@ FocusScope {
 
                                     readonly property bool selected: index === root.selectedIndex
                                     readonly property bool hovered: rowHover.hovered
-                                    width: listView.width
+                                    x: 4
+                                    width: listView.width - 8
                                     implicitHeight: Math.max(58, previewLabel.implicitHeight + 22)
-                                    radius: 16
-                                    color: selected ? Qt.rgba(1, 1, 1, 0.10) : hovered ? Theme.qsCardBgHover : Theme.qsCardBg
-                                    border.width: 1
-                                    border.color: selected ? Qt.rgba(1, 1, 1, 0.16) : hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+                                    radius: 14
+                                    color: selected ? Qt.rgba(1, 1, 1, 0.12) : hovered ? Qt.rgba(1, 1, 1, 0.085) : Qt.rgba(1, 1, 1, 0.055)
+                                    border.width: 0
 
                                     HoverHandler {
                                         id: rowHover
@@ -823,42 +861,14 @@ FocusScope {
                                 }
                             }
 
-                            Rectangle {
-                                visible: listView.visible && listView.visibleArea.heightRatio < 0.999
-                                width: 4
-                                radius: 2
-                                color: Theme.qsEdgeSoft
-
-                                anchors {
-                                    top: parent.top
-                                    bottom: parent.bottom
-                                    right: parent.right
-                                    topMargin: 10
-                                    bottomMargin: 10
-                                    rightMargin: 8
-                                }
-
-                                Rectangle {
-                                    width: parent.width
-                                    radius: 2
-                                    color: Theme.qsCardBorderHover
-                                    y: parent.height * listView.visibleArea.yPosition
-                                    height: Math.max(28, parent.height * listView.visibleArea.heightRatio)
-                                }
-                            }
                         }
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
 
-                        Text {
+                        Item {
                             Layout.fillWidth: true
-                            text: root.clipboardService.lastError.length > 0 ? root.clipboardService.lastError : (root.filteredEntries.length === root.clipboardService.entries.length ? `${root.filteredEntries.length} entries` : `${root.filteredEntries.length} of ${root.clipboardService.entries.length} entries`)
-                            font.family: Theme.fontUi
-                            font.pixelSize: 11
-                            color: root.clipboardService.lastError.length > 0 ? Theme.red : Theme.textDim
-                            verticalAlignment: Text.AlignVCenter
                         }
 
                         Rectangle {
