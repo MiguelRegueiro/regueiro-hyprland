@@ -762,10 +762,10 @@ FocusScope {
                                                 width: Math.min(134, parent.width - 6)
                                                 height: 122
                                                 radius: 16
-                                                color: selected ? Qt.rgba(0.208, 0.518, 0.894, 0.16) : "transparent"
+                                                color: selected ? Qt.rgba(1, 1, 1, 0.095) : "transparent"
                                                 border.width: selected ? 1 : 0
-                                                border.color: Theme.tileActiveBorderHover
-                                                scale: selected ? 1.018 : 1
+                                                border.color: selected ? Qt.rgba(1, 1, 1, 0.16) : "transparent"
+                                                scale: selected ? 1.012 : 1
 
                                                 anchors.centerIn: parent
 
@@ -865,11 +865,11 @@ FocusScope {
                                                 layer.enabled: selected
                                                 layer.effect: MultiEffect {
                                                     shadowEnabled: true
-                                                    shadowColor: Qt.rgba(0, 0, 0, 0.42)
-                                                    shadowBlur: 0.46
-                                                    shadowVerticalOffset: 3
+                                                    shadowColor: Qt.rgba(0, 0, 0, 0.34)
+                                                    shadowBlur: 0.34
+                                                    shadowVerticalOffset: 2
                                                     shadowHorizontalOffset: 0
-                                                    blurMax: 18
+                                                    blurMax: 14
                                                 }
                                             }
 
