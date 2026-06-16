@@ -12,17 +12,15 @@ Item {
     property bool loading: true
     property bool visibilityRefreshPending: false
     property string lastError: ""
-    property int maxResults: 30
+    // 0 means unlimited; the app drawer should be able to show every installed app.
+    property int maxResults: 0
     property int statsRevision: 0
-    property int minimumFuzzyQueryLength: 2
     property var launchCounts: ({
     })
     property var lastLaunchTimes: ({
     })
-    property var iconPathOverrides: ({
-    })
-    property var pendingIconLookups: []
-    property bool iconLookupRunning: false
+    property int entriesRevision: 0
+    property var usageOrderedCache: []
     readonly property string genericIconFallback: "application-x-executable"
     readonly property url launcherStatsLocation: Qt.resolvedUrl(Quickshell.statePath("launcher-usage.ini"))
     // Matches the repo's current Hyprland terminal command.
@@ -45,10 +43,6 @@ Item {
 
     function compactText(value) {
         return root.normalizedSearchText(value).replace(/\s+/g, "");
-    }
-
-    function isBoundaryCharacter(character) {
-        return character === " " || character === "-" || character === "_" || character === "." || character === "/" || character === ":" || character === "+" || character === "(" || character === ")";
     }
 
     function idShortText(idLower) {
@@ -108,6 +102,16 @@ Item {
         }).filter((value) => {
             return value.length > 0;
         }).join(" ");
+    }
+
+    function tokensForText(value) {
+        const text = root.normalizedSearchText(value);
+        if (text.length === 0)
+            return [];
+
+        return text.split(" ").filter((token) => {
+            return token.length > 0;
+        });
     }
 
     function buildSubtitle(comment, genericName, categories) {
@@ -182,6 +186,7 @@ Item {
         launcherStats.setValue(root.lastLaunchKey(normalizedId), nextLaunchMs);
         launcherStats.sync();
         root.statsRevision += 1;
+        root.rebuildUsageOrderedCache();
     }
 
     function frecencyScore(statsId) {
@@ -199,28 +204,58 @@ Item {
         return Math.round(volumeScore + recencyScore + 24);
     }
 
-    function searchUsageBonus(statsId, limit, multiplier) {
-        const frecency = root.frecencyScore(statsId);
-        if (frecency <= 0)
-            return 0;
-
-        return Math.min(limit, Math.round(Math.sqrt(frecency) * multiplier));
-    }
-
     function compareEntryIdentity(left, right) {
         return left.sortKey.localeCompare(right.sortKey) || left.name.localeCompare(right.name);
     }
 
     function compareUsage(left, right) {
-        return root.frecencyScore(right.statsId) - root.frecencyScore(left.statsId) || root.launchCountForId(right.statsId) - root.launchCountForId(left.statsId) || root.lastLaunchForId(right.statsId) - root.lastLaunchForId(left.statsId);
+        return root.launchCountForId(right.statsId) - root.launchCountForId(left.statsId) || root.lastLaunchForId(right.statsId) - root.lastLaunchForId(left.statsId) || root.frecencyScore(right.statsId) - root.frecencyScore(left.statsId);
     }
 
     function compareDefaultEntries(left, right) {
         return root.compareUsage(left, right) || root.compareEntryIdentity(left, right);
     }
 
-    function compareScoredMatches(left, right) {
-        return right.score - left.score || right.usageScore - left.usageScore || root.compareEntryIdentity(left.entry, right.entry);
+    function usageOrderedEntries() {
+        if (root.usageOrderedCache.length > 0 || root.entries.length === 0)
+            return root.usageOrderedCache;
+
+        return root.entries;
+    }
+
+    function rebuildUsageOrderedCache() {
+        const rankedEntries = root.entries.slice();
+        rankedEntries.sort((left, right) => {
+            return root.compareDefaultEntries(left, right);
+        });
+        root.usageOrderedCache = rankedEntries;
+    }
+
+    function limitedResults(values) {
+        if (root.maxResults <= 0)
+            return values;
+
+        return values.slice(0, root.maxResults);
+    }
+
+    function iconDisplaySource(source) {
+        return source;
+    }
+
+    function iconSourceForName(iconName) {
+        const fallback = Quickshell.iconPath("", root.genericIconFallback);
+        if (typeof iconName !== "string")
+            return fallback;
+
+        const normalizedIcon = iconName.trim();
+        if (normalizedIcon.length === 0)
+            return fallback;
+
+        if (normalizedIcon.charAt(0) === "/")
+            return normalizedIcon;
+
+        const resolved = Quickshell.iconPath(normalizedIcon, root.genericIconFallback);
+        return resolved.length > 0 ? resolved : fallback;
     }
 
     function mapEntry(entry) {
@@ -244,6 +279,19 @@ Item {
         const idLower = root.normalizeText(id);
         const keywordsLower = root.listToText(keywords);
         const categoriesLower = root.listToText(categories);
+        const nameSearchText = root.normalizedSearchText(name);
+        const genericNameSearchText = root.normalizedSearchText(genericName);
+        const commentSearchText = root.normalizedSearchText(comment);
+        const idSearchText = root.normalizedSearchText(id);
+        const primarySearchText = [nameSearchText, genericNameSearchText, idSearchText].filter((value) => {
+            return value.length > 0;
+        }).join(" ");
+        const secondarySearchText = [commentSearchText, keywordsLower, categoriesLower].filter((value) => {
+            return value.length > 0;
+        }).join(" ");
+        const searchText = [primarySearchText, secondarySearchText].filter((value) => {
+            return value.length > 0;
+        }).join(" ");
         const statsId = id.length > 0 ? id : nameLower;
         root.ensureStatsLoaded(statsId);
         return {
@@ -251,6 +299,7 @@ Item {
             "id": id,
             "statsId": statsId,
             "icon": icon,
+            "iconSource": root.iconSourceForName(icon),
             "name": name,
             "subtitle": subtitle,
             "runInTerminal": !!entry.runInTerminal,
@@ -267,10 +316,15 @@ Item {
             "nameCompact": root.compactText(name),
             "genericNameCompact": root.compactText(genericName),
             "idCompact": root.compactText(id),
+            "commentCompact": root.compactText(comment),
             "keywordsCompact": root.compactText(keywordsLower),
-            "searchText": [root.normalizedSearchText(name), root.normalizedSearchText(genericName), root.normalizedSearchText(comment), root.normalizedSearchText(id), keywordsLower, categoriesLower].filter((value) => {
-                return value.length > 0;
-            }).join(" "),
+            "categoriesCompact": root.compactText(categoriesLower),
+            "primarySearchText": primarySearchText,
+            "secondarySearchText": secondarySearchText,
+            "searchText": searchText,
+            "primarySearchTokens": root.tokensForText(primarySearchText),
+            "secondarySearchTokens": root.tokensForText(secondarySearchText),
+            "searchTokens": root.tokensForText(searchText),
             "sortKey": `${nameLower}\u0000${idLower}`
         };
     }
@@ -290,6 +344,8 @@ Item {
             return root.compareEntryIdentity(left, right);
         });
         root.entries = nextEntries;
+        root.entriesRevision += 1;
+        root.rebuildUsageOrderedCache();
         root.loading = false;
     }
 
@@ -343,275 +399,99 @@ Item {
         return true;
     }
 
-    function fieldScore(haystack, word, prefixWeight, containsWeight) {
-        if (haystack.length === 0)
-            return 0;
-
-        const index = haystack.indexOf(word);
-        if (index < 0)
-            return 0;
-
-        if (index === 0)
-            return prefixWeight;
-
-        if (root.isBoundaryCharacter(haystack[index - 1]))
-            return Math.max(prefixWeight - 24, containsWeight + 28);
-
-        return Math.max(containsWeight - Math.min(index, 56), 8);
-    }
-
-    function compactFieldScore(haystack, query, matchWeight) {
-        if (haystack.length === 0 || query.length < root.minimumFuzzyQueryLength)
-            return 0;
-
-        const index = haystack.indexOf(query);
-        if (index < 0)
-            return 0;
-
-        if (index === 0)
-            return matchWeight;
-
-        return Math.max(36, matchWeight - Math.min(matchWeight - 36, index * 6));
-    }
-
-    function rankEntry(entry, query, words, compactQuery) {
-        let score = 0;
-        if (entry.nameLower === query)
-            score += 2600;
-
-        if (entry.idLower === query || entry.idShortLower === query)
-            score += 2400;
-
-        if (entry.nameCompact === compactQuery && compactQuery.length >= root.minimumFuzzyQueryLength)
-            score += 2100;
-
-        if (entry.nameLower.startsWith(query))
-            score += 1800 - Math.min(200, entry.nameLower.length - query.length);
-
-        if (entry.genericNameLower.startsWith(query))
-            score += 1200;
-
-        if (entry.idLower.startsWith(query) || entry.idShortLower.startsWith(query))
-            score += 1100;
-
-        if (entry.commentLower.startsWith(query))
-            score += 520;
-
-        if (entry.nameInitials.startsWith(query))
-            score += 960;
-
-        if (entry.genericNameInitials.startsWith(query))
-            score += 560;
-
-        if (entry.idInitials.startsWith(query))
-            score += 480;
-
-        if (entry.searchText.includes(query))
-            score += Math.max(420 - entry.searchText.indexOf(query), 120);
-
-        score += root.compactFieldScore(entry.nameCompact, compactQuery, 760);
-        score += root.compactFieldScore(entry.genericNameCompact, compactQuery, 420);
-        score += root.compactFieldScore(entry.idCompact, compactQuery, 360);
-        score += root.compactFieldScore(entry.keywordsCompact, compactQuery, 280);
+    function allWordsHaveTokenPrefix(tokens, words) {
         for (const word of words) {
-            score += root.fieldScore(entry.nameLower, word, 240, 88);
-            score += root.fieldScore(entry.genericNameLower, word, 150, 52);
-            score += root.fieldScore(entry.idLower, word, 150, 46);
-            score += root.fieldScore(entry.commentLower, word, 90, 34);
-            score += root.fieldScore(entry.keywordsLower, word, 84, 30);
-            score += root.fieldScore(entry.categoriesLower, word, 54, 24);
-        }
-        if (entry.runInTerminal)
-            score -= 5;
-
-        return score + root.searchUsageBonus(entry.statsId, 140, 4);
-    }
-
-    function canUseFuzzy(words) {
-        if (words.length === 0)
-            return false;
-
-        for (const word of words) {
-            if (word.length < root.minimumFuzzyQueryLength)
+            let matched = false;
+            for (const token of tokens) {
+                if (token.startsWith(word)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched)
                 return false;
 
         }
         return true;
     }
 
-    function fuzzyFieldScore(haystack, needle, boundaryWeight, consecutiveWeight) {
-        if (haystack.length === 0 || needle.length === 0 || needle.length > haystack.length)
+    function hasPrimaryCompactMatch(entry, compactQuery) {
+        if (compactQuery.length === 0)
+            return false;
+
+        return entry.nameCompact.includes(compactQuery) || entry.genericNameCompact.includes(compactQuery) || entry.idCompact.includes(compactQuery);
+    }
+
+    function hasSecondaryCompactMatch(entry, compactQuery) {
+        if (compactQuery.length === 0)
+            return false;
+
+        return entry.commentCompact.includes(compactQuery) || entry.keywordsCompact.includes(compactQuery) || entry.categoriesCompact.includes(compactQuery);
+    }
+
+    function isSubsequence(needle, haystack) {
+        if (needle.length < 2 || haystack.length === 0 || needle.length > haystack.length)
+            return false;
+
+        let cursor = 0;
+        for (let index = 0; index < haystack.length && cursor < needle.length; index += 1) {
+            if (haystack[index] === needle[cursor])
+                cursor += 1;
+        }
+        return cursor === needle.length;
+    }
+
+    function hasSubsequenceMatch(entry, compactQuery) {
+        if (compactQuery.length < 2)
+            return false;
+
+        return root.isSubsequence(compactQuery, entry.nameCompact) || root.isSubsequence(compactQuery, entry.genericNameCompact) || root.isSubsequence(compactQuery, entry.idCompact);
+    }
+
+    function searchMatchTier(entry, normalizedQuery, words, compactQuery) {
+        const exactPrimaryMatch = entry.nameLower === normalizedQuery || entry.genericNameLower === normalizedQuery || entry.idShortLower === normalizedQuery || entry.nameCompact === compactQuery || entry.genericNameCompact === compactQuery || entry.idCompact === compactQuery;
+        if (exactPrimaryMatch)
             return 0;
 
-        let score = 0;
-        let previousIndex = -1;
-        let firstIndex = -1;
-        let consecutiveRun = 0;
-        let boundaryHits = 0;
-        for (let cursor = 0; cursor < needle.length; cursor += 1) {
-            const index = haystack.indexOf(needle[cursor], previousIndex + 1);
-            if (index < 0)
-                return 0;
+        const primaryPrefixMatch = entry.nameLower.startsWith(normalizedQuery) || entry.genericNameLower.startsWith(normalizedQuery) || entry.idShortLower.startsWith(normalizedQuery) || entry.nameCompact.startsWith(compactQuery) || entry.genericNameCompact.startsWith(compactQuery) || entry.idCompact.startsWith(compactQuery);
+        if (primaryPrefixMatch)
+            return 1;
 
-            if (firstIndex < 0) {
-                firstIndex = index;
-                score += Math.max(0, 42 - index * 4);
-            }
-            if (index === 0 || root.isBoundaryCharacter(haystack[index - 1])) {
-                boundaryHits += 1;
-                score += boundaryWeight;
-            }
-            if (previousIndex >= 0) {
-                const gap = index - previousIndex - 1;
-                if (gap === 0) {
-                    consecutiveRun += 1;
-                    score += consecutiveWeight + Math.min(24, consecutiveRun * 8);
-                } else {
-                    consecutiveRun = 0;
-                    score -= Math.min(44, gap * 3);
-                }
-            }
-            previousIndex = index;
-        }
-        score += Math.max(0, 24 - (haystack.length - needle.length));
-        if (firstIndex > 0 && !root.isBoundaryCharacter(haystack[firstIndex - 1]))
-            score -= Math.min(20, firstIndex * 2);
+        const primaryTokenMatch = entry.nameInitials.startsWith(compactQuery) || entry.genericNameInitials.startsWith(compactQuery) || entry.idInitials.startsWith(compactQuery) || root.allWordsHaveTokenPrefix(entry.primarySearchTokens, words);
+        if (primaryTokenMatch)
+            return 2;
 
-        if (needle.length <= 2 && boundaryHits === 0 && firstIndex > 0)
-            score -= 20;
+        if (root.allWordsMatch(entry.primarySearchText, words) || root.hasPrimaryCompactMatch(entry, compactQuery))
+            return 3;
 
-        const minimumScore = needle.length <= 2 ? 48 : 42 + needle.length * 8;
-        return score >= minimumScore ? score : 0;
-    }
+        if (root.allWordsHaveTokenPrefix(entry.secondarySearchTokens, words) || root.allWordsMatch(entry.secondarySearchText, words) || root.hasSecondaryCompactMatch(entry, compactQuery))
+            return 4;
 
-    function bestFuzzyWordScore(entry, word) {
-        let best = 0;
-        const nameScore = root.fuzzyFieldScore(entry.nameLower, word, 34, 32);
-        if (nameScore > 0)
-            best = Math.max(best, nameScore + 220);
+        if (compactQuery.length >= 2 && root.hasSubsequenceMatch(entry, compactQuery))
+            return 5;
 
-        const genericNameScore = root.fuzzyFieldScore(entry.genericNameLower, word, 30, 28);
-        if (genericNameScore > 0)
-            best = Math.max(best, genericNameScore + 150);
-
-        const idScore = root.fuzzyFieldScore(entry.idLower, word, 28, 24);
-        if (idScore > 0)
-            best = Math.max(best, idScore + 132);
-
-        const keywordsScore = root.fuzzyFieldScore(entry.keywordsLower, word, 26, 22);
-        if (keywordsScore > 0)
-            best = Math.max(best, keywordsScore + 116);
-
-        const commentScore = root.fuzzyFieldScore(entry.commentLower, word, 18, 16);
-        if (commentScore > 0)
-            best = Math.max(best, commentScore + 56);
-
-        return best;
-    }
-
-    function rankFuzzyEntry(entry, query, words, compactQuery) {
-        let score = 0;
-        for (const word of words) {
-            const wordScore = root.bestFuzzyWordScore(entry, word);
-            if (wordScore === 0)
-                return 0;
-
-            score += wordScore;
-        }
-        const wholeNameScore = root.fuzzyFieldScore(entry.nameCompact, compactQuery, 34, 30);
-        if (wholeNameScore > 0)
-            score += wholeNameScore + 180;
-
-        const wholeGenericScore = root.fuzzyFieldScore(entry.genericNameCompact, compactQuery, 28, 24);
-        if (wholeGenericScore > 0)
-            score += wholeGenericScore + 112;
-
-        const wholeIdScore = root.fuzzyFieldScore(entry.idCompact, compactQuery, 26, 22);
-        if (wholeIdScore > 0)
-            score += wholeIdScore + 96;
-
-        if (entry.runInTerminal)
-            score -= 5;
-
-        return score + root.searchUsageBonus(entry.statsId, 96, 3);
+        return -1;
     }
 
     function searchEntries(query) {
         const statsRevision = root.statsRevision;
-        const normalizedQuery = root.normalizeText(query);
-        if (normalizedQuery.length === 0) {
-            const rankedEntries = root.entries.slice();
-            rankedEntries.sort((left, right) => {
-                return root.compareDefaultEntries(left, right);
-            });
-            return rankedEntries.slice(0, root.maxResults);
-        }
-        if (normalizedQuery.length === 1) {
-            const prefixMatches = [];
-            for (const entry of root.entries) {
-                if (entry.nameLower.startsWith(normalizedQuery) || entry.idShortLower.startsWith(normalizedQuery) || entry.nameInitials.startsWith(normalizedQuery))
-                    prefixMatches.push(entry);
+        const normalizedQuery = root.normalizedSearchText(query);
+        if (normalizedQuery.length === 0)
+            return root.limitedResults(root.usageOrderedEntries());
 
-            }
-            prefixMatches.sort((left, right) => {
-                return root.compareDefaultEntries(left, right);
-            });
-            return prefixMatches.slice(0, root.maxResults);
-        }
         const words = normalizedQuery.split(/\s+/).filter((word) => {
             return word.length > 0;
         });
         const compactQuery = words.join("");
-        const strictMatches = [];
-        for (const entry of root.entries) {
-            if (!root.allWordsMatch(entry.searchText, words))
-                continue;
+        const buckets = [[], [], [], [], [], []];
+        const sourceEntries = root.usageOrderedEntries();
 
-            strictMatches.push({
-                "entry": entry,
-                "score": root.rankEntry(entry, normalizedQuery, words, compactQuery),
-                "usageScore": root.frecencyScore(entry.statsId)
-            });
+        for (const entry of sourceEntries) {
+            const tier = root.searchMatchTier(entry, normalizedQuery, words, compactQuery);
+            if (tier >= 0)
+                buckets[tier].push(entry);
         }
-        strictMatches.sort((left, right) => {
-            return root.compareScoredMatches(left, right);
-        });
-        if (strictMatches.length >= root.maxResults || !root.canUseFuzzy(words))
-            return strictMatches.slice(0, root.maxResults).map((item) => {
-            return item.entry;
-        });
-
-        const strictIds = ({
-        });
-        for (const match of strictMatches) strictIds[match.entry.statsId] = true
-        const fuzzyMatches = [];
-        for (const entry of root.entries) {
-            if (strictIds[entry.statsId])
-                continue;
-
-            const score = root.rankFuzzyEntry(entry, normalizedQuery, words, compactQuery);
-            if (score <= 0)
-                continue;
-
-            fuzzyMatches.push({
-                "entry": entry,
-                "score": score,
-                "usageScore": root.frecencyScore(entry.statsId)
-            });
-        }
-        fuzzyMatches.sort((left, right) => {
-            return root.compareScoredMatches(left, right);
-        });
-        const results = strictMatches.slice(0, root.maxResults).map((item) => {
-            return item.entry;
-        });
-        for (const match of fuzzyMatches) {
-            if (results.length >= root.maxResults)
-                break;
-
-            results.push(match.entry);
-        }
-        return results;
+        return root.limitedResults([].concat(buckets[0], buckets[1], buckets[2], buckets[3], buckets[4], buckets[5]));
     }
 
     function commandList(values) {
@@ -668,59 +548,6 @@ Item {
         }
     }
 
-    function resolveIconSource(iconName) {
-        if (typeof iconName !== "string" || iconName.length === 0)
-            return Quickshell.iconPath("", root.genericIconFallback);
-
-        if (iconName.charAt(0) === "/") {
-            const direct = Quickshell.iconPath(iconName, "");
-            if (direct.length > 0)
-                return direct;
-
-            return iconName;
-        }
-        const qtResolved = Quickshell.iconPath(iconName, "");
-        if (qtResolved.length > 0)
-            return qtResolved;
-
-        const cached = root.iconPathOverrides[iconName];
-        if (typeof cached === "string") {
-            if (cached.length > 0)
-                return cached;
-
-            return Quickshell.iconPath(iconName, root.genericIconFallback);
-        }
-        Qt.callLater(root.requestIconLookup, iconName);
-        return Quickshell.iconPath(iconName, root.genericIconFallback);
-    }
-
-    function requestIconLookup(iconName) {
-        if (typeof iconName !== "string" || iconName.length === 0)
-            return ;
-
-        if (root.iconPathOverrides[iconName] !== undefined)
-            return ;
-
-        if (root.pendingIconLookups.indexOf(iconName) !== -1)
-            return ;
-
-        root.pendingIconLookups = root.pendingIconLookups.concat([iconName]);
-        root.processNextIconLookup();
-    }
-
-    function processNextIconLookup() {
-        if (root.iconLookupRunning || root.pendingIconLookups.length === 0)
-            return ;
-
-        const queue = root.pendingIconLookups.slice();
-        const nextName = queue.shift();
-        root.pendingIconLookups = queue;
-        iconLookupProc.targetName = nextName;
-        iconLookupProc.command = ["sh", Quickshell.shellPath("scripts/launcher-resolve-icon.sh"), nextName];
-        root.iconLookupRunning = true;
-        iconLookupProc.running = true;
-    }
-
     Component.onCompleted: root.refreshVisibility()
 
     Settings {
@@ -760,30 +587,6 @@ Item {
             onStreamFinished: {
                 root.hiddenEntryIds = root.parseHiddenEntryIds(visibilityOut.text);
             }
-        }
-
-    }
-
-    Process {
-        id: iconLookupProc
-
-        property string targetName: ""
-
-        onExited: {
-            const path = iconLookupOut.text.trim();
-            const updated = ({
-            });
-            for (const key in root.iconPathOverrides) updated[key] = root.iconPathOverrides[key]
-            updated[iconLookupProc.targetName] = path;
-            root.iconPathOverrides = updated;
-            root.iconLookupRunning = false;
-            Qt.callLater(root.processNextIconLookup);
-        }
-
-        stdout: StdioCollector {
-            id: iconLookupOut
-
-            waitForEnd: true
         }
 
     }

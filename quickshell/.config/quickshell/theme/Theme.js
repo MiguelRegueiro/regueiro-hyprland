@@ -91,8 +91,8 @@ var clipboardSurfaceTopLeftRadius = barCornerRadius + 6;
 var clipboardSurfaceTopRightRadius = barCornerRadius + 6;
 
 // Launcher
-var launcherWidth = 720;
-var launcherHeight = 540;
+var launcherWidth = 760;
+var launcherHeight = 600;
 var launcherAttachBottom = borderSize;
 var launcherSurfaceTopLeftRadius = barCornerRadius + 6;
 var launcherSurfaceTopRightRadius = barCornerRadius + 6;

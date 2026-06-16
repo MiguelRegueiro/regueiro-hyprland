@@ -15,6 +15,7 @@ FocusScope {
     property real reveal: 0
     property int selectedIndex: -1
     property bool hasOpenedOnce: false
+    property var appGridView: null
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: panelHover.hovered || boundsHover.hovered
@@ -35,6 +36,23 @@ FocusScope {
     readonly property real surfaceOffsetY: (1 - root.reveal) * root.clipSurfaceHeight
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: root.launcherService.searchEntries(root.searchQuery)
+    readonly property var allEntries: {
+        const entriesRevision = root.launcherService.entriesRevision;
+        const statsRevision = root.launcherService.statsRevision;
+        return root.launcherService.usageOrderedEntries();
+    }
+    readonly property var filteredEntryIndexes: {
+        const indexes = ({
+        });
+        const entries = root.filteredEntries;
+        for (let index = 0; index < entries.length; index += 1) {
+            const entry = entries[index];
+            if (entry && typeof entry.statsId === "string")
+                indexes[entry.statsId] = index;
+
+        }
+        return indexes;
+    }
 
     signal requestClose()
 
@@ -67,7 +85,46 @@ FocusScope {
 
         const nextIndex = Math.max(0, Math.min(root.filteredEntries.length - 1, root.selectedIndex + delta));
         root.selectedIndex = nextIndex;
-        listView.positionViewAtIndex(nextIndex, ListView.Contain);
+        root.ensureSelectionVisible(nextIndex);
+    }
+
+    function gridColumns() {
+        if (!root.appGridView || root.appGridView.width <= 0 || root.appGridView.cellWidth <= 0)
+            return 1;
+
+        return Math.max(1, Math.floor(root.appGridView.width / root.appGridView.cellWidth));
+    }
+
+    function clampGridContentY(value) {
+        if (!root.appGridView)
+            return 0;
+
+        const maxY = Math.max(0, root.appGridView.contentHeight - root.appGridView.height);
+        return Math.max(0, Math.min(maxY, value));
+    }
+
+    function scrollGrid(deltaY) {
+        if (!root.appGridView)
+            return;
+
+        root.appGridView.contentY = root.clampGridContentY(root.appGridView.contentY + deltaY);
+    }
+
+    function ensureSelectionVisible(index) {
+        if (!root.appGridView || index < 0)
+            return;
+
+        const columns = root.gridColumns();
+        const row = Math.floor(index / columns);
+        const rowTop = row * root.appGridView.cellHeight;
+        const rowBottom = rowTop + root.appGridView.cellHeight;
+        const viewTop = root.appGridView.contentY;
+        const viewBottom = viewTop + root.appGridView.height;
+
+        if (rowTop < viewTop)
+            root.appGridView.contentY = root.clampGridContentY(rowTop);
+        else if (rowBottom > viewBottom)
+            root.appGridView.contentY = root.clampGridContentY(rowBottom - root.appGridView.height);
     }
 
     function activateEntry(entry) {
@@ -100,21 +157,37 @@ FocusScope {
             root.hasOpenedOnce = false;
         }
     }
-    onFilteredEntriesChanged: clampSelection()
+    onFilteredEntriesChanged: {
+        clampSelection();
+    }
     onSelectedIndexChanged: {
-        if (root.selectedIndex >= 0 && root.selectedIndex < root.filteredEntries.length)
-            listView.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+        if (root.appGridView && root.selectedIndex >= 0 && root.selectedIndex < root.filteredEntries.length)
+            root.ensureSelectionVisible(root.selectedIndex);
     }
 
     Shortcut {
         sequence: "Up"
         context: Qt.WindowShortcut
         enabled: root.open
-        onActivated: root.moveSelection(-1)
+        onActivated: root.moveSelection(-root.gridColumns())
     }
 
     Shortcut {
         sequence: "Down"
+        context: Qt.WindowShortcut
+        enabled: root.open
+        onActivated: root.moveSelection(root.gridColumns())
+    }
+
+    Shortcut {
+        sequence: "Left"
+        context: Qt.WindowShortcut
+        enabled: root.open
+        onActivated: root.moveSelection(-1)
+    }
+
+    Shortcut {
+        sequence: "Right"
         context: Qt.WindowShortcut
         enabled: root.open
         onActivated: root.moveSelection(1)
@@ -443,33 +516,43 @@ FocusScope {
 
                     anchors {
                         fill: parent
-                        leftMargin: 14
-                        rightMargin: 14
+                        leftMargin: 16
+                        rightMargin: 16
                         topMargin: 14
-                        bottomMargin: 16
+                        bottomMargin: 14
                     }
 
-                    spacing: 12
+                    spacing: 10
 
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 46
+                        Layout.preferredHeight: 44
                         radius: 16
-                        color: Theme.qsCardBg
-                        border.width: 1
-                        border.color: searchInput.activeFocus ? Theme.tileActiveBorderHover : Theme.qsCardBorder
+                        color: searchInput.activeFocus ? Qt.rgba(1, 1, 1, 0.105) : Qt.rgba(1, 1, 1, 0.058)
+                        border.width: 0
+                        layer.enabled: searchInput.activeFocus
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: Qt.rgba(0, 0, 0, 0.34)
+                            shadowBlur: 0.28
+                            shadowVerticalOffset: 2
+                            shadowHorizontalOffset: 0
+                            blurMax: 16
+                        }
 
                         Text {
-                            text: "󰍉"
-                            font.family: Theme.fontIcons
-                            font.pixelSize: 14
-                            color: Theme.textDim
+                            id: searchIcon
 
                             anchors {
                                 left: parent.left
-                                leftMargin: 14
+                                leftMargin: 15
                                 verticalCenter: parent.verticalCenter
                             }
+
+                            text: "󰍉"
+                            font.family: Theme.fontIcons
+                            font.pixelSize: 14
+                            color: searchInput.activeFocus ? Theme.textPrimary : Theme.textDim
                         }
 
                         TextInput {
@@ -487,17 +570,27 @@ FocusScope {
                             onTextEdited: root.selectedIndex = 0
 
                             anchors {
-                                left: parent.left
+                                left: searchIcon.right
                                 right: clearSearch.left
-                                leftMargin: 38
+                                leftMargin: 12
                                 rightMargin: 8
                                 verticalCenter: parent.verticalCenter
+                            }
+
+                            Keys.onLeftPressed: (event) => {
+                                root.moveSelection(-1);
+                                event.accepted = true;
+                            }
+
+                            Keys.onRightPressed: (event) => {
+                                root.moveSelection(1);
+                                event.accepted = true;
                             }
                         }
 
                         Text {
                             visible: searchInput.text.length === 0
-                            text: "Search applications"
+                            text: "Search"
                             color: Theme.textDisabled
                             font.family: Theme.fontUi
                             font.pixelSize: 13
@@ -553,8 +646,8 @@ FocusScope {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: 20
-                        color: Theme.popupBg
+                        radius: 22
+                        color: Qt.rgba(0.075, 0.075, 0.075, 0.88)
                         border.width: 1
                         border.color: Theme.qsEdge
                         clip: true
@@ -609,131 +702,192 @@ FocusScope {
                                 }
                             }
 
-                            ListView {
-                                id: listView
+                            Flickable {
+                                id: appGrid
+
+                                property int cellWidth: Math.floor(width / 5)
+                                property int cellHeight: 130
 
                                 visible: root.filteredEntries.length > 0
-                                model: root.filteredEntries
-                                spacing: 8
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
+                                contentWidth: width
+                                contentHeight: appGridPositioner.height
+                                Component.onCompleted: root.appGridView = appGrid
 
                                 anchors {
                                     fill: parent
-                                    leftMargin: 16
-                                    rightMargin: 16
-                                    topMargin: 10
-                                    bottomMargin: 10
+                                    leftMargin: 12
+                                    rightMargin: 12
+                                    topMargin: 12
+                                    bottomMargin: 12
                                 }
 
-                                delegate: Rectangle {
-                                    required property var modelData
-                                    required property int index
-
-                                    readonly property bool selected: index === root.selectedIndex
-                                    readonly property bool hovered: rowHover.hovered
-                                    readonly property bool hasSubtitle: modelData.subtitle.length > 0
-                                    width: listView.width
-                                    implicitHeight: hasSubtitle ? 74 : 64
-                                    radius: 16
-                                    color: selected ? Qt.rgba(1, 1, 1, 0.10) : hovered ? Theme.qsCardBgHover : Theme.qsCardBg
-                                    border.width: 1
-                                    border.color: selected ? Qt.rgba(1, 1, 1, 0.16) : hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
-
-                                    HoverHandler {
-                                        id: rowHover
-
-                                        blocking: false
-                                        cursorShape: Qt.ArrowCursor
+                                WheelHandler {
+                                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                    onWheel: (event) => {
+                                        const pixelDelta = event.pixelDelta.y;
+                                        const wheelSteps = event.angleDelta.y / 120;
+                                        const scrollDelta = pixelDelta !== 0 ? -pixelDelta * 1.4 : -wheelSteps * appGrid.cellHeight * 2.4;
+                                        root.scrollGrid(scrollDelta);
+                                        event.accepted = true;
                                     }
+                                }
 
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 12
-                                        anchors.topMargin: 6
-                                        anchors.bottomMargin: 6
-                                        spacing: 10
+                                Item {
+                                    id: appGridPositioner
 
-                                        Item {
-                                            Layout.alignment: Qt.AlignVCenter
-                                            Layout.preferredWidth: 52
-                                            Layout.preferredHeight: 52
+                                    width: appGrid.width
+                                    height: Math.ceil(root.filteredEntries.length / 5) * appGrid.cellHeight
 
-                                            Image {
-                                                anchors.centerIn: parent
-                                                width: 52
-                                                height: 52
-                                                fillMode: Image.PreserveAspectFit
-                                                sourceSize.width: 256
-                                                sourceSize.height: 256
-                                                smooth: true
-                                                mipmap: true
-                                                asynchronous: true
-                                                source: root.launcherService.resolveIconSource(modelData.icon)
-                                            }
-                                        }
+                                    Repeater {
+                                        model: root.allEntries
 
-                                        ColumnLayout {
-                                            Layout.fillWidth: true
-                                            Layout.alignment: Qt.AlignVCenter
-                                            spacing: hasSubtitle ? 3 : 0
+                                        delegate: Item {
+                                            required property var modelData
 
-                                            Text {
-                                                Layout.fillWidth: true
-                                                text: modelData.name
-                                                elide: Text.ElideRight
-                                                color: Theme.textPrimary
-                                                font.family: Theme.fontUi
-                                                font.pixelSize: 13
-                                            }
+                                            readonly property var mappedIndex: root.filteredEntryIndexes[modelData.statsId]
+                                            readonly property int filteredIndex: typeof mappedIndex === "number" ? mappedIndex : -1
+                                            readonly property bool matched: filteredIndex >= 0
+                                            readonly property bool selected: filteredIndex === root.selectedIndex
+                                            visible: matched
+                                            x: matched ? (filteredIndex % 5) * appGrid.cellWidth : 0
+                                            y: matched ? Math.floor(filteredIndex / 5) * appGrid.cellHeight : 0
+                                            width: matched ? appGrid.cellWidth : 0
+                                            height: matched ? appGrid.cellHeight : 0
 
-                                            Text {
-                                                visible: hasSubtitle
-                                                Layout.fillWidth: true
-                                                text: modelData.subtitle
-                                                elide: Text.ElideRight
-                                                color: Theme.textDim
-                                                font.family: Theme.fontUi
-                                                font.pixelSize: 11
-                                            }
-                                        }
+                                            Rectangle {
+                                                id: appTile
 
-                                        Rectangle {
-                                            visible: modelData.runInTerminal
-                                            Layout.alignment: Qt.AlignVCenter
-                                            implicitWidth: terminalLabel.implicitWidth + 14
-                                            implicitHeight: 24
-                                            radius: 12
-                                            color: Theme.qsCardChipBg
-                                            border.width: 1
-                                            border.color: Theme.qsCardChipBorder
-
-                                            Text {
-                                                id: terminalLabel
+                                                width: Math.min(134, parent.width - 6)
+                                                height: 122
+                                                radius: 16
+                                                color: selected ? Qt.rgba(0.208, 0.518, 0.894, 0.16) : "transparent"
+                                                border.width: selected ? 1 : 0
+                                                border.color: Theme.tileActiveBorderHover
+                                                scale: selected ? 1.018 : 1
 
                                                 anchors.centerIn: parent
-                                                text: "Term"
-                                                color: Theme.textDim
-                                                font.family: Theme.fontUi
-                                                font.pixelSize: 10
-                                            }
-                                        }
-                                    }
 
-                                    TapHandler {
-                                        acceptedButtons: Qt.LeftButton
-                                        gesturePolicy: TapHandler.ReleaseWithinBounds
-                                        onTapped: {
-                                            root.selectedIndex = index;
-                                            root.activateEntry(modelData);
+                                                Column {
+                                                    width: parent.width
+                                                    spacing: 8
+
+                                                    anchors {
+                                                        top: parent.top
+                                                        topMargin: 9
+                                                        horizontalCenter: parent.horizontalCenter
+                                                    }
+
+                                                    Item {
+                                                        width: 84
+                                                        height: 74
+
+                                                        anchors.horizontalCenter: parent.horizontalCenter
+
+                                                        Image {
+                                                            anchors.centerIn: parent
+                                                            width: 70
+                                                            height: 70
+                                                            fillMode: Image.PreserveAspectFit
+                                                            sourceSize.width: 256
+                                                            sourceSize.height: 256
+                                                            smooth: true
+                                                            mipmap: true
+                                                            asynchronous: true
+                                                            cache: true
+                                                            source: root.launcherService.iconDisplaySource(modelData.iconSource)
+                                                        }
+
+                                                        Rectangle {
+                                                            visible: modelData.runInTerminal
+                                                            width: 22
+                                                            height: 18
+                                                            radius: 9
+                                                            color: Theme.qsCardBg
+                                                            border.width: 1
+                                                            border.color: Theme.qsCardBorder
+
+                                                            anchors {
+                                                                top: parent.top
+                                                                right: parent.right
+                                                                topMargin: -2
+                                                                rightMargin: -2
+                                                            }
+
+                                                            Text {
+                                                                anchors.centerIn: parent
+                                                                text: ""
+                                                                color: Theme.textDim
+                                                                font.family: Theme.fontIcons
+                                                                font.pixelSize: 10
+                                                            }
+                                                        }
+                                                    }
+
+                                                    Text {
+                                                        width: parent.width - 10
+                                                        height: 31
+                                                        text: modelData.name
+                                                        horizontalAlignment: Text.AlignHCenter
+                                                        verticalAlignment: Text.AlignTop
+                                                        wrapMode: Text.WordWrap
+                                                        maximumLineCount: 2
+                                                        elide: Text.ElideRight
+                                                        color: selected ? Theme.textPrimary : Theme.textDim
+                                                        font.family: Theme.fontUi
+                                                        font.pixelSize: 12
+                                                        lineHeight: 0.94
+
+                                                        anchors.horizontalCenter: parent.horizontalCenter
+                                                    }
+                                                }
+
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: Theme.qsPageFadeDuration
+                                                    }
+                                                }
+
+                                                Behavior on border.color {
+                                                    ColorAnimation {
+                                                        duration: Theme.qsPageFadeDuration
+                                                    }
+                                                }
+
+                                                Behavior on scale {
+                                                    NumberAnimation {
+                                                        duration: Theme.hoverAnimDuration
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+
+                                                layer.enabled: selected
+                                                layer.effect: MultiEffect {
+                                                    shadowEnabled: true
+                                                    shadowColor: Qt.rgba(0, 0, 0, 0.42)
+                                                    shadowBlur: 0.46
+                                                    shadowVerticalOffset: 3
+                                                    shadowHorizontalOffset: 0
+                                                    blurMax: 18
+                                                }
+                                            }
+
+                                            TapHandler {
+                                                acceptedButtons: Qt.LeftButton
+                                                gesturePolicy: TapHandler.ReleaseWithinBounds
+                                                onTapped: {
+                                                    root.selectedIndex = filteredIndex;
+                                                    root.activateEntry(modelData);
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
 
                             Rectangle {
-                                visible: listView.visible && listView.visibleArea.heightRatio < 0.999
+                                visible: appGrid.visible && appGrid.visibleArea.heightRatio < 0.999
                                 width: 4
                                 radius: 2
                                 color: Theme.qsEdgeSoft
@@ -751,32 +905,10 @@ FocusScope {
                                     width: parent.width
                                     radius: 2
                                     color: Theme.qsCardBorderHover
-                                    y: parent.height * listView.visibleArea.yPosition
-                                    height: Math.max(28, parent.height * listView.visibleArea.heightRatio)
+                                    y: parent.height * appGrid.visibleArea.yPosition
+                                    height: Math.max(28, parent.height * appGrid.visibleArea.heightRatio)
                                 }
                             }
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: root.launcherService.lastError.length > 0 ? root.launcherService.lastError : (root.filteredEntries.length === root.launcherService.entries.length ? `${root.filteredEntries.length} apps` : `${root.filteredEntries.length} of ${root.launcherService.entries.length} apps`)
-                            font.family: Theme.fontUi
-                            font.pixelSize: 11
-                            color: root.launcherService.lastError.length > 0 ? Theme.red : Theme.textDim
-                            verticalAlignment: Text.AlignVCenter
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            text: "Enter launches · Esc closes"
-                            font.family: Theme.fontUi
-                            font.pixelSize: 11
-                            color: Theme.textDisabled
-                            verticalAlignment: Text.AlignVCenter
                         }
                     }
                 }
