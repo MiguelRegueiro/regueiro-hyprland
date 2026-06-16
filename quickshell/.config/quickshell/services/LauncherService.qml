@@ -565,6 +565,33 @@ Item {
         target: DesktopEntries
     }
 
+    Item {
+        id: iconWarmup
+
+        x: -10000
+        y: -10000
+        width: 1
+        height: 1
+        opacity: 0
+        enabled: false
+
+        Repeater {
+            model: root.entries
+
+            delegate: Image {
+                required property var modelData
+
+                width: 1
+                height: 1
+                sourceSize.width: 256
+                sourceSize.height: 256
+                asynchronous: true
+                cache: true
+                source: root.iconDisplaySource(modelData.iconSource)
+            }
+        }
+    }
+
     Process {
         id: visibilityProc
 
