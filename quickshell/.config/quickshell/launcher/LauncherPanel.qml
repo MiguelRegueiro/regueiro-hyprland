@@ -41,6 +41,10 @@ FocusScope {
         const statsRevision = root.launcherService.statsRevision;
         return root.launcherService.usageOrderedEntries();
     }
+    readonly property var iconWarmupEntries: {
+        const entriesRevision = root.launcherService.entriesRevision;
+        return root.launcherService.entries;
+    }
     readonly property var filteredEntryIndexes: {
         const indexes = ({
         });
@@ -226,6 +230,33 @@ FocusScope {
         context: Qt.WindowShortcut
         enabled: root.open
         onActivated: root.requestClose()
+    }
+
+    Item {
+        id: iconWarmup
+
+        x: -10000
+        y: -10000
+        width: 1
+        height: 1
+        opacity: 0
+        enabled: false
+
+        Repeater {
+            model: root.iconWarmupEntries
+
+            delegate: Image {
+                required property var modelData
+
+                width: 1
+                height: 1
+                sourceSize.width: 256
+                sourceSize.height: 256
+                asynchronous: true
+                cache: true
+                source: root.launcherService.iconDisplaySource(modelData.iconSource)
+            }
+        }
     }
 
     Item {
