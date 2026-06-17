@@ -38,9 +38,11 @@ FocusScope {
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: root.launcherService.searchEntries(root.searchQuery)
     readonly property var allEntries: {
+        // Stable delegate model: frecency changes only move existing delegates via
+        // filteredEntryIndexes. Rebuilding this model on every app launch destroys
+        // every Image and makes 256px icons reload on the next open.
         const entriesRevision = root.launcherService.entriesRevision;
-        const statsRevision = root.launcherService.statsRevision;
-        return root.launcherService.usageOrderedEntries();
+        return root.launcherService.entries;
     }
     readonly property var filteredEntryIndexes: {
         const indexes = ({
@@ -244,7 +246,11 @@ FocusScope {
     implicitHeight: root.bodyHeight + root.attachBottom
     width: implicitWidth
     height: implicitHeight
-    visible: reveal > 0.001
+    // Never hide/unmap this subtree on close. Hiding it makes Qt drop the
+    // Image scene-graph textures, so every reopen has to decode the 256px icons
+    // again. The closed state already moves the surface out through the clipped
+    // reveal animation; keep it alive so icons stay hot.
+    visible: true
 
     transitions: [
         Transition {
@@ -751,11 +757,15 @@ FocusScope {
                                             readonly property int filteredIndex: typeof mappedIndex === "number" ? mappedIndex : -1
                                             readonly property bool matched: filteredIndex >= 0
                                             readonly property bool selected: filteredIndex === root.selectedIndex
-                                            visible: matched
-                                            x: matched ? (filteredIndex % 5) * appGrid.cellWidth : 0
-                                            y: matched ? Math.floor(filteredIndex / 5) * appGrid.cellHeight : 0
-                                            width: matched ? appGrid.cellWidth : 0
-                                            height: matched ? appGrid.cellHeight : 0
+                                            // Keep delegates and their 256px icon images alive across searches.
+                                            // Toggling visible/size to 0 makes Qt drop/reload async images, which is
+                                            // exactly the slow blank-icon flash this drawer must avoid.
+                                            enabled: matched
+                                            opacity: matched ? 1 : 0
+                                            x: matched ? (filteredIndex % 5) * appGrid.cellWidth : -10000
+                                            y: matched ? Math.floor(filteredIndex / 5) * appGrid.cellHeight : -10000
+                                            width: appGrid.cellWidth
+                                            height: appGrid.cellHeight
 
                                             Rectangle {
                                                 id: appTile

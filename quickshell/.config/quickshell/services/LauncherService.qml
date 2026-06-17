@@ -21,7 +21,15 @@ Item {
     })
     property int entriesRevision: 0
     property var usageOrderedCache: []
+    property var searchResultCache: ({
+    })
+    property var iconPathCache: ({
+    })
     readonly property string genericIconFallback: "application-x-executable"
+    readonly property string fallbackIconSourcePath: {
+        const resolved = Quickshell.iconPath("", root.genericIconFallback);
+        return typeof resolved === "string" && resolved.length > 0 ? resolved : root.genericIconFallback;
+    }
     readonly property url launcherStatsLocation: Qt.resolvedUrl(Quickshell.statePath("launcher-usage.ini"))
     // Matches the repo's current Hyprland terminal command.
     property var terminalCommand: ["kitty"]
@@ -229,6 +237,8 @@ Item {
             return root.compareDefaultEntries(left, right);
         });
         root.usageOrderedCache = rankedEntries;
+        root.searchResultCache = ({
+        });
     }
 
     function limitedResults(values) {
@@ -243,7 +253,7 @@ Item {
     }
 
     function iconSourceForName(iconName) {
-        const fallback = Quickshell.iconPath("", root.genericIconFallback);
+        const fallback = root.fallbackIconSourcePath;
         if (typeof iconName !== "string")
             return fallback;
 
@@ -254,8 +264,14 @@ Item {
         if (normalizedIcon.charAt(0) === "/")
             return normalizedIcon;
 
+        const cached = root.iconPathCache[normalizedIcon];
+        if (cached !== undefined)
+            return cached;
+
         const resolved = Quickshell.iconPath(normalizedIcon, root.genericIconFallback);
-        return resolved.length > 0 ? resolved : fallback;
+        const source = typeof resolved === "string" && resolved.length > 0 ? resolved : fallback;
+        root.iconPathCache[normalizedIcon] = source;
+        return source;
     }
 
     function mapEntry(entry) {
@@ -476,8 +492,15 @@ Item {
     function searchEntries(query) {
         const statsRevision = root.statsRevision;
         const normalizedQuery = root.normalizedSearchText(query);
-        if (normalizedQuery.length === 0)
-            return root.limitedResults(root.usageOrderedEntries());
+        const cachedResults = root.searchResultCache[normalizedQuery];
+        if (cachedResults !== undefined)
+            return cachedResults;
+
+        if (normalizedQuery.length === 0) {
+            const results = root.limitedResults(root.usageOrderedEntries());
+            root.searchResultCache[normalizedQuery] = results;
+            return results;
+        }
 
         const words = normalizedQuery.split(/\s+/).filter((word) => {
             return word.length > 0;
@@ -491,7 +514,9 @@ Item {
             if (tier >= 0)
                 buckets[tier].push(entry);
         }
-        return root.limitedResults([].concat(buckets[0], buckets[1], buckets[2], buckets[3], buckets[4], buckets[5]));
+        const results = root.limitedResults([].concat(buckets[0], buckets[1], buckets[2], buckets[3], buckets[4], buckets[5]));
+        root.searchResultCache[normalizedQuery] = results;
+        return results;
     }
 
     function commandList(values) {
