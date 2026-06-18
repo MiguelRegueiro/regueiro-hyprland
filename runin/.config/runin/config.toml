@@ -1,0 +1,5 @@
+search_root = "/home/regueiro"
+default_command = "codex"
+include_root = true
+include_hidden = true
+cd_after_run = true

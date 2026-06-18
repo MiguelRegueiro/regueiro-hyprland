@@ -97,7 +97,7 @@ pw groupmod video -m "$USER"
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell fish starship fastfetch kitty fcitx5 gtk xresources discord
+stow hypr quickshell fish starship fastfetch kitty fcitx5 gtk xresources discord runin elio fontconfig mimeapps user-dirs
 ```
 
 The `hypr` package owns the active Hyprland config, including `hypridle.conf`.
