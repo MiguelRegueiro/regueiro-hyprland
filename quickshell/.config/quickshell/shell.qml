@@ -424,10 +424,6 @@ ShellRoot {
         id: brightnessServiceState
     }
 
-    Services.InputService {
-        id: inputServiceState
-    }
-
     Services.ClipboardService {
         id: clipboardServiceState
     }
@@ -542,22 +538,6 @@ ShellRoot {
                 targetScreen: modelData
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
-            }
-
-        }
-
-    }
-
-    Variants {
-        model: Quickshell.screens
-
-        delegate: Component {
-            Overlays.InputMethodOSD {
-                required property var modelData
-
-                targetScreen: modelData
-                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
-                inputService: inputServiceState
             }
 
         }

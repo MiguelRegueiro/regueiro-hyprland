@@ -1,6 +1,6 @@
 # regueiro-hyprland
 
-FreeBSD-only Hyprland dotfiles for my laptop desktop. The setup is a custom QuickShell shell on top of Hyprland, tuned for FreeBSD 15, Intel graphics, Linuxulator Discord, Firefox VAAPI playback, Fcitx 5, and a GNOME-like workflow without using GNOME.
+FreeBSD-only Hyprland dotfiles for my laptop desktop. The setup is a custom QuickShell shell on top of Hyprland, tuned for FreeBSD 15.1, Intel graphics, Linuxulator Discord, Firefox VAAPI playback, and a GNOME-like workflow without using GNOME.
 
 This is personal infrastructure. Use it as reference, but expect hardware-specific paths, monitor names, and helper scripts.
 
@@ -8,7 +8,7 @@ Machine-specific copy-paste notes live in [docs/freebsd-hardware-notes.md](docs/
 
 ## Stack
 
-- **OS** - FreeBSD 15
+- **OS** - FreeBSD 15.1
 - **Compositor** - Hyprland
 - **Bar / panels / launcher / power menu** - QuickShell
 - **Wallpaper** - hyprpaper
@@ -16,7 +16,7 @@ Machine-specific copy-paste notes live in [docs/freebsd-hardware-notes.md](docs/
 - **Polkit agent** - hyprpolkitagent
 - **Terminal** - Kitty
 - **Shell** - Fish + Starship
-- **Input method** - Fcitx 5 with Spanish and Mozc Japanese input
+- **Keyboard** - Spanish layout through Hyprland
 - **Audio** - PipeWire + WirePlumber, with PulseAudio compatibility
 - **Portals** - xdg-desktop-portal + xdg-desktop-portal-hyprland
 - **Browser** - Firefox on Wayland with Intel VAAPI
@@ -31,7 +31,6 @@ doas pkg install -y git stow \
     hyprland hypridle hyprlock hyprpaper hyprpicker hyprpolkitagent \
     quickshell \
     kitty fish starship fastfetch btop \
-    fcitx5 ja-fcitx-mozc fcitx5-gtk2 fcitx5-gtk3 fcitx5-gtk4 fcitx5-qt5 fcitx5-qt6 fcitx5-configtool \
     thunar \
     pipewire wireplumber pulseaudio \
     seatd dbus polkit xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
@@ -112,7 +111,7 @@ pw groupmod video -m "$USER"
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell fish starship fastfetch kitty fcitx5 gtk xresources discord runin elio fontconfig mimeapps user-dirs
+stow hypr quickshell fish starship fastfetch kitty gtk xresources discord runin elio fontconfig mimeapps user-dirs
 ```
 
 The `hypr` package owns the active Hyprland config, including `hypridle.conf`.
@@ -327,25 +326,7 @@ The Hyprland autostart must start QuickShell:
 exec-once = qs -n -d
 ```
 
-## Input Method
-
-The setup uses Fcitx 5 with Spanish and Mozc Japanese input:
-
-- `fcitx5`
-- `ja-fcitx-mozc`
-- `fcitx5-gtk2`, `fcitx5-gtk3`, `fcitx5-gtk4`
-- `fcitx5-qt5`, `fcitx5-qt6`
-
-The session exports:
-
-```ini
-env = SDL_IM_MODULE,fcitx
-env = GLFW_IM_MODULE,fcitx
-env = QT_IM_MODULE,fcitx
-env = XMODIFIERS,@im=fcitx
-```
-
-GTK uses native Wayland support for modern apps, while the GTK settings files keep `fcitx` available for apps that still route through X11/XWayland.
+## Keyboard
 
 The Hyprland keyboard config uses:
 
@@ -355,7 +336,10 @@ kb_options = lv3:switch
 
 Right Ctrl acts as an additional AltGr / level-3 key, useful on the Spanish layout.
 
-`Super+Space` cycles input methods through QuickShell first so the OSD and shell state stay in sync, then falls back to direct Fcitx control if QuickShell is unavailable.
+Japanese input is not enabled in this FreeBSD config. The Linux setup uses
+Fcitx 5 Mozc, but FreeBSD does not provide the same Fcitx 5 Mozc package. The
+tested Fcitx 5 Anthy path did not produce reliable kana/kanji input on this
+machine, so Fcitx is intentionally omitted here.
 
 ## Hardware Notes
 

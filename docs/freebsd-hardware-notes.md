@@ -4,7 +4,7 @@ These notes are for the current laptop and are intentionally not all represented
 
 ## Machine
 
-- OS: FreeBSD 15
+- OS: FreeBSD 15.1
 - Laptop: HP Pavilion x360 Convertible 14-dh1xxx
 - CPU: Intel Core i7-10510U
 - Display GPU: Intel Comet Lake UHD, `8086:9b41`
