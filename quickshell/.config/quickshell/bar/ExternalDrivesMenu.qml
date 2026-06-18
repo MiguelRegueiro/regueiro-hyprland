@@ -50,6 +50,17 @@ PanelWindow {
         right: true
     }
 
+    Timer {
+        interval: 1000
+        running: root.open
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (root.driveService)
+                root.driveService.refresh();
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
@@ -328,7 +339,7 @@ PanelWindow {
                                     id: countText
 
                                     anchors.fill: parent
-                                    text: root.loading || root.mutating ? "…" : String(root.drives.length)
+                                    text: String(root.drives.length)
                                     color: Theme.textPrimary
                                     font.family: Theme.fontUi
                                     font.pixelSize: 12
@@ -617,10 +628,7 @@ PanelWindow {
                                                     anchors.fill: parent
                                                     enabled: !root.mutating
                                                     cursorShape: Qt.PointingHandCursor
-                                                    onClicked: {
-                                                        root.driveService.ejectDrive(modelData);
-                                                        root.closeRequested();
-                                                    }
+                                                    onClicked: root.driveService.ejectDrive(modelData)
                                                 }
                                             }
 

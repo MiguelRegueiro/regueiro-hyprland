@@ -7,8 +7,10 @@ Item {
 
     property var drives: []
     property string lastError: ""
+    property string lastErrorSource: ""
     readonly property bool loading: listProc.running
     readonly property bool mutating: actionProc.running
+    readonly property string driveHelper: Qt.resolvedUrl("../scripts/freebsd-drive-eject.sh").toString().replace("file://", "")
 
     function cleanMountpoints(points) {
         if (!Array.isArray(points))
@@ -84,7 +86,7 @@ Item {
         for (let i = 0; i < devices.length; i++)
             walk(devices[i], null);
 
-        root.lastError = "";
+        root.clearListError();
         return found;
     }
 
@@ -202,8 +204,33 @@ Item {
             });
         }
 
-        root.lastError = "";
+        root.clearListError();
         return found;
+    }
+
+    function clearError() {
+        root.lastError = "";
+        root.lastErrorSource = "";
+    }
+
+    function clearListError() {
+        if (root.lastErrorSource === "list")
+            root.clearError();
+    }
+
+    function setError(message, source) {
+        root.lastError = message;
+        root.lastErrorSource = source;
+    }
+
+    function cleanActionError(output) {
+        const text = String(output || "").trim().replace(/\s+/g, " ");
+        if (text.length === 0)
+            return "Drive action failed";
+
+        const parts = text.split(": ");
+        const useful = parts.length > 1 ? parts.slice(Math.max(0, parts.length - 2)).join(": ") : text;
+        return useful.length > 0 ? useful : "Drive action failed";
     }
 
     function refresh() {
@@ -215,8 +242,8 @@ Item {
         if (actionProc.running || !drive || !drive.mounted || drive.mountPath.length === 0)
             return;
 
-        root.lastError = "";
-        actionProc.command = ["gio", "open", drive.mountPath];
+        root.clearError();
+        actionProc.command = ["env", "-u", "NO_COLOR", "COLORTERM=truecolor", "kitty", "-e", "elio", drive.mountPath];
         actionProc.running = true;
     }
 
@@ -224,7 +251,7 @@ Item {
         if (actionProc.running || !drive || drive.path.length === 0)
             return;
 
-        root.lastError = "";
+        root.clearError();
         actionProc.command = ["udisksctl", "mount", "-b", drive.path];
         actionProc.running = true;
     }
@@ -233,8 +260,8 @@ Item {
         if (actionProc.running || !drive || drive.path.length === 0)
             return;
 
-        root.lastError = "";
-        actionProc.command = ["udisksctl", "unmount", "-b", drive.path];
+        root.clearError();
+        actionProc.command = [root.driveHelper, "unmount", drive.path, drive.mountPath || "", drive.diskPath || ""];
         actionProc.running = true;
     }
 
@@ -242,8 +269,8 @@ Item {
         if (actionProc.running || !drive || drive.diskPath.length === 0)
             return;
 
-        root.lastError = "";
-        actionProc.command = ["sh", "-lc", "udisksctl unmount -b \"$1\" >/dev/null 2>&1 || true; udisksctl power-off -b \"$2\"", "external-drive", drive.path, drive.diskPath];
+        root.clearError();
+        actionProc.command = [root.driveHelper, "eject", drive.path, drive.mountPath || "", drive.diskPath];
         actionProc.running = true;
     }
 
@@ -277,7 +304,7 @@ Item {
 
         onExited: (exitCode) => {
             if (exitCode !== 0)
-                root.lastError = "Failed to list drives";
+                root.setError("Failed to list drives", "list");
         }
     }
 
@@ -287,9 +314,19 @@ Item {
         command: ["echo"]
         onExited: (exitCode) => {
             if (exitCode !== 0)
-                root.lastError = "Drive action failed";
+                root.setError(root.cleanActionError(actionErr.text || actionOut.text), "action");
+            else
+                root.clearError();
 
             refreshSoon.restart();
+        }
+
+        stdout: StdioCollector {
+            id: actionOut
+        }
+
+        stderr: StdioCollector {
+            id: actionErr
         }
     }
 
