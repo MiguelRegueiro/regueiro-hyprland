@@ -3,7 +3,7 @@
 
   "logo": {
     "type": "file",
-    "source": "/home/regueiro/regueiro-hyprland/fastfetch/.config/fastfetch/freebsd-logo.txt",
+    "source": "~/regueiro-hyprland/fastfetch/.config/fastfetch/freebsd-logo.txt",
     "color":  {
       "1": "#eb3325",
       "2": "#eb3325",
