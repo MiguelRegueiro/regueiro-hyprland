@@ -230,13 +230,14 @@ Those caused blurry fonts, missing text, or high CPU usage.
 Current live wallpaper:
 
 ```text
-/home/regueiro/Pictures/wallpapers/wallpaer4.png
+~/regueiro-hyprland/wallpapers/japan-background-blured-redish.jpg
 ```
 
-The autostart line is intentionally machine-specific because the image path is local:
+The autostart line uses `hyprpaper` and the stowed `hyprpaper.conf` points to
+the repo-managed wallpaper:
 
 ```ini
-exec-once = /usr/local/bin/swaybg -i /home/regueiro/Pictures/wallpapers/wallpaer4.png -m fill
+exec-once = hyprpaper
 ```
 
 ## Suspend / Resume

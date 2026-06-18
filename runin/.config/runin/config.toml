@@ -1,4 +1,4 @@
-search_root = "/home/regueiro"
+search_root = "~"
 default_command = "codex"
 include_root = true
 include_hidden = true

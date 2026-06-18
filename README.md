@@ -11,7 +11,7 @@ Machine-specific copy-paste notes live in [docs/freebsd-hardware-notes.md](docs/
 - **OS** - FreeBSD 15
 - **Compositor** - Hyprland
 - **Bar / panels / launcher / power menu** - QuickShell
-- **Wallpaper** - swaybg, with a legacy hyprpaper config kept around
+- **Wallpaper** - hyprpaper
 - **Lock / idle** - hyprlock + hypridle
 - **Polkit agent** - hyprpolkitagent
 - **Terminal** - Kitty
@@ -28,7 +28,7 @@ Core packages:
 
 ```sh
 doas pkg install -y git stow \
-    hyprland hypridle hyprlock hyprpicker hyprpolkitagent \
+    hyprland hypridle hyprlock hyprpaper hyprpicker hyprpolkitagent \
     quickshell \
     kitty fish starship fastfetch btop \
     fcitx5 ja-fcitx-mozc fcitx5-gtk2 fcitx5-gtk3 fcitx5-gtk4 fcitx5-qt5 fcitx5-qt6 fcitx5-configtool \
@@ -39,7 +39,6 @@ doas pkg install -y git stow \
     libva libva-intel-media-driver libva-utils \
     wl-clipboard cliphist grim slurp playerctl jq \
     bsdisks upower \
-    swaybg \
     linux_base-rl9 linux-discord \
     noto noto-basic noto-emoji liberation-fonts-ttf dejavu \
     cpu-microcode-intel cpu-microcode-rc
@@ -161,10 +160,10 @@ xwayland {
 
 This is especially important for Discord font rendering.
 
-Wallpaper is currently applied through `swaybg` in Hyprland autostart:
+Wallpaper is applied through `hyprpaper` in Hyprland autostart:
 
 ```ini
-exec-once = /usr/local/bin/swaybg -i /home/regueiro/Pictures/wallpapers/wallpaer4.png -m fill
+exec-once = hyprpaper
 ```
 
 System suspend is disabled in QuickShell on this laptop. FreeBSD reports S3
@@ -281,7 +280,7 @@ Those caused blurry fonts, broken text rendering, or high CPU usage in Linux Dis
 If Discord text breaks after experiments, stop Discord and clear generated caches:
 
 ```sh
-pkill -f '/home/regueiro/.config/discord'
+pkill -f "$HOME/.config/discord"
 mv ~/.config/discord/Cache ~/.config/discord/Cache.bak
 mv ~/.config/discord/'Code Cache' ~/.config/discord/'Code Cache.bak'
 mv ~/.config/discord/GPUCache ~/.config/discord/GPUCache.bak
