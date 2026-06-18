@@ -35,7 +35,7 @@ doas pkg install -y git stow \
     thunar \
     pipewire wireplumber pulseaudio \
     seatd dbus polkit xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
-    drm-kmod gpu-firmware-kmod \
+    drm-61-kmod gpu-firmware-kmod \
     libva libva-intel-media-driver libva-utils \
     wl-clipboard cliphist grim slurp playerctl jq \
     bsdisks upower \
@@ -82,6 +82,22 @@ doas sysrc -f /boot/loader.conf cpu_microcode_name=/boot/firmware/intel-ucode.bi
 ```
 
 Reboot after changing `/boot/loader.conf` or `kld_list`.
+
+### Intel DRM Driver
+
+This laptop currently uses `drm-61-kmod` with `i915kms`. Avoid the generic
+`drm-kmod` meta package here, because after the FreeBSD 15.1 update it pulled
+`drm-66-kmod`, which caused a black-screen reboot loop before the TTY login.
+
+Known-good recovery package:
+
+```sh
+doas pkg install -y drm-61-kmod
+```
+
+If a newer DRM branch is tested later, keep a single-user-mode recovery path
+ready and be prepared to remove the bad driver from `/etc/rc.conf` or reinstall
+`drm-61-kmod`.
 
 The user should be in at least these groups:
 

@@ -5,6 +5,7 @@ These notes are for the current laptop and are intentionally not all represented
 ## Machine
 
 - OS: FreeBSD 15
+- Laptop: HP Pavilion x360 Convertible 14-dh1xxx
 - CPU: Intel Core i7-10510U
 - Display GPU: Intel Comet Lake UHD, `8086:9b41`
 - Secondary GPU: NVIDIA MX250, intentionally ignored
@@ -15,6 +16,36 @@ These notes are for the current laptop and are intentionally not all represented
 - Wi-Fi: Realtek RTL8822CE through `rtw88`
 
 The NVIDIA MX250 is not worth configuring for this setup. The internal panel is driven by Intel, and the dGPU adds complexity and power draw.
+
+## Intel DRM Driver
+
+Current working package:
+
+```text
+drm-61-kmod-6.1.128.1501000_9
+```
+
+Current loaded modules include:
+
+```text
+i915kms.ko
+drm.ko
+linuxkpi_video.ko
+```
+
+After updating to FreeBSD 15.1, the generic DRM path installed `drm-66-kmod`.
+With `i915kms` still in `kld_list`, that driver caused a black-screen reboot
+loop before the TTY login. The system was recoverable from single-user mode by
+mounting the filesystems read/write, getting networking up, removing the bad
+driver path from `/etc/rc.conf`, booting back to TTY, and reinstalling:
+
+```sh
+doas pkg install -y drm-61-kmod
+```
+
+For this laptop, keep `drm-61-kmod` as the known-good Intel graphics driver.
+Do not casually switch to `drm-66-kmod`; only test a newer DRM branch when there
+is time to recover from single-user mode again.
 
 ## `/etc/rc.conf`
 
