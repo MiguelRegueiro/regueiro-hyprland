@@ -27,14 +27,11 @@ PanelWindow {
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
-    readonly property real frameOpacity: 0.72 + root.reveal * 0.28
+    readonly property real surfaceOffsetY: -(1 - root.reveal) * externalPanel.height
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
-    readonly property real clipSurfaceWidth: root.menuWidth * root.clipWidthProgress + root.fuseOverhang * 2 * root.reveal
-    readonly property int openDuration: 260
-    readonly property int closeDuration: 110
+    readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
+    readonly property int openDuration: Theme.panelOpenSpatialDuration
+    readonly property int closeDuration: Theme.panelCloseDuration
 
     signal closeRequested()
 
@@ -79,7 +76,7 @@ PanelWindow {
 
                 Components.Anim {
                     property: "reveal"
-                    curve: Components.Anim.FastSpatial
+                    curve: Components.Anim.EmphasizedDecel
                     duration: root.openDuration
                 }
 
@@ -110,31 +107,31 @@ PanelWindow {
             id: motionFrame
 
             width: externalPanel.width
-            height: externalPanel.height
-            y: (1 - root.reveal) * -4
-            scale: root.frameScale
-            transformOrigin: Item.Top
-            opacity: root.frameOpacity
+            height: Math.max(1, externalPanel.height)
+            y: 0
             layer.enabled: true
 
-            Item {
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.max(1, root.clipSurfaceWidth)
-                height: Math.max(1, externalPanel.height * root.clipHeightProgress)
-                clip: true
-
                 Item {
-                    id: frame
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Math.max(1, root.clipSurfaceWidth)
+                    height: Math.max(1, externalPanel.height)
+                    clip: true
+
+                    Item {
+                        id: frame
 
                     anchors.top: parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: root.menuWidth
                     height: externalPanel.height
+                    transform: Translate {
+                        y: root.surfaceOffsetY
+                    }
 
                     Shape {
-                        anchors.fill: parent
-                        preferredRendererType: Shape.CurveRenderer
+                            anchors.fill: parent
+                            preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
                         fillColor: Theme.menuBg
@@ -404,6 +401,8 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     implicitHeight: 92
                                     radius: Theme.qsRadius + 1
+                                    scale: hovered ? 1.006 : 1
+                                    transformOrigin: Item.Center
                                     color: hovered ? Qt.rgba(0.115, 0.115, 0.115, 1) : Theme.qsCardBg
                                     border.width: 1
                                     border.color: hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
@@ -413,6 +412,13 @@ PanelWindow {
                                         id: rowHover
 
                                         blocking: false
+                                    }
+
+                                    Behavior on scale {
+                                        Components.Anim {
+                                            curve: Components.Anim.DefaultEffects
+                                            duration: Theme.hoverAnimDuration
+                                        }
                                     }
 
                                     ColumnLayout {
@@ -673,7 +679,7 @@ PanelWindow {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.96 * root.reveal)
+            shadowColor: Qt.rgba(0, 0, 0, 0.96)
             shadowBlur: 0.72
             shadowVerticalOffset: 2
             shadowHorizontalOffset: 0

@@ -383,7 +383,7 @@ Item {
     Process {
         id: pollProc
 
-        command: ["bash", "-c", "echo \"wifi:$(nmcli radio wifi 2>/dev/null)\";" + "echo \"ssid:$(nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2 | head -1)\";" + "nmcli -t -m multiline -f IN-USE,SSID,SECURITY,SIGNAL dev wifi list 2>/dev/null | sed 's/^/NET:/'"]
+        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-wifi.sh", "scan"]
         environment: ({
             "LANG": "C.UTF-8",
             "LC_ALL": "C.UTF-8"
@@ -464,7 +464,7 @@ Item {
     Process {
         id: wifiToggleProc
 
-        command: [Quickshell.env("HOME") + "/.config/hypr/scripts/wifi-toggle.sh"]
+        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-wifi.sh", "toggle"]
     }
 
 }

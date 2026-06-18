@@ -11,20 +11,21 @@ Item {
     property var sinkMetadata: ({
     })
     property var sinks: []
+    property var currentSink: null
     property string pendingSinkName: ""
     property var pendingSinkInputIds: []
     property int pipewireVolume: sinkAudio ? Math.min(100, Math.round(sinkAudio.volume * 100)) : -1
     property int polledVolume: 0
     property bool polledMuted: false
+    property string mixerDeviceName: "Default Output"
     property int optimisticVolumePercent: -1
     property bool optimisticMuted: false
-    readonly property bool hasDirectSinkControl: !!sinkAudio
+    readonly property bool hasDirectSinkControl: false
     readonly property bool optimisticStateActive: optimisticVolumePercent >= 0
-    readonly property var currentSink: defaultSink
-    readonly property string currentSinkName: sinkDisplayName(currentSink)
+    readonly property string currentSinkName: currentSink ? sinkDisplayName(currentSink) : mixerDeviceName
     readonly property string currentSinkIcon: sinkIconText(currentSink)
-    readonly property int actualVolumePercent: pipewireVolume >= 0 ? pipewireVolume : polledVolume
-    readonly property bool actualMuted: sinkAudio ? sinkAudio.muted : polledMuted
+    readonly property int actualVolumePercent: polledVolume
+    readonly property bool actualMuted: polledMuted
     readonly property int volumePercent: optimisticStateActive ? optimisticVolumePercent : actualVolumePercent
     readonly property bool muted: optimisticStateActive ? optimisticMuted : actualMuted
     readonly property string volumeIcon: {
@@ -43,6 +44,23 @@ Item {
         return "";
     }
 
+    function logicalToMixerPercent(percent) {
+        const logical = Math.max(0, Math.min(100, Number(percent)));
+        if (logical <= 0)
+            return 0;
+
+        // Stronger perceptual remap for OSS mixer's linear scale.
+        return Math.max(1, Math.min(100, Math.round(Math.cbrt(logical / 100) * 100)));
+    }
+
+    function mixerToLogicalPercent(percent) {
+        const mixer = Math.max(0, Math.min(100, Number(percent)));
+        if (mixer <= 0)
+            return 0;
+
+        return Math.max(0, Math.min(100, Math.round((mixer / 100) * (mixer / 100) * (mixer / 100) * 100)));
+    }
+
     function sinkDisplayName(node) {
         if (!node)
             return "";
@@ -54,7 +72,7 @@ Item {
         const properties = node.properties || {
         };
         const alsaName = (properties["alsa.name"] || "").trim();
-        return node.nickname || alsaName || properties["device.profile.description"] || node.description || properties["device.nick"] || node.name || "Unknown Output";
+        return node.nickname || alsaName || properties["device.profile.description"] || properties["device.description"] || node.description || properties["device.nick"] || node.name || "Unknown Output";
     }
 
     function sinkSecondaryName(node) {
@@ -93,8 +111,8 @@ Item {
 
         const properties = node.properties || {
         };
-        const haystack = [node.description || "", node.nickname || "", node.name || "", properties["device.icon-name"] || "", properties["node.name"] || "", properties["device.bus"] || ""].join(" ").toLowerCase();
-        if (haystack.includes("bluetooth") || haystack.includes("bluez"))
+        const haystack = [node.description || "", node.nickname || "", node.name || "", properties["device.icon-name"] || "", properties["device.icon_name"] || "", properties["device.description"] || "", properties["node.name"] || "", properties["device.bus"] || ""].join(" ").toLowerCase();
+        if (haystack.includes("bluetooth") || haystack.includes("bluez") || haystack.includes("wh-ch") || haystack.includes("bt_"))
             return "󰂯";
 
         if (haystack.includes("headphone") || haystack.includes("headset"))
@@ -229,10 +247,57 @@ Item {
         root.sinks = resolved;
     }
 
-    function refresh() {
-        if (root.hasDirectSinkControl)
-            return ;
+    function updatePulseSinks(text) {
+        let parsed = [];
+        try {
+            parsed = JSON.parse(text);
+        } catch (error) {
+            parsed = [];
+        }
 
+        const next = [];
+        const defaultName = (defaultSinkOut.text || "").trim();
+        let active = null;
+        if (Array.isArray(parsed)) {
+            for (const entry of parsed) {
+                if (!entry || !entry.name)
+                    continue;
+
+                if (!pulseSinkVisible(entry))
+                    continue;
+
+                const sink = {
+                    "id": Number(entry.index || 0),
+                    "name": entry.name,
+                    "description": entry.description || entry.name,
+                    "nickname": entry.description || entry.name,
+                    "properties": entry.properties || {
+                    }
+                };
+                next.push(sink);
+                if (entry.name === defaultName)
+                    active = sink;
+            }
+        }
+        root.sinks = next;
+        root.currentSink = active || (next.length > 0 ? next[0] : null);
+    }
+
+    function pulseSinkVisible(entry) {
+        const name = entry.name || "";
+        const description = entry.description || "";
+        const properties = entry.properties || {
+        };
+        const deviceString = properties["device.string"] || "";
+        const haystack = [name, description, properties["device.description"] || "", deviceString].join(" ").toLowerCase();
+
+        if (deviceString === "/dev/dsp0" || name === "oss_output.dsp0")
+            return true;
+
+        return false;
+    }
+
+    function refresh() {
         if (!volumePoll.running)
             volumePoll.running = true;
 
@@ -257,12 +322,8 @@ Item {
 
         const clamped = Math.max(0, Math.min(100, nextPercent));
         root.setOptimisticState(clamped, false);
-        if (root.hasDirectSinkControl) {
-            sinkAudio.muted = false;
-            sinkAudio.volume = clamped / 100;
-            return ;
-        }
-        setVolume.command = ["wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", clamped + "%"];
+        const mixerPercent = root.logicalToMixerPercent(clamped);
+        setVolume.command = ["sh", "-c", "/usr/sbin/mixer -f /dev/mixer0 vol=" + mixerPercent + "%"];
         setVolume.running = true;
         refreshSoon.restart();
     }
@@ -279,10 +340,6 @@ Item {
     function toggleMute() {
         const nextMuted = !root.muted;
         root.setOptimisticState(root.volumePercent, nextMuted);
-        if (root.hasDirectSinkControl) {
-            sinkAudio.muted = nextMuted;
-            return ;
-        }
         muteToggle.running = true;
         refreshSoon.restart();
     }
@@ -296,15 +353,14 @@ Item {
     }
 
     function setAudioSink(node) {
-        if (!node)
+        if (!node || !node.name)
             return ;
 
-        pendingSinkName = node.name || "";
-        pendingSinkInputIds = [];
-        setDefaultSink.command = ["wpctl", "set-default", String(node.id)];
+        root.currentSink = node;
+        root.pendingSinkName = node.name;
+        setDefaultSink.command = ["/usr/local/bin/pactl", "set-default-sink", node.name];
         setDefaultSink.running = true;
         listSinkInputs.running = true;
-        refreshSoon.restart();
     }
 
     function updateSinkInputsToMove(text) {
@@ -339,7 +395,7 @@ Item {
         }
         const nextId = pendingSinkInputIds[0];
         pendingSinkInputIds = pendingSinkInputIds.slice(1);
-        moveSinkInput.command = ["pactl", "move-sink-input", String(nextId), pendingSinkName];
+        moveSinkInput.command = ["/usr/local/bin/pactl", "move-sink-input", String(nextId), pendingSinkName];
         moveSinkInput.running = true;
     }
 
@@ -402,17 +458,32 @@ Item {
     Process {
         id: volumePoll
 
-        command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null"]
+        command: ["sh", "-c", "/usr/sbin/mixer -f /dev/mixer0 vol 2>/dev/null"]
 
         stdout: StdioCollector {
             id: volumeOut
 
             onStreamFinished: {
-                const match = volumeOut.text.match(/[\d.]+/);
-                if (match)
-                    root.polledVolume = Math.min(100, Math.round(parseFloat(match[0]) * 100));
+                const lines = volumeOut.text.split(/\r?\n/);
+                for (const line of lines) {
+                    const deviceMatch = line.match(/^[^:]+:mixer:\s+<([^>]+)>.*\(default\)/);
+                    if (deviceMatch) {
+                        root.mixerDeviceName = (deviceMatch[1] || "").trim() || "Default Output";
+                        break;
+                    }
+                }
 
-                root.polledMuted = volumeOut.text.includes("[MUTED]");
+                const volMatch = volumeOut.text.match(/vol\.volume=([0-9.]+):([0-9.]+)/);
+                if (volMatch) {
+                    const left = parseFloat(volMatch[1]);
+                    const right = parseFloat(volMatch[2]);
+                    const avg = ((isNaN(left) ? 0 : left) + (isNaN(right) ? 0 : right)) / 2;
+                    root.polledVolume = root.mixerToLogicalPercent(Math.round(avg * 100));
+                }
+
+                const muteMatch = volumeOut.text.match(/vol\.mute=(on|off)/);
+                if (muteMatch)
+                    root.polledMuted = muteMatch[1] === "on";
             }
         }
 
@@ -421,20 +492,34 @@ Item {
     Process {
         id: sinkPoll
 
-        command: ["pactl", "-f", "json", "list", "sinks"]
+        command: ["sh", "-c", "/usr/local/bin/pactl get-default-sink; /usr/local/bin/pactl -f json list sinks"]
 
         stdout: StdioCollector {
             id: sinkPollOut
 
-            onStreamFinished: root.updateSinkMetadata(sinkPollOut.text)
+            onStreamFinished: {
+                const firstNewline = sinkPollOut.text.indexOf("\n");
+                if (firstNewline < 0) {
+                    root.updatePulseSinks("[]");
+                    return ;
+                }
+                defaultSinkOut.text = sinkPollOut.text.slice(0, firstNewline);
+                root.updatePulseSinks(sinkPollOut.text.slice(firstNewline + 1));
+            }
         }
 
+    }
+
+    Text {
+        id: defaultSinkOut
+
+        visible: false
     }
 
     Process {
         id: listSinkInputs
 
-        command: ["pactl", "list", "short", "sink-inputs"]
+        command: ["/usr/local/bin/pactl", "list", "short", "sink-inputs"]
 
         stdout: StdioCollector {
             id: sinkInputsOut
@@ -459,19 +544,20 @@ Item {
     Process {
         id: volumeUp
 
-        command: ["wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", "2%+"]
+        command: ["/usr/local/bin/wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", "2%+"]
     }
 
     Process {
         id: volumeDown
 
-        command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "2%-"]
+        command: ["/usr/local/bin/wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "2%-"]
     }
 
     Process {
         id: muteToggle
 
-        command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]
+        command: ["/usr/sbin/mixer", "-f", "/dev/mixer0", "vol.mute=toggle"]
+        onExited: root.refresh()
     }
 
     Process {
@@ -484,6 +570,7 @@ Item {
         id: setVolume
 
         command: ["echo"]
+        onExited: root.refresh()
     }
 
     IpcHandler {

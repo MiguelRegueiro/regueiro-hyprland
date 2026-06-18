@@ -7,7 +7,7 @@ Item {
     property int percent: 0
     property bool charging: false
     property bool full: false
-    readonly property color stateColor: percent <= Theme.batteryLowThreshold ? Theme.red : (charging || full) ? Theme.green : Qt.rgba(1, 1, 1, 0.85)
+    readonly property color outlineColor: Qt.rgba(1, 1, 1, 0.9)
 
     width: 24
     height: 12
@@ -21,7 +21,7 @@ Item {
         radius: 3
         color: "transparent"
         border.width: 1.5
-        border.color: root.stateColor
+        border.color: root.outlineColor
 
         Item {
             clip: true
@@ -78,7 +78,7 @@ Item {
         width: 3
         height: 5
         radius: 1
-        color: root.stateColor
+        color: root.outlineColor
     }
 
 }

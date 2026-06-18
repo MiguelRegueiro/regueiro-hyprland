@@ -9,20 +9,10 @@ Item {
     property bool loading: listProc.running
     property bool mutating: copyProc.running || deleteProc.running || wipeProc.running
     property string lastError: ""
-    // Support the documented cargo install path, manual /usr/local installs, and PATH installs.
-    property string mimeclipLauncher: 'cmd="$HOME/.cargo/bin/mimeclip"; if [ ! -x "$cmd" ]; then if [ -x /usr/local/bin/mimeclip ]; then cmd=/usr/local/bin/mimeclip; else cmd="$(command -v mimeclip 2>/dev/null || true)"; fi; fi; if [ -z "$cmd" ] || [ ! -x "$cmd" ]; then echo "mimeclip not found in $HOME/.cargo/bin, /usr/local/bin, or PATH" >&2; exit 127; fi; exec "$cmd" "$@"'
 
     signal copyCompleted(bool success)
     signal deleteCompleted(bool success)
     signal wipeCompleted(bool success)
-
-    function normalizeKind(kind) {
-        return typeof kind === "string" && kind.length > 0 ? kind.toLowerCase() : "other";
-    }
-
-    function mimeclipCommand(args) {
-        return ["bash", "-lc", root.mimeclipLauncher, "mimeclip"].concat(args);
-    }
 
     function titleCaseKind(kind) {
         if (!kind || kind.length === 0)
@@ -74,30 +64,20 @@ Item {
         if (output.trim().length === 0)
             return [];
 
-        let parsed;
-        try {
-            parsed = JSON.parse(output);
-        } catch (error) {
-            root.lastError = "Failed to parse clipboard history";
-            return [];
-        }
+        const lines = output.split(/\r?\n/).filter((line) => {
+            return line.trim().length > 0;
+        });
 
-        if (!Array.isArray(parsed)) {
-            root.lastError = "Clipboard history returned an unexpected format";
-            return [];
-        }
-
-        return parsed.map((entry) => {
-            const id = entry.id;
-            const kind = root.normalizeKind(entry.kind);
-            const label = typeof entry.label === "string" ? entry.label : "";
-            const preview = typeof entry.preview === "string" ? entry.preview : "";
-            const createdAt = typeof entry.created_at === "string"
-                ? entry.created_at
-                : (typeof entry.timestamp === "string" ? entry.timestamp : "");
-            const lastUsedAt = typeof entry.last_used_at === "string" ? entry.last_used_at : createdAt;
-            const mimeTypes = Array.isArray(entry.mime_types) ? entry.mime_types : [];
-            const displayPreview = root.formatDisplayPreview(label, preview, kind, createdAt);
+        return lines.map((line) => {
+            const parts = line.split("\t");
+            const id = parts[0] || "";
+            const preview = parts.slice(1).join("\t").trim();
+            const kind = "text";
+            const label = preview;
+            const createdAt = "";
+            const lastUsedAt = "";
+            const mimeTypes = [];
+            const displayPreview = preview.length > 0 ? preview : "Clipboard item";
 
             return {
                 id: id,
@@ -108,7 +88,8 @@ Item {
                 lastUsedAt: lastUsedAt,
                 displayPreview: displayPreview,
                 mimeTypes: mimeTypes,
-                searchText: `${id} ${kind} ${label} ${preview} ${createdAt} ${lastUsedAt} ${displayPreview} ${mimeTypes.join(" ")}`.toLowerCase()
+                rawEntry: line,
+                searchText: `${id} ${label} ${preview} ${displayPreview}`.toLowerCase()
             };
         });
     }
@@ -123,7 +104,7 @@ Item {
         if (!entry || copyProc.running)
             return;
         lastError = "";
-        copyProc.command = root.mimeclipCommand(["restore", String(entry.id)]);
+        copyProc.command = ["sh", "-c", "/usr/local/bin/cliphist decode \"$1\" | /usr/local/bin/wl-copy", "cliphist-copy", String(entry.id)];
         copyProc.running = true;
     }
 
@@ -131,7 +112,7 @@ Item {
         if (!entry || deleteProc.running)
             return;
         lastError = "";
-        deleteProc.command = root.mimeclipCommand(["delete", String(entry.id)]);
+        deleteProc.command = ["/usr/local/bin/cliphist", "delete", String(entry.rawEntry || "")];
         deleteProc.running = true;
     }
 
@@ -145,7 +126,7 @@ Item {
     Process {
         id: listProc
 
-        command: root.mimeclipCommand(["list", "--json", "--limit", "200"])
+        command: ["sh", "-c", "/usr/local/bin/cliphist list | sed -n '1,200p'"]
         stdout: StdioCollector {
             id: listOut
             waitForEnd: true
@@ -163,7 +144,7 @@ Item {
     Process {
         id: copyProc
 
-        command: root.mimeclipCommand(["restore", "0"])
+        command: ["sh", "-c", "/usr/local/bin/cliphist decode \"$1\" | /usr/local/bin/wl-copy", "cliphist-copy", "0"]
         onExited: (exitCode) => {
             const success = exitCode === 0;
             if (!success)
@@ -175,7 +156,7 @@ Item {
     Process {
         id: deleteProc
 
-        command: root.mimeclipCommand(["delete", "0"])
+        command: ["/usr/local/bin/cliphist", "delete", ""]
         onExited: (exitCode) => {
             const success = exitCode === 0;
             if (success)
@@ -189,7 +170,7 @@ Item {
     Process {
         id: wipeProc
 
-        command: root.mimeclipCommand(["clear"])
+        command: ["/usr/local/bin/cliphist", "wipe"]
         onExited: (exitCode) => {
             const success = exitCode === 0;
             if (success)

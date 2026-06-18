@@ -23,10 +23,6 @@ Item {
     readonly property real revealProgress: reveal
     readonly property real animTopLeftRadius: root.topLeftRadius * root.reveal
     readonly property real animTopRightRadius: root.topRightRadius * root.reveal
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
-    readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property real bodyWidth: Theme.ncWidth
     readonly property real calendarWidth: 268
     readonly property real fuseOverhang: Theme.barCornerRadius
@@ -38,7 +34,8 @@ Item {
     // A tiny top radius avoids degenerate arcs while visually behaving like a merged edge.
     readonly property real mergedTopLeftRadius: 0.001
     readonly property real mergedTopRightRadius: 0.001
-    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseOverhang * 2 * root.reveal
+    readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
+    readonly property real surfaceOffsetY: -(1 - root.reveal) * root.height
 
     implicitWidth: root.bodyWidth + root.fuseOverhang * 2
     implicitHeight: contentColumn.implicitHeight + root.attachTop
@@ -53,7 +50,7 @@ Item {
 
             Components.Anim {
                 property: "reveal"
-                curve: Components.Anim.DefaultSpatial
+                curve: Components.Anim.EmphasizedDecel
                 duration: Theme.panelOpenSpatialDuration
             }
 
@@ -92,43 +89,43 @@ Item {
         id: motionFrame
 
         width: root.width
-        height: root.height
-        y: (1 - root.reveal) * -4
-        scale: root.frameScale
-        transformOrigin: Item.Top
-        opacity: root.frameOpacity
+        height: Math.max(1, root.height)
+        y: 0
         layer.enabled: true
 
-        HoverHandler {
-            id: boundsHover
-
-            blocking: false
-        }
-
-        Item {
-            anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.max(1, root.clipSurfaceWidth)
-            height: Math.max(1, root.height * root.clipHeightProgress)
-            clip: true
-
             HoverHandler {
-                id: hoverArea
+                id: boundsHover
 
                 blocking: false
             }
 
             Item {
-                id: frame
-
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: root.bodyWidth
-                height: root.height
+                width: Math.max(1, root.clipSurfaceWidth)
+                height: Math.max(1, root.height)
+                clip: true
 
-                Shape {
-                    anchors.fill: parent
-                    preferredRendererType: Shape.CurveRenderer
+                HoverHandler {
+                    id: hoverArea
+
+                    blocking: false
+                }
+
+                Item {
+                    id: frame
+
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: root.bodyWidth
+                    height: root.height
+                    transform: Translate {
+                        y: root.surfaceOffsetY
+                    }
+
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
 
                     // One continuous fill surface.
                     // This replaces the separate left fuse, right fuse, and body fills.
@@ -574,7 +571,7 @@ Item {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.96 * root.reveal)
+            shadowColor: Qt.rgba(0, 0, 0, 0.96)
             shadowBlur: 0.72
             shadowVerticalOffset: 2
             shadowHorizontalOffset: 0

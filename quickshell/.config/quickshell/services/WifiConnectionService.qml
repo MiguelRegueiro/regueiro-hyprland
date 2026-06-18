@@ -18,6 +18,7 @@ Item {
         "LANG": "C.UTF-8",
         "LC_ALL": "C.UTF-8"
     })
+    readonly property string _wifiHelper: Qt.resolvedUrl("../scripts/freebsd-wifi.sh").toString().replace("file://", "")
 
     function _cleanError(error) {
         return (error || "").trim().replace(/^Error:\s*/, "");
@@ -137,7 +138,7 @@ Item {
 
         root._forgetCallback = callback || null;
         root._pendingForgetProfile = profileName;
-        forgetNetworkProc.command = ["nmcli", "connection", "delete", profileName];
+        forgetNetworkProc.command = [root._wifiHelper, "forget", profileName];
         forgetNetworkProc.running = true;
         return true;
     }
@@ -165,7 +166,7 @@ Item {
         const existingProfile = root._pendingPassword.length > 0 ? root.findSavedProfileName(target) : "";
         if (existingProfile.length > 0) {
             root._pendingDeleteProfile = existingProfile;
-            forgetProc.command = ["nmcli", "connection", "delete", existingProfile];
+            forgetProc.command = [root._wifiHelper, "forget", existingProfile];
             forgetProc.running = true;
         } else {
             root._startConnect();
@@ -174,9 +175,9 @@ Item {
     }
 
     function _startConnect() {
-        const cmd = ["nmcli", "device", "wifi", "connect", root._pendingSsid];
+        const cmd = [root._wifiHelper, "connect", root._pendingSsid];
         if (root._pendingPassword.length > 0)
-            cmd.push("password", root._pendingPassword);
+            cmd.push(root._pendingPassword);
 
         connectProc.command = cmd;
         connectProc.running = true;
@@ -208,14 +209,14 @@ Item {
         root._cleanupResult = result;
         root._cleanupProfile = profileName;
         root._removeSavedProfile(profileName);
-        cleanupProc.command = ["nmcli", "connection", "delete", profileName];
+        cleanupProc.command = [root._wifiHelper, "forget", profileName];
         cleanupProc.running = true;
     }
 
     Process {
         id: profilesProc
 
-        command: ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"]
+        command: [root._wifiHelper, "profiles"]
         environment: root._env
         onExited: (code) => {
             if (code === 0)

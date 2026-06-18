@@ -6,7 +6,8 @@ var screenFrameBg = Qt.rgba(0, 0, 0, 1.0);
 var menuBg = Qt.rgba(0, 0, 0, 1.0);
 var popupBg = Qt.rgba(0.075, 0.075, 0.075, 1.0);
 var barBorder = Qt.rgba(1, 1, 1, 0.08);
-var barHeight = 34;
+var barHeight = 28;
+var barItemHeight = 26;
 var barCornerRadius = 16; // matches hyprland rounding = 16
 var borderSize = 14; // screen frame thickness -- matches hyprland gaps_out
 
@@ -19,18 +20,18 @@ var textDisabled = Qt.rgba(0.965, 0.961, 0.957, 0.35);
 var hoverBg = Qt.rgba(1, 1, 1, 0.11);
 var hoverBgStrong = Qt.rgba(1, 1, 1, 0.17);
 var activeBg = Qt.rgba(1, 1, 1, 0.18);
-var hoverAnimDuration = 75;
+var hoverAnimDuration = 105;
 
 // State colors
-var accent = "#3584e4";
+var accent = "#e43d35";
 var green = "#8ff0a4";
 var yellow = "#f8e45c";
 var red = "#ff7b63";
 var blue = "#78aeed";
-var urgentAccent = Qt.rgba(0.47, 0.68, 0.93, 0.72);
-var urgentBg = Qt.rgba(0.47, 0.68, 0.93, 0.06);
-var urgentBorder = Qt.rgba(0.47, 0.68, 0.93, 0.16);
-var urgentBorderHover = Qt.rgba(0.47, 0.68, 0.93, 0.22);
+var urgentAccent = Qt.rgba(0.89, 0.24, 0.21, 0.72);
+var urgentBg = Qt.rgba(0.89, 0.24, 0.21, 0.06);
+var urgentBorder = Qt.rgba(0.89, 0.24, 0.21, 0.16);
+var urgentBorderHover = Qt.rgba(0.89, 0.24, 0.21, 0.22);
 
 // Radius
 var radiusSmall = 7;
@@ -55,7 +56,7 @@ var qsSurfaceBottomRightRadius = barCornerRadius + 2;
 var qsContentPadding = 14;
 var qsEdge = Qt.rgba(1, 1, 1, 0.08);
 var qsEdgeSoft = Qt.rgba(1, 1, 1, 0.06);
-var qsGlow = Qt.rgba(0.28, 0.49, 0.88, 0.08);
+var qsGlow = Qt.rgba(0.89, 0.24, 0.21, 0.08);
 var qsRowBg = Qt.rgba(1, 1, 1, 0.08);
 var qsRowBgHover = Qt.rgba(1, 1, 1, 0.12);
 var qsCardBg = Qt.rgba(0.094, 0.094, 0.094, 0.96);
@@ -82,25 +83,25 @@ var ncSurfaceBottomLeftRadius = barCornerRadius + 6;
 var ncSurfaceBottomRightRadius = barCornerRadius + 6;
 
 // Clipboard
-var clipboardWidth = 560;
-var clipboardHeight = 620;
+var clipboardWidth = 620;
+var clipboardHeight = 560;
 var clipboardAttachBottom = borderSize;
 var clipboardBorderFuseInset = 2;
 var clipboardSurfaceTopLeftRadius = barCornerRadius + 6;
 var clipboardSurfaceTopRightRadius = barCornerRadius + 6;
 
 // Launcher
-var launcherWidth = 720;
-var launcherHeight = 540;
+var launcherWidth = 760;
+var launcherHeight = 600;
 var launcherAttachBottom = borderSize;
 var launcherSurfaceTopLeftRadius = barCornerRadius + 6;
 var launcherSurfaceTopRightRadius = barCornerRadius + 6;
 
-// Tile active state -- accent blue (#3584e4) at two opacities
-var tileActiveBg = Qt.rgba(0.208, 0.518, 0.894, 0.82);
-var tileActiveBgHover = Qt.rgba(0.208, 0.518, 0.894, 0.92);
-var tileActiveBorder = Qt.rgba(0.82, 0.90, 1.0, 0.18);
-var tileActiveBorderHover = Qt.rgba(0.84, 0.92, 1.0, 0.22);
+// Tile active state -- FreeBSD red (#e43d35) at two opacities
+var tileActiveBg = Qt.rgba(0.89, 0.24, 0.21, 0.82);
+var tileActiveBgHover = Qt.rgba(0.89, 0.24, 0.21, 0.92);
+var tileActiveBorder = Qt.rgba(1.0, 0.76, 0.72, 0.18);
+var tileActiveBorderHover = Qt.rgba(1.0, 0.78, 0.74, 0.22);
 
 // Screen identity
 var primaryScreen = "eDP-1";
@@ -130,12 +131,12 @@ var popupButtonColorDuration = 90;
 var outputItemColorDuration = 85;
 
 // Panel animation durations (ms)
-var panelOpenDuration = 250;
-var panelCloseDuration = 145;
-var panelOpenSpatialDuration = 380; // organic open with spring overshoot (DefaultSpatial)
-var qsPageSlideDuration = 130;
-var qsPageFadeDuration = 110;
-var qsHeightDuration = 120;
+var panelOpenDuration = 140;
+var panelCloseDuration = 65;
+var panelOpenSpatialDuration = 150;
+var qsPageSlideDuration = 210;
+var qsPageFadeDuration = 145;
+var qsHeightDuration = 180;
 var batteryFillDuration = 200;
 
 // Material 3 motion curves (caelestia-derived)
@@ -176,6 +177,6 @@ var toastCloseDuration = 150;
 var toastSlideDuration = 180;
 
 // Thresholds
-var batteryLowThreshold = 15;
+var batteryLowThreshold = 25;
 var cpuWarnThreshold = 70;
 var cpuCritThreshold = 90;

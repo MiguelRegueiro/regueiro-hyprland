@@ -1,151 +1,359 @@
 # regueiro-hyprland
 
-Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShell bar and panels, aiming for a GNOME-like experience but faster and more customizable. Feel free to use as inspiration but expect rough edges.
+FreeBSD-only Hyprland dotfiles for my laptop desktop. The setup is a custom QuickShell shell on top of Hyprland, tuned for FreeBSD 15, Intel graphics, Linuxulator Discord, Firefox VAAPI playback, Fcitx 5, and a GNOME-like workflow without using GNOME.
+
+This is personal infrastructure. Use it as reference, but expect hardware-specific paths, monitor names, and helper scripts.
+
+Machine-specific copy-paste notes live in [docs/freebsd-hardware-notes.md](docs/freebsd-hardware-notes.md). Keep the README as the reusable FreeBSD source of truth; use the hardware notes only when rebuilding this exact laptop or checking what was done locally.
 
 ## Stack
 
-- **WM** — [Hyprland](https://hyprland.org/)
-- **Bar / panels** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
-- **Launcher / power menu** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
-- **Run menu** — [Rofi](https://github.com/davatorium/rofi)
-- **Wallpaper** — [hyprpaper](https://github.com/hyprwm/hyprpaper)
-- **Lock screen** — [hyprlock](https://github.com/hyprwm/hyprlock)
-- **Input method** — [Fcitx 5](https://fcitx-im.org/wiki/Fcitx_5/en)
-- **Terminal** — [Kitty](https://sw.kovidgoyal.net/kitty/)
-- **Shell** — [Fish](https://fishshell.com/) + [Starship](https://starship.rs/)
+- **OS** - FreeBSD 15
+- **Compositor** - Hyprland
+- **Bar / panels / launcher / power menu** - QuickShell
+- **Wallpaper** - swaybg, with a legacy hyprpaper config kept around
+- **Lock / idle** - hyprlock + hypridle
+- **Polkit agent** - hyprpolkitagent
+- **Terminal** - Kitty
+- **Shell** - Fish + Starship
+- **Input method** - Fcitx 5 with Spanish and Mozc Japanese input
+- **Audio** - PipeWire + WirePlumber, with PulseAudio compatibility
+- **Portals** - xdg-desktop-portal + xdg-desktop-portal-hyprland
+- **Browser** - Firefox on Wayland with Intel VAAPI
+- **Discord** - linux-discord through Linuxulator/XWayland
 
-## Dependencies
+## Packages
 
-```sh
-sudo pacman -S git stow \
-               hyprland hyprpaper hyprlock hyprpicker hypridle \
-               hyprpolkitagent \
-               quickshell \
-               rofi \
-               kitty fish starship fastfetch btop \
-               fcitx5 fcitx5-mozc fcitx5-gtk fcitx5-qt fcitx5-configtool \
-               nautilus \
-               networkmanager \
-               bluez bluez-utils blueman \
-               pipewire pipewire-pulse wireplumber libpulse \
-               wl-clipboard wl-clip-persist \
-               brightnessctl playerctl \
-               jq grim slurp libnotify \
-               xorg-xhost \
-               power-profiles-daemon \
-               flatpak \
-               adwaita-fonts cantarell-fonts \
-               adw-gtk-theme
-```
-
-> Some of these may already be installed or available under slightly different names depending on your repos/AUR helper.
-> Region screenshots use `grim` + `slurp`. `hyprpicker` is only used by the color-picker bind, `flatpak` is only needed if you keep the Zen Browser bind or want Flatpak apps in the launcher, and `power-profiles-daemon` is only needed for the Quick Settings power mode switcher.
-
-Optional / personal extras:
+Core packages:
 
 ```sh
-paru -S normcap elio-bin
-cargo install runin
+doas pkg install -y git stow \
+    hyprland hypridle hyprlock hyprpicker hyprpolkitagent \
+    quickshell \
+    kitty fish starship fastfetch btop \
+    fcitx5 ja-fcitx-mozc fcitx5-gtk2 fcitx5-gtk3 fcitx5-gtk4 fcitx5-qt5 fcitx5-qt6 fcitx5-configtool \
+    thunar \
+    pipewire wireplumber pulseaudio \
+    seatd dbus polkit xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
+    drm-kmod gpu-firmware-kmod \
+    libva libva-intel-media-driver libva-utils \
+    wl-clipboard cliphist grim slurp playerctl jq \
+    bsdisks upower \
+    swaybg \
+    linux_base-rl9 linux-discord \
+    noto noto-basic noto-emoji liberation-fonts-ttf dejavu \
+    cpu-microcode-intel cpu-microcode-rc
 ```
 
-## Manual steps
-
-### Bibata cursor theme
+Optional packages depending on what you use:
 
 ```sh
-cp -r icons/Bibata-Modern-Classic ~/.local/share/icons/
+doas pkg install -y webcamd fswebcam fd-find
 ```
 
-### Fonts
-
-The `fonts/` folder contains all needed fonts. Install them by copying to your fonts directory:
+`webcamd` is only needed if the webcam does not work through the default stack.
+On FreeBSD, the package that provides `fd` is `fd-find`:
 
 ```sh
-cp -r fonts/. ~/.local/share/fonts/
-fc-cache -fv
+doas pkg install fd-find
 ```
 
-QuickShell uses **Adwaita Sans** and **Cantarell**. On Arch, install them explicitly with `adwaita-fonts` and `cantarell-fonts`.
+## System Setup
 
-### Services
+Enable desktop services and the required kernel modules:
 
 ```sh
-sudo systemctl enable --now NetworkManager
-sudo systemctl enable --now bluetooth
-sudo systemctl enable --now power-profiles-daemon
+doas sysrc dbus_enable=YES
+doas sysrc seatd_enable=YES
+doas sysrc linux_enable=YES
+doas sysrc powerd_enable=YES
+doas sysrc powerd_flags='-a hiadaptive -b adaptive -n adaptive'
+doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket"
+
+doas service dbus start
+doas service seatd start
+doas service powerd start
 ```
 
-### Privileged desktop apps
-
-`hyprpolkitagent` provides the polkit authentication prompt under Hyprland, so apps that need admin privileges, like Btrfs Assistant, can ask for your password.
-`xorg-xhost` provides the `xhost` helper some older/root X11 apps still expect under Wayland/XWayland, such as GParted.
-
-### Monitor layout
-
-`hypr/.config/hypr/conf/monitors.conf` has a hardcoded monitor layout for my machine. Edit it to match yours before starting.
-`hypr/.config/hypr/scripts/startup-monitor-focus.sh` also prefers `DP-1` at session start when it is connected; change that script if your external monitor has a different name.
-
-### Wi-Fi handling
-
-Wi-Fi is handled directly inside the QuickShell quick settings panel through `nmcli`.
-No NetworkManager applet is used in this setup, so secured networks use the custom QuickShell password prompt and inline error states instead of a separate GTK dialog.
-On Arch, the package is `networkmanager`, but the binaries you actually use are `nmcli` and `NetworkManager`.
-
-### Bluetooth handling
-
-The Bluetooth submenu is handled directly with `bluetoothctl`, so `bluez` + `bluez-utils` are the core Bluetooth dependencies.
-It currently lists paired devices and lets you connect/disconnect them inline from QuickShell.
-`blueman` is also part of this setup: `blueman-applet` is autostarted, and the footer button opens `blueman-manager` for the external Bluetooth settings/pairing UI.
-
-### Clipboard history
-
-Clipboard history is handled by [`mimeclip`](https://github.com/MiguelRegueiro/mimeclip), not `cliphist`.
-Install `mimeclip` / `mimeclipd` separately, then enable its user service:
+Enable early Intel microcode loading:
 
 ```sh
-systemctl --user enable --now mimeclipd
+doas sysrc -f /boot/loader.conf cpu_microcode_load=YES
+doas sysrc -f /boot/loader.conf cpu_microcode_name=/boot/firmware/intel-ucode.bin
 ```
 
-### Input method
+Reboot after changing `/boot/loader.conf` or `kld_list`.
 
-The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5` + `fcitx5-mozc`).
-For broad app coverage on Hyprland/Wayland, keep the GTK and Qt integration packages installed too: `fcitx5-gtk` and `fcitx5-qt`.
-The session exports `XMODIFIERS=@im=fcitx`, `QT_IM_MODULE=fcitx`, and `GLFW_IM_MODULE=fcitx` so GLFW apps such as Kitty use the same input-method backend.
-GTK uses the native Wayland frontend for modern apps, while the repo's GTK settings files keep `fcitx` configured for GTK apps that still run through X11/XWayland.
-The top-bar language indicator is backed by a QuickShell input service that tracks the real Fcitx method ID and the configured method order from the current Fcitx group.
-`Super+Space` cycles through the configured group order through QuickShell first so the OSD and shell state stay in sync, and falls back to the direct Fcitx backend if QuickShell is unavailable.
-The Hyprland keyboard config uses `kb_options = lv3:switch`, so Right Ctrl acts like an additional AltGr/level-3 key for symbols such as `@` on the Spanish layout.
-After the first install or after changing the IM env vars, log out and back in once so the session picks up the new input-method setup.
-If `stow gtk` conflicts with existing `~/.config/gtk-3.0/settings.ini` or `~/.config/gtk-4.0/settings.ini`, back them up and retry:
+The user should be in at least these groups:
 
 ```sh
-mv ~/.config/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini.bak
-mv ~/.config/gtk-4.0/settings.ini ~/.config/gtk-4.0/settings.ini.bak
-stow gtk
+pw groupmod wheel -m "$USER"
+pw groupmod operator -m "$USER"
+pw groupmod video -m "$USER"
 ```
-
-If you want to keep existing GTK settings instead, merge `gtk-im-module=fcitx` into those files manually.
-
-### Optional keybind-only apps
-
-```sh
-flatpak install flathub app.zen_browser.zen
-```
-
-Some personal keybinds also expect `anitrack`, `elio`, `normcap`, and `runin`.
-If you do not use those apps, either skip them or change the matching binds in `hypr/.config/hypr/conf/binds.conf`.
-
-### Power menu
-
-Power actions are handled by QuickShell through `qs ipc call powermenu`, so the session power menu expects the QuickShell daemon started by Hyprland autostart to be running.
 
 ## Install
 
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell rofi fish starship fastfetch kitty hypridle fcitx5 gtk
+stow hypr quickshell fish starship fastfetch kitty fcitx5 gtk xresources discord
 ```
+
+The `hypr` package owns the active Hyprland config, including `hypridle.conf`.
+There is no separate `hypridle` stow package because it would target the same
+file and create a conflict.
+
+Install cursor and fonts:
+
+```sh
+cp -r icons/Bibata-Modern-Classic ~/.local/share/icons/
+mkdir -p ~/.icons
+ln -s ~/.local/share/icons/Bibata-Modern-Classic ~/.icons/Bibata-Modern-Classic
+
+cp -r fonts/. ~/.local/share/fonts/
+fc-cache -fv
+```
+
+The `~/.icons` symlink matters for Linuxulator/XWayland apps such as Discord.
+
+Load Xresources after stowing:
+
+```sh
+xrdb -merge ~/.Xresources
+```
+
+Launch Hyprland with the fish `hr` abbreviation, which expands to the
+stow-managed `~/.start-hyprland` wrapper:
+
+```sh
+hr
+```
+
+The wrapper runs `ck-launch-session dbus-run-session start-hyprland`. This is
+required for polkit to treat the Hyprland login as an active local session.
+Without it, Thunar and QuickShell/`udisksctl` can see USB drives but fail to
+mount them with `Not authorized`.
+
+After logging into Hyprland, this should list an active session:
+
+```sh
+ck-list-sessions
+```
+
+## Hyprland Notes
+
+FreeBSD installs `hyprpolkitagent` at `/usr/local/libexec/hyprpolkitagent`, so autostart must use the full path:
+
+```ini
+exec-once = /usr/local/libexec/hyprpolkitagent
+```
+
+The checked-in monitor config is for this laptop. Adjust `hypr/.config/hypr/conf/monitors.conf` if your monitor names differ, and see [docs/freebsd-hardware-notes.md](docs/freebsd-hardware-notes.md) for the current hardware-specific values.
+
+XWayland should render unscaled so Electron apps can scale themselves cleanly:
+
+```ini
+xwayland {
+    force_zero_scaling = true
+}
+```
+
+This is especially important for Discord font rendering.
+
+Wallpaper is currently applied through `swaybg` in Hyprland autostart:
+
+```ini
+exec-once = /usr/local/bin/swaybg -i /home/regueiro/Pictures/wallpapers/wallpaer4.png -m fill
+```
+
+System suspend is disabled in QuickShell on this laptop. FreeBSD reports S3
+support, but real tests with `zzz` froze the machine hard enough to require a
+forced power-off.
+
+Hypridle still locks on normal idle timeout and turns the display off with
+DPMS. Do not enable automatic system suspend unless S3 resume is fixed and
+tested outside the desktop session first.
+
+## Firefox / YouTube Performance
+
+Install and verify the Intel VAAPI driver:
+
+```sh
+doas pkg install -y libva-intel-media-driver libva-utils
+vainfo
+```
+
+Expected useful entries include:
+
+- `VAProfileH264High`
+- `VAProfileVP9Profile0`
+- `VAProfileHEVCMain`
+
+The Hyprland session exports:
+
+```ini
+env = LIBVA_DRIVER_NAME,iHD
+env = MOZ_ENABLE_WAYLAND,1
+```
+
+Firefox profile prefs used for smooth YouTube playback:
+
+```js
+user_pref("media.ffmpeg.vaapi.enabled", true);
+user_pref("media.hardware-video-decoding.force-enabled", true);
+user_pref("media.av1.enabled", false);
+user_pref("gfx.webrender.all", true);
+user_pref("widget.dmabuf.force-enabled", true);
+```
+
+`media.av1.enabled = false` matters on this Intel Comet Lake iGPU. YouTube AV1 playback is CPU decoded, while VP9/H.264 can be GPU decoded through VAAPI.
+
+## Discord
+
+Discord uses `linux-discord` through Linuxulator. Keep it on XWayland. Forcing Electron Wayland/Ozone caused EGL/VAAPI errors and high CPU usage on this machine.
+
+### Update Override
+
+The Linux Discord wrapper can overwrite `settings.json` from `settings.json.bak`, which can re-enable the upstream host update prompt. Keep the update override immutable:
+
+```sh
+./scripts/setup-discord-runtime.sh
+```
+
+To edit it later:
+
+```sh
+doas chflags noschg ~/.config/discord/settings.json
+```
+
+### Font And Cursor Rendering
+
+The working setup is:
+
+- Hyprland `xwayland.force_zero_scaling = true`
+- Discord launched with `--force-device-scale-factor=1.25`
+- Cursor theme exported through the launcher
+- No custom `FONTCONFIG_FILE`
+- Xft DPI loaded through `xrdb`
+
+`~/.Xresources`:
+
+```conf
+Xft.dpi: 120
+Xft.antialias: true
+Xft.hinting: true
+Xft.hintstyle: hintslight
+Xft.rgba: rgb
+```
+
+Apply it:
+
+```sh
+xrdb -merge ~/.Xresources
+```
+
+The Discord desktop-file override is stow-managed at `discord/.local/share/applications/linux-discord.desktop`:
+
+```ini
+[Desktop Entry]
+Name=Discord
+StartupWMClass=discord
+Comment=All-in-one voice and text chat.
+GenericName=Internet Messenger
+Exec=env XCURSOR_THEME=Bibata-Modern-Classic XCURSOR_SIZE=24 GTK_THEME=Adwaita:dark /usr/local/bin/linux-discord --force-device-scale-factor=1.25
+Icon=discord
+Type=Application
+Categories=Network;InstantMessaging;
+Path=/usr/local/bin
+```
+
+Do not use:
+
+```sh
+--force-device-scale-factor=0.9
+--enable-features=UseOzonePlatform --ozone-platform=wayland
+FONTCONFIG_FILE=...
+```
+
+Those caused blurry fonts, broken text rendering, or high CPU usage in Linux Discord.
+
+If Discord text breaks after experiments, stop Discord and clear generated caches:
+
+```sh
+pkill -f '/home/regueiro/.config/discord'
+mv ~/.config/discord/Cache ~/.config/discord/Cache.bak
+mv ~/.config/discord/'Code Cache' ~/.config/discord/'Code Cache.bak'
+mv ~/.config/discord/GPUCache ~/.config/discord/GPUCache.bak
+```
+
+Then restart from the desktop-file launcher.
+
+Do not stow the full `~/.config/discord` profile. It contains tokens, cookies, caches, and other runtime state. Only the update override in `settings.json` is worth recreating, and it is documented in [docs/freebsd-hardware-notes.md](docs/freebsd-hardware-notes.md).
+
+## QuickShell Services
+
+Some QuickShell services are FreeBSD-specific:
+
+- Wi-Fi uses FreeBSD helper scripts.
+- Bluetooth uses FreeBSD `hccontrol` / service helpers.
+- Power mode uses FreeBSD `powerd` profile helpers.
+- Battery, brightness, disks, and audio are wired to the FreeBSD device/service model.
+
+Power actions are handled by QuickShell through:
+
+```sh
+qs ipc call powermenu
+```
+
+The Hyprland autostart must start QuickShell:
+
+```ini
+exec-once = qs -n -d
+```
+
+## Input Method
+
+The setup uses Fcitx 5 with Spanish and Mozc Japanese input:
+
+- `fcitx5`
+- `ja-fcitx-mozc`
+- `fcitx5-gtk2`, `fcitx5-gtk3`, `fcitx5-gtk4`
+- `fcitx5-qt5`, `fcitx5-qt6`
+
+The session exports:
+
+```ini
+env = SDL_IM_MODULE,fcitx
+env = GLFW_IM_MODULE,fcitx
+env = QT_IM_MODULE,fcitx
+env = XMODIFIERS,@im=fcitx
+```
+
+GTK uses native Wayland support for modern apps, while the GTK settings files keep `fcitx` available for apps that still route through X11/XWayland.
+
+The Hyprland keyboard config uses:
+
+```ini
+kb_options = lv3:switch
+```
+
+Right Ctrl acts as an additional AltGr / level-3 key, useful on the Spanish layout.
+
+`Super+Space` cycles input methods through QuickShell first so the OSD and shell state stay in sync, then falls back to direct Fcitx control if QuickShell is unavailable.
+
+## Hardware Notes
+
+This laptop uses:
+
+- Intel Comet Lake UHD as the real display GPU.
+- NVIDIA MX250 as a secondary dGPU.
+- Realtek `rtw88` Wi-Fi.
+- BOE `BOE082C` / `NV140FHM-N4K` panel.
+
+The NVIDIA MX250 is intentionally ignored. It is not worth the complexity for this desktop, and the internal panel is driven by Intel.
+
+The BOE panel is low-gamut. Software calibration can improve tone curve behavior, but it cannot make the display color accurate.
 
 ## Formatting
 

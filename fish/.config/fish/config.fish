@@ -1,81 +1,68 @@
-if test -f /usr/share/cachyos-fish-config/cachyos-config.fish
-    source /usr/share/cachyos-fish-config/cachyos-config.fish
+# Miguel FreeBSD fish config
+# Minimal, fast, FreeBSD-safe.
+function fish_greeting
 end
 
-# Load fzf key bindings
-if test -f /usr/share/fzf/shell/key-bindings.fish
-    source /usr/share/fzf/shell/key-bindings.fish
-end
-functions -q fzf_key_bindings; and fzf_key_bindings
-
-
-# Distro-aware updater abbreviation.
-if test -f /etc/os-release
-    if grep -qiE '(^ID=fedora$|^ID_LIKE=.*fedora)' /etc/os-release
-        abbr -a up "sudo dnf upgrade --refresh -y && flatpak update -y && cargo install-update -a"
-    else
-        abbr -a up "paru -Syu && flatpak update && cargo install-update -a"
-    end
-end
+set -gx EDITOR nvim
+set -gx VISUAL nvim
+set -gx PAGER less
+set -gx LESS "-R"
+set -gx BROWSER firefox
+set -gx TERMINAL kitty
 
 fish_add_path $HOME/.local/bin
+fish_add_path $HOME/bin
+fish_add_path /usr/local/bin
+fish_add_path /usr/local/sbin
+
+# Basic navigation.
+abbr -a ll "ls -lah"
+abbr -a la "ls -A"
+abbr -a l "ls -lah"
+abbr -a .. "cd .."
+abbr -a ... "cd ../.."
+abbr -a .... "cd ../../.."
+abbr -a hr "~/.start-hyprland"
+abbr -a sx startx
+
+# Editor / doas.
+abbr -a v nvim
+abbr -a svim "doas nvim"
+abbr -a se "doasedit"
+
+# FreeBSD pkg.
+abbr -a ps "pkg search"
+abbr -a pi "doas pkg install"
+abbr -a pr "doas pkg remove"
+abbr -a pu "doas pkg update"
+abbr -a pup "doas pkg upgrade"
+abbr -a up "doas pkg update && doas pkg upgrade"
+abbr -a autoremove "doas pkg autoremove"
+
+# FreeBSD services/system.
+abbr -a rc "doas service"
+abbr -a rcl "service -l"
+abbr -a rcstatus "service -e"
+abbr -a kld "kldstat"
+abbr -a ports "cd /usr/ports"
+
+# Git, if installed.
+abbr -a gs "git status --short --branch"
+abbr -a gd "git diff"
+abbr -a gl "git log --oneline --decorate --graph -20"
+abbr -a ga "git add"
+abbr -a gc "git commit"
+abbr -a gp "git push"
+
+# Process/network helpers.
+abbr -a portsopen "sockstat -4 -6 -l"
+abbr -a myip "ifconfig | grep 'inet '"
+
+# Optional extras if you install them later.
 if command -sq zoxide
     zoxide init fish | source
 end
 
 if command -sq starship
     starship init fish | source
-end
-
-
-function __refresh_fastfetch_package_cache --description "Refresh cached package counts for fastfetch"
-    set -l cache_dir "$HOME/.cache/fastfetch"
-    set -l cache_file "$cache_dir/packages.txt"
-    mkdir -p $cache_dir
-
-    set -l counts
-
-    if command -sq pacman
-        set -l pacman_count (pacman -Qq 2>/dev/null | wc -l | string trim)
-        test -n "$pacman_count"; and set -a counts "$pacman_count (pacman)"
-    end
-
-    if command -sq flatpak
-        set -l flatpak_system_count (flatpak list --system 2>/dev/null | wc -l | string trim)
-        test -n "$flatpak_system_count"; and set -a counts "$flatpak_system_count (flatpak-system)"
-
-        set -l flatpak_user_count (flatpak list --user 2>/dev/null | wc -l | string trim)
-        test -n "$flatpak_user_count"; and set -a counts "$flatpak_user_count (flatpak-user)"
-    end
-
-    if test -x /home/linuxbrew/.linuxbrew/bin/brew
-        set -l brew_count (/home/linuxbrew/.linuxbrew/bin/brew list 2>/dev/null | wc -l | string trim)
-        test -n "$brew_count"; and set -a counts "$brew_count (brew)"
-    end
-
-    if test (count $counts) -gt 0
-        printf '%s\n' (string join ', ' $counts) > $cache_file
-    end
-end
-
-# Keep fastfetch on launch without recalculating package counts every time.
-function fish_greeting
-    set -l cache_file "$HOME/.cache/fastfetch/packages.txt"
-    set -l refresh_interval 43200
-
-    if not test -f $cache_file
-        __refresh_fastfetch_package_cache >/dev/null 2>&1 &
-    else
-        set -l now (date +%s)
-        set -l mtime (stat -c %Y $cache_file 2>/dev/null)
-        if test -n "$mtime"
-            if test (math "$now - $mtime") -gt $refresh_interval
-                __refresh_fastfetch_package_cache >/dev/null 2>&1 &
-            end
-        end
-    end
-
-    if command -sq fastfetch
-        fastfetch
-    end
 end

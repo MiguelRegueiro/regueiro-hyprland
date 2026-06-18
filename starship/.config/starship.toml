@@ -1,97 +1,128 @@
-"$schema" = 'https://starship.rs/config-schema.json'
+"$schema" = "https://starship.rs/config-schema.json"
 
-format = """
-$cmd_duration$line_break$line_break\
-[](surface0)\
+add_newline = true
+palette = "miguel_deep_red"
+
+format = """[](surface0)\
 $os$username\
 [](fg:surface0 bg:overlay0)\
 $directory\
-[](fg:overlay0 bg:blue)\
+[](fg:overlay0 bg:red)\
 $git_branch$git_status\
-[](fg:blue bg:purple)\
+[](fg:red bg:dark_red)\
 $python$nodejs$rust$golang$docker_context\
-[](fg:purple bg:accent)\
+[](fg:dark_red bg:accent)\
 $time\
 [](fg:accent)\
 $line_break$character"""
 
-palette = "custom_dark_polished"
-
 # ---------- Modules ----------
+
+[os]
+disabled = false
+style = "bg:surface0 fg:text"
+format = "[ $symbol ]($style)"
+
+[os.symbols]
+FreeBSD = ""
+Linux = ""
+Arch = ""
 
 [username]
 show_always = true
 style_user = "bg:surface0 fg:text"
-format = '[ $user ]($style)'
+style_root = "bg:danger fg:text bold"
+format = "[ $user ]($style)"
 
 [directory]
 style = "fg:text bg:overlay0"
 format = "[ $path ]($style)"
 truncation_length = 0
 truncate_to_repo = false
+home_symbol = "~"
+read_only = " 󰌾"
 
 [git_branch]
 symbol = ""
-style = "bg:blue fg:base"
-format = '[ $symbol $branch ]($style)'
+style = "bg:red fg:text bold"
+format = "[ $symbol $branch ]($style)"
 
 [git_status]
-style = "bg:blue fg:base"
-format = '[ $all_status$ahead_behind ]($style)'
+style = "bg:red fg:text bold"
+format = "[ $all_status$ahead_behind ]($style)"
+conflicted = "=${count}"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?${count}"
+stashed = "$"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
 
 [python]
 symbol = ""
-style = "bg:purple fg:base"
-format = '[ $symbol $version ]($style)'
+style = "bg:dark_red fg:text"
+format = "[ $symbol $version ]($style)"
 
 [nodejs]
 symbol = ""
-style = "bg:purple fg:base"
-format = '[ $symbol $version ]($style)'
+style = "bg:dark_red fg:text"
+format = "[ $symbol $version ]($style)"
 
 [rust]
 symbol = ""
-style = "bg:purple fg:base"
-format = '[ $symbol $version ]($style)'
+style = "bg:dark_red fg:text"
+format = "[ $symbol $version ]($style)"
 
 [golang]
 symbol = ""
-style = "bg:purple fg:base"
-format = '[ $symbol $version ]($style)'
+style = "bg:dark_red fg:text"
+format = "[ $symbol $version ]($style)"
 
 [docker_context]
 symbol = ""
-style = "bg:purple fg:base"
-format = '[ $symbol $context ]($style)'
+
+style = "bg:dark_red fg:text"
+format = "[ $symbol $context ]($style)"
 
 [time]
 disabled = false
 time_format = "%H:%M"
-style = "bg:accent fg:base"
-format = '[ $time ]($style)'
+style = "bg:accent fg:text"
+format = "[ $time ]($style)"
 
 [line_break]
 disabled = false
 
-[cmd_duration]
-min_time = 1
-format = "[$duration](fg:lavender)"
-style = "fg:lavender"
-
-# ---------- Modules ----------
-
 [character]
 disabled = false
-success_symbol = '[➜](bold fg:#5246f2)'  # Arrow
-error_symbol = '[✘](bold fg:#ff0000)'    # X mark
+success_symbol = "[➜](bold fg:#b11226)"
+error_symbol = "[✘](bold fg:#e01b2f)"
+vimcmd_symbol = "[❮](bold fg:#b11226)"
 
-# ---------- Custom Palette (Refined) ----------
-[palettes.custom_dark_polished]
-surface0 = "#262631"       # Darker grey
-overlay0 = "#2f2f3c"       # Slightly lighter grey
-blue     = "#0286de"       # Muted blue-purple
-purple   = "#2D5BE3"       # Rich violet
-accent   = "#22222e"       # Deep bluish grey for end cap
-lavender = "#9a9fe1"       # Used in character and time
-text     = "#d4d6e0"       # Clean, not too bright
-base     = "#d4d6e0"       # Background base
+# No annoying repeated duration on empty Enter
+[cmd_duration]
+disabled = true
+
+# No ugly [127]
+[status]
+disabled = true
+
+[package]
+disabled = true
+
+[hostname]
+disabled = true
+
+# ---------- Palette: dark blood red, not pink ----------
+[palettes.miguel_deep_red]
+surface0 = "#2b252b"
+overlay0 = "#373039"
+red      = "#a4161a"
+dark_red = "#6f1118"
+accent   = "#28222a"
+danger   = "#c1121f"
+text     = "#e3d7dc"
+base     = "#e3d7dc"

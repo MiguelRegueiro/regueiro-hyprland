@@ -22,8 +22,7 @@ ShellRoot {
     property bool clipboardOpening: false
     readonly property bool clipboardRequested: clipboardVisible || clipboardOpening
     property bool launcherVisible: false
-    property bool launcherOpening: false
-    readonly property bool launcherRequested: launcherVisible || launcherOpening
+    readonly property bool launcherRequested: launcherVisible
     property bool externalDrivesMenuVisible: false
     readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible
     property bool powerMenuVisible: false
@@ -57,6 +56,9 @@ ShellRoot {
 
     function requestPowerAction(actionId) {
         if (powerBusyAction !== "")
+            return ;
+
+        if (actionId === "suspend")
             return ;
 
         if (actionId === "toggle") {
@@ -102,8 +104,6 @@ ShellRoot {
         powerBusyAction = actionId;
         if (actionId === "lock" && !lockProc.running)
             lockProc.running = true;
-        else if (actionId === "suspend" && !suspendProc.running)
-            suspendProc.running = true;
         else if (actionId === "logout" && !logoutProc.running)
             logoutProc.running = true;
         else if (actionId === "reboot" && !rebootProc.running)
@@ -121,8 +121,6 @@ ShellRoot {
     }
 
     function closeLauncher() {
-        launcherOpenTimer.stop();
-        launcherOpening = false;
         launcherVisible = false;
     }
 
@@ -160,15 +158,14 @@ ShellRoot {
         ncController.pinned = false;
         qsController.closeImmediately();
         ncController.closeImmediately();
-        launcherOpening = true;
-        launcherOpenTimer.restart();
+        launcherVisible = true;
     }
 
     function toggleLauncher() {
         if (powerMenuVisible)
             return ;
 
-        if (launcherVisible || launcherOpening)
+        if (launcherVisible)
             closeLauncher();
         else
             openLauncher();
@@ -200,28 +197,16 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
-        const openingFromDrawer = root.launcherRequested || root.clipboardRequested || root.externalDrivesMenuVisible;
-        const openingFromOtherMenu = root.notificationCenterVisible;
-        const openingFromTransientMenu = openingFromOtherMenu && ncController.transientOpen;
+        const shouldClose = qsController.open;
         closeExternalDrivesMenu();
         closeLauncher();
         closeClipboard();
         ncController.closeImmediately();
-        if (openingFromDrawer) {
-            Qt.callLater(function() {
-                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested && !root.externalDrivesMenuVisible) {
-                    qsController.openTransient();
-                }
-            });
-        } else if (openingFromOtherMenu) {
-            if (openingFromTransientMenu) {
-                qsController.openTransient();
-            } else {
-                qsController.pinned = true;
-                qsController.syncVisibility(false);
-            }
+        if (shouldClose) {
+            qsController.closeImmediately();
         } else {
-            qsController.togglePinned();
+            qsController.pinned = true;
+            qsController.syncVisibility(false);
         }
     }
 
@@ -229,28 +214,16 @@ ShellRoot {
         if (powerMenuVisible)
             return ;
 
-        const openingFromDrawer = root.launcherRequested || root.clipboardRequested || root.externalDrivesMenuVisible;
-        const openingFromOtherMenu = root.quickSettingsVisible;
-        const openingFromTransientMenu = openingFromOtherMenu && qsController.transientOpen;
+        const shouldClose = ncController.open;
         closeExternalDrivesMenu();
         closeLauncher();
         closeClipboard();
         qsController.closeImmediately();
-        if (openingFromDrawer) {
-            Qt.callLater(function() {
-                if (!root.powerMenuVisible && !root.launcherRequested && !root.clipboardRequested && !root.externalDrivesMenuVisible) {
-                    ncController.openTransient();
-                }
-            });
-        } else if (openingFromOtherMenu) {
-            if (openingFromTransientMenu) {
-                ncController.openTransient();
-            } else {
-                ncController.pinned = true;
-                ncController.syncVisibility(false);
-            }
+        if (shouldClose) {
+            ncController.closeImmediately();
         } else {
-            ncController.togglePinned();
+            ncController.pinned = true;
+            ncController.syncVisibility(false);
         }
     }
 
@@ -303,17 +276,6 @@ ShellRoot {
         }
 
         target: "launcher"
-    }
-
-    Timer {
-        id: launcherOpenTimer
-
-        interval: 16
-        repeat: false
-        onTriggered: {
-            root.launcherVisible = true;
-            root.launcherOpening = false;
-        }
     }
 
     Timer {
@@ -370,7 +332,7 @@ ShellRoot {
     Process {
         id: lockProc
 
-        command: ["sh", "-lc", "if command -v hyprlock >/dev/null 2>&1; then hyprlock --config \"$HOME/.config/hypr/hyprlock.conf\"; elif command -v swaylock >/dev/null 2>&1; then swaylock; else loginctl lock-session; fi"]
+        command: ["sh", "-lc", "if command -v hyprlock >/dev/null 2>&1; then exec hyprlock --config \"$HOME/.config/hypr/hyprlock.conf\"; elif command -v swaylock >/dev/null 2>&1; then exec swaylock; else exit 0; fi"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("lock");
@@ -381,7 +343,7 @@ ShellRoot {
     Process {
         id: suspendProc
 
-        command: ["sh", "-lc", "if command -v hyprlock >/dev/null 2>&1 && ! pgrep -x hyprlock >/dev/null 2>&1; then hyprlock --config \"$HOME/.config/hypr/hyprlock.conf\" >/dev/null 2>&1 & sleep 1; elif command -v swaylock >/dev/null 2>&1 && ! pgrep -x swaylock >/dev/null 2>&1; then swaylock >/dev/null 2>&1 & sleep 1; else loginctl lock-session >/dev/null 2>&1 || true; fi; systemctl suspend"]
+        command: ["false"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("suspend");
@@ -403,7 +365,7 @@ ShellRoot {
     Process {
         id: rebootProc
 
-        command: ["systemctl", "reboot"]
+        command: ["sh", "-lc", "if command -v doas >/dev/null 2>&1; then exec doas -n /sbin/reboot; else exec /sbin/reboot; fi"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("reboot");
@@ -414,7 +376,7 @@ ShellRoot {
     Process {
         id: shutdownProc
 
-        command: ["systemctl", "poweroff"]
+        command: ["sh", "-lc", "if command -v doas >/dev/null 2>&1; then exec doas -n /sbin/shutdown -p now; else exec /sbin/shutdown -p now; fi"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("shutdown");
@@ -454,6 +416,10 @@ ShellRoot {
         id: audioServiceState
     }
 
+    Services.BatteryService {
+        id: batteryServiceState
+    }
+
     Services.BrightnessService {
         id: brightnessServiceState
     }
@@ -487,27 +453,24 @@ ShellRoot {
 
                 targetScreen: modelData
                 showBar: activeScreen
+                externalConnected: root.externalConnected
                 forceOverlay: fullscreenPanelChromeActive
+                quickSettingsOpen: root.quickSettingsVisible
+                notificationCenterOpen: root.notificationCenterVisible
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
+                batteryService: batteryServiceState
                 brightnessService: brightnessServiceState
-                inputService: inputServiceState
                 externalDrivesService: externalDrivesServiceState
                 onQuickSettingsClicked: root.toggleQuickSettings()
                 onNotificationCenterClicked: root.toggleNotificationCenter()
                 onClipboardClicked: root.toggleClipboard()
                 onExternalDrivesClicked: root.toggleExternalDrivesMenu()
                 onQuickSettingsHoveredChanged: (hovered) => {
-                    if (hovered)
-                        ncController.closeImmediately();
-
-                    return qsController.triggerHovered = hovered;
+                    qsController.triggerHovered = false;
                 }
                 onNotificationCenterHoveredChanged: (hovered) => {
-                    if (hovered)
-                        qsController.closeImmediately();
-
-                    return ncController.triggerHovered = hovered;
+                    ncController.triggerHovered = false;
                 }
             }
 
@@ -550,6 +513,7 @@ ShellRoot {
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
+                batteryService: batteryServiceState
                 brightnessService: brightnessServiceState
                 onOutsidePressed: root.closeAllPanels()
                 onQuickSettingsRequested: root.toggleQuickSettings()

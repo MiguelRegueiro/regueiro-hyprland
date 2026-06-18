@@ -1,11 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 
 Item {
     id: root
 
+    property bool open: false
+    property real reveal: 0
     readonly property var actions: [{
         "actionId": "suspend",
         "label": "Suspend",
@@ -53,6 +56,38 @@ Item {
     implicitHeight: popupColumn.implicitHeight + 20
     width: implicitWidth
     height: implicitHeight
+    visible: reveal > 0.001
+    opacity: 1
+    transform: Translate {
+        y: -(1 - root.reveal) * 18
+    }
+    state: open ? "open" : ""
+    transitions: [
+        Transition {
+            from: ""
+            to: "open"
+
+            Components.Anim {
+                target: root
+                property: "reveal"
+                curve: Components.Anim.EmphasizedDecel
+                duration: Theme.panelOpenDuration
+            }
+
+        },
+        Transition {
+            from: "open"
+            to: ""
+
+            Components.Anim {
+                target: root
+                property: "reveal"
+                curve: Components.Anim.EmphasizedAccel
+                duration: Theme.panelCloseDuration
+            }
+
+        }
+    ]
 
     Rectangle {
         anchors.fill: parent
@@ -175,6 +210,15 @@ Item {
 
             }
 
+        }
+
+    }
+
+    states: State {
+        name: "open"
+
+        PropertyChanges {
+            root.reveal: 1
         }
 
     }

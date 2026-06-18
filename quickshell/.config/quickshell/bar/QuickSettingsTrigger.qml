@@ -1,6 +1,6 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
-import Quickshell.Services.UPower
 import "../components" as Components
 import "../theme/Theme.js" as Theme
 
@@ -8,20 +8,21 @@ Rectangle {
     id: root
 
     required property var audioService
+    required property var batteryService
     property int barHeight: 34
+    property bool menuOpen: false
     readonly property bool hovered: triggerHover.hovered
-    property var batteryDevice: UPower.displayDevice
-    property int batteryPercent: batteryDevice ? Math.min(100, Math.round(batteryDevice.percentage * 100)) : -1
-    property bool batteryCharging: batteryDevice && (batteryDevice.state === UPowerDeviceState.Charging || batteryDevice.state === UPowerDeviceState.FullyCharged)
-    property bool batteryFull: batteryDevice && batteryDevice.state === UPowerDeviceState.FullyCharged
+    property int batteryPercent: batteryService ? batteryService.percent : -1
+    property bool batteryCharging: batteryService && batteryService.charging
+    property bool batteryFull: batteryService && batteryService.full
     property string networkIcon: "󰤭"
 
     signal clicked()
 
-    height: barHeight - 6
+    height: Math.min(barHeight, Theme.barItemHeight)
     implicitWidth: contentRow.implicitWidth + 28
     radius: Theme.radiusSmall
-    color: Theme.barBg
+    color: hovered && !menuOpen ? Theme.hoverBg : "transparent"
 
     HoverHandler {
         id: triggerHover
@@ -45,7 +46,7 @@ Rectangle {
     Process {
         id: networkPoll
 
-        command: ["bash", "-c", "eth=$(nmcli -t -f DEVICE,TYPE,STATE dev 2>/dev/null | " + "awk -F: '$2==\"ethernet\" && $1!~/^(docker|br[0-9]|virbr|veth)/ {print $3; exit}'); " + "if [ \"$eth\" = 'connected' ]; then echo eth; " + "else w=$(nmcli radio wifi 2>/dev/null); " + "s=$(nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | head -1); " + "if [ \"$w\" = 'enabled' ] && [ -n \"$s\" ]; then echo wifi_up; " + "elif [ \"$w\" = 'enabled' ]; then echo wifi_off; " + "else echo off; fi; fi"]
+        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-wifi.sh", "network-state"]
 
         stdout: StdioCollector {
             id: networkOut
@@ -141,6 +142,15 @@ Rectangle {
         onWheel: (wheel) => {
             return root.audioService.adjustVolume(wheel.angleDelta.y > 0 ? 5 : -5);
         }
+    }
+
+    Behavior on color {
+        enabled: !root.menuOpen
+
+        ColorAnimation {
+            duration: Theme.hoverAnimDuration
+        }
+
     }
 
 }

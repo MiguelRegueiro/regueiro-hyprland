@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Services.UPower
 import "widgets" as Widgets
 import "../components" as Components
 import "../theme/Theme.js" as Theme
@@ -10,6 +9,7 @@ Item {
 
     required property var notificationStore
     required property var audioService
+    required property var batteryService
     required property var brightnessService
     required property var wifiPage
     required property var bluetoothPage
@@ -84,27 +84,11 @@ Item {
             Item {
                 id: batteryInfo
 
-                property var dev: UPower.displayDevice
-                property bool hasBattery: dev && dev.percentage >= 0
-                property int percent: hasBattery ? Math.min(100, Math.round(dev.percentage * 100)) : 0
-                property bool charging: hasBattery && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
-                property bool full: hasBattery && dev.state === UPowerDeviceState.FullyCharged
-                property real secondsLeft: hasBattery && !charging ? dev.timeToEmpty : 0
-
-                function formatTime(secs) {
-                    if (secs <= 0)
-                        return "";
-
-                    const h = Math.floor(secs / 3600);
-                    const m = Math.floor((secs % 3600) / 60);
-                    if (h > 0 && m > 0)
-                        return h + "h " + m + "m";
-
-                    if (h > 0)
-                        return h + "h";
-
-                    return m + "m";
-                }
+                property bool hasBattery: root.batteryService && root.batteryService.hasBattery
+                property int percent: hasBattery ? root.batteryService.percent : 0
+                property bool charging: hasBattery && root.batteryService.charging
+                property bool full: hasBattery && root.batteryService.full
+                property real secondsLeft: hasBattery ? root.batteryService.secondsLeft : 0
 
                 Layout.fillWidth: true
                 visible: batteryInfo.hasBattery
@@ -140,7 +124,7 @@ Item {
                                 if (batteryInfo.charging)
                                     return batteryInfo.percent + "% · Charging";
 
-                                const t = batteryInfo.formatTime(batteryInfo.secondsLeft);
+                                const t = root.batteryService ? root.batteryService.formatTime(batteryInfo.secondsLeft) : "";
                                 return batteryInfo.percent + "%" + (t ? " · " + t : "");
                             }
                             font.family: Theme.fontUi
@@ -451,9 +435,11 @@ Item {
                 actionButtonActive: root.audioOutputPopupOpen
                 actionIconText: "󰅂"
                 actionIconOffsetX: 1
+                stepSize: root.audioService.volumeStepPercent / 100
+                emitInterval: 0
                 onMuteClicked: root.audioService.toggleMute()
                 onSliderMoved: (value) => {
-                    return root.audioService.setVolumePercent(Math.round(value * 100));
+                    return root.audioService.setVolumePercent(value * 100);
                 }
                 onDraggingChanged: {
                     if (!dragging)
@@ -498,7 +484,7 @@ Item {
     }
 
     Item {
-        visible: root.powerMenuOpen
+        visible: root.powerMenuOpen || powerMenu.visible
         anchors.fill: parent
         z: 200
 
@@ -513,17 +499,10 @@ Item {
 
             x: Math.max(12, Math.min(root.width - width - 6, powerAnchor.x + powerAnchor.width - width))
             y: headerRow.y + powerAnchor.height + 10
-            opacity: root.powerMenuOpen ? 1 : 0
+            open: root.powerMenuOpen
             onActionTriggered: root.powerMenuOpen = false
             onActionRequested: (actionId) => {
                 return root.powerActionRequested(actionId);
-            }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.qsPageFadeDuration
-                }
-
             }
 
         }
@@ -531,7 +510,7 @@ Item {
     }
 
     Item {
-        visible: root.audioOutputPopupOpen
+        visible: root.audioOutputPopupOpen || audioOutputPopup.visible
         x: 0
         y: 0
         width: root.width
@@ -581,6 +560,7 @@ Item {
             maxPopupHeight: root.audioOutputPopupMaxHeight
             x: Math.max(0, Math.round((root.width - width) / 2))
             y: volumeRow.y + volumeRow.height + root.audioOutputPopupGap
+            open: root.audioOutputPopupOpen
             onSinkChosen: root.audioOutputPopupRequest(false)
         }
 

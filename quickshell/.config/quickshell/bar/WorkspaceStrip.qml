@@ -8,6 +8,17 @@ Row {
 
     property string screenName: ""
     property int barHeight: 34
+    property bool externalConnected: false
+    readonly property var pinnedWorkspaceIds: externalConnected && screenName === Theme.primaryScreen ? [10] : [1, 2, 3, 4, 5]
+
+    function belongsToScreen(workspace) {
+        const id = Number(workspace.id);
+
+        if (pinnedWorkspaceIds.indexOf(id) !== -1)
+            return true;
+
+        return workspace.monitor !== null && workspace.monitor !== undefined && workspace.monitor.name === screenName;
+    }
 
     spacing: 0
     leftPadding: 4
@@ -22,9 +33,8 @@ Row {
             required property var modelData
             readonly property bool hovered: hover.hovered
 
-            // Only show workspaces belonging to this bar's screen
-            visible: modelData.monitor !== null && modelData.monitor.name === screenName
-            height: barHeight - 8
+            visible: wsRow.belongsToScreen(modelData)
+            height: Math.min(barHeight, Theme.barItemHeight)
             width: visible ? Math.max(wsLabel.implicitWidth + 14, 28) : 0
             radius: Theme.radiusSmall
             color: {

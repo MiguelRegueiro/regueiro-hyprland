@@ -13,6 +13,7 @@ FocusScope {
 
     required property var notificationStore
     required property var audioService
+    required property var batteryService
     required property var brightnessService
     property bool open: false
     property real topOffset: 0
@@ -30,10 +31,6 @@ FocusScope {
     readonly property real surfaceBottomRightRadius: Theme.qsSurfaceBottomRightRadius
     readonly property real attachTop: Theme.qsAttachTop
     readonly property real attachRight: Theme.qsAttachRight
-    readonly property real clipWidthProgress: 0.84 + root.reveal * 0.16
-    readonly property real clipHeightProgress: 0.78 + root.reveal * 0.22
-    readonly property real frameScale: 0.988 + root.reveal * 0.012
-    readonly property real frameOpacity: 0.72 + root.reveal * 0.28
     readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
     readonly property real revealProgress: reveal
@@ -48,14 +45,16 @@ FocusScope {
     readonly property real mergedBottomRightRadius: Theme.borderSize
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomFuseJoinX: root.bodyWidth - Theme.borderSize - Theme.barCornerRadius
-    readonly property real clipSurfaceWidth: root.bodyWidth * root.clipWidthProgress + root.fuseLeftOverhang * root.reveal
-    readonly property real clipSurfaceHeight: root.bodyHeight * root.clipHeightProgress + root.fuseBottomOverhang * root.reveal
+    readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseLeftOverhang
+    readonly property real clipSurfaceHeight: root.bodyHeight + root.fuseBottomOverhang
+    readonly property real surfaceOffsetY: -(1 - root.reveal) * root.clipSurfaceHeight
+    readonly property string powerProfileHelper: Qt.resolvedUrl("../scripts/freebsd-power-profile.sh").toString().replace("file://", "")
 
     signal powerActionRequested(string actionId)
 
     function applyPowerMode(nextMode) {
         powerMode = nextMode;
-        setPowerProfile.command = ["powerprofilesctl", "set", nextMode];
+        setPowerProfile.command = [root.powerProfileHelper, "set", nextMode];
         setPowerProfile.running = true;
     }
 
@@ -82,7 +81,7 @@ FocusScope {
             Components.Anim {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.DefaultSpatial
+                curve: Components.Anim.EmphasizedDecel
                 duration: Theme.panelOpenSpatialDuration
             }
 
@@ -121,43 +120,43 @@ FocusScope {
         id: motionFrame
 
         width: root.width
-        height: root.height
-        y: (1 - root.reveal) * -4
-        scale: root.frameScale
-        transformOrigin: Item.TopRight
-        opacity: root.frameOpacity
+        height: Math.max(1, root.height)
+        y: 0
         layer.enabled: true
 
-        HoverHandler {
-            id: boundsHover
-
-            blocking: false
-        }
-
-        Item {
-            anchors.top: parent.top
-            anchors.right: parent.right
-            width: Math.max(1, root.clipSurfaceWidth)
-            height: Math.max(1, root.clipSurfaceHeight)
-            clip: !root.audioOutputPopupOpen
-
             HoverHandler {
-                id: panelHover
+                id: boundsHover
 
                 blocking: false
             }
 
             Item {
-                id: frame
-
                 anchors.top: parent.top
                 anchors.right: parent.right
-                width: root.bodyWidth
-                height: root.bodyHeight
+                width: Math.max(1, root.clipSurfaceWidth)
+                height: Math.max(1, root.clipSurfaceHeight)
+                clip: !root.audioOutputPopupOpen
 
-                Shape {
-                    anchors.fill: parent
-                    preferredRendererType: Shape.CurveRenderer
+                HoverHandler {
+                    id: panelHover
+
+                    blocking: false
+                }
+
+                Item {
+                    id: frame
+
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    width: root.bodyWidth
+                    height: root.bodyHeight
+                    transform: Translate {
+                        y: root.surfaceOffsetY
+                    }
+
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
                         fillColor: Theme.menuBg
@@ -438,6 +437,7 @@ FocusScope {
                             opacity: root.submenuOpen ? 0 : 1
                             notificationStore: root.notificationStore
                             audioService: root.audioService
+                            batteryService: root.batteryService
                             brightnessService: root.brightnessService
                             wifiPage: wifiPageView
                             bluetoothPage: bluetoothPageView
@@ -460,16 +460,17 @@ FocusScope {
                             }
 
                             Behavior on x {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageSlideDuration
-                                    easing.type: Easing.OutExpo
+                                    curve: Components.Anim.DefaultSpatial
                                 }
 
                             }
 
                             Behavior on opacity {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageFadeDuration
+                                    curve: Components.Anim.DefaultEffects
                                 }
 
                             }
@@ -487,16 +488,17 @@ FocusScope {
                             onBackClicked: root.wifiPageOpen = false
 
                             Behavior on x {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageSlideDuration
-                                    easing.type: Easing.OutExpo
+                                    curve: Components.Anim.DefaultSpatial
                                 }
 
                             }
 
                             Behavior on opacity {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageFadeDuration
+                                    curve: Components.Anim.DefaultEffects
                                 }
 
                             }
@@ -513,16 +515,17 @@ FocusScope {
                             onBackClicked: root.bluetoothPageOpen = false
 
                             Behavior on x {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageSlideDuration
-                                    easing.type: Easing.OutExpo
+                                    curve: Components.Anim.DefaultSpatial
                                 }
 
                             }
 
                             Behavior on opacity {
-                                NumberAnimation {
+                                Components.Anim {
                                     duration: Theme.qsPageFadeDuration
+                                    curve: Components.Anim.DefaultEffects
                                 }
 
                             }
@@ -530,9 +533,9 @@ FocusScope {
                         }
 
                         Behavior on implicitHeight {
-                            NumberAnimation {
+                            Components.Anim {
                                 duration: Theme.qsHeightDuration
-                                easing.type: Easing.OutExpo
+                                curve: Components.Anim.DefaultEffects
                             }
 
                         }
@@ -551,7 +554,7 @@ FocusScope {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.7 * root.reveal)
+            shadowColor: Qt.rgba(0, 0, 0, 0.7)
             shadowBlur: 0.88
             shadowVerticalOffset: 4
             shadowHorizontalOffset: 0
@@ -571,7 +574,7 @@ FocusScope {
     Process {
         id: powerProfilePoll
 
-        command: ["powerprofilesctl", "get"]
+        command: [root.powerProfileHelper, "get"]
 
         stdout: StdioCollector {
             id: powerProfileOut
@@ -590,6 +593,7 @@ FocusScope {
         id: setPowerProfile
 
         command: ["echo"]
+        onExited: powerProfilePoll.running = true
     }
 
     Services.WifiConnectionService {

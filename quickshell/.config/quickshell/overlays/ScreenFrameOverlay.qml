@@ -13,6 +13,7 @@ PanelWindow {
     required property var targetScreen
     required property var notificationStore
     required property var audioService
+    required property var batteryService
     required property var brightnessService
     property bool hasBar: true
     property bool quickSettingsVisible: false
@@ -430,6 +431,7 @@ PanelWindow {
         topOffset: root.innerTopY - Theme.qsBarFuseOverlap - 2
         notificationStore: root.notificationStore
         audioService: root.audioService
+        batteryService: root.batteryService
         brightnessService: root.brightnessService
         onPowerActionRequested: (actionId) => {
             return root.powerActionRequested(actionId);

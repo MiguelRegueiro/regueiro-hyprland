@@ -1,0 +1,28 @@
+Xft.dpi: 120
+Xft.antialias: true
+Xft.hinting: true
+Xft.hintstyle: hintslight
+Xft.rgba: rgb
+
+
+XTerm*faceName: monospace
+XTerm*faceSize: 10
+XTerm*background: #0b0d10
+XTerm*foreground: #d7dae0
+XTerm*cursorColor: #7c8cff
+XTerm*color0: #0b0d10
+XTerm*color1: #ff5f7a
+XTerm*color2: #50fa7b
+XTerm*color3: #ffb86c
+XTerm*color4: #7c8cff
+XTerm*color5: #bd93f9
+XTerm*color6: #8be9fd
+XTerm*color7: #d7dae0
+XTerm*color8: #4b5263
+XTerm*color9: #ff6e8a
+XTerm*color10: #69ff94
+XTerm*color11: #ffd38a
+XTerm*color12: #9aa6ff
+XTerm*color13: #d6acff
+XTerm*color14: #a4ffff
+XTerm*color15: #ffffff

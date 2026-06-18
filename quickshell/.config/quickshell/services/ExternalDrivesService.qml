@@ -37,8 +37,7 @@ Item {
         try {
             parsed = JSON.parse(output);
         } catch (error) {
-            root.lastError = "Failed to read drives";
-            return [];
+            return root.parseUdisksDump(output);
         }
 
         const found = [];
@@ -89,6 +88,124 @@ Item {
         return found;
     }
 
+    function formatBytes(size) {
+        const bytes = Number(size);
+        if (!Number.isFinite(bytes) || bytes <= 0)
+            return "";
+
+        const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+        let value = bytes;
+        let unit = 0;
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024;
+            unit++;
+        }
+
+        return value.toFixed(value >= 10 || unit === 0 ? 0 : 1) + units[unit];
+    }
+
+    function parseUdisksDump(output) {
+        const blocks = {};
+        const drives = {};
+        const sections = output.split(/\n(?=\/org\/freedesktop\/UDisks2\/)/);
+
+        function valueAfter(line, key) {
+            const index = line.indexOf(key + ":");
+            if (index < 0)
+                return "";
+
+            return line.slice(index + key.length + 1).trim();
+        }
+
+        for (let i = 0; i < sections.length; i++) {
+            const section = sections[i].trim();
+            if (section.length === 0)
+                continue;
+
+            const lines = section.split(/\r?\n/);
+            const path = lines[0].replace(/:$/, "");
+            const entry = {
+                path: path,
+                mountpoints: []
+            };
+
+            for (let j = 1; j < lines.length; j++) {
+                const line = lines[j];
+                if (line.indexOf("Device:") >= 0)
+                    entry.device = valueAfter(line, "Device");
+                else if (line.indexOf("PreferredDevice:") >= 0)
+                    entry.preferredDevice = valueAfter(line, "PreferredDevice");
+                else if (line.indexOf("Drive:") >= 0)
+                    entry.drive = valueAfter(line, "Drive").replace(/^'|'$/g, "");
+                else if (line.indexOf("HintName:") >= 0)
+                    entry.hintName = valueAfter(line, "HintName");
+                else if (line.indexOf("HintIgnore:") >= 0)
+                    entry.hintIgnore = valueAfter(line, "HintIgnore") === "true";
+                else if (line.indexOf("IdLabel:") >= 0)
+                    entry.idLabel = valueAfter(line, "IdLabel");
+                else if (line.indexOf("IdType:") >= 0)
+                    entry.idType = valueAfter(line, "IdType");
+                else if (line.indexOf("IdUsage:") >= 0)
+                    entry.idUsage = valueAfter(line, "IdUsage");
+                else if (line.indexOf("Size:") >= 0)
+                    entry.size = valueAfter(line, "Size");
+                else if (line.indexOf("MountPoints:") >= 0)
+                    entry.mountpoints = valueAfter(line, "MountPoints").split(/\s+/).filter((point) => point.length > 0);
+                else if (line.indexOf("CanPowerOff:") >= 0)
+                    entry.canPowerOff = valueAfter(line, "CanPowerOff") === "true";
+                else if (line.indexOf("ConnectionBus:") >= 0)
+                    entry.connectionBus = valueAfter(line, "ConnectionBus");
+                else if (line.indexOf("Model:") >= 0)
+                    entry.model = valueAfter(line, "Model");
+                else if (line.indexOf("Removable:") >= 0)
+                    entry.removable = valueAfter(line, "Removable") === "true";
+                else if (line.indexOf("bsdisks_IsHotpluggable:") >= 0)
+                    entry.hotpluggable = valueAfter(line, "bsdisks_IsHotpluggable") === "true";
+            }
+
+            if (path.indexOf("/block_devices/") >= 0)
+                blocks[path] = entry;
+            else if (path.indexOf("/drives/") >= 0)
+                drives[path] = entry;
+        }
+
+        const diskDeviceByDrive = {};
+        for (const path in blocks) {
+            const block = blocks[path];
+            if (block.drive && (!block.idUsage || block.idUsage.length === 0))
+                diskDeviceByDrive[block.drive] = block.preferredDevice || block.device || "";
+        }
+
+        const found = [];
+        for (const path in blocks) {
+            const block = blocks[path];
+            const drive = drives[block.drive] || {};
+            const device = block.preferredDevice || block.device || "";
+            const mounts = root.cleanMountpoints(block.mountpoints);
+            const mountPath = mounts.length > 0 ? mounts[0] : "";
+            const external = drive.connectionBus === "usb" || drive.removable || drive.hotpluggable || drive.canPowerOff;
+            const systemMount = mountPath === "/" || mountPath.indexOf("/boot") === 0 || mountPath.indexOf("/compat") === 0;
+            const mountable = block.idUsage === "filesystem" && block.idType !== "swap" && block.idType !== "";
+
+            if (!external || block.hintIgnore || !mountable || systemMount)
+                continue;
+
+            found.push({
+                name: device.replace(/^\/dev\//, ""),
+                label: block.idLabel || block.hintName || drive.model || device || "External drive",
+                size: root.formatBytes(block.size),
+                path: device,
+                diskPath: diskDeviceByDrive[block.drive] || device,
+                fstype: block.idType || "",
+                mountPath: mountPath,
+                mounted: mountPath.length > 0
+            });
+        }
+
+        root.lastError = "";
+        return found;
+    }
+
     function refresh() {
         if (!listProc.running)
             listProc.running = true;
@@ -126,7 +243,7 @@ Item {
             return;
 
         root.lastError = "";
-        actionProc.command = ["bash", "-lc", "udisksctl unmount -b \"$1\" >/dev/null 2>&1 || true; udisksctl power-off -b \"$2\"", "external-drive", drive.path, drive.diskPath];
+        actionProc.command = ["sh", "-lc", "udisksctl unmount -b \"$1\" >/dev/null 2>&1 || true; udisksctl power-off -b \"$2\"", "external-drive", drive.path, drive.diskPath];
         actionProc.running = true;
     }
 
@@ -149,7 +266,7 @@ Item {
     Process {
         id: listProc
 
-        command: ["lsblk", "-J", "-o", "NAME,KNAME,TYPE,SIZE,LABEL,MODEL,TRAN,HOTPLUG,RM,MOUNTPOINTS,PATH,FSTYPE,UUID"]
+        command: ["udisksctl", "dump"]
 
         stdout: StdioCollector {
             id: listOut

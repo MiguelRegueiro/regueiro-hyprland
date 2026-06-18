@@ -1,12 +1,15 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
+import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 
 Item {
     id: popupRoot
 
     required property var audioService
+    property bool open: false
+    property real reveal: 0
     property real maxPopupHeight: 560
     readonly property real listSpacing: 8
     readonly property real listFooterHeight: 8
@@ -35,6 +38,38 @@ Item {
     implicitHeight: cardHeight
     width: implicitWidth
     height: implicitHeight
+    visible: reveal > 0.001
+    opacity: 1
+    transform: Translate {
+        y: -(1 - popupRoot.reveal) * 18
+    }
+    state: open ? "open" : ""
+    transitions: [
+        Transition {
+            from: ""
+            to: "open"
+
+            Components.Anim {
+                target: popupRoot
+                property: "reveal"
+                curve: Components.Anim.EmphasizedDecel
+                duration: Theme.panelOpenDuration
+            }
+
+        },
+        Transition {
+            from: "open"
+            to: ""
+
+            Components.Anim {
+                target: popupRoot
+                property: "reveal"
+                curve: Components.Anim.EmphasizedAccel
+                duration: Theme.panelCloseDuration
+            }
+
+        }
+    ]
 
     Rectangle {
         id: popup
@@ -255,6 +290,15 @@ Item {
             shadowVerticalOffset: 1
             shadowHorizontalOffset: 0
             blurMax: 48
+        }
+
+    }
+
+    states: State {
+        name: "open"
+
+        PropertyChanges {
+            popupRoot.reveal: 1
         }
 
     }

@@ -13,6 +13,7 @@ PanelWindow {
     property bool showLayer: true
     property bool launcherVisible: false
     property bool forceOverlay: false
+    property bool openingGuard: false
     readonly property real launcherRegionX: launcherPanel.x + launcherPanel.inputRegion.x
     readonly property real launcherRegionY: launcherPanel.y + launcherPanel.inputRegion.y
     readonly property real launcherRegionWidth: launcherPanel.inputRegion.width
@@ -42,20 +43,46 @@ PanelWindow {
         return false;
     }
 
+    function closeFromOutside() {
+        // With the layer kept mapped for icon-cache warmth, the same click that
+        // opens the launcher can also hit this overlay. Ignore the initial press
+        // and focus churn so the drawer does not close before the reveal appears.
+        if (root.openingGuard)
+            return;
+
+        root.outsidePressed();
+    }
+
     onLauncherVisibleChanged: {
         if (root.launcherVisible) {
+            root.openingGuard = true;
+            openingGuardTimer.restart();
             Qt.callLater(function() {
                 if (root.launcherVisible)
                     launcherFocusGrab.active = true;
 
             });
         } else {
+            root.openingGuard = false;
+            openingGuardTimer.stop();
             launcherFocusGrab.active = false;
         }
     }
 
+    Timer {
+        id: openingGuardTimer
+
+        interval: 180
+        repeat: false
+        onTriggered: root.openingGuard = false
+    }
+
     screen: targetScreen
-    visible: showLayer && (root.launcherVisible || launcherPanel.visible)
+    // Keep the layer mapped even when the drawer is closed. If the PanelWindow is
+    // unmapped, Qt drops icon textures and the next open visibly reloads every
+    // 256px app icon. The mask below is empty while closed, so this remains
+    // transparent and non-interactive.
+    visible: showLayer
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
@@ -76,7 +103,7 @@ PanelWindow {
         windows: [root]
         onCleared: {
             if (root.launcherVisible)
-                root.outsidePressed();
+                root.closeFromOutside();
 
         }
     }
@@ -95,7 +122,7 @@ PanelWindow {
                 if (root.forceOverlay && root.routeBarPress(mouse))
                     return ;
 
-                root.outsidePressed();
+                root.closeFromOutside();
             }
         }
 
@@ -105,7 +132,7 @@ PanelWindow {
             width: Math.max(0, Math.round(root.launcherRegionX))
             height: Math.max(0, Math.round(root.launcherRegionHeight))
             acceptedButtons: Qt.AllButtons
-            onPressed: root.outsidePressed()
+            onPressed: root.closeFromOutside()
         }
 
         MouseArea {
@@ -114,7 +141,7 @@ PanelWindow {
             width: Math.max(0, Math.round(parent.width - (root.launcherRegionX + root.launcherRegionWidth)))
             height: Math.max(0, Math.round(root.launcherRegionHeight))
             acceptedButtons: Qt.AllButtons
-            onPressed: root.outsidePressed()
+            onPressed: root.closeFromOutside()
         }
 
         MouseArea {
@@ -123,7 +150,7 @@ PanelWindow {
             width: parent.width
             height: Math.max(0, Math.round(parent.height - (root.launcherRegionY + root.launcherRegionHeight)))
             acceptedButtons: Qt.AllButtons
-            onPressed: root.outsidePressed()
+            onPressed: root.closeFromOutside()
         }
     }
 

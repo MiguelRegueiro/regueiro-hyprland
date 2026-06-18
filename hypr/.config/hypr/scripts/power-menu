@@ -15,11 +15,11 @@ case "$action" in
 esac
 
 case "$action" in
-    toggle | open | close | lock | suspend | logout | reboot | shutdown)
-        exec qs ipc call powermenu "$action"
+    toggle | open | close | lock | logout | reboot | shutdown)
+        exec /usr/local/bin/qs ipc --newest call powermenu "$action"
         ;;
     *)
-        printf 'Usage: %s [toggle|open|close|lock|suspend|logout|reboot|shutdown]\n' "$0" >&2
+        printf 'Usage: %s [toggle|open|close|lock|logout|reboot|shutdown]\n' "$0" >&2
         exit 2
         ;;
 esac

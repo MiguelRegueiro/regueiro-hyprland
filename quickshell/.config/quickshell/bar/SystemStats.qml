@@ -9,7 +9,7 @@ Row {
     property int cpuPct: 0
     property real ramUsedGb: 0
     // ── CPU polling ────────────────────────────────────────────
-    // Read /proc/stat twice to compute delta
+    // Read kern.cp_time twice to compute delta on FreeBSD.
     property var _prevIdle: 0
     property var _prevTotal: 0
 
@@ -26,24 +26,22 @@ Row {
     Process {
         id: cpuProc
 
-        command: ["bash", "-c", "awk 'NR==1{print $2,$3,$4,$5,$6,$7,$8}' /proc/stat"]
+        command: ["sh", "-c", "/sbin/sysctl -n kern.cp_time 2>/dev/null"]
 
         stdout: StdioCollector {
             id: cpuOut
 
             onStreamFinished: {
                 var parts = cpuOut.text.trim().split(/\s+/);
-                if (parts.length < 7)
+                if (parts.length < 5)
                     return ;
 
                 var user = parseInt(parts[0]);
                 var nice = parseInt(parts[1]);
                 var sys = parseInt(parts[2]);
-                var idle = parseInt(parts[3]);
-                var iowait = parseInt(parts[4]);
-                var irq = parseInt(parts[5]);
-                var softirq = parseInt(parts[6]);
-                var total = user + nice + sys + idle + iowait + irq + softirq;
+                var intr = parseInt(parts[3]);
+                var idle = parseInt(parts[4]);
+                var total = user + nice + sys + idle + intr;
                 var dTotal = total - root._prevTotal;
                 var dIdle = idle - root._prevIdle;
                 if (dTotal > 0)
@@ -68,7 +66,7 @@ Row {
     Process {
         id: ramProc
 
-        command: ["bash", "-c", "awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.1f\", (t-a)/1048576}' /proc/meminfo"]
+        command: ["sh", "-c", "active=$(/sbin/sysctl -n vm.stats.vm.v_active_count 2>/dev/null); wired=$(/sbin/sysctl -n vm.stats.vm.v_wire_count 2>/dev/null); pagesize=$(/sbin/sysctl -n hw.pagesize 2>/dev/null); if [ -n \"$active\" ] && [ -n \"$wired\" ] && [ -n \"$pagesize\" ]; then used=$(((active + wired) * pagesize)); awk -v used=\"$used\" 'BEGIN { printf \"%.1f\", used / 1073741824 }'; fi"]
 
         stdout: StdioCollector {
             id: ramOut
@@ -85,7 +83,7 @@ Row {
 
     // ── CPU display ────────────────────────────────────────────
     Rectangle {
-        height: root.barHeight - 8
+        height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: cpuRow.implicitWidth + 20
         radius: Theme.radiusSmall
         color: cpuHover.hovered ? Theme.hoverBg : "transparent"
@@ -135,7 +133,7 @@ Row {
 
     // ── RAM display ────────────────────────────────────────────
     Rectangle {
-        height: root.barHeight - 8
+        height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: ramRow.implicitWidth + 20
         radius: Theme.radiusSmall
         color: ramHover.hovered ? Theme.hoverBg : "transparent"

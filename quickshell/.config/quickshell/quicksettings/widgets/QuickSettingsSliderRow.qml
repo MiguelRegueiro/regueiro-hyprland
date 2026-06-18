@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
+import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 
 // Slider row: [icon]  [label]  [slider]  [mute button]
@@ -19,28 +20,60 @@ Item {
     property real actionIconOffsetX: 0
     property real backgroundRadius: Theme.radiusSmall
     property int emitInterval: 36
+    property real stepSize: 0
+    property real maxValue: 1
     readonly property bool showLabel: label.length > 0
     readonly property bool dragging: slider.pressed
     readonly property bool hovered: rowHover.hovered
     property real _displayValue: 0
     property real _pendingValue: 0
+    property real _lastEmittedValue: -1
 
     signal sliderMoved(real val)
     signal muteClicked()
     signal actionClicked()
 
     function clampValue(val) {
-        return Math.max(0, Math.min(1, val));
+        return Math.max(0, Math.min(Math.max(0.01, row.maxValue), val));
+    }
+
+    function snapValue(val) {
+        const clamped = row.clampValue(val);
+        if (row.stepSize <= 0)
+            return clamped;
+
+        return row.clampValue(Math.round(clamped / row.stepSize) * row.stepSize);
+    }
+
+    function emitPendingValue() {
+        if (Math.abs(row._pendingValue - row._lastEmittedValue) < 0.000001)
+            return ;
+
+        row._lastEmittedValue = row._pendingValue;
+        row.sliderMoved(row._pendingValue);
+    }
+
+    function queueSliderValue(val) {
+        row._pendingValue = val;
+        if (row.emitInterval <= 0) {
+            emitTimer.stop();
+            row.emitPendingValue();
+            return ;
+        }
+
+        emitTimer.restart();
     }
 
     function syncFromSource() {
         if (!slider.pressed)
-            row._displayValue = row.muted ? 0 : row.clampValue(row.value);
+            row._displayValue = row.muted ? 0 : row.snapValue(row.value);
 
     }
 
     Layout.fillWidth: true
     height: 56
+    scale: row.dragging ? 1.006 : (row.hovered ? 1.004 : 1)
+    transformOrigin: Item.Center
     onValueChanged: syncFromSource()
     onMutedChanged: syncFromSource()
     Component.onCompleted: syncFromSource()
@@ -50,7 +83,7 @@ Item {
 
         interval: row.emitInterval
         repeat: false
-        onTriggered: row.sliderMoved(row._pendingValue)
+        onTriggered: row.emitPendingValue()
     }
 
     Rectangle {
@@ -177,29 +210,29 @@ Item {
                     width: parent.width
                     height: 24
                     from: 0
-                    to: 1
+                    to: Math.max(0.01, row.maxValue)
+                    stepSize: row.stepSize
                     live: true
                     value: row._displayValue
                     enabled: !row.muted
                     onMoved: {
-                        row._displayValue = row.clampValue(value);
-                        row._pendingValue = row._displayValue;
-                        emitTimer.restart();
+                        row._displayValue = row.snapValue(value);
+                        row.queueSliderValue(row._displayValue);
                     }
                     onValueChanged: {
                         if (!slider.pressed)
                             return ;
 
-                        row._displayValue = row.clampValue(value);
-                        row._pendingValue = row._displayValue;
-                        emitTimer.restart();
+                        row._displayValue = row.snapValue(value);
+                        row.queueSliderValue(row._displayValue);
                     }
                     onPressedChanged: {
                         if (slider.pressed)
                             return ;
 
                         emitTimer.stop();
-                        row.sliderMoved(row._displayValue);
+                        row._pendingValue = row._displayValue;
+                        row.emitPendingValue();
                     }
 
                     background: Rectangle {
@@ -223,6 +256,16 @@ Item {
 
                             }
 
+                            Behavior on width {
+                                enabled: !slider.pressed
+
+                                Components.Anim {
+                                    curve: Components.Anim.FastEffects
+                                    duration: Theme.animDurFastEffects
+                                }
+
+                            }
+
                         }
 
                     }
@@ -232,9 +275,19 @@ Item {
                         y: slider.topPadding + slider.availableHeight / 2 - height / 2
                         width: 18
                         height: 18
+                        scale: slider.pressed ? 1.16 : (row.hovered ? 1.08 : 1)
+                        transformOrigin: Item.Center
                         radius: 9
                         color: "white"
                         opacity: 1
+
+                        Behavior on scale {
+                            Components.Anim {
+                                curve: Components.Anim.FastEffects
+                                duration: Theme.animDurFastEffects
+                            }
+
+                        }
                     }
 
                 }
@@ -293,4 +346,11 @@ Item {
 
     }
 
+    Behavior on scale {
+        Components.Anim {
+            curve: Components.Anim.FastEffects
+            duration: Theme.animDurFastEffects
+        }
+
+    }
 }

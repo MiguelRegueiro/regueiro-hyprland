@@ -11,7 +11,7 @@ Item {
     readonly property bool available: maxValue > 0
     // Edit this list to change the brightness stops.
     // All values are percentages (0–100). Tune freely.
-    readonly property var stops: [2, 4, 8, 12, 18, 26, 36, 50, 66, 80, 90, 100]
+    readonly property var stops: [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90, 100]
     readonly property string iconText: {
         if (percent < 34)
             return "󰃞";
@@ -33,8 +33,12 @@ Item {
     function setPercent(nextPercent) {
         const clamped = Math.max(0, Math.min(100, Math.round(nextPercent)));
         root.percent = clamped;
-        root.rawValue = root.maxValue > 0 ? Math.round(clamped * root.maxValue / 100) : 0;
-        setBrightness.command = ["brightnessctl", "set", clamped + "%"];
+        root.maxValue = 100;
+        root.rawValue = clamped;
+        setBrightness.command = [
+            "/home/regueiro/.config/hypr/scripts/brightness-set.sh",
+            String(clamped)
+        ];
         setBrightness.running = true;
         root.adjusted();
         refreshSoon.restart();
@@ -42,7 +46,7 @@ Item {
 
     function adjust(direction) {
         if (root.maxValue <= 0)
-            return ;
+            root.maxValue = 100;
 
         const current = root.percent;
         let target;
@@ -60,8 +64,11 @@ Item {
             return ;
 
         root.percent = target;
-        root.rawValue = Math.round(target * root.maxValue / 100);
-        setBrightness.command = ["brightnessctl", "set", target + "%"];
+        root.rawValue = target;
+        setBrightness.command = [
+            "/home/regueiro/.config/hypr/scripts/brightness-set.sh",
+            String(target)
+        ];
         setBrightness.running = true;
         root.adjusted();
         refreshSoon.restart();
@@ -86,18 +93,27 @@ Item {
     Process {
         id: brightnessPoll
 
-        command: ["bash", "-c", "b=$(cat /sys/class/backlight/*/brightness 2>/dev/null | head -1); m=$(cat /sys/class/backlight/*/max_brightness 2>/dev/null | head -1); echo \"${b:-0} ${m:-0}\""]
+        command: [
+            "sh",
+            "-c",
+            "if [ -x /usr/bin/backlight ]; then /usr/bin/backlight -q 2>/dev/null; else printf 'brightness: 0\\n'; fi"
+        ]
 
         stdout: StdioCollector {
             id: brightnessOut
 
             onStreamFinished: {
-                const parts = brightnessOut.text.trim().split(" ");
-                const current = parseInt(parts[0]) || 0;
-                const max = parseInt(parts[1]) || 0;
-                root.maxValue = max;
+                const text = brightnessOut.text.trim();
+                let current = 0;
+                if (/^[0-9]+$/.test(text)) {
+                    current = parseInt(text) || 0;
+                } else {
+                    const match = text.match(/brightness:\s*([0-9]+)/i);
+                    current = match ? (parseInt(match[1]) || 0) : 0;
+                }
+                root.maxValue = 100;
                 root.rawValue = current;
-                root.percent = max > 0 ? Math.round(current * 100 / max) : 0;
+                root.percent = Math.max(0, Math.min(100, current));
             }
         }
 
@@ -107,6 +123,7 @@ Item {
         id: setBrightness
 
         command: ["echo"]
+        onExited: root.refresh()
     }
 
     IpcHandler {

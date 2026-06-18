@@ -29,6 +29,12 @@ Item {
         location: Qt.resolvedUrl("../notification-times.ini")
     }
 
+    Settings {
+        id: notificationPrefs
+        category: "NotificationPreferences"
+        location: Qt.resolvedUrl(Quickshell.statePath("notification-preferences.ini"))
+    }
+
     onPopupSuppressedChanged: {
         if (popupSuppressed)
             popups = []
@@ -85,8 +91,35 @@ Item {
         root.allDismissed()
     }
 
+    function storedBool(key, fallback) {
+        const value = notificationPrefs.value(key, fallback)
+        if (typeof value === "boolean")
+            return value
+
+        if (typeof value === "number")
+            return value !== 0
+
+        const normalized = String(value).toLowerCase()
+        if (normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on")
+            return true
+
+        if (normalized === "false" || normalized === "0" || normalized === "no" || normalized === "off")
+            return false
+
+        return fallback
+    }
+
+    function setDnd(enabled) {
+        const next = !!enabled
+        if (dnd === next)
+            return
+
+        dnd = next
+        notificationPrefs.setValue("dnd", next)
+    }
+
     function toggleDnd() {
-        dnd = !dnd
+        root.setDnd(!dnd)
     }
 
     function hasDefaultAction(notif) {
@@ -118,6 +151,10 @@ Item {
             return "󰂯"
 
         return ""
+    }
+
+    Component.onCompleted: {
+        dnd = root.storedBool("dnd", false)
     }
 
     NotificationServer {

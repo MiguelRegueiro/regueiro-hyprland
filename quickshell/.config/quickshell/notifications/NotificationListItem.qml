@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell.Services.Notifications
+import "../components" as Components
 import "../theme/Theme.js" as Theme
 import "../utils/DateUtils.js" as DateUtils
 
@@ -31,6 +32,8 @@ Item {
         width: parent.width
         implicitHeight: content.implicitHeight + 26
         radius: Theme.qsRadius + 1
+        scale: root.canActivate && cardHover.hovered ? 1.006 : 1
+        transformOrigin: Item.Center
         color: root.cardColor
         border.width: 1
         border.color: root.cardBorderColor
@@ -79,6 +82,13 @@ Item {
             shadowVerticalOffset: 1
             shadowHorizontalOffset: 0
             blurMax: 18
+        }
+
+        Behavior on scale {
+            Components.Anim {
+                curve: Components.Anim.DefaultEffects
+                duration: Theme.hoverAnimDuration
+            }
         }
 
     }

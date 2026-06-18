@@ -1,3 +1,5 @@
-#!/bin/bash
+#!/bin/sh
 
-/usr/bin/qs ipc --newest call brightness decrease
+/usr/local/bin/qs ipc --newest call brightness decrease
+sleep 0.2
+"$HOME/.config/hypr/scripts/brightness-store.sh" current

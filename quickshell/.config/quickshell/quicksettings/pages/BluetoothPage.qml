@@ -348,10 +348,10 @@ Item {
                                         root._actingMac = devRow.modelData.mac;
                                         root._actingIsDisconn = devRow.modelData.connected;
                                         if (devRow.modelData.connected) {
-                                            btDisconnProc.command = ["bluetoothctl", "disconnect", devRow.modelData.mac];
+                                            btDisconnProc.command = [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-bluetooth.sh", "disconnect", devRow.modelData.mac];
                                             btDisconnProc.running = true;
                                         } else {
-                                            btConnProc.command = ["bluetoothctl", "connect", devRow.modelData.mac];
+                                            btConnProc.command = [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-bluetooth.sh", "connect", devRow.modelData.mac];
                                             btConnProc.running = true;
                                         }
                                         actionTimeout.restart();
@@ -517,7 +517,7 @@ Item {
     Process {
         id: pollProc
 
-        command: ["bash", "-c", "echo \"bt:$(/usr/bin/bluetoothctl show 2>/dev/null | awk '/Powered:/{print $2}')\";" + "connected=$(/usr/bin/bluetoothctl devices Connected 2>/dev/null | awk '{print $2}' | tr '\\n' ' ');" + "/usr/bin/bluetoothctl devices Paired 2>/dev/null | while read _ mac name; do " + "  if echo \"$connected\" | grep -qF \"$mac\"; then echo \"DEV|$mac|${name}|yes\"; " + "  else echo \"DEV|$mac|${name}|no\"; fi; done"]
+        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-bluetooth.sh", "poll"]
 
         stdout: StdioCollector {
             id: pollData
@@ -554,13 +554,13 @@ Item {
     Process {
         id: btToggleProc
 
-        command: [Quickshell.env("HOME") + "/.config/hypr/scripts/bt-toggle.sh"]
+        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-bluetooth.sh", "toggle"]
     }
 
     Process {
         id: searchProc
 
-        command: ["blueman-manager"]
+        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-bluetooth.sh", "settings"]
     }
 
     Process {

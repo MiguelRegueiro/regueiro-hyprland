@@ -1,3 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
-/usr/bin/qs ipc --newest call audio increase 2
+/usr/local/bin/qs ipc --newest call audio increase 5

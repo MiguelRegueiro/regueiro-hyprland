@@ -9,3 +9,7 @@ quickshell/.config/quickshell/notification-times.ini
 
 # editor/AI session dirs
 .codex
+
+# crash dumps / generated cores
+*.core
+core

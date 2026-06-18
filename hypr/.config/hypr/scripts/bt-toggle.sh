@@ -1,7 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
-if /usr/bin/bluetoothctl show | grep -q "Powered: yes"; then
-    /usr/bin/bluetoothctl power off
-else
-    /usr/bin/bluetoothctl power on
-fi
+"$HOME/.config/quickshell/scripts/freebsd-bluetooth.sh" toggle

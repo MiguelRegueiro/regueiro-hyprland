@@ -1,15 +1,27 @@
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+
   "logo": {
-    "type": "kitty",
-    "source": "~/.config/fastfetch/CachyOS3.png",
-    "width": 38,
+    "type": "file",
+    "source": "/home/regueiro/regueiro-hyprland/fastfetch/.config/fastfetch/freebsd-logo.txt",
+    "color":  {
+      "1": "#eb3325",
+      "2": "#eb3325",
+      "3": "#eb3325",
+      "4": "#eb3325",
+      "5": "#eb3325"
+    },
     "padding": {
-      "top": 3,
-      "left": 2,
+      "top": 0,
+      "left": 1,
       "right": 2
     }
   },
+
+  "display": {
+    "separator": " : "
+  },
+
   "modules": [
     "break",
 
@@ -17,32 +29,33 @@
     {
       "type": "host",
       "key": "PC",
-      "keyColor": "#04b4e0"
+      "keyColor": "#FB4934"
     },
     {
       "type": "cpu",
       "key": "CPU",
-      "keyColor": "#04b4e0"
+      "keyColor": "#FB4934"
     },
     {
       "type": "gpu",
       "key": "GPU",
-      "keyColor": "#04b4e0"
+      "keyColor": "#FB4934"
     },
     {
       "type": "memory",
       "key": "RAM",
-      "keyColor": "#04b4e0"
+      "keyColor": "#FB4934"
     },
     {
       "type": "swap",
       "key": "Swap",
-      "keyColor": "#04b4e0"
+      "keyColor": "#FB4934"
     },
     {
       "type": "disk",
       "key": "Disk",
-      "keyColor": "#04b4e0"
+      "keyColor": "#FB4934",
+      "folders": "/"
     },
 
     "break",
@@ -51,38 +64,32 @@
     {
       "type": "os",
       "key": "OS",
-      "keyColor": "#527cfa"
+      "keyColor": "#FE8019"
     },
     {
       "type": "kernel",
       "key": "Kernel",
-      "keyColor": "#527cfa"
+      "keyColor": "#fe4719"
     },
     {
       "type": "bios",
       "key": "UEFI",
-      "keyColor": "#527cfa"
+      "keyColor": "#fe4719"
     },
     {
-      "type": "de",
-      "key": "DE",
-      "keyColor": "#527cfa"
-    },
-    {
-      "type": "command",
+      "type": "packages",
       "key": "Packages",
-      "keyColor": "#527cfa",
-      "text": "[ -f \"$HOME/.cache/fastfetch/packages.txt\" ] && cat \"$HOME/.cache/fastfetch/packages.txt\" || echo \"refresh pending\""
+      "keyColor": "#FE8019"
     },
     {
       "type": "shell",
       "key": "Shell",
-      "keyColor": "#527cfa"
+      "keyColor": "#fe4719"
     },
     {
       "type": "terminal",
       "key": "Terminal",
-      "keyColor": "#527cfa"
+      "keyColor": "#fe4719"
     },
 
     "break",
@@ -91,23 +98,24 @@
     {
       "type": "command",
       "key": "OS Age ",
-      "keyColor": "#0388e1",
-      "text": "install_epoch=$(stat -c %W /); printf '%s days\\n' \"$((( $(date +%s) - install_epoch ) / 86400))\""
+      "keyColor": "#C1121F",
+      "text": "install_epoch=$(stat -f %B /); printf '%s days\\n' \"$((( $(date +%s) - install_epoch ) / 86400))\""
     },
     {
       "type": "uptime",
       "key": "Uptime ",
-      "keyColor": "#0388e1"
+      "keyColor": "#C1121F"
     },
     {
       "type": "datetime",
       "key": "DateTime ",
-      "keyColor": "#0388e1"
+      "keyColor": "#C1121F"
     },
     {
       "type": "battery",
       "format": "{/4}{-}{/}{4}{?5} [{5}]{?}",
-      "keyColor": "#0388e1"
+      "key": "Battery",
+      "keyColor": "#C1121F"
     }
   ]
 }

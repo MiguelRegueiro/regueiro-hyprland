@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/local/bin/bash
 
 action="${1:-cycle-next}"
 shift || true

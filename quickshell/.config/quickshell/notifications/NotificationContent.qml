@@ -16,7 +16,7 @@ Item {
     readonly property bool hasImage: imageSource.length > 0
     readonly property int imageSize: !hasImage ? 0 : (root.minimalChrome ? Theme.notificationImageMinimalSize : (root.compact ? Theme.notificationImageCompactSize : Theme.notificationImageSize))
     readonly property int iconSize: root.minimalChrome ? 26 : (root.compact ? 28 : 34)
-    readonly property int closeSize: root.minimalChrome ? 18 : (root.compact ? 24 : 28)
+    readonly property int closeSize: root.minimalChrome ? 22 : (root.compact ? 24 : 28)
 
     signal dismissRequested()
 
@@ -100,10 +100,12 @@ Item {
                 verticalAlignment: Text.AlignVCenter
             }
 
-            Item {
+            Rectangle {
                 width: root.closeSize
                 height: width
                 Layout.alignment: Qt.AlignVCenter
+                radius: width / 2
+                color: closeHover.hovered ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
 
                 Text {
                     anchors.centerIn: parent
