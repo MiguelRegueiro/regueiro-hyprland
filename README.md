@@ -37,7 +37,7 @@ doas pkg install -y git stow \
     drm-61-kmod gpu-firmware-kmod \
     libva libva-intel-media-driver libva-utils \
     wl-clipboard cliphist grim slurp playerctl jq \
-    bsdisks upower \
+    bsdisks fusefs-ext2 e2fsprogs upower \
     linux_base-rl9 linux-discord \
     noto noto-basic noto-emoji liberation-fonts-ttf dejavu \
     cpu-microcode-intel cpu-microcode-rc
@@ -106,6 +106,19 @@ pw groupmod operator -m "$USER"
 pw groupmod video -m "$USER"
 ```
 
+External drive support uses `bsdisks` as the UDisks2-compatible backend.
+Install `fusefs-ext2` and `e2fsprogs` for ext2/3/4 USB drives, and load FUSE
+at boot:
+
+```sh
+doas sysrc kld_list+="fusefs"
+doas kldload fusefs
+```
+
+FreeBSD can mount ext drives, but the ext/FUSE path is noticeably slower than
+Linux for trees with many small files, such as icon themes. For a USB drive
+shared between Linux and FreeBSD, exFAT is usually the smoother filesystem.
+
 ## Install
 
 ```sh
@@ -121,8 +134,10 @@ file and create a conflict.
 Install cursor and fonts:
 
 ```sh
+ln -sfn ~/regueiro-hyprland/icons/MacTahoe-dark ~/.local/share/icons/MacTahoe-dark
 cp -r icons/Bibata-Modern-Classic ~/.local/share/icons/
 mkdir -p ~/.icons
+ln -sfn ~/.local/share/icons/MacTahoe-dark ~/.icons/MacTahoe-dark
 ln -s ~/.local/share/icons/Bibata-Modern-Classic ~/.icons/Bibata-Modern-Classic
 
 cp -r fonts/. ~/.local/share/fonts/

@@ -13,3 +13,6 @@ quickshell/.config/quickshell/notification-times.ini
 # crash dumps / generated cores
 *.core
 core
+
+# generated icon theme caches
+icon-theme.cache
