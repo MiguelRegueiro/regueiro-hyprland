@@ -128,6 +128,8 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
                 iconText: "󰅌"
+                iconSize: 15 + Theme.fontSizeDelta
+                padH: 7
                 onClicked: bar.clipboardClicked()
             }
 

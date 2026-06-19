@@ -10,16 +10,16 @@ Item {
     signal clicked()
     signal rightClicked()
 
-    implicitWidth: 32
+    implicitWidth: 34
     implicitHeight: barHeight
 
     readonly property int sessionCount: sshService && sshService.sessions ? sshService.sessions.length : 0
 
     Rectangle {
         anchors.centerIn: parent
-        width: 28
-        height: 26
-        radius: 13
+        width: 34
+        height: Math.min(root.barHeight, Theme.barItemHeight)
+        radius: Theme.radiusSmall
         color: hover.hovered ? Theme.hoverBg : "transparent"
 
         Text {
@@ -54,6 +54,12 @@ Item {
                 font.family: Theme.fontUi
                 font.pixelSize: 9 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
+            }
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.hoverAnimDuration
             }
         }
     }
