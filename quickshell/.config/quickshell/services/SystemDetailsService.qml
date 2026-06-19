@@ -34,7 +34,7 @@ Item {
     }
 
     function formatGb(value) {
-        return `${Number(value || 0).toFixed(1)}G`;
+        return `${Number(value || 0).toFixed(1)} GB`;
     }
 
     function parseTopRows(lines, startIndex, normalizeCpu) {
@@ -198,7 +198,7 @@ Item {
     Process {
         id: ramProc
 
-        command: ["sh", "-c", "printf 'mem\\t'; printf '%s\\t' $(sysctl -n hw.physmem vm.stats.vm.v_active_count vm.stats.vm.v_wire_count vm.stats.vm.v_inactive_count vm.stats.vm.v_free_count hw.pagesize 2>/dev/null); printf '\\n'; printf 'swap\\t'; swapinfo -k 2>/dev/null | awk 'NR == 2 { printf \"%.1fG / %.1fG (%s)\", $3 / 1048576, $2 / 1048576, $5 }'; printf '\\n'; printf 'top\\n'; ps -axo rss,pcpu,pid,user,comm | awk 'NR > 1 { printf \"%s %s %s %s %s\\n\", $1, $2, $3, $4, $5 }' | sort -nr | head -5"]
+        command: ["sh", "-c", "printf 'mem\\t'; printf '%s\\t' $(sysctl -n hw.physmem vm.stats.vm.v_active_count vm.stats.vm.v_wire_count vm.stats.vm.v_inactive_count vm.stats.vm.v_free_count hw.pagesize 2>/dev/null); printf '\\n'; printf 'swap\\t'; swapinfo -k 2>/dev/null | awk 'NR == 2 { printf \"%.1f GB / %.1f GB (%s)\", $3 / 1048576, $2 / 1048576, $5 }'; printf '\\n'; printf 'top\\n'; ps -axo rss,pcpu,pid,user,comm | awk 'NR > 1 { printf \"%s %s %s %s %s\\n\", $1, $2, $3, $4, $5 }' | sort -nr | head -5"]
 
         stdout: StdioCollector {
             id: ramOut

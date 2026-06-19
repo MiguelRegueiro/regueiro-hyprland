@@ -227,7 +227,7 @@ PanelWindow {
                                         Layout.fillWidth: true
                                         text: root.detailsService.cpuTemp.length > 0 ? `${root.detailsService.cpuCores} threads · ${root.detailsService.cpuTemp}` : `${root.detailsService.cpuCores} threads`
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 12 + Theme.fontSizeDelta
+                                        font.pixelSize: 13 + Theme.fontSizeDelta
                                         color: Theme.textDim
                                         elide: Text.ElideRight
                                     }
@@ -269,7 +269,7 @@ PanelWindow {
                                             Layout.preferredWidth: 18
                                             text: `C${index + 1}`
                                             font.family: Theme.fontUi
-                                            font.pixelSize: 10 + Theme.fontSizeDelta
+                                            font.pixelSize: 12 + Theme.fontSizeDelta
                                             color: Theme.textDim
                                         }
 
@@ -291,7 +291,7 @@ PanelWindow {
                                             Layout.preferredWidth: 32
                                             text: `${modelData}%`
                                             font.family: Theme.fontUi
-                                            font.pixelSize: 11 + Theme.fontSizeDelta
+                                            font.pixelSize: 12 + Theme.fontSizeDelta
                                             color: Theme.textDim
                                             horizontalAlignment: Text.AlignRight
                                         }

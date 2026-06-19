@@ -29,11 +29,6 @@ PanelWindow {
 
     signal closeRequested()
 
-    function memLabel(kb) {
-        const value = Number(kb || 0) / 1048576;
-        return `${value.toFixed(value >= 10 ? 0 : 1)}G`;
-    }
-
     function usedPercent() {
         if (root.detailsService.ramTotalGb <= 0)
             return 0;
@@ -218,7 +213,6 @@ PanelWindow {
                                 }
 
                                 Text {
-                                    Layout.fillWidth: true
                                     text: "Memory"
                                     font.family: Theme.fontUi
                                     font.pixelSize: 14 + Theme.fontSizeDelta
@@ -229,8 +223,12 @@ PanelWindow {
                                 Text {
                                     text: `${root.detailsService.formatGb(root.detailsService.ramUsedGb)} / ${root.detailsService.formatGb(root.detailsService.ramTotalGb)}`
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 11 + Theme.fontSizeDelta
+                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                     color: Theme.textDim
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
                                 }
                             }
                         }
@@ -256,7 +254,7 @@ PanelWindow {
                                 Text {
                                     text: `${root.usedPercent()}%`
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 18 + Theme.fontSizeDelta
+                                    font.pixelSize: 14 + Theme.fontSizeDelta
                                     font.weight: Font.DemiBold
                                     color: Theme.textPrimary
                                 }
@@ -330,7 +328,7 @@ PanelWindow {
                                             Text {
                                                 text: modelData.value
                                                 font.family: Theme.fontUi
-                                                font.pixelSize: 13 + Theme.fontSizeDelta
+                                                font.pixelSize: 12 + Theme.fontSizeDelta
                                                 font.weight: Font.DemiBold
                                                 color: Theme.textPrimary
                                             }
@@ -362,8 +360,8 @@ PanelWindow {
                                     }
 
                                     Text {
-                                        text: root.detailsService.swapText.length > 0 ? root.detailsService.swapText : "0.0G / 0.0G"
-                                            font.family: Theme.fontUi
+                                        text: root.detailsService.swapText.length > 0 ? root.detailsService.swapText : "0.0 GB / 0.0 GB"
+                                        font.family: Theme.fontUi
                                         font.pixelSize: 12 + Theme.fontSizeDelta
                                         font.weight: Font.DemiBold
                                         color: Theme.textPrimary

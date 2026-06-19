@@ -168,7 +168,7 @@ Row {
             }
 
             Text {
-                text: root.ramUsedGb.toFixed(1) + "G"
+                text: root.ramUsedGb.toFixed(1) + "GB"
                 font.family: Theme.fontUi
                 font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
