@@ -65,7 +65,7 @@ Rectangle {
             Layout.fillWidth: true
             text: pill.active ? pill.message : " "
             font.family: Theme.fontUi
-            font.pixelSize: 11
+            font.pixelSize: 11 + Theme.fontSizeDelta
             font.weight: Font.Medium
             color: pill.labelColor
             elide: Text.ElideRight

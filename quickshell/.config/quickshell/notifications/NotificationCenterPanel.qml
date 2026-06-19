@@ -399,7 +399,7 @@ Item {
                                             text: "Notifications"
                                             color: Theme.textPrimary
                                             font.family: Theme.fontUi
-                                            font.pixelSize: 14
+                                            font.pixelSize: 14 + Theme.fontSizeDelta
                                             font.weight: Font.DemiBold
                                         }
 
@@ -418,7 +418,7 @@ Item {
                                                 text: String(root.notificationStore.count)
                                                 color: Theme.textPrimary
                                                 font.family: Theme.fontUi
-                                                font.pixelSize: 12
+                                                font.pixelSize: 12 + Theme.fontSizeDelta
                                                 font.weight: Font.DemiBold
                                                 horizontalAlignment: Text.AlignHCenter
                                                 verticalAlignment: Text.AlignVCenter
@@ -450,7 +450,7 @@ Item {
                                         text: "Clear"
                                         color: clearHover.hovered ? Theme.textPrimary : Theme.textDim
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 12
+                                        font.pixelSize: 12 + Theme.fontSizeDelta
                                         font.weight: Font.DemiBold
                                     }
 
@@ -497,7 +497,7 @@ Item {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         text: "󰂜"
                                         font.family: Theme.fontIcons
-                                        font.pixelSize: 28
+                                        font.pixelSize: 28 + Theme.fontSizeDelta
                                         color: Theme.textDisabled
                                     }
 
@@ -506,7 +506,7 @@ Item {
                                         text: "No notifications"
                                         color: Theme.textPrimary
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 14
+                                        font.pixelSize: 14 + Theme.fontSizeDelta
                                         font.weight: Font.DemiBold
                                     }
 

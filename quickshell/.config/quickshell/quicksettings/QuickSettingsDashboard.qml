@@ -128,7 +128,7 @@ Item {
                                 return batteryInfo.percent + "%" + (t ? " · " + t : "");
                             }
                             font.family: Theme.fontUi
-                            font.pixelSize: 13
+                            font.pixelSize: 13 + Theme.fontSizeDelta
                             color: Theme.textDim
                         }
 
@@ -155,7 +155,7 @@ Item {
                         anchors.centerIn: parent
                         text: "\uf08b"
                         font.family: Theme.fontIcons
-                        font.pixelSize: 16
+                        font.pixelSize: 16 + Theme.fontSizeDelta
                         color: Theme.textPrimary
                     }
 
@@ -211,7 +211,7 @@ Item {
                         anchors.centerIn: parent
                         text: "󰌾"
                         font.family: Theme.fontIcons
-                        font.pixelSize: 17
+                        font.pixelSize: 17 + Theme.fontSizeDelta
                         color: Theme.textPrimary
                     }
 
@@ -270,7 +270,7 @@ Item {
                         anchors.horizontalCenterOffset: 1
                         text: "󰐥"
                         font.family: Theme.fontIcons
-                        font.pixelSize: 17
+                        font.pixelSize: 17 + Theme.fontSizeDelta
                         color: Theme.textPrimary
                     }
 

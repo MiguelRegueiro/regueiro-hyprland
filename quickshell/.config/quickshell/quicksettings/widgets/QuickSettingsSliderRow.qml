@@ -145,7 +145,7 @@ Item {
                 Text {
                     text: row.iconText
                     font.family: Theme.fontIcons
-                    font.pixelSize: 16
+                    font.pixelSize: 16 + Theme.fontSizeDelta
                     color: row.muted ? Theme.textDisabled : Theme.textPrimary
                 }
 
@@ -199,7 +199,7 @@ Item {
                     text: row.label
                     color: Theme.textPrimary
                     font.family: Theme.fontUi
-                    font.pixelSize: 12
+                    font.pixelSize: 12 + Theme.fontSizeDelta
                     elide: Text.ElideRight
                     width: parent.width
                 }
@@ -311,7 +311,7 @@ Item {
                 anchors.horizontalCenterOffset: row.actionIconOffsetX
                 text: row.actionIconText
                 font.family: Theme.fontIcons
-                font.pixelSize: 15
+                font.pixelSize: 15 + Theme.fontSizeDelta
                 color: row.actionButtonActive ? Theme.textPrimary : Theme.textDim
             }
 

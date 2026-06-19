@@ -97,7 +97,7 @@ Item {
                 text: "Output Device"
                 color: Theme.textPrimary
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
             }
 
@@ -106,7 +106,7 @@ Item {
                 text: popupRoot.audioService.currentSinkName.length > 0 ? popupRoot.audioService.currentSinkName : "No active output"
                 color: Theme.textDim
                 font.family: Theme.fontUi
-                font.pixelSize: 11
+                font.pixelSize: 11 + Theme.fontSizeDelta
                 elide: Text.ElideRight
             }
 
@@ -185,7 +185,7 @@ Item {
                             anchors.centerIn: parent
                             text: popupRoot.audioService.sinkIconText(modelData)
                             font.family: Theme.fontIcons
-                            font.pixelSize: 15
+                            font.pixelSize: 15 + Theme.fontSizeDelta
                             color: active ? Theme.textPrimary : Theme.textDim
                         }
 
@@ -201,7 +201,7 @@ Item {
                             text: popupRoot.audioService.sinkDisplayName(modelData)
                             color: active ? Theme.textPrimary : Theme.textPrimary
                             font.family: Theme.fontUi
-                            font.pixelSize: 12
+                            font.pixelSize: 12 + Theme.fontSizeDelta
                             font.weight: active ? Font.DemiBold : Font.Medium
                             elide: Text.ElideRight
                         }
@@ -212,7 +212,7 @@ Item {
                             text: secondaryText
                             color: Theme.textDim
                             font.family: Theme.fontUi
-                            font.pixelSize: 10
+                            font.pixelSize: 10 + Theme.fontSizeDelta
                             elide: Text.ElideRight
                         }
 
@@ -280,7 +280,7 @@ Item {
             text: "No output devices found"
             color: Theme.textDim
             font.family: Theme.fontUi
-            font.pixelSize: 11
+            font.pixelSize: 11 + Theme.fontSizeDelta
         }
 
         layer.effect: MultiEffect {

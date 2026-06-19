@@ -115,7 +115,7 @@ Item {
                     text: root.monthTitle
                     color: Theme.textPrimary
                     font.family: Theme.fontUi
-                    font.pixelSize: 14
+                    font.pixelSize: 14 + Theme.fontSizeDelta
                     font.weight: Font.DemiBold
                 }
 
@@ -123,7 +123,7 @@ Item {
                     text: root.todayTitle
                     color: Theme.textDim
                     font.family: Theme.fontUi
-                    font.pixelSize: 11
+                    font.pixelSize: 11 + Theme.fontSizeDelta
                 }
 
             }
@@ -149,7 +149,7 @@ Item {
                         text: "‹"
                         color: Theme.textPrimary
                         font.family: Theme.fontUi
-                        font.pixelSize: 16
+                        font.pixelSize: 16 + Theme.fontSizeDelta
                         font.weight: Font.DemiBold
                     }
 
@@ -193,7 +193,7 @@ Item {
                         text: "›"
                         color: Theme.textPrimary
                         font.family: Theme.fontUi
-                        font.pixelSize: 16
+                        font.pixelSize: 16 + Theme.fontSizeDelta
                         font.weight: Font.DemiBold
                     }
 
@@ -249,7 +249,7 @@ Item {
                         text: modelData
                         color: Theme.textDisabled
                         font.family: Theme.fontUi
-                        font.pixelSize: 10
+                        font.pixelSize: 10 + Theme.fontSizeDelta
                         font.weight: Font.DemiBold
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -306,7 +306,7 @@ Item {
                             text: String(parent.dateValue.getDate())
                             color: parent.selected ? Theme.textPrimary : parent.inVisibleMonth ? (parent.isWeekend ? Theme.textDim : Theme.textPrimary) : Theme.textDisabled
                             font.family: Theme.fontUi
-                            font.pixelSize: 12
+                            font.pixelSize: 12 + Theme.fontSizeDelta
                             font.weight: parent.selected || parent.isToday ? Font.DemiBold : Font.Medium
                         }
 
@@ -343,7 +343,7 @@ Item {
                 text: "Today"
                 color: Theme.textPrimary
                 font.family: Theme.fontUi
-                font.pixelSize: 12
+                font.pixelSize: 12 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
             }
 

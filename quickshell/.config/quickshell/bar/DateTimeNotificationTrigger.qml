@@ -48,7 +48,7 @@ Row {
                 text: root.doNotDisturb ? "󰂛" : root.hasNotification ? "󰂚" : "󰂜"
                 color: root.doNotDisturb ? Theme.textDisabled : root.hasNotification ? Theme.textPrimary : Theme.textDim
                 font.family: Theme.fontIcons
-                font.pixelSize: 14
+                font.pixelSize: 14 + Theme.fontSizeDelta
             }
 
             Rectangle {
@@ -63,7 +63,7 @@ Row {
                 text: DateUtils.formatBarTime(clock.date)
                 color: Theme.textPrimary
                 font.family: Theme.fontUi
-                font.pixelSize: 14
+                font.pixelSize: 14 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
             }
 

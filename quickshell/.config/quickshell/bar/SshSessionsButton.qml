@@ -26,7 +26,7 @@ Item {
             anchors.centerIn: parent
             text: ""
             font.family: Theme.fontIcons
-            font.pixelSize: 14
+            font.pixelSize: 14 + Theme.fontSizeDelta
             font.weight: Font.DemiBold
             color: root.sessionCount > 0 ? Theme.textPrimary : Theme.textDim
         }
@@ -52,7 +52,7 @@ Item {
                 text: root.sessionCount > 9 ? "9+" : String(root.sessionCount)
                 color: Theme.textPrimary
                 font.family: Theme.fontUi
-                font.pixelSize: 9
+                font.pixelSize: 9 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
             }
         }

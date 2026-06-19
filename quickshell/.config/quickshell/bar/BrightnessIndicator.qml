@@ -29,7 +29,7 @@ Rectangle {
         Text {
             text: root.brightnessService.percent + "%"
             font.family: Theme.fontUi
-            font.pixelSize: 13
+            font.pixelSize: 13 + Theme.fontSizeDelta
             color: Theme.textDim
             anchors.verticalCenter: parent.verticalCenter
         }

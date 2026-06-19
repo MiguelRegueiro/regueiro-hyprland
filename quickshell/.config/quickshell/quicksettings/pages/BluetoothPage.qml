@@ -74,7 +74,7 @@ Item {
                         anchors.centerIn: parent
                         text: "󰁍"
                         font.family: Theme.fontIcons
-                        font.pixelSize: 18
+                        font.pixelSize: 18 + Theme.fontSizeDelta
                         color: Theme.textPrimary
                     }
 
@@ -114,7 +114,7 @@ Item {
                 Text {
                     text: root.btOn ? "󰂯" : "󰂲"
                     font.family: Theme.fontIcons
-                    font.pixelSize: 18
+                    font.pixelSize: 18 + Theme.fontSizeDelta
                     color: root.btOn ? Theme.accent : Theme.textDim
                     Layout.preferredWidth: 24
                     horizontalAlignment: Text.AlignHCenter
@@ -128,7 +128,7 @@ Item {
                     Layout.fillWidth: true
                     text: "Bluetooth"
                     font.family: Theme.fontUi
-                    font.pixelSize: 14
+                    font.pixelSize: 14 + Theme.fontSizeDelta
                     font.weight: Font.Medium
                     color: Theme.textPrimary
                 }
@@ -244,7 +244,7 @@ Item {
                                     anchors.horizontalCenterOffset: 1
                                     text: "󰂯"
                                     font.family: Theme.fontIcons
-                                    font.pixelSize: 15
+                                    font.pixelSize: 15 + Theme.fontSizeDelta
                                     color: devRow.modelData.connected ? Theme.textPrimary : Theme.textDim
                                 }
 
@@ -258,7 +258,7 @@ Item {
                                     Layout.fillWidth: true
                                     text: devRow.modelData.name || devRow.modelData.mac
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 12
+                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                     font.weight: devRow.modelData.connected ? Font.DemiBold : Font.Medium
                                     color: Theme.textPrimary
                                     elide: Text.ElideRight
@@ -268,7 +268,7 @@ Item {
                                     Layout.fillWidth: true
                                     text: devRow.modelData.connected ? "Connected" : "Paired device"
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 10
+                                    font.pixelSize: 10 + Theme.fontSizeDelta
                                     color: Theme.textDim
                                     elide: Text.ElideRight
                                 }
@@ -303,7 +303,7 @@ Item {
 
                                     anchors.centerIn: parent
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 11
+                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                     text: {
                                         if (actionBtn.hasResult) {
                                             if (root._actingIsDisconn)
@@ -387,7 +387,7 @@ Item {
                         anchors.centerIn: parent
                         text: "No paired devices"
                         font.family: Theme.fontUi
-                        font.pixelSize: 12
+                        font.pixelSize: 12 + Theme.fontSizeDelta
                         color: Theme.textDisabled
                     }
 
@@ -432,14 +432,14 @@ Item {
                 Text {
                     text: "󰂰"
                     font.family: Theme.fontIcons
-                    font.pixelSize: 16
+                    font.pixelSize: 16 + Theme.fontSizeDelta
                     color: Theme.textPrimary
                 }
 
                 Text {
                     text: "Bluetooth Settings"
                     font.family: Theme.fontUi
-                    font.pixelSize: 13
+                    font.pixelSize: 13 + Theme.fontSizeDelta
                     color: Theme.textPrimary
                 }
 

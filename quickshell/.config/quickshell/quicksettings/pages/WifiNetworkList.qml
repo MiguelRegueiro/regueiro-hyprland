@@ -89,7 +89,7 @@ Flickable {
                             anchors.verticalCenterOffset: 1
                             text: root.controller.sigIcon(modelData.signal || 0)
                             font.family: Theme.fontIcons
-                            font.pixelSize: 15
+                            font.pixelSize: 15 + Theme.fontSizeDelta
                             color: modelData.active ? Theme.textPrimary : Theme.textDim
                         }
 
@@ -103,7 +103,7 @@ Flickable {
                             Layout.fillWidth: true
                             text: modelData.ssid || ""
                             font.family: Theme.fontUi
-                            font.pixelSize: 12
+                            font.pixelSize: 12 + Theme.fontSizeDelta
                             font.weight: modelData.active ? Font.DemiBold : Font.Medium
                             color: Theme.textPrimary
                             elide: Text.ElideRight
@@ -113,7 +113,7 @@ Flickable {
                             Layout.fillWidth: true
                             text: root.controller.networkStatusText(modelData)
                             font.family: Theme.fontUi
-                            font.pixelSize: 10
+                            font.pixelSize: 10 + Theme.fontSizeDelta
                             color: Theme.textDim
                             elide: Text.ElideRight
                         }
@@ -146,7 +146,7 @@ Flickable {
                                     anchors.centerIn: parent
                                     text: "Cancel"
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 11
+                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                     font.weight: Font.Medium
                                     color: Theme.textPrimary
                                 }
@@ -191,7 +191,7 @@ Flickable {
                                         return "Forget";
                                     }
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 11
+                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                     font.weight: Font.Medium
                                     color: {
                                         if (wifiRow.forgetHasResult)
@@ -242,7 +242,7 @@ Flickable {
                                 anchors.centerIn: parent
                                 text: "Saved"
                                 font.family: Theme.fontUi
-                                font.pixelSize: 11
+                                font.pixelSize: 11 + Theme.fontSizeDelta
                                 font.weight: Font.Medium
                                 color: Theme.textPrimary
                             }
@@ -261,7 +261,7 @@ Flickable {
                             anchors.centerIn: parent
                             text: "󰌾"
                             font.family: Theme.fontIcons
-                            font.pixelSize: 12
+                            font.pixelSize: 12 + Theme.fontSizeDelta
                             color: Theme.textDim
                         }
 
@@ -271,7 +271,7 @@ Flickable {
                         visible: !!modelData.active
                         text: "󰄬"
                         font.family: Theme.fontIcons
-                        font.pixelSize: 14
+                        font.pixelSize: 14 + Theme.fontSizeDelta
                         color: Theme.green
                     }
 

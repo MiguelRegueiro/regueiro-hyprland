@@ -169,7 +169,7 @@ Item {
                         Layout.fillWidth: true
                         text: modelData.label
                         font.family: Theme.fontUi
-                        font.pixelSize: 13
+                        font.pixelSize: 13 + Theme.fontSizeDelta
                         font.weight: Font.Medium
                         color: Theme.textPrimary
                         elide: Text.ElideRight

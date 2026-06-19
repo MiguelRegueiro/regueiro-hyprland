@@ -63,7 +63,7 @@ FocusScope {
                         anchors.centerIn: parent
                         text: "󰁍"
                         font.family: Theme.fontIcons
-                        font.pixelSize: 18
+                        font.pixelSize: 18 + Theme.fontSizeDelta
                         color: Theme.textPrimary
                     }
 
@@ -103,7 +103,7 @@ FocusScope {
                 Text {
                     text: wifiCtrl.wifiOn ? "󰤨" : "󰤭"
                     font.family: Theme.fontIcons
-                    font.pixelSize: 18
+                    font.pixelSize: 18 + Theme.fontSizeDelta
                     color: wifiCtrl.wifiOn ? Theme.accent : Theme.textDim
                     Layout.preferredWidth: 24
                     horizontalAlignment: Text.AlignHCenter
@@ -117,7 +117,7 @@ FocusScope {
                     Layout.fillWidth: true
                     text: "Wi-Fi"
                     font.family: Theme.fontUi
-                    font.pixelSize: 14
+                    font.pixelSize: 14 + Theme.fontSizeDelta
                     font.weight: Font.Medium
                     color: Theme.textPrimary
                 }

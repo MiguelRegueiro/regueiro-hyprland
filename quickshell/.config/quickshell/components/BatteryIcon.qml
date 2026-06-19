@@ -65,7 +65,7 @@ Item {
             visible: root.charging
             text: "󱐋"
             font.family: Theme.fontIcons
-            font.pixelSize: 8
+            font.pixelSize: 8 + Theme.fontSizeDelta
             color: Qt.rgba(0, 0, 0, 0.9)
         }
 

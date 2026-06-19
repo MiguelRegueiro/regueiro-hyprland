@@ -49,7 +49,7 @@ Rectangle {
                 Layout.fillWidth: true
                 text: "Password Required"
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
                 color: Theme.textPrimary
             }
@@ -58,7 +58,7 @@ Rectangle {
                 Layout.fillWidth: true
                 text: root.controller.connectSsid
                 font.family: Theme.fontUi
-                font.pixelSize: 11
+                font.pixelSize: 11 + Theme.fontSizeDelta
                 color: Theme.textDim
                 elide: Text.ElideRight
             }
@@ -77,7 +77,7 @@ Rectangle {
                 id: passField
 
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 color: Theme.textPrimary
                 selectionColor: Theme.accent
                 selectedTextColor: Theme.textPrimary
@@ -119,7 +119,7 @@ Rectangle {
                 visible: passField.text.length === 0
                 text: "Enter Wi-Fi password"
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 color: Qt.rgba(1, 1, 1, 0.42)
 
                 anchors {
@@ -149,7 +149,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: root.controller.showPassword ? "" : ""
                     font.family: Theme.fontIcons
-                    font.pixelSize: 14
+                    font.pixelSize: 14 + Theme.fontSizeDelta
                     color: Theme.textDim
                 }
 
@@ -197,7 +197,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "Cancel"
                     font.family: Theme.fontUi
-                    font.pixelSize: 12
+                    font.pixelSize: 12 + Theme.fontSizeDelta
                     color: Theme.textPrimary
                 }
 
@@ -229,7 +229,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: root.controller.connecting ? "Connecting…" : "Connect"
                     font.family: Theme.fontUi
-                    font.pixelSize: 12
+                    font.pixelSize: 12 + Theme.fontSizeDelta
                     font.weight: Font.Medium
                     color: "white"
                 }

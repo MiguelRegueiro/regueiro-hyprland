@@ -93,7 +93,7 @@ Rectangle {
                 anchors.horizontalCenterOffset: tile.iconCenterOffsetX
                 text: tile.toggled ? tile.iconOn : tile.iconOff
                 font.family: Theme.fontIcons
-                font.pixelSize: 18
+                font.pixelSize: 18 + Theme.fontSizeDelta
                 color: tile.toggled ? "white" : Theme.textPrimary
             }
 
@@ -129,7 +129,7 @@ Rectangle {
             Text {
                 text: tile.label
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.Medium
                 color: tile.interactive ? (tile.toggled ? "white" : Theme.textPrimary) : Theme.textDim
                 elide: Text.ElideRight
@@ -140,7 +140,7 @@ Rectangle {
                 visible: text.length > 0
                 text: tile.sublabel
                 font.family: Theme.fontUi
-                font.pixelSize: 11
+                font.pixelSize: 11 + Theme.fontSizeDelta
                 color: tile.interactive ? (tile.toggled ? Qt.rgba(1, 1, 1, 0.76) : Theme.textDim) : Theme.textDisabled
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -158,7 +158,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "󰅂"
                 font.family: Theme.fontIcons
-                font.pixelSize: 16
+                font.pixelSize: 16 + Theme.fontSizeDelta
                 color: tile.toggled ? "white" : Theme.textDim
             }
 

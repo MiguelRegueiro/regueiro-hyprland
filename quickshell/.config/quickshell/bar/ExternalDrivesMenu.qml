@@ -30,8 +30,8 @@ PanelWindow {
     readonly property real surfaceOffsetY: -(1 - root.reveal) * externalPanel.height
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
-    readonly property int openDuration: Theme.panelOpenSpatialDuration
-    readonly property int closeDuration: Theme.panelCloseDuration
+    readonly property int openDuration: Theme.topBarMenuOpenDuration
+    readonly property int closeDuration: Theme.topBarMenuCloseDuration
 
     signal closeRequested()
 
@@ -313,7 +313,7 @@ PanelWindow {
                             Text {
                                 text: ""
                                 font.family: Theme.fontIcons
-                                font.pixelSize: 16
+                                font.pixelSize: 16 + Theme.fontSizeDelta
                                 color: Theme.textPrimary
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -322,7 +322,7 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 text: root.drives.length === 1 ? "External drive" : "External drives"
                                 font.family: Theme.fontUi
-                                font.pixelSize: 14
+                                font.pixelSize: 14 + Theme.fontSizeDelta
                                 font.weight: Font.DemiBold
                                 color: Theme.textPrimary
                                 elide: Text.ElideRight
@@ -342,7 +342,7 @@ PanelWindow {
                                     text: String(root.drives.length)
                                     color: Theme.textPrimary
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 12
+                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                     font.weight: Font.DemiBold
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
@@ -377,7 +377,7 @@ PanelWindow {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: root.lastError.length > 0 ? root.lastError : "No external drives"
                                 font.family: Theme.fontUi
-                                font.pixelSize: 12
+                                font.pixelSize: 12 + Theme.fontSizeDelta
                                 font.weight: Font.DemiBold
                                 color: root.lastError.length > 0 ? Theme.red : Theme.textDim
                                 horizontalAlignment: Text.AlignHCenter
@@ -453,7 +453,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: ""
                                                     font.family: Theme.fontIcons
-                                                    font.pixelSize: 15
+                                                    font.pixelSize: 15 + Theme.fontSizeDelta
                                                     color: modelData.mounted ? Theme.textPrimary : Theme.textDim
                                                 }
 
@@ -467,7 +467,7 @@ PanelWindow {
                                                     Layout.fillWidth: true
                                                     text: modelData.label
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 13
+                                                    font.pixelSize: 13 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                     elide: Text.ElideRight
@@ -485,7 +485,7 @@ PanelWindow {
                                                         return bits.join(" · ");
                                                     }
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     color: Theme.textDim
                                                     elide: Text.ElideRight
                                                 }
@@ -511,7 +511,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Open"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                 }
@@ -547,7 +547,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Mount"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                 }
@@ -580,7 +580,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Unmount"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                 }
@@ -612,7 +612,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Eject"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: ejectHover.hovered ? Theme.red : Theme.textPrimary
                                                 }
@@ -674,7 +674,7 @@ PanelWindow {
                         visible: root.lastError.length > 0 && root.drives.length > 0
                         text: root.lastError
                         font.family: Theme.fontUi
-                        font.pixelSize: 11
+                        font.pixelSize: 11 + Theme.fontSizeDelta
                         color: Theme.red
                         wrapMode: Text.WordWrap
                     }

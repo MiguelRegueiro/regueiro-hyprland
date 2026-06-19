@@ -320,7 +320,7 @@ PanelWindow {
                                     width: parent.width
                                     text: modelData.label
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 12
+                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                     font.weight: Font.Medium
                                     color: actionTile.selected ? Theme.textPrimary : Theme.textDisabled
                                     horizontalAlignment: Text.AlignHCenter
@@ -365,7 +365,7 @@ PanelWindow {
                         Layout.preferredWidth: root.confirmButtonW * 2 + root.confirmButtonGap
                         text: root.actionLabel(root.actionId)
                         font.family: Theme.fontUi
-                        font.pixelSize: 17
+                        font.pixelSize: 17 + Theme.fontSizeDelta
                         font.weight: Font.Bold
                         color: Theme.textPrimary
                         horizontalAlignment: Text.AlignHCenter
@@ -415,7 +415,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         text: modelData.label
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 13
+                                        font.pixelSize: 13 + Theme.fontSizeDelta
                                         font.weight: Font.Medium
                                         color: confirmButton.selected ? Theme.textPrimary : Theme.textDim
                                     }

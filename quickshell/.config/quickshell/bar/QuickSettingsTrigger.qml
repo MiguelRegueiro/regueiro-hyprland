@@ -73,7 +73,7 @@ Rectangle {
         Text {
             text: root.networkIcon
             font.family: Theme.fontIcons
-            font.pixelSize: 14
+            font.pixelSize: 14 + Theme.fontSizeDelta
             font.weight: Font.DemiBold
             color: Theme.textPrimary
             anchors.verticalCenter: parent.verticalCenter
@@ -97,7 +97,7 @@ Rectangle {
         Text {
             text: root.audioService.volumePercent + "%"
             font.family: Theme.fontUi
-            font.pixelSize: 13
+            font.pixelSize: 13 + Theme.fontSizeDelta
             font.weight: Font.DemiBold
             color: root.audioService.muted ? Theme.textDisabled : Theme.textPrimary
             anchors.verticalCenter: parent.verticalCenter
@@ -125,7 +125,7 @@ Rectangle {
             Text {
                 text: root.batteryPercent + "%"
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
                 color: Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter

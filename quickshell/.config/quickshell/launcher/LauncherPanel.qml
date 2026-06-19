@@ -558,7 +558,7 @@ FocusScope {
 
                             text: "󰍉"
                             font.family: Theme.fontIcons
-                            font.pixelSize: 14
+                            font.pixelSize: 14 + Theme.fontSizeDelta
                             color: searchInput.activeFocus ? Theme.textPrimary : Theme.textDim
                         }
 
@@ -567,7 +567,7 @@ FocusScope {
 
                             color: Theme.textPrimary
                             font.family: Theme.fontUi
-                            font.pixelSize: 13
+                            font.pixelSize: 13 + Theme.fontSizeDelta
                             selectionColor: Theme.accent
                             selectedTextColor: Theme.textPrimary
                             cursorVisible: activeFocus
@@ -600,7 +600,7 @@ FocusScope {
                             text: "Search"
                             color: Theme.textDisabled
                             font.family: Theme.fontUi
-                            font.pixelSize: 13
+                            font.pixelSize: 13 + Theme.fontSizeDelta
 
                             anchors {
                                 left: searchInput.left
@@ -627,7 +627,7 @@ FocusScope {
                                 anchors.centerIn: parent
                                 text: "󰅖"
                                 font.family: Theme.fontIcons
-                                font.pixelSize: 13
+                                font.pixelSize: 13 + Theme.fontSizeDelta
                                 color: Theme.textDim
                             }
 
@@ -672,7 +672,7 @@ FocusScope {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: "󰑐"
                                     font.family: Theme.fontIcons
-                                    font.pixelSize: 24
+                                    font.pixelSize: 24 + Theme.fontSizeDelta
                                     color: Theme.textDisabled
                                 }
 
@@ -680,7 +680,7 @@ FocusScope {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: "Loading applications..."
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 13
+                                    font.pixelSize: 13 + Theme.fontSizeDelta
                                     color: Theme.textDim
                                 }
                             }
@@ -696,7 +696,7 @@ FocusScope {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: root.searchQuery.length === 0 ? "󰀻" : "󰍉"
                                     font.family: Theme.fontIcons
-                                    font.pixelSize: 24
+                                    font.pixelSize: 24 + Theme.fontSizeDelta
                                     color: Theme.textDisabled
                                 }
 
@@ -704,7 +704,7 @@ FocusScope {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: root.searchQuery.length === 0 ? "No applications found" : "No matches for this search"
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 13
+                                    font.pixelSize: 13 + Theme.fontSizeDelta
                                     color: Theme.textDim
                                 }
                             }
@@ -831,7 +831,7 @@ FocusScope {
                                                                 text: ""
                                                                 color: Theme.textDim
                                                                 font.family: Theme.fontIcons
-                                                                font.pixelSize: 10
+                                                                font.pixelSize: 10 + Theme.fontSizeDelta
                                                             }
                                                         }
                                                     }
@@ -847,7 +847,7 @@ FocusScope {
                                                         elide: Text.ElideRight
                                                         color: selected ? Theme.textPrimary : Theme.textDim
                                                         font.family: Theme.fontUi
-                                                        font.pixelSize: 12
+                                                        font.pixelSize: 12 + Theme.fontSizeDelta
                                                         lineHeight: 0.94
 
                                                         anchors.horizontalCenter: parent.horizontalCenter

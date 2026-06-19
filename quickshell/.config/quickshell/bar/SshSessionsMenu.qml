@@ -29,8 +29,8 @@ PanelWindow {
     readonly property real surfaceOffsetY: -(1 - root.reveal) * sshPanel.height
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
-    readonly property int openDuration: Theme.panelOpenSpatialDuration
-    readonly property int closeDuration: Theme.panelCloseDuration
+    readonly property int openDuration: Theme.topBarMenuOpenDuration
+    readonly property int closeDuration: Theme.topBarMenuCloseDuration
 
     signal closeRequested()
 
@@ -228,7 +228,7 @@ PanelWindow {
                                 Text {
                                     text: ""
                                     font.family: Theme.fontIcons
-                                    font.pixelSize: 16
+                                    font.pixelSize: 16 + Theme.fontSizeDelta
                                     color: Theme.textPrimary
                                     Layout.alignment: Qt.AlignVCenter
                                 }
@@ -237,7 +237,7 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     text: root.sessions.length === 1 ? "SSH session" : "SSH sessions"
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 14
+                                    font.pixelSize: 14 + Theme.fontSizeDelta
                                     font.weight: Font.DemiBold
                                     color: Theme.textPrimary
                                     elide: Text.ElideRight
@@ -257,7 +257,7 @@ PanelWindow {
                                         text: String(root.sessions.length)
                                         color: Theme.textPrimary
                                         font.family: Theme.fontUi
-                                        font.pixelSize: 12
+                                        font.pixelSize: 12 + Theme.fontSizeDelta
                                         font.weight: Font.DemiBold
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
@@ -287,7 +287,7 @@ PanelWindow {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: root.lastError.length > 0 ? root.lastError : "No active sessions"
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 12
+                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                     font.weight: Font.DemiBold
                                     color: root.lastError.length > 0 ? Theme.red : Theme.textDim
                                     horizontalAlignment: Text.AlignHCenter
@@ -351,7 +351,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: ""
                                                     font.family: Theme.fontIcons
-                                                    font.pixelSize: 14
+                                                    font.pixelSize: 14 + Theme.fontSizeDelta
                                                     color: Theme.textPrimary
                                                 }
                                             }
@@ -364,7 +364,7 @@ PanelWindow {
                                                     Layout.fillWidth: true
                                                     text: `${modelData.user}  ${modelData.tty}  ${root.remoteLabel(modelData)}`
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 13
+                                                    font.pixelSize: 13 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                     elide: Text.ElideRight
@@ -375,7 +375,7 @@ PanelWindow {
                                                     visible: root.hostLabel(modelData).length > 0
                                                     text: root.hostLabel(modelData)
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     color: Theme.textDim
                                                     elide: Text.ElideRight
                                                 }
@@ -394,7 +394,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: ""
                                                     font.family: Theme.fontIcons
-                                                    font.pixelSize: 12
+                                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                                     color: Theme.textDim
                                                 }
                                             }
@@ -412,7 +412,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "ending..."
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textDim
                                                 }
@@ -431,7 +431,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Confirm"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: confirmHover.hovered ? Theme.red : Theme.textPrimary
                                                 }
@@ -464,7 +464,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "󰅖"
                                                     font.family: Theme.fontIcons
-                                                    font.pixelSize: 12
+                                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                                     color: Theme.textPrimary
                                                 }
 
@@ -496,7 +496,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "End"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: endHover.hovered ? Theme.red : Theme.textPrimary
                                                 }
@@ -534,7 +534,7 @@ PanelWindow {
                             visible: root.lastError.length > 0 && root.sessions.length > 0
                             text: root.lastError
                             font.family: Theme.fontUi
-                            font.pixelSize: 11
+                            font.pixelSize: 11 + Theme.fontSizeDelta
                             color: Theme.red
                             wrapMode: Text.WordWrap
                         }
