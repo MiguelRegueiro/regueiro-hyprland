@@ -58,7 +58,7 @@ linux_enable="YES"
 powerd_enable="YES"
 powerd_flags="-a hiadaptive -b adaptive -n adaptive"
 
-kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket"
+kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket fusefs"
 
 wlans_rtw880="wlan0"
 create_args_wlan0="country ES regdomain ETSI"
@@ -77,7 +77,7 @@ doas sysrc seatd_enable=YES
 doas sysrc linux_enable=YES
 doas sysrc powerd_enable=YES
 doas sysrc powerd_flags='-a hiadaptive -b adaptive -n adaptive'
-doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket"
+doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket fusefs"
 
 doas sysrc wlans_rtw880=wlan0
 doas sysrc create_args_wlan0="country ES regdomain ETSI"

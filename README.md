@@ -27,14 +27,14 @@ Machine-specific copy-paste notes live in [docs/freebsd-hardware-notes.md](docs/
 Core packages:
 
 ```sh
-doas pkg install -y git stow \
+doas pkg install -y git gh stow \
     hyprland hypridle hyprlock hyprpaper hyprpicker hyprpolkitagent \
     quickshell \
-    kitty xterm fish starship fastfetch btop \
-    thunar \
+    kitty xterm fish starship fastfetch btop elio \
+    nautilus \
     pipewire wireplumber pulseaudio \
     seatd dbus polkit xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
-    drm-61-kmod gpu-firmware-kmod \
+    drm-61-kmod gpu-firmware-intel-kmod-kabylake \
     libva libva-intel-media-driver libva-utils \
     wl-clipboard cliphist grim slurp playerctl jq \
     bsdisks fusefs-ext2 e2fsprogs upower \
@@ -66,7 +66,7 @@ doas sysrc seatd_enable=YES
 doas sysrc linux_enable=YES
 doas sysrc powerd_enable=YES
 doas sysrc powerd_flags='-a hiadaptive -b adaptive -n adaptive'
-doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket"
+doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket fusefs"
 
 doas service dbus start
 doas service seatd start
@@ -123,8 +123,8 @@ pw groupmod video -m "$USER"
 ```
 
 External drive support uses `bsdisks` as the UDisks2-compatible backend.
-Install `fusefs-ext2` and `e2fsprogs` for ext2/3/4 USB drives, and load FUSE
-at boot:
+Install `fusefs-ext2` and `e2fsprogs` for ext2/3/4 USB drives. If `fusefs` was
+not already included in `kld_list`, load it at boot:
 
 ```sh
 doas sysrc kld_list+="fusefs"
@@ -180,8 +180,8 @@ hr
 
 The wrapper runs `ck-launch-session dbus-run-session start-hyprland`. This is
 required for polkit to treat the Hyprland login as an active local session.
-Without it, Thunar and QuickShell/`udisksctl` can see USB drives but fail to
-mount them with `Not authorized`.
+Without it, file managers and QuickShell/`udisksctl` can see USB drives but
+fail to mount them with `Not authorized`.
 
 After logging into Hyprland, this should list an active session:
 
@@ -286,7 +286,7 @@ The working setup is:
 - Xft DPI loaded through `xrdb`
 - xterm kept as a dark fallback terminal using `JetBrainsMono Nerd Font Mono`
 
-`~/.Xresources`:
+Relevant `~/.Xresources` values:
 
 ```conf
 Xft.dpi: 120
@@ -294,6 +294,10 @@ Xft.antialias: true
 Xft.hinting: true
 Xft.hintstyle: hintslight
 Xft.rgba: rgb
+XTerm*faceName: JetBrainsMono Nerd Font Mono
+XTerm*faceSize: 15
+XTerm*background: #0b0d10
+XTerm*foreground: #d7dae0
 ```
 
 Hyprland loads it automatically on startup. To apply changes in the current

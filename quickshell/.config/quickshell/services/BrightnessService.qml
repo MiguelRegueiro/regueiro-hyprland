@@ -36,7 +36,7 @@ Item {
         root.maxValue = 100;
         root.rawValue = clamped;
         setBrightness.command = [
-            "/home/regueiro/.config/hypr/scripts/brightness-set.sh",
+            Quickshell.env("HOME") + "/.config/hypr/scripts/brightness-set.sh",
             String(clamped)
         ];
         setBrightness.running = true;
@@ -66,7 +66,7 @@ Item {
         root.percent = target;
         root.rawValue = target;
         setBrightness.command = [
-            "/home/regueiro/.config/hypr/scripts/brightness-set.sh",
+            Quickshell.env("HOME") + "/.config/hypr/scripts/brightness-set.sh",
             String(target)
         ];
         setBrightness.running = true;
