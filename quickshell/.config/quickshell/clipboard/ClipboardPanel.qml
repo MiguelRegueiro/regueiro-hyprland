@@ -275,7 +275,7 @@ FocusScope {
         width: root.width
         height: Math.max(1, root.height)
         y: 0
-        layer.enabled: true
+        layer.enabled: false
 
             HoverHandler {
                 id: boundsHover
@@ -790,6 +790,7 @@ FocusScope {
 
                                             Layout.fillWidth: true
                                             text: modelData.displayPreview
+                                            textFormat: Text.PlainText
                                             wrapMode: Text.Wrap
                                             maximumLineCount: 2
                                             elide: Text.ElideRight
@@ -910,14 +911,6 @@ FocusScope {
                     }
                 }
 
-                layer.effect: MultiEffect {
-                    shadowEnabled: true
-                    shadowColor: Qt.rgba(0, 0, 0, 0.72)
-                    shadowBlur: 0.88
-                    shadowVerticalOffset: -4
-                    shadowHorizontalOffset: 0
-                    blurMax: 48
-                }
             }
         }
     }
