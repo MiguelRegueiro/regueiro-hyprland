@@ -24,7 +24,8 @@ ShellRoot {
     property bool launcherVisible: false
     readonly property bool launcherRequested: launcherVisible
     property bool externalDrivesMenuVisible: false
-    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible
+    property bool sshSessionsMenuVisible: false
+    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || sshSessionsMenuVisible
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -129,6 +130,7 @@ ShellRoot {
             return ;
 
         closeExternalDrivesMenu();
+        closeSshSessionsMenu();
         closeLauncher();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -153,6 +155,7 @@ ShellRoot {
             return ;
 
         closeExternalDrivesMenu();
+        closeSshSessionsMenu();
         closeClipboard();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -175,6 +178,10 @@ ShellRoot {
         externalDrivesMenuVisible = false;
     }
 
+    function closeSshSessionsMenu() {
+        sshSessionsMenuVisible = false;
+    }
+
     function toggleExternalDrivesMenu() {
         if (powerMenuVisible)
             return ;
@@ -183,6 +190,7 @@ ShellRoot {
             closeExternalDrivesMenu();
             return ;
         }
+        closeSshSessionsMenu();
         closeClipboard();
         closeLauncher();
         qsController.pinned = false;
@@ -193,12 +201,32 @@ ShellRoot {
         externalDrivesMenuVisible = true;
     }
 
+    function toggleSshSessionsMenu() {
+        if (powerMenuVisible)
+            return ;
+
+        if (sshSessionsMenuVisible) {
+            closeSshSessionsMenu();
+            return ;
+        }
+        closeExternalDrivesMenu();
+        closeClipboard();
+        closeLauncher();
+        qsController.pinned = false;
+        ncController.pinned = false;
+        qsController.closeImmediately();
+        ncController.closeImmediately();
+        sshSessionsServiceState.refresh();
+        sshSessionsMenuVisible = true;
+    }
+
     function toggleQuickSettings() {
         if (powerMenuVisible)
             return ;
 
         const shouldClose = qsController.open;
         closeExternalDrivesMenu();
+        closeSshSessionsMenu();
         closeLauncher();
         closeClipboard();
         ncController.closeImmediately();
@@ -216,6 +244,7 @@ ShellRoot {
 
         const shouldClose = ncController.open;
         closeExternalDrivesMenu();
+        closeSshSessionsMenu();
         closeLauncher();
         closeClipboard();
         qsController.closeImmediately();
@@ -235,6 +264,7 @@ ShellRoot {
         closeClipboard();
         closeLauncher();
         closeExternalDrivesMenu();
+        closeSshSessionsMenu();
         closePowerMenu();
     }
 
@@ -432,6 +462,10 @@ ShellRoot {
         id: externalDrivesServiceState
     }
 
+    Services.SshSessionsService {
+        id: sshSessionsServiceState
+    }
+
     Services.LauncherService {
         id: launcherServiceState
     }
@@ -458,16 +492,36 @@ ShellRoot {
                 batteryService: batteryServiceState
                 brightnessService: brightnessServiceState
                 externalDrivesService: externalDrivesServiceState
+                sshSessionsService: sshSessionsServiceState
                 onQuickSettingsClicked: root.toggleQuickSettings()
                 onNotificationCenterClicked: root.toggleNotificationCenter()
                 onClipboardClicked: root.toggleClipboard()
                 onExternalDrivesClicked: root.toggleExternalDrivesMenu()
+                onSshSessionsClicked: root.toggleSshSessionsMenu()
                 onQuickSettingsHoveredChanged: (hovered) => {
                     qsController.triggerHovered = false;
                 }
                 onNotificationCenterHoveredChanged: (hovered) => {
                     ncController.triggerHovered = false;
                 }
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Bar.SshSessionsMenu {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                sshService: sshSessionsServiceState
+                open: root.sshSessionsMenuVisible && activeScreen
+                onCloseRequested: root.closeSshSessionsMenu()
             }
 
         }

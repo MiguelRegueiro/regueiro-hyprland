@@ -352,6 +352,8 @@ Some QuickShell services are FreeBSD-specific:
 - Wi-Fi uses FreeBSD helper scripts.
 - Bluetooth uses FreeBSD `hccontrol` / service helpers.
 - Power mode uses FreeBSD `powerd` profile helpers.
+- SSH sessions use `who`, `ps`, `sockstat`, and `pkill` to show active logins
+  in the bar and end same-user sessions from the menu.
 - Battery, brightness, disks, and audio are wired to the FreeBSD device/service model.
 
 Power actions are handled by QuickShell through:

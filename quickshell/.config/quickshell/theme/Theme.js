@@ -115,6 +115,7 @@ var networkPollInterval = 3000;
 var statsFastInterval = 2000;
 var statsSlowInterval = 5000;
 var brightnessPollInterval = 2000;
+var sshSessionsPollInterval = 2000;
 var audioPollFastInterval = 500;
 var audioPollSlowInterval = 1500;
 var audioRefreshDelay = 150;

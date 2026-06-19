@@ -13,6 +13,7 @@ PanelWindow {
     required property var batteryService
     required property var brightnessService
     required property var externalDrivesService
+    required property var sshSessionsService
     property bool externalConnected: false
     readonly property var externalDrives: externalDrivesService && externalDrivesService.drives ? externalDrivesService.drives : []
     property bool showBar: true
@@ -24,6 +25,7 @@ PanelWindow {
     signal notificationCenterClicked()
     signal clipboardClicked()
     signal externalDrivesClicked()
+    signal sshSessionsClicked()
     signal quickSettingsHoveredChanged(bool hovered)
     signal notificationCenterHoveredChanged(bool hovered)
 
@@ -89,6 +91,18 @@ PanelWindow {
             anchors {
                 right: parent.right
                 top: parent.top
+            }
+
+            SshSessionsButton {
+                Layout.alignment: Qt.AlignVCenter
+                barHeight: Theme.barHeight
+                sshService: bar.sshSessionsService
+                onClicked: bar.sshSessionsClicked()
+                onRightClicked: {
+                    if (bar.sshSessionsService)
+                        bar.sshSessionsService.refresh();
+
+                }
             }
 
             ExternalDriveButton {
