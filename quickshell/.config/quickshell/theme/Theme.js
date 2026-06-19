@@ -40,6 +40,7 @@ var radiusSmall = 7;
 var fontUi = "Adwaita Sans";
 var fontFallback = "Cantarell";
 var fontIcons = "Symbols Nerd Font Mono";
+var fontSizeDelta = 1;
 
 // Quick Settings
 var qsBg = Qt.rgba(0.16, 0.18, 0.24, 0.18);
@@ -135,6 +136,8 @@ var outputItemColorDuration = 85;
 var panelOpenDuration = 140;
 var panelCloseDuration = 65;
 var panelOpenSpatialDuration = 150;
+var topBarMenuOpenDuration = 105;
+var topBarMenuCloseDuration = 55;
 var qsPageSlideDuration = 210;
 var qsPageFadeDuration = 145;
 var qsHeightDuration = 180;

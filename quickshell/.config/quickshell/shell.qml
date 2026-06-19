@@ -25,7 +25,9 @@ ShellRoot {
     readonly property bool launcherRequested: launcherVisible
     property bool externalDrivesMenuVisible: false
     property bool sshSessionsMenuVisible: false
-    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || sshSessionsMenuVisible
+    property bool cpuStatsMenuVisible: false
+    property bool ramStatsMenuVisible: false
+    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || sshSessionsMenuVisible || cpuStatsMenuVisible || ramStatsMenuVisible
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -131,6 +133,8 @@ ShellRoot {
 
         closeExternalDrivesMenu();
         closeSshSessionsMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
         closeLauncher();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -156,6 +160,8 @@ ShellRoot {
 
         closeExternalDrivesMenu();
         closeSshSessionsMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
         closeClipboard();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -182,6 +188,14 @@ ShellRoot {
         sshSessionsMenuVisible = false;
     }
 
+    function closeCpuStatsMenu() {
+        cpuStatsMenuVisible = false;
+    }
+
+    function closeRamStatsMenu() {
+        ramStatsMenuVisible = false;
+    }
+
     function toggleExternalDrivesMenu() {
         if (powerMenuVisible)
             return ;
@@ -191,6 +205,8 @@ ShellRoot {
             return ;
         }
         closeSshSessionsMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
         closeClipboard();
         closeLauncher();
         qsController.pinned = false;
@@ -210,6 +226,8 @@ ShellRoot {
             return ;
         }
         closeExternalDrivesMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
         closeClipboard();
         closeLauncher();
         qsController.pinned = false;
@@ -220,6 +238,48 @@ ShellRoot {
         sshSessionsMenuVisible = true;
     }
 
+    function toggleCpuStatsMenu() {
+        if (powerMenuVisible)
+            return ;
+
+        if (cpuStatsMenuVisible) {
+            closeCpuStatsMenu();
+            return ;
+        }
+        closeExternalDrivesMenu();
+        closeSshSessionsMenu();
+        closeRamStatsMenu();
+        closeClipboard();
+        closeLauncher();
+        qsController.pinned = false;
+        ncController.pinned = false;
+        qsController.closeImmediately();
+        ncController.closeImmediately();
+        systemDetailsServiceState.refreshCpu();
+        cpuStatsMenuVisible = true;
+    }
+
+    function toggleRamStatsMenu() {
+        if (powerMenuVisible)
+            return ;
+
+        if (ramStatsMenuVisible) {
+            closeRamStatsMenu();
+            return ;
+        }
+        closeExternalDrivesMenu();
+        closeSshSessionsMenu();
+        closeCpuStatsMenu();
+        closeClipboard();
+        closeLauncher();
+        qsController.pinned = false;
+        ncController.pinned = false;
+        qsController.closeImmediately();
+        ncController.closeImmediately();
+        systemDetailsServiceState.refreshRam();
+        ramStatsMenuVisible = true;
+    }
+
     function toggleQuickSettings() {
         if (powerMenuVisible)
             return ;
@@ -227,6 +287,8 @@ ShellRoot {
         const shouldClose = qsController.open;
         closeExternalDrivesMenu();
         closeSshSessionsMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
         closeLauncher();
         closeClipboard();
         ncController.closeImmediately();
@@ -245,6 +307,8 @@ ShellRoot {
         const shouldClose = ncController.open;
         closeExternalDrivesMenu();
         closeSshSessionsMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
         closeLauncher();
         closeClipboard();
         qsController.closeImmediately();
@@ -265,6 +329,8 @@ ShellRoot {
         closeLauncher();
         closeExternalDrivesMenu();
         closeSshSessionsMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
         closePowerMenu();
     }
 
@@ -466,6 +532,10 @@ ShellRoot {
         id: sshSessionsServiceState
     }
 
+    Services.SystemDetailsService {
+        id: systemDetailsServiceState
+    }
+
     Services.LauncherService {
         id: launcherServiceState
     }
@@ -487,6 +557,8 @@ ShellRoot {
                 forceOverlay: fullscreenPanelChromeActive
                 quickSettingsOpen: root.quickSettingsVisible
                 notificationCenterOpen: root.notificationCenterVisible
+                cpuStatsOpen: root.cpuStatsMenuVisible
+                ramStatsOpen: root.ramStatsMenuVisible
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 batteryService: batteryServiceState
@@ -498,12 +570,50 @@ ShellRoot {
                 onClipboardClicked: root.toggleClipboard()
                 onExternalDrivesClicked: root.toggleExternalDrivesMenu()
                 onSshSessionsClicked: root.toggleSshSessionsMenu()
+                onCpuStatsClicked: root.toggleCpuStatsMenu()
+                onRamStatsClicked: root.toggleRamStatsMenu()
                 onQuickSettingsHoveredChanged: (hovered) => {
                     qsController.triggerHovered = false;
                 }
                 onNotificationCenterHoveredChanged: (hovered) => {
                     ncController.triggerHovered = false;
                 }
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Bar.CpuStatsMenu {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                detailsService: systemDetailsServiceState
+                open: root.cpuStatsMenuVisible && activeScreen
+                onCloseRequested: root.closeCpuStatsMenu()
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Bar.RamStatsMenu {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                detailsService: systemDetailsServiceState
+                open: root.ramStatsMenuVisible && activeScreen
+                onCloseRequested: root.closeRamStatsMenu()
             }
 
         }
