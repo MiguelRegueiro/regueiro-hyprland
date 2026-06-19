@@ -10,7 +10,7 @@ scan_dir() {
     dir=$1
     [ -d "$dir" ] || return 0
 
-    find "$dir" -maxdepth 1 -type f -name '*.desktop' -print
+    find "$dir" -maxdepth 1 \( -type f -o -type l \) -name '*.desktop' -print
 }
 
 {
