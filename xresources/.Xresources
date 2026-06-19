@@ -5,8 +5,9 @@ Xft.hintstyle: hintslight
 Xft.rgba: rgb
 
 
-XTerm*faceName: monospace
-XTerm*faceSize: 10
+XTerm*faceName: JetBrainsMono Nerd Font Mono
+XTerm*faceSize: 15
+XTerm*reverseVideo: false
 XTerm*background: #0b0d10
 XTerm*foreground: #d7dae0
 XTerm*cursorColor: #7c8cff

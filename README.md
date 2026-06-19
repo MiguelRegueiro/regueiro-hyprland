@@ -30,7 +30,7 @@ Core packages:
 doas pkg install -y git stow \
     hyprland hypridle hyprlock hyprpaper hyprpicker hyprpolkitagent \
     quickshell \
-    kitty fish starship fastfetch btop \
+    kitty xterm fish starship fastfetch btop \
     thunar \
     pipewire wireplumber pulseaudio \
     seatd dbus polkit xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
@@ -72,6 +72,22 @@ doas service dbus start
 doas service seatd start
 doas service powerd start
 ```
+
+Configure `doas` manually as root-owned system policy, not through stow. The
+tracked `docs/doas.conf.example` mirrors the current local
+`/usr/local/etc/doas.conf`, so it can be copied directly when rebuilding the
+setup:
+
+```sh
+doas cp docs/doas.conf.example /usr/local/etc/doas.conf
+doas chmod 644 /usr/local/etc/doas.conf
+doas -C /usr/local/etc/doas.conf
+```
+
+This local policy is convenient for a single-user laptop, but permissive because
+wheel can run commands without a password and with the environment preserved.
+For a stricter setup, remove the sample user rules and replace the broad wheel
+rules with `permit persist :wheel`.
 
 Enable early Intel microcode loading:
 
@@ -124,7 +140,7 @@ shared between Linux and FreeBSD, exFAT is usually the smoother filesystem.
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell fish starship fastfetch kitty gtk xresources discord runin elio fontconfig mimeapps user-dirs
+stow hypr quickshell fish starship fastfetch kitty gtk xresources discord runin elio fontconfig mimeapps user-dirs desktop-overrides
 ```
 
 The `hypr` package owns the active Hyprland config, including `hypridle.conf`.
@@ -146,7 +162,10 @@ fc-cache -fv
 
 The `~/.icons` symlink matters for Linuxulator/XWayland apps such as Discord.
 
-Load Xresources after stowing:
+Xresources is stow-managed at `~/.Xresources`. Hyprland loads it at startup
+with `xrdb`, so xterm uses the configured dark theme, DPI, and
+`JetBrainsMono Nerd Font Mono` fallback-terminal font automatically. To apply
+changes in the current session without logging out:
 
 ```sh
 xrdb -merge ~/.Xresources
@@ -265,6 +284,7 @@ The working setup is:
 - Cursor theme exported through the launcher
 - No custom `FONTCONFIG_FILE`
 - Xft DPI loaded through `xrdb`
+- xterm kept as a dark fallback terminal using `JetBrainsMono Nerd Font Mono`
 
 `~/.Xresources`:
 
@@ -276,7 +296,8 @@ Xft.hintstyle: hintslight
 Xft.rgba: rgb
 ```
 
-Apply it:
+Hyprland loads it automatically on startup. To apply changes in the current
+session:
 
 ```sh
 xrdb -merge ~/.Xresources
