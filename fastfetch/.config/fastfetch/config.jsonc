@@ -12,7 +12,7 @@
       "5": "#eb3325"
     },
     "padding": {
-      "top": 0,
+      "top": 3,
       "left": 1,
       "right": 2
     }
@@ -79,7 +79,7 @@
     {
       "type": "packages",
       "key": "Packages",
-      "keyColor": "#FE8019"
+      "keyColor": "#fe4719"
     },
     {
       "type": "shell",
