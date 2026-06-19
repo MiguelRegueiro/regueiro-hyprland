@@ -16,7 +16,9 @@ Item {
     property real ramWiredGb: 0
     property real ramInactiveGb: 0
     property real ramFreeGb: 0
-    property string swapText: ""
+    property real swapUsedGb: 0
+    property real swapTotalGb: 0
+    property int swapPct: 0
     property var topMem: []
     property string lastError: ""
     readonly property bool cpuLoading: cpuProc.running
@@ -149,7 +151,16 @@ Item {
                     root.ramUsedGb = root.ramActiveGb + root.ramWiredGb;
                 }
             } else if (line.indexOf("swap\t") === 0) {
-                root.swapText = line.slice(5).trim();
+                const parts = line.split(/\s+/);
+                if (parts.length >= 4) {
+                    root.swapUsedGb = Number(parts[1]) || 0;
+                    root.swapTotalGb = Number(parts[2]) || 0;
+                    root.swapPct = Math.max(0, Math.min(100, Math.round(Number(parts[3]) || 0)));
+                } else {
+                    root.swapUsedGb = 0;
+                    root.swapTotalGb = 0;
+                    root.swapPct = 0;
+                }
             } else if (line === "top") {
                 topStart = i + 1;
                 break;
@@ -198,7 +209,7 @@ Item {
     Process {
         id: ramProc
 
-        command: ["sh", "-c", "printf 'mem\\t'; printf '%s\\t' $(sysctl -n hw.physmem vm.stats.vm.v_active_count vm.stats.vm.v_wire_count vm.stats.vm.v_inactive_count vm.stats.vm.v_free_count hw.pagesize 2>/dev/null); printf '\\n'; printf 'swap\\t'; swapinfo -k 2>/dev/null | awk 'NR == 2 { printf \"%.1f GB / %.1f GB (%s)\", $3 / 1048576, $2 / 1048576, $5 }'; printf '\\n'; printf 'top\\n'; ps -axo rss,pcpu,pid,user,comm | awk 'NR > 1 { printf \"%s %s %s %s %s\\n\", $1, $2, $3, $4, $5 }' | sort -nr | head -5"]
+        command: ["sh", "-c", "printf 'mem\\t'; printf '%s\\t' $(sysctl -n hw.physmem vm.stats.vm.v_active_count vm.stats.vm.v_wire_count vm.stats.vm.v_inactive_count vm.stats.vm.v_free_count hw.pagesize 2>/dev/null); printf '\\n'; printf 'swap\\t'; swapinfo -k 2>/dev/null | awk 'NR == 2 { pct=$2 > 0 ? ($3 * 100 / $2) : 0; printf \"%.1f %.1f %.0f\", $3 / 1048576, $2 / 1048576, pct }'; printf '\\n'; printf 'top\\n'; ps -axo rss,pcpu,pid,user,comm | awk 'NR > 1 { printf \"%s %s %s %s %s\\n\", $1, $2, $3, $4, $5 }' | sort -nr | head -5"]
 
         stdout: StdioCollector {
             id: ramOut

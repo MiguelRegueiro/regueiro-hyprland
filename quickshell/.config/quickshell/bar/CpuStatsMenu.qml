@@ -225,10 +225,11 @@ PanelWindow {
 
                                     Text {
                                         Layout.fillWidth: true
-                                        text: root.detailsService.cpuTemp.length > 0 ? `${root.detailsService.cpuCores} threads · ${root.detailsService.cpuTemp}` : `${root.detailsService.cpuCores} threads`
+                                        visible: root.detailsService.cpuTemp.length > 0
+                                        text: root.detailsService.cpuTemp
                                         font.family: Theme.fontUi
                                         font.pixelSize: 13 + Theme.fontSizeDelta
-                                        color: Theme.textDim
+                                        color: Theme.textPrimary
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -270,7 +271,7 @@ PanelWindow {
                                             text: `C${index + 1}`
                                             font.family: Theme.fontUi
                                             font.pixelSize: 12 + Theme.fontSizeDelta
-                                            color: Theme.textDim
+                                            color: Theme.textPrimary
                                         }
 
                                         Rectangle {
@@ -292,7 +293,7 @@ PanelWindow {
                                             text: `${modelData}%`
                                             font.family: Theme.fontUi
                                             font.pixelSize: 12 + Theme.fontSizeDelta
-                                            color: Theme.textDim
+                                            color: Theme.textPrimary
                                             horizontalAlignment: Text.AlignRight
                                         }
                                     }

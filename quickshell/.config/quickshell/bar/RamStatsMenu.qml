@@ -195,53 +195,9 @@ PanelWindow {
                             rightMargin: 14
                         }
 
-                        Item {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 48
-
-                            RowLayout {
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 10
-
-                                Text {
-                                    text: "󰒋"
-                                    font.family: Theme.fontIcons
-                                    font.pixelSize: 16 + Theme.fontSizeDelta
-                                    color: Theme.textPrimary
-                                }
-
-                                Text {
-                                    text: "Memory"
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 14 + Theme.fontSizeDelta
-                                    font.weight: Font.DemiBold
-                                    color: Theme.textPrimary
-                                }
-
-                                Text {
-                                    text: `${root.detailsService.formatGb(root.detailsService.ramUsedGb)} / ${root.detailsService.formatGb(root.detailsService.ramTotalGb)}`
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 12 + Theme.fontSizeDelta
-                                    color: Theme.textDim
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 1
-                            color: Theme.qsEdgeSoft
-                        }
-
                         ColumnLayout {
                             Layout.fillWidth: true
-                            Layout.topMargin: 12
+                            Layout.topMargin: 14
                             Layout.leftMargin: 12
                             Layout.rightMargin: 12
                             Layout.bottomMargin: 12
@@ -252,10 +208,17 @@ PanelWindow {
                                 spacing: 10
 
                                 Text {
-                                    text: `${root.usedPercent()}%`
+                                    text: `${root.detailsService.formatGb(root.detailsService.ramUsedGb)} / ${root.detailsService.formatGb(root.detailsService.ramTotalGb)}`
                                     font.family: Theme.fontUi
                                     font.pixelSize: 14 + Theme.fontSizeDelta
                                     font.weight: Font.DemiBold
+                                    color: Theme.textPrimary
+                                }
+
+                                Text {
+                                    text: `${root.usedPercent()}%`
+                                    font.family: Theme.fontUi
+                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                     color: Theme.textPrimary
                                 }
 
@@ -321,7 +284,7 @@ PanelWindow {
                                                 text: modelData.label
                                                 font.family: Theme.fontUi
                                                 font.pixelSize: 12 + Theme.fontSizeDelta
-                                                color: Theme.textDim
+                                                color: Theme.textPrimary
                                                 elide: Text.ElideRight
                                             }
 
@@ -339,7 +302,7 @@ PanelWindow {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                implicitHeight: 34
+                                implicitHeight: 42
                                 radius: 8
                                 color: Theme.qsCardBg
                                 border.width: 1
@@ -352,19 +315,32 @@ PanelWindow {
                                     spacing: 8
 
                                     Text {
-                                        Layout.fillWidth: true
                                         text: "Swap"
                                         font.family: Theme.fontUi
                                         font.pixelSize: 12 + Theme.fontSizeDelta
-                                        color: Theme.textDim
+                                        color: Theme.textPrimary
                                     }
 
                                     Text {
-                                        text: root.detailsService.swapText.length > 0 ? root.detailsService.swapText : "0.0 GB / 0.0 GB"
+                                        text: `${root.detailsService.formatGb(root.detailsService.swapUsedGb)} / ${root.detailsService.formatGb(root.detailsService.swapTotalGb)}`
                                         font.family: Theme.fontUi
                                         font.pixelSize: 12 + Theme.fontSizeDelta
                                         font.weight: Font.DemiBold
                                         color: Theme.textPrimary
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 7
+                                        radius: 4
+                                        color: Theme.qsCardChipBg
+
+                                        Rectangle {
+                                            width: parent.width * Math.max(0, Math.min(100, root.detailsService.swapPct)) / 100
+                                            height: parent.height
+                                            radius: parent.radius
+                                            color: Theme.accent
+                                        }
                                     }
                                 }
                             }
