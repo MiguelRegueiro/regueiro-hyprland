@@ -1,3 +1,23 @@
 #!/bin/sh
 
-/usr/local/bin/qs ipc --newest call audio decrease 5
+lockdir="${TMPDIR:-/tmp}/regueiro-volume-step.lock"
+if ! mkdir "$lockdir" 2>/dev/null; then
+    exit 0
+fi
+trap 'rmdir "$lockdir"' EXIT HUP INT TERM
+
+next=$(/usr/sbin/mixer -f /dev/mixer0 vol 2>/dev/null | awk '
+    /^vol\.volume=/ {
+        split($0, parts, "=")
+        split(parts[2], channels, ":")
+        nextValue = int((((channels[1] + channels[2]) / 2) * 100) + 0.5) - 2
+        if (nextValue < 0)
+            nextValue = 0
+        printf "%d\n", nextValue
+        exit
+    }
+')
+
+[ -n "$next" ] || exit 1
+/usr/sbin/mixer -f /dev/mixer0 vol="$next%" >/dev/null
+sleep 0.02

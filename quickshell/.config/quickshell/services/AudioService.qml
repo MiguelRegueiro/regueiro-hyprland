@@ -20,6 +20,7 @@ Item {
     property string mixerDeviceName: "Default Output"
     property int optimisticVolumePercent: -1
     property bool optimisticMuted: false
+    readonly property int volumeStepPercent: 2
     readonly property bool hasDirectSinkControl: false
     readonly property bool optimisticStateActive: optimisticVolumePercent >= 0
     readonly property string currentSinkName: currentSink ? sinkDisplayName(currentSink) : mixerDeviceName
@@ -46,19 +47,12 @@ Item {
 
     function logicalToMixerPercent(percent) {
         const logical = Math.max(0, Math.min(100, Number(percent)));
-        if (logical <= 0)
-            return 0;
-
-        // Stronger perceptual remap for OSS mixer's linear scale.
-        return Math.max(1, Math.min(100, Math.round(Math.cbrt(logical / 100) * 100)));
+        return root.snapVolumePercent(logical);
     }
 
     function mixerToLogicalPercent(percent) {
         const mixer = Math.max(0, Math.min(100, Number(percent)));
-        if (mixer <= 0)
-            return 0;
-
-        return Math.max(0, Math.min(100, Math.round((mixer / 100) * (mixer / 100) * (mixer / 100) * 100)));
+        return root.snapVolumePercent(mixer);
     }
 
     function sinkDisplayName(node) {
@@ -315,12 +309,20 @@ Item {
         root.optimisticMuted = false;
     }
 
+    function snapVolumePercent(percent) {
+        const nextPercent = Number(percent);
+        if (isNaN(nextPercent))
+            return 0;
+
+        return Math.max(0, Math.min(100, Math.round(nextPercent / root.volumeStepPercent) * root.volumeStepPercent));
+    }
+
     function setVolumePercent(percent) {
         const nextPercent = Number(percent);
         if (isNaN(nextPercent))
             return ;
 
-        const clamped = Math.max(0, Math.min(100, nextPercent));
+        const clamped = root.snapVolumePercent(nextPercent);
         root.setOptimisticState(clamped, false);
         const mixerPercent = root.logicalToMixerPercent(clamped);
         setVolume.command = ["sh", "-c", "/usr/sbin/mixer -f /dev/mixer0 vol=" + mixerPercent + "%"];
@@ -349,7 +351,7 @@ Item {
         if (!isNaN(parsed) && parsed !== 0)
             root.adjustVolume(parsed);
         else
-            root.adjustVolume(2);
+            root.adjustVolume(root.volumeStepPercent);
     }
 
     function setAudioSink(node) {
@@ -580,7 +582,7 @@ Item {
 
         function decrease(stepPercent: string) {
             const parsed = Number(stepPercent);
-            root.adjustVolume(!isNaN(parsed) && parsed !== 0 ? -parsed : -2);
+            root.adjustVolume(!isNaN(parsed) && parsed !== 0 ? -parsed : -root.volumeStepPercent);
         }
 
         function set(percent: string) {
