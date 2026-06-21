@@ -32,7 +32,7 @@ doas pkg install -y git gh stow \
     quickshell \
     kitty xterm fish starship fastfetch btop elio \
     nautilus \
-    pipewire wireplumber pulseaudio \
+    pipewire wireplumber pulseaudio freedesktop-sound-theme \
     seatd dbus polkit xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
     drm-61-kmod gpu-firmware-intel-kmod-kabylake \
     libva libva-intel-media-driver libva-utils \
@@ -355,6 +355,13 @@ Some QuickShell services are FreeBSD-specific:
 - SSH sessions use `who`, `ps`, `sockstat`, and `pkill` to show active logins
   in the bar and end same-user sessions from the menu.
 - Battery, brightness, disks, and audio are wired to the FreeBSD device/service model.
+
+QuickShell and the Hyprland volume scripts use the freedesktop volume-change
+sound for audible volume feedback. Install the sound theme if it is missing:
+
+```sh
+doas pkg install freedesktop-sound-theme
+```
 
 Power actions are handled by QuickShell through:
 

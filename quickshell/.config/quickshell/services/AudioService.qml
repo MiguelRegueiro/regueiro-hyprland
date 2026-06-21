@@ -21,6 +21,8 @@ Item {
     property int optimisticVolumePercent: -1
     property bool optimisticMuted: false
     readonly property int volumeStepPercent: 2
+    readonly property int volumeFeedbackDelayMs: 28
+    readonly property int volumeFeedbackQuietMs: 180
     readonly property bool hasDirectSinkControl: false
     readonly property bool optimisticStateActive: optimisticVolumePercent >= 0
     readonly property string currentSinkName: currentSink ? sinkDisplayName(currentSink) : mixerDeviceName
@@ -317,16 +319,41 @@ Item {
         return Math.max(0, Math.min(100, Math.round(nextPercent / root.volumeStepPercent) * root.volumeStepPercent));
     }
 
+    function requestVolumeFeedback() {
+        if (root.muted || root.volumePercent <= 0)
+            return ;
+
+        if (volumeFeedbackDelay.running || volumeFeedbackQuiet.running || volumeFeedback.running) {
+            volumeFeedbackQuiet.restart();
+            return ;
+        }
+        volumeFeedbackDelay.restart();
+        volumeFeedbackQuiet.restart();
+    }
+
+    function playVolumeFeedback() {
+        if (root.muted || root.volumePercent <= 0 || volumeFeedback.running)
+            return ;
+
+        volumeFeedback.running = true;
+    }
+
     function setVolumePercent(percent) {
         const nextPercent = Number(percent);
         if (isNaN(nextPercent))
             return ;
 
+        const previousPercent = root.volumePercent;
+        const previousMuted = root.muted;
         const clamped = root.snapVolumePercent(nextPercent);
+        const shouldPlayFeedback = clamped > 0 && (clamped !== previousPercent || previousMuted);
         root.setOptimisticState(clamped, false);
         const mixerPercent = root.logicalToMixerPercent(clamped);
         setVolume.command = ["sh", "-c", "/usr/sbin/mixer -f /dev/mixer0 vol=" + mixerPercent + "%"];
         setVolume.running = true;
+        if (shouldPlayFeedback)
+            root.requestVolumeFeedback();
+
         refreshSoon.restart();
     }
 
@@ -437,6 +464,21 @@ Item {
         interval: Theme.audioOptimisticReset
         repeat: false
         onTriggered: root.clearOptimisticState()
+    }
+
+    Timer {
+        id: volumeFeedbackDelay
+
+        interval: root.volumeFeedbackDelayMs
+        repeat: false
+        onTriggered: root.playVolumeFeedback()
+    }
+
+    Timer {
+        id: volumeFeedbackQuiet
+
+        interval: root.volumeFeedbackQuietMs
+        repeat: false
     }
 
     Connections {
@@ -573,6 +615,12 @@ Item {
 
         command: ["echo"]
         onExited: root.refresh()
+    }
+
+    Process {
+        id: volumeFeedback
+
+        command: ["sh", "-c", "/usr/local/bin/canberra-gtk-play -i audio-volume-change -d 'Volume changed' 2>/dev/null || /usr/local/bin/paplay /usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null || /usr/local/bin/pw-play /usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null || true"]
     }
 
     IpcHandler {

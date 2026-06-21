@@ -20,4 +20,10 @@ next=$(/usr/sbin/mixer -f /dev/mixer0 vol 2>/dev/null | awk '
 
 [ -n "$next" ] || exit 1
 /usr/sbin/mixer -f /dev/mixer0 vol="$next%" >/dev/null
+(
+    /usr/local/bin/canberra-gtk-play -i audio-volume-change -d 'Volume changed' 2>/dev/null ||
+        /usr/local/bin/paplay /usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null ||
+        /usr/local/bin/pw-play /usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null ||
+        true
+) &
 sleep 0.02
