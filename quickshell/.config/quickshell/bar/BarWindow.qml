@@ -13,6 +13,7 @@ PanelWindow {
     required property var brightnessService
     required property var inputService
     required property var externalDrivesService
+    required property var sshSessionsService
     property bool externalConnected: false
     readonly property var externalDrives: externalDrivesService && externalDrivesService.drives ? externalDrivesService.drives : []
     property bool showBar: true
@@ -21,6 +22,7 @@ PanelWindow {
     property bool notificationCenterOpen: false
     property bool cpuStatsOpen: false
     property bool ramStatsOpen: false
+    property bool sshSessionsOpen: false
 
     signal quickSettingsClicked()
     signal notificationCenterClicked()
@@ -28,6 +30,7 @@ PanelWindow {
     signal externalDrivesClicked()
     signal cpuStatsClicked()
     signal ramStatsClicked()
+    signal sshSessionsClicked()
     signal quickSettingsHoveredChanged(bool hovered)
     signal notificationCenterHoveredChanged(bool hovered)
 
@@ -105,6 +108,18 @@ PanelWindow {
                 onRightClicked: {
                     if (bar.externalDrivesService)
                         bar.externalDrivesService.refresh();
+
+                }
+            }
+
+            SshSessionsButton {
+                Layout.alignment: Qt.AlignVCenter
+                barHeight: Theme.barHeight
+                sshService: bar.sshSessionsService
+                onClicked: bar.sshSessionsClicked()
+                onRightClicked: {
+                    if (bar.sshSessionsService)
+                        bar.sshSessionsService.refresh();
 
                 }
             }

@@ -114,6 +114,7 @@ var osdTimeout = 1500;
 var slowPollInterval = 10000;
 var inputPollInterval = 250;
 var networkPollInterval = 3000;
+var sshSessionsPollInterval = 3000;
 var statsFastInterval = 2000;
 var statsSlowInterval = 5000;
 var brightnessPollInterval = 2000;
