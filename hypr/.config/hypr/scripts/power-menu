@@ -15,7 +15,17 @@ case "$action" in
 esac
 
 case "$action" in
-    toggle | open | close | lock | suspend | logout | reboot | shutdown)
+    lock)
+        exec ~/.config/hypr/scripts/hyprlock-smart
+        ;;
+    suspend)
+        if command -v hyprlock >/dev/null 2>&1 && ! pgrep -x hyprlock >/dev/null 2>&1; then
+            ~/.config/hypr/scripts/hyprlock-smart >/dev/null 2>&1 &
+            sleep 1
+        fi
+        exec systemctl suspend
+        ;;
+    toggle | open | close | logout | reboot | shutdown)
         exec qs ipc call powermenu "$action"
         ;;
     *)
