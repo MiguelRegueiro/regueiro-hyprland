@@ -19,11 +19,15 @@ PanelWindow {
     property bool forceOverlay: false
     property bool quickSettingsOpen: false
     property bool notificationCenterOpen: false
+    property bool cpuStatsOpen: false
+    property bool ramStatsOpen: false
 
     signal quickSettingsClicked()
     signal notificationCenterClicked()
     signal clipboardClicked()
     signal externalDrivesClicked()
+    signal cpuStatsClicked()
+    signal ramStatsClicked()
     signal quickSettingsHoveredChanged(bool hovered)
     signal notificationCenterHoveredChanged(bool hovered)
 
@@ -61,6 +65,10 @@ PanelWindow {
 
             SystemStats {
                 barHeight: Theme.barHeight
+                cpuMenuOpen: bar.cpuStatsOpen
+                ramMenuOpen: bar.ramStatsOpen
+                onCpuClicked: bar.cpuStatsClicked()
+                onRamClicked: bar.ramStatsClicked()
             }
 
         }

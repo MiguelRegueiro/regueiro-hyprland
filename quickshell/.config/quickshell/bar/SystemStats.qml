@@ -6,6 +6,8 @@ Row {
     id: root
 
     property int barHeight: 34
+    property bool cpuMenuOpen: false
+    property bool ramMenuOpen: false
     property int cpuPct: 0
     property real ramUsedGb: 0
     // ── CPU polling ────────────────────────────────────────────
@@ -14,6 +16,9 @@ Row {
     property var _prevTotal: 0
 
     spacing: 0
+
+    signal cpuClicked()
+    signal ramClicked()
 
     Timer {
         interval: Theme.statsFastInterval
@@ -55,7 +60,6 @@ Row {
         }
 
     }
-
     // ── RAM polling ────────────────────────────────────────────
     Timer {
         interval: Theme.statsSlowInterval
@@ -82,13 +86,12 @@ Row {
         }
 
     }
-
     // ── CPU display ────────────────────────────────────────────
     Rectangle {
         height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: cpuRow.implicitWidth + 20
         radius: Theme.radiusSmall
-        color: cpuHover.hovered ? Theme.hoverBg : "transparent"
+        color: cpuHover.hovered && !root.cpuMenuOpen ? Theme.hoverBg : "transparent"
         anchors.verticalCenter: parent.verticalCenter
 
         Row {
@@ -100,7 +103,7 @@ Row {
             Text {
                 text: "󰍛"
                 font.family: Theme.fontIcons
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
                 color: root.cpuPct >= Theme.cpuCritThreshold ? Theme.red : root.cpuPct >= Theme.cpuWarnThreshold ? Theme.yellow : Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
@@ -109,14 +112,13 @@ Row {
             Text {
                 text: root.cpuPct + "%"
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
                 color: root.cpuPct >= Theme.cpuCritThreshold ? Theme.red : root.cpuPct >= Theme.cpuWarnThreshold ? Theme.yellow : Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
             }
 
         }
-
         HoverHandler {
             id: cpuHover
 
@@ -124,7 +126,15 @@ Row {
             cursorShape: Qt.ArrowCursor
         }
 
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.cpuClicked()
+        }
+
         Behavior on color {
+            enabled: !root.cpuMenuOpen
+
             ColorAnimation {
                 duration: Theme.hoverAnimDuration
             }
@@ -132,13 +142,12 @@ Row {
         }
 
     }
-
     // ── RAM display ────────────────────────────────────────────
     Rectangle {
         height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: ramRow.implicitWidth + 20
         radius: Theme.radiusSmall
-        color: ramHover.hovered ? Theme.hoverBg : "transparent"
+        color: ramHover.hovered && !root.ramMenuOpen ? Theme.hoverBg : "transparent"
         anchors.verticalCenter: parent.verticalCenter
 
         Row {
@@ -150,16 +159,16 @@ Row {
             Text {
                 text: "󰒋"
                 font.family: Theme.fontIcons
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
                 color: Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             Text {
-                text: root.ramUsedGb.toFixed(1) + "G"
+                text: root.ramUsedGb.toFixed(1) + "GB"
                 font.family: Theme.fontUi
-                font.pixelSize: 13
+                font.pixelSize: 13 + Theme.fontSizeDelta
                 font.weight: Font.DemiBold
                 color: Theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
@@ -174,13 +183,19 @@ Row {
             cursorShape: Qt.ArrowCursor
         }
 
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.ramClicked()
+        }
+
         Behavior on color {
+            enabled: !root.ramMenuOpen
+
             ColorAnimation {
                 duration: Theme.hoverAnimDuration
             }
 
         }
-
     }
-
 }
