@@ -13,7 +13,6 @@ PanelWindow {
     property bool showLayer: true
     property bool launcherVisible: false
     property bool forceOverlay: false
-    property bool layerMapped: false
     property bool openingGuard: false
     readonly property real launcherRegionX: launcherPanel.x + launcherPanel.inputRegion.x
     readonly property real launcherRegionY: launcherPanel.y + launcherPanel.inputRegion.y
@@ -56,8 +55,6 @@ PanelWindow {
 
     onLauncherVisibleChanged: {
         if (root.launcherVisible) {
-            root.layerMapped = true;
-            closeUnmountTimer.stop();
             root.openingGuard = true;
             openingGuardTimer.restart();
             Qt.callLater(function() {
@@ -69,7 +66,6 @@ PanelWindow {
             root.openingGuard = false;
             openingGuardTimer.stop();
             launcherFocusGrab.active = false;
-            closeUnmountTimer.restart();
         }
     }
 
@@ -81,22 +77,10 @@ PanelWindow {
         onTriggered: root.openingGuard = false
     }
 
-    Timer {
-        id: closeUnmountTimer
-
-        interval: Theme.panelCloseDuration + 40
-        repeat: false
-        onTriggered: {
-            if (!root.launcherVisible)
-                root.layerMapped = false;
-
-        }
-    }
-
     screen: targetScreen
-    // Keep the layer mapped through the close animation, then unmap it so
-    // Hyprland can return pointer-follow focus to the underlying client.
-    visible: showLayer && root.layerMapped
+    // Keep the layer mapped so launcher icons stay hot, but drop keyboard focus
+    // while closed so Hyprland returns typing to the underlying client.
+    visible: showLayer
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
