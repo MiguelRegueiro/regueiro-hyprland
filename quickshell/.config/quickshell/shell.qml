@@ -532,7 +532,9 @@ ShellRoot {
                 onCpuStatsClicked: root.toggleCpuStatsMenu()
                 onRamStatsClicked: root.toggleRamStatsMenu()
                 onQuickSettingsHoveredChanged: (hovered) => {
-                    qsController.triggerHovered = false;
+                    if (activeScreen)
+                        qsController.triggerHovered = hovered;
+
                 }
                 onNotificationCenterHoveredChanged: (hovered) => {
                     ncController.triggerHovered = false;

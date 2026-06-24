@@ -135,6 +135,7 @@ PanelWindow {
                 menuOpen: bar.quickSettingsOpen
                 audioService: bar.audioService
                 onClicked: bar.quickSettingsClicked()
+                onHoveredChanged: bar.quickSettingsHoveredChanged(hovered)
             }
 
         }

@@ -19,7 +19,7 @@ Rectangle {
 
     signal clicked()
 
-    height: Math.min(barHeight, Theme.barItemHeight)
+    height: barHeight
     implicitWidth: contentRow.implicitWidth + 28
     radius: Theme.radiusSmall
     color: hovered && !menuOpen ? Theme.hoverBg : "transparent"
