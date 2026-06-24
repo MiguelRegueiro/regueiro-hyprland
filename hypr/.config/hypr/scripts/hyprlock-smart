@@ -51,28 +51,6 @@ sed \
     -e "s/^\([[:space:]]*monitor = \)\$lockMonitor/\1${lock_monitor}/" \
     "$base_config" > "$runtime_config"
 
-if [ "$lock_monitor" = "$laptop_monitor" ]; then
-    perl -0pi -e '
-        s/(shape \{\n\s*monitor = eDP-1\n\s*size = )436, 416/${1}620, 560/s;
-        s/(shape \{\n\s*monitor = eDP-1\n\s*size = 64, 4[\s\S]*?position = )0, 164/${1}0, 224/s;
-        s/(text = LOCKED[\s\S]*?font_size = )11/${1}14/s;
-        s/(text = LOCKED[\s\S]*?position = )0, 140/${1}0, 190/s;
-        s/(text = \$TIME[\s\S]*?font_size = )86/${1}120/s;
-        s/(text = \$TIME[\s\S]*?position = )0, 86/${1}0, 118/s;
-        s/(date \+"%A, %d %B"[\s\S]*?font_size = )18/${1}24/s;
-        s/(date \+"%A, %d %B"[\s\S]*?position = )0, 18/${1}0, 26/s;
-        s/(text = Enter password to unlock[\s\S]*?font_size = )12/${1}16/s;
-        s/(text = Enter password to unlock[\s\S]*?position = )0, -20/${1}0, -30/s;
-        s/(input-field \{\n\s*monitor = eDP-1\n\s*size = )316, 54/${1}440, 72/s;
-        s/(dots_size = )0\.18/${1}0.24/s;
-        s/(dots_spacing = )0\.32/${1}0.36/s;
-        s/(rounding = )15/${1}18/s;
-        s/(input-field \{[\s\S]*?position = )0, -84/${1}0, -116/s;
-        s/(text = \$LAYOUT[\s\S]*?font_size = )11/${1}14/s;
-        s/(text = \$LAYOUT[\s\S]*?position = )0, -136/${1}0, -182/s;
-    ' "$runtime_config"
-fi
-
 if [ "${HYPRLOCK_SMART_PRINT_CONFIG:-0}" = "1" ]; then
     cat "$runtime_config"
     exit 0
