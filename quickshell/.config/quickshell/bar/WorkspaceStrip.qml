@@ -21,7 +21,6 @@ Row {
     }
 
     spacing: 0
-    leftPadding: 4
     rightPadding: 4
 
     Repeater {
@@ -34,7 +33,7 @@ Row {
             readonly property bool hovered: hover.hovered
 
             visible: wsRow.belongsToScreen(modelData)
-            height: Math.min(barHeight, Theme.barItemHeight)
+            height: barHeight
             width: visible ? Math.max(wsLabel.implicitWidth + 14, 28) : 0
             radius: Theme.radiusSmall
             color: {

@@ -51,7 +51,6 @@ PanelWindow {
             anchors {
                 left: parent.left
                 top: parent.top
-                leftMargin: 4
             }
 
             WorkspaceStrip {
