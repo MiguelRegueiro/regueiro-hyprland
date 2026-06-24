@@ -10,6 +10,7 @@ var barHeight = 28;
 var barItemHeight = 26;
 var barCornerRadius = 16; // matches hyprland rounding = 16
 var borderSize = 14; // screen frame thickness -- matches hyprland gaps_out
+var frameTopOverlap = 1; // hide fractional-scale seam below the top bar
 
 // Text
 var textPrimary = "#f6f5f4";

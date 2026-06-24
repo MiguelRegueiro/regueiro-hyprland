@@ -19,8 +19,8 @@ PanelWindow {
     property bool quickSettingsCursorInside: false
     property bool forceOverlay: false
     readonly property bool quickSettingsHovered: quickSettingsPanel.hovered || root.quickSettingsCursorInside
-    readonly property real topY: hasBar ? Theme.barHeight : 0
-    readonly property real innerTopY: hasBar ? Theme.barHeight : Theme.borderSize
+    readonly property real topY: hasBar ? Theme.barHeight - Theme.frameTopOverlap : 0
+    readonly property real innerTopY: hasBar ? Theme.barHeight - Theme.frameTopOverlap : Theme.borderSize
     readonly property real quickSettingsRegionX: quickSettingsPanel.x + quickSettingsPanel.inputRegion.x
     readonly property real quickSettingsRegionY: quickSettingsPanel.y + quickSettingsPanel.inputRegion.y
     readonly property real quickSettingsRegionWidth: quickSettingsPanel.inputRegion.width
