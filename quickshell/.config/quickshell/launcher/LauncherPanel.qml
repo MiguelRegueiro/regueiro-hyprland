@@ -28,6 +28,13 @@ FocusScope {
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.launcherWidth
     readonly property real bodyHeight: Theme.launcherHeight
+    readonly property real touchpadScrollMultiplier: 3.2
+    readonly property real mouseWheelScrollRows: 2.4
+    readonly property int horizontalKeyRepeatMs: Theme.qsPageFadeDuration
+    readonly property int verticalKeyRepeatMs: 95
+    readonly property int gridColumnCount: 5
+    property real lastHorizontalKeyMoveMs: 0
+    property real lastVerticalKeyMoveMs: 0
     readonly property real fuseOverhang: Theme.barCornerRadius
     readonly property real fuseOpticalInset: 2
     readonly property real fuseBottomInset: root.attachBottom
@@ -91,11 +98,41 @@ FocusScope {
         root.ensureSelectionVisible(nextIndex);
     }
 
-    function gridColumns() {
-        if (!root.appGridView || root.appGridView.width <= 0 || root.appGridView.cellWidth <= 0)
-            return 1;
+    function moveHorizontalSelection(delta) {
+        const now = Date.now();
+        if (now - root.lastHorizontalKeyMoveMs < root.horizontalKeyRepeatMs)
+            return;
 
-        return Math.max(1, Math.floor(root.appGridView.width / root.appGridView.cellWidth));
+        root.lastHorizontalKeyMoveMs = now;
+        root.moveSelection(delta);
+    }
+
+    function moveVerticalSelection(direction) {
+        const now = Date.now();
+        if (now - root.lastVerticalKeyMoveMs < root.verticalKeyRepeatMs)
+            return;
+
+        if (root.filteredEntries.length === 0)
+            return;
+
+        const columns = root.gridColumns();
+        const currentIndex = Math.max(0, Math.min(root.filteredEntries.length - 1, root.selectedIndex));
+        const currentColumn = currentIndex % columns;
+        const targetRow = Math.floor(currentIndex / columns) + direction;
+        if (targetRow < 0)
+            return;
+
+        const targetIndex = targetRow * columns + currentColumn;
+        if (targetIndex >= root.filteredEntries.length)
+            return;
+
+        root.lastVerticalKeyMoveMs = now;
+        root.selectedIndex = targetIndex;
+        root.ensureSelectionVisible(targetIndex);
+    }
+
+    function gridColumns() {
+        return root.gridColumnCount;
     }
 
     function clampGridContentY(value) {
@@ -147,6 +184,8 @@ FocusScope {
     onOpenChanged: {
         if (open) {
             root.hasOpenedOnce = false;
+            root.lastHorizontalKeyMoveMs = 0;
+            root.lastVerticalKeyMoveMs = 0;
             root.launcherService.clearError();
             searchInput.text = "";
             root.selectedIndex = 0;
@@ -158,6 +197,8 @@ FocusScope {
             searchInput.text = "";
             root.selectedIndex = -1;
             root.hasOpenedOnce = false;
+            root.lastHorizontalKeyMoveMs = 0;
+            root.lastVerticalKeyMoveMs = 0;
         }
     }
     onFilteredEntriesChanged: {
@@ -172,28 +213,28 @@ FocusScope {
         sequence: "Up"
         context: Qt.WindowShortcut
         enabled: root.open
-        onActivated: root.moveSelection(-root.gridColumns())
+        onActivated: root.moveVerticalSelection(-1)
     }
 
     Shortcut {
         sequence: "Down"
         context: Qt.WindowShortcut
         enabled: root.open
-        onActivated: root.moveSelection(root.gridColumns())
+        onActivated: root.moveVerticalSelection(1)
     }
 
     Shortcut {
         sequence: "Left"
         context: Qt.WindowShortcut
         enabled: root.open
-        onActivated: root.moveSelection(-1)
+        onActivated: root.moveHorizontalSelection(-1)
     }
 
     Shortcut {
         sequence: "Right"
         context: Qt.WindowShortcut
         enabled: root.open
-        onActivated: root.moveSelection(1)
+        onActivated: root.moveHorizontalSelection(1)
     }
 
     Shortcut {
@@ -585,12 +626,12 @@ FocusScope {
                             }
 
                             Keys.onLeftPressed: (event) => {
-                                root.moveSelection(-1);
+                                root.moveHorizontalSelection(-1);
                                 event.accepted = true;
                             }
 
                             Keys.onRightPressed: (event) => {
-                                root.moveSelection(1);
+                                root.moveHorizontalSelection(1);
                                 event.accepted = true;
                             }
                         }
@@ -712,7 +753,7 @@ FocusScope {
                             Flickable {
                                 id: appGrid
 
-                                property int cellWidth: Math.floor(width / 5)
+                                property int cellWidth: Math.floor(width / root.gridColumnCount)
                                 property int cellHeight: 130
 
                                 visible: root.filteredEntries.length > 0
@@ -735,7 +776,7 @@ FocusScope {
                                     onWheel: (event) => {
                                         const pixelDelta = event.pixelDelta.y;
                                         const wheelSteps = event.angleDelta.y / 120;
-                                        const scrollDelta = pixelDelta !== 0 ? -pixelDelta * 1.4 : -wheelSteps * appGrid.cellHeight * 2.4;
+                                        const scrollDelta = pixelDelta !== 0 ? -pixelDelta * root.touchpadScrollMultiplier : -wheelSteps * appGrid.cellHeight * root.mouseWheelScrollRows;
                                         root.scrollGrid(scrollDelta);
                                         event.accepted = true;
                                     }
@@ -745,7 +786,7 @@ FocusScope {
                                     id: appGridPositioner
 
                                     width: appGrid.width
-                                    height: Math.ceil(root.filteredEntries.length / 5) * appGrid.cellHeight
+                                    height: Math.ceil(root.filteredEntries.length / root.gridColumnCount) * appGrid.cellHeight
 
                                     Repeater {
                                         model: root.allEntries
@@ -762,8 +803,8 @@ FocusScope {
                                             // exactly the slow blank-icon flash this drawer must avoid.
                                             enabled: matched
                                             opacity: matched ? 1 : 0
-                                            x: matched ? (filteredIndex % 5) * appGrid.cellWidth : -10000
-                                            y: matched ? Math.floor(filteredIndex / 5) * appGrid.cellHeight : -10000
+                                            x: matched ? (filteredIndex % root.gridColumnCount) * appGrid.cellWidth : -10000
+                                            y: matched ? Math.floor(filteredIndex / root.gridColumnCount) * appGrid.cellHeight : -10000
                                             width: appGrid.cellWidth
                                             height: appGrid.cellHeight
 
