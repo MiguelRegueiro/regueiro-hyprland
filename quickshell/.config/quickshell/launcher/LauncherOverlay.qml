@@ -78,9 +78,9 @@ PanelWindow {
     }
 
     screen: targetScreen
-    // Keep the layer mapped so launcher icons stay hot, but drop keyboard focus
-    // while closed so Hyprland returns typing to the underlying client.
-    visible: showLayer
+    // Match clipboard focus behavior: unmap the layer after the close animation
+    // so Hyprland immediately returns typing to the client under the cursor.
+    visible: showLayer && (root.launcherVisible || launcherPanel.reveal > 0.001)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
