@@ -78,16 +78,14 @@ PanelWindow {
     }
 
     screen: targetScreen
-    // Keep the layer mapped even when the drawer is closed. If the PanelWindow is
-    // unmapped, Qt drops icon textures and the next open visibly reloads every
-    // 256px app icon. The mask below is empty while closed, so this remains
-    // transparent and non-interactive.
+    // Keep the layer mapped so launcher icons stay hot, but drop keyboard focus
+    // while closed so Hyprland returns typing to the underlying client.
     visible: showLayer
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-launcher"
-    WlrLayershell.keyboardFocus: root.launcherVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: root.launcherVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
 
     anchors {
