@@ -25,7 +25,15 @@ Item {
     })
     property var iconPathCache: ({
     })
+    property var iconRasterCache: ({
+    })
+    property var pendingIconRasterCache: null
+    property var pendingIconRasterizations: []
+    property bool iconRasterizationRunning: false
+    property bool iconRasterApplyBlocked: false
     readonly property string genericIconFallback: "application-x-executable"
+    readonly property string iconRasterCachePath: Quickshell.statePath("launcher-icon-cache")
+    readonly property url launcherIconCacheLocation: Qt.resolvedUrl(Quickshell.statePath("launcher-icon-cache.ini"))
     readonly property string fallbackIconSourcePath: {
         const resolved = Quickshell.iconPath("", root.genericIconFallback);
         return typeof resolved === "string" && resolved.length > 0 ? resolved : root.genericIconFallback;
@@ -248,8 +256,159 @@ Item {
         return values.slice(0, root.maxResults);
     }
 
-    function iconDisplaySource(source) {
-        return source;
+    function iconDisplaySource(iconName, resolvedSource) {
+        const rasterSource = root.iconRasterSource(iconName, resolvedSource);
+        if (rasterSource.length > 0)
+            return rasterSource;
+
+        if (typeof iconName === "string") {
+            const normalizedIcon = iconName.trim();
+            if (normalizedIcon.length > 0 && normalizedIcon.charAt(0) !== "/")
+                return `image://icon/${normalizedIcon}`;
+
+        }
+        if (typeof resolvedSource === "string" && resolvedSource.length > 0)
+            return resolvedSource;
+
+        return root.fallbackIconSourcePath;
+    }
+
+    function iconRasterKey(iconName, resolvedSource) {
+        if (typeof iconName === "string") {
+            const normalizedIcon = iconName.trim();
+            if (normalizedIcon.length > 0) {
+                if (normalizedIcon.charAt(0) === "/")
+                    return normalizedIcon;
+
+                return `icon:${normalizedIcon}`;
+            }
+
+        }
+        if (typeof resolvedSource === "string" && resolvedSource.length > 0 && resolvedSource.charAt(0) === "/")
+            return resolvedSource;
+
+        return "";
+    }
+
+    function iconRasterSource(iconName, resolvedSource) {
+        const key = root.iconRasterKey(iconName, resolvedSource);
+        if (key.length === 0)
+            return "";
+
+        const cached = root.iconRasterCache[key];
+        return typeof cached === "string" && cached.length > 0 ? cached : "";
+    }
+
+    function loadIconRasterCache() {
+        const rawCache = launcherIconCache.value("entries", "{}");
+        let parsed = ({
+        });
+        try {
+            parsed = JSON.parse(String(rawCache || "{}"));
+        } catch (error) {
+            parsed = ({
+            });
+        }
+
+        const loaded = ({
+        });
+        for (const cacheKey in parsed) {
+            const source = parsed[cacheKey];
+            if (typeof cacheKey === "string" && cacheKey.length > 0 && typeof source === "string" && source.length > 0)
+                loaded[cacheKey] = source;
+
+        }
+        root.iconRasterCache = loaded;
+    }
+
+    function saveIconRasterCache(cache) {
+        launcherIconCache.setValue("entries", JSON.stringify(cache));
+        launcherIconCache.sync();
+    }
+
+    function applyIconRasterCache(cache) {
+        if (root.iconRasterApplyBlocked) {
+            root.pendingIconRasterCache = cache;
+            return;
+        }
+
+        root.pendingIconRasterCache = null;
+        root.iconRasterCache = cache;
+        root.saveIconRasterCache(cache);
+    }
+
+    function flushPendingIconRasterCache() {
+        if (root.iconRasterApplyBlocked || root.pendingIconRasterCache === null)
+            return;
+
+        root.applyIconRasterCache(root.pendingIconRasterCache);
+    }
+
+    function canRasterizeIcon(iconName, source) {
+        return root.iconRasterKey(iconName, source).length > 0;
+    }
+
+    function hasPendingIconRasterization(key) {
+        for (const item of root.pendingIconRasterizations) {
+            if (item && item.key === key)
+                return true;
+
+        }
+        return false;
+    }
+
+    function queueIconRasterization(iconName, source) {
+        if (!root.canRasterizeIcon(iconName, source))
+            return;
+
+        const key = root.iconRasterKey(iconName, source);
+        if (root.iconRasterCache[key] !== undefined)
+            return;
+
+        if (root.hasPendingIconRasterization(key))
+            return;
+
+        root.pendingIconRasterizations = root.pendingIconRasterizations.concat([{
+            "key": key,
+            "icon": typeof iconName === "string" ? iconName.trim() : "",
+            "source": typeof source === "string" ? source : ""
+        }]);
+        root.processNextIconRasterization();
+    }
+
+    function queueIconRasterizations(entries) {
+        const values = Array.isArray(entries) ? entries : [];
+        for (const entry of values)
+            root.queueIconRasterization(entry.icon, entry.iconSource);
+
+    }
+
+    function processNextIconRasterization() {
+        if (root.iconRasterizationRunning || root.pendingIconRasterizations.length === 0)
+            return;
+
+        const items = root.pendingIconRasterizations.filter((item) => {
+            return item && typeof item.key === "string" && item.key.length > 0 && root.iconRasterCache[item.key] === undefined;
+        });
+        root.pendingIconRasterizations = [];
+        if (items.length === 0) {
+            Qt.callLater(root.processNextIconRasterization);
+            return;
+        }
+        if (typeof iconRasterProc === "undefined") {
+            Qt.callLater(root.processNextIconRasterization);
+            return;
+        }
+
+        const command = ["sh", Quickshell.shellPath("scripts/launcher-rasterize-icons.sh"), root.iconRasterCachePath];
+        for (const item of items) {
+            command.push(item.key);
+            command.push(item.icon);
+            command.push(item.source);
+        }
+        iconRasterProc.command = command;
+        root.iconRasterizationRunning = true;
+        iconRasterProc.running = true;
     }
 
     function iconSourceForName(iconName) {
@@ -362,6 +521,9 @@ Item {
         root.entries = nextEntries;
         root.entriesRevision += 1;
         root.rebuildUsageOrderedCache();
+        Qt.callLater(function() {
+            root.queueIconRasterizations(root.usageOrderedEntries());
+        });
         root.loading = false;
     }
 
@@ -573,13 +735,23 @@ Item {
         }
     }
 
-    Component.onCompleted: root.refreshVisibility()
+    Component.onCompleted: {
+        root.loadIconRasterCache();
+        root.refreshVisibility();
+    }
 
     Settings {
         id: launcherStats
 
         category: "LauncherUsage"
         location: root.launcherStatsLocation
+    }
+
+    Settings {
+        id: launcherIconCache
+
+        category: "LauncherIconCache"
+        location: root.launcherIconCacheLocation
     }
 
     Connections {
@@ -612,8 +784,45 @@ Item {
                 sourceSize.height: 256
                 asynchronous: true
                 cache: true
-                source: root.iconDisplaySource(modelData.iconSource)
+                source: root.iconDisplaySource(modelData.icon, modelData.iconSource)
             }
+        }
+    }
+
+    Process {
+        id: iconRasterProc
+
+        onExited: {
+            const updated = ({
+            });
+            for (const cacheKey in root.iconRasterCache) updated[cacheKey] = root.iconRasterCache[cacheKey];
+
+            const lines = iconRasterOut.text.split(/\r?\n/);
+            let changed = false;
+            for (const line of lines) {
+                const separator = line.indexOf("\t");
+                if (separator <= 0)
+                    continue;
+
+                const key = line.slice(0, separator);
+                const output = line.slice(separator + 1).trim();
+                if (key.length === 0 || output.length === 0)
+                    continue;
+
+                updated[key] = output;
+                changed = true;
+            }
+            if (changed)
+                root.applyIconRasterCache(updated);
+
+            root.iconRasterizationRunning = false;
+            Qt.callLater(root.processNextIconRasterization);
+        }
+
+        stdout: StdioCollector {
+            id: iconRasterOut
+
+            waitForEnd: true
         }
     }
 

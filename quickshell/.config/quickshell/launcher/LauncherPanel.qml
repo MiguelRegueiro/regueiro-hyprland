@@ -182,6 +182,7 @@ FocusScope {
     }
 
     onOpenChanged: {
+        root.launcherService.iconRasterApplyBlocked = open;
         if (open) {
             root.hasOpenedOnce = false;
             root.lastHorizontalKeyMoveMs = 0;
@@ -199,6 +200,7 @@ FocusScope {
             root.hasOpenedOnce = false;
             root.lastHorizontalKeyMoveMs = 0;
             root.lastVerticalKeyMoveMs = 0;
+            root.launcherService.flushPendingIconRasterCache();
         }
     }
     onFilteredEntriesChanged: {
@@ -848,7 +850,7 @@ FocusScope {
                                                             mipmap: true
                                                             asynchronous: true
                                                             cache: true
-                                                            source: root.launcherService.iconDisplaySource(modelData.iconSource)
+                                                            source: root.launcherService.iconDisplaySource(modelData.icon, modelData.iconSource)
                                                         }
 
                                                         Rectangle {
