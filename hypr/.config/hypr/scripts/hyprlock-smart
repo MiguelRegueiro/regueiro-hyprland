@@ -3,53 +3,150 @@
 set -euo pipefail
 
 base_config="${HYPRLOCK_CONFIG:-$HOME/.config/hypr/hyprlock.conf}"
-preferred_external="${HYPRLOCK_EXTERNAL_MONITOR:-DP-1}"
 laptop_monitor="${HYPRLOCK_LAPTOP_MONITOR:-eDP-1}"
 runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
 if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && [ -d "$runtime_dir/hypr" ]; then
-    latest_instance="$(find "$runtime_dir/hypr" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | tail -1)"
+    latest_instance="$(find "$runtime_dir/hypr" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | tail -n 1)"
     if [ -n "$latest_instance" ]; then
         export HYPRLAND_INSTANCE_SIGNATURE="$latest_instance"
     fi
 fi
 
+if ! command -v jq >/dev/null 2>&1; then
+    exec hyprlock --config "$base_config" "$@"
+fi
+
 monitor_json_raw="$(hyprctl monitors -j 2>/dev/null || true)"
-if jq -e type >/dev/null 2>&1 <<<"$monitor_json_raw"; then
+if jq -e 'type == "array"' >/dev/null 2>&1 <<<"$monitor_json_raw"; then
     monitor_json="$monitor_json_raw"
 else
     monitor_json="[]"
 fi
 
-monitor_exists() {
-    local name="$1"
-    jq -e --arg name "$name" '.[] | select(.name == $name)' >/dev/null <<<"$monitor_json"
+first_monitor_matching() {
+    local query="$1"
+
+    jq -r "$query" <<<"$monitor_json" | head -n 1
 }
 
-first_monitor() {
-    jq -r '.[0].name // empty' <<<"$monitor_json"
-}
+laptop_name="$(
+    jq -r --arg laptop "$laptop_monitor" '.[] | select(.name == $laptop) | .name' <<<"$monitor_json" |
+        head -n 1
+)"
 
-if monitor_exists "$preferred_external"; then
-    lock_monitor="$preferred_external"
-elif monitor_exists "$laptop_monitor"; then
-    lock_monitor="$laptop_monitor"
-else
-    lock_monitor="$(first_monitor)"
+if [ -z "$laptop_name" ]; then
+    laptop_name="$(first_monitor_matching '.[] | select(.name | startswith("eDP")) | .name')"
 fi
+
+external_name="$(
+    first_monitor_matching \
+        '.[] | select((.name | startswith("eDP") | not) and (.disabled | not)) | .name'
+)"
+
+lock_monitor="${laptop_name:-$external_name}"
 
 if [ -z "${lock_monitor:-}" ]; then
     exec hyprlock --config "$base_config" "$@"
 fi
 
-tmp_dir="$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/hyprlock-smart.XXXXXX")"
+tmp_parent="${XDG_RUNTIME_DIR:-/tmp}"
+tmp_dir="$(mktemp -d "$tmp_parent/hyprlock-smart.XXXXXX" 2>/dev/null || mktemp -d /tmp/hyprlock-smart.XXXXXX)"
 trap 'rm -rf "$tmp_dir"' EXIT
 runtime_config="$tmp_dir/hyprlock.conf"
 
 sed \
     -e "s/^\$lockMonitor = .*/\$lockMonitor = ${lock_monitor}/" \
-    -e "s/^\([[:space:]]*monitor = \)\$lockMonitor/\1${lock_monitor}/" \
-    "$base_config" > "$runtime_config"
+    "$base_config" >"$runtime_config"
+
+append_external_widgets() {
+    local monitor="$1"
+
+    cat >>"$runtime_config" <<EOF
+
+label {
+    monitor = $monitor
+    text = \$TIME
+    color = \$text
+    font_size = 96
+    font_family = \$font
+    text_align = center
+    shadow_passes = 2
+    shadow_size = 4
+    shadow_color = rgba(000000a0)
+    position = 0, 168
+    halign = center
+    valign = center
+    zindex = 2
+}
+
+label {
+    monitor = $monitor
+    text = cmd[update:60000] date +"%A, %d %B"
+    color = \$textDim
+    font_size = 22
+    font_family = \$font
+    text_align = center
+    shadow_passes = 1
+    shadow_size = 2
+    shadow_color = rgba(00000080)
+    position = 0, 58
+    halign = center
+    valign = center
+    zindex = 2
+}
+
+input-field {
+    monitor = $monitor
+    size = 400, 60
+    outline_thickness = 1
+    dots_size = 0.24
+    dots_spacing = 0.38
+    dots_center = true
+    outer_color = \$glassBorder
+    inner_color = \$glassStrong
+    font_color = \$text
+    fail_text = <i>\$FAIL</i>
+    check_text = Unlocking…
+    placeholder_text = Password
+    fade_on_empty = false
+    rounding = 30
+    check_color = \$accent
+    fail_color = rgba(ff7b63ff)
+    capslock_color = rgba(f8e45cff)
+    numlock_color = rgba(f8e45cff)
+    bothlock_color = rgba(f8e45cff)
+    font_family = \$font
+    shadow_passes = 2
+    shadow_size = 10
+    shadow_color = rgba(00000070)
+    position = 0, -70
+    halign = center
+    valign = center
+    zindex = 2
+}
+
+label {
+    monitor = $monitor
+    text = \$LAYOUT
+    color = \$textMuted
+    font_size = 13
+    font_family = \$font
+    text_align = center
+    shadow_passes = 1
+    shadow_size = 1
+    shadow_color = rgba(00000070)
+    position = 0, -130
+    halign = center
+    valign = center
+    zindex = 2
+}
+EOF
+}
+
+if [ -n "$external_name" ] && [ "$external_name" != "$lock_monitor" ]; then
+    append_external_widgets "$external_name"
+fi
 
 if [ "${HYPRLOCK_SMART_PRINT_CONFIG:-0}" = "1" ]; then
     cat "$runtime_config"

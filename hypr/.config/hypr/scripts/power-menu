@@ -20,7 +20,7 @@ case "$action" in
         ;;
     suspend)
         if command -v hyprlock >/dev/null 2>&1 && ! pgrep -x hyprlock >/dev/null 2>&1; then
-            ~/.config/hypr/scripts/hyprlock-smart >/dev/null 2>&1 &
+            ~/.config/hypr/scripts/hyprlock-smart --grace 0 --immediate-render --no-fade-in >/dev/null 2>&1 &
             sleep 1
         fi
         exec systemctl suspend
