@@ -125,10 +125,15 @@ start_wifi() {
 
 toggle_wifi() {
     if [ "$(wifi_state)" = "enabled" ]; then
-        doas pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
-        doas ifconfig "$iface" down
+        # On the HP/RTL8822CE FreeBSD live image, cycling rtw88 with ifconfig
+        # down/up can panic in the LinuxKPI net80211 receive path. Keep the
+        # interface under rc.conf/netif control like the installed system.
+        printf '%s\n' "wifi:enabled"
     else
-        start_wifi
+        # Same reason: do not manually raise a downed rtw88 interface from QS.
+        # The live image brings wlan0 up through rc.conf at boot.
+        echo "Wi-Fi is managed by FreeBSD rc.conf on this live image; reboot to re-enable wlan0" >&2
+        return 1
     fi
 }
 
@@ -222,12 +227,14 @@ root_update_wifi() {
     mv "$tmp" "$wpa_conf"
 
     if [ "$action" = "connect" ]; then
-        parent="$(wifi_parent)"
-        if ! ifconfig "$iface" >/dev/null 2>&1 && [ -n "$parent" ]; then
-            ifconfig "$iface" create wlandev "$parent" >/dev/null 2>&1 || true
+        if ! ifconfig "$iface" >/dev/null 2>&1; then
+            echo "$iface does not exist; reboot or let FreeBSD rc.conf create it" >&2
+            exit 1
         fi
-        ifconfig "$iface" country ES regdomain ETSI >/dev/null 2>&1 || true
-        ifconfig "$iface" up
+        if ! ifconfig "$iface" 2>/dev/null | sed -n '1p' | grep -q "<.*UP"; then
+            echo "$iface is down; reboot to let FreeBSD rc.conf bring Wi-Fi up safely" >&2
+            exit 1
+        fi
         pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
         wpa_supplicant -B -i "$iface" -c "$wpa_conf"
         dhclient "$iface" >/dev/null 2>&1 || true
