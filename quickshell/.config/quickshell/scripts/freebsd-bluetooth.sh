@@ -2,12 +2,33 @@
 
 set -eu
 
-dev="${BT_DEV:-ubt0}"
-hci="${BT_HCI:-${dev}hci}"
+dev="${BT_DEV:-}"
+hci="${BT_HCI:-}"
 hosts="${BT_HOSTS:-/etc/bluetooth/hosts}"
 hids="${BT_HIDS:-/var/db/bthidd.hids}"
 
+detect_hci() {
+    [ -n "$hci" ] && return 0
+
+    for candidate in ubt0hci ubt1hci ubt2hci; do
+        if hccontrol -n "$candidate" read_node_state >/dev/null 2>&1; then
+            hci="$candidate"
+            break
+        fi
+    done
+}
+
+detect_dev() {
+    detect_hci
+    if [ -z "$dev" ] && [ -n "$hci" ]; then
+        dev="${hci%hci}"
+    fi
+    [ -n "$dev" ] || dev="ubt0"
+    [ -n "$hci" ] || hci="${dev}hci"
+}
+
 stack_ready() {
+    detect_dev
     hccontrol -n "$hci" read_node_state >/dev/null 2>&1
 }
 
@@ -111,6 +132,7 @@ poll() {
 }
 
 toggle() {
+    detect_dev
     if stack_ready; then
         doas service bluetooth stop "$dev"
     else

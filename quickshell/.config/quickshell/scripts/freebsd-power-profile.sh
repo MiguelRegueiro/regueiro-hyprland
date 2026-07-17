@@ -2,6 +2,8 @@
 
 set -eu
 
+state_file="${XDG_RUNTIME_DIR:-/tmp}/quickshell-power-profile"
+
 usage() {
     echo "usage: $0 get|set power-saver|balanced|performance" >&2
     exit 2
@@ -65,6 +67,16 @@ current_flags() {
 }
 
 get_mode() {
+    if [ -r "$state_file" ]; then
+        mode="$(cat "$state_file" 2>/dev/null || true)"
+        case "$mode" in
+            power-saver|balanced|performance)
+                printf '%s\n' "$mode"
+                return 0
+                ;;
+        esac
+    fi
+
     mode_from_flags "$(current_flags)"
 }
 
@@ -72,14 +84,11 @@ set_mode() {
     mode="${1:-}"
     flags="$(flags_for_mode "$mode")"
 
-    doas sysrc powerd_enable=YES >/dev/null
-    doas sysrc "powerd_flags=$flags" >/dev/null
-
-    if service powerd onestatus >/dev/null 2>&1; then
-        doas service powerd restart >/dev/null
-    else
-        doas service powerd start >/dev/null
-    fi
+    # Live media can have a read-only /etc, so do not rely on sysrc here.
+    # Restart powerd directly with the requested transient flags instead.
+    # shellcheck disable=SC2086
+    doas sh -c 'service powerd onestop >/dev/null 2>&1 || true; /usr/sbin/powerd "$@" >/dev/null 2>&1' sh $flags
+    printf '%s\n' "$mode" > "$state_file"
 
     printf '%s\n' "$mode"
 }

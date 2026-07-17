@@ -13,7 +13,11 @@ fi
 wpa_conf="${WPA_SUPPLICANT_CONF:-/etc/wpa_supplicant.conf}"
 
 current_ssid() {
-    ifconfig "$iface" 2>/dev/null | sed -n 's/.*ssid \(.*\) channel .*/\1/p' | head -n 1
+    ifconfig_out="$(ifconfig "$iface" 2>/dev/null || true)"
+    printf '%s\n' "$ifconfig_out" | grep -q "status: associated" || return 0
+    printf '%s\n' "$ifconfig_out" | sed -n \
+        -e 's/.*ssid "\([^"]*\)".*/\1/p' \
+        -e 's/.*ssid \([^[:space:]]*\) channel .*/\1/p' | head -n 1
 }
 
 wifi_state() {
