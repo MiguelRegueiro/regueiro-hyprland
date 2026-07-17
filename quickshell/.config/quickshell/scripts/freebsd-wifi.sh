@@ -10,7 +10,7 @@ if [ -z "$iface" ]; then
     iface="wlan0"
 fi
 
-wpa_conf="${WPA_SUPPLICANT_CONF:-/etc/wpa_supplicant.conf}"
+wpa_conf="${WPA_SUPPLICANT_CONF:-${XDG_RUNTIME_DIR:-/tmp}/triton-wpa_supplicant.conf}"
 
 current_ssid() {
     ifconfig_out="$(ifconfig "$iface" 2>/dev/null || true)"
@@ -97,11 +97,21 @@ network_state() {
     fi
 }
 
+start_wifi() {
+    doas ifconfig "$iface" up
+    if [ -s "$wpa_conf" ]; then
+        doas pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
+        doas wpa_supplicant -B -i "$iface" -c "$wpa_conf"
+        doas dhclient "$iface" >/dev/null 2>&1 || true
+    fi
+}
+
 toggle_wifi() {
     if [ "$(wifi_state)" = "enabled" ]; then
+        doas pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
         doas ifconfig "$iface" down
     else
-        doas service netif restart "$iface"
+        start_wifi
     fi
 }
 
@@ -121,57 +131,85 @@ root_update_wifi() {
         exit 1
     }
 
-    awk -v target="$ssid" '
-        BEGIN { depth = 0; block = ""; block_ssid = "" }
-        /^[[:space:]]*network=\{/ {
-            depth = 1
-            block = $0 ORS
-            block_ssid = ""
-            next
-        }
-        depth > 0 {
-            block = block $0 ORS
-            if ($0 ~ /^[[:space:]]*ssid="/) {
-                block_ssid = $0
-                sub(/^[[:space:]]*ssid="/, "", block_ssid)
-                sub(/"[[:space:]]*$/, "", block_ssid)
-                gsub(/\\"/, "\"", block_ssid)
-            }
-            if ($0 ~ /^[[:space:]]*\}/) {
-                if (block_ssid != target)
-                    printf "%s", block
-                depth = 0
-                block = ""
-                block_ssid = ""
-            }
-            next
-        }
-        { print }
-    ' "$wpa_conf" > "$tmp"
+    mkdir -p "$(dirname "$wpa_conf")"
+    touch "$wpa_conf"
+    chmod 600 "$wpa_conf"
+    chown root:wheel "$wpa_conf" 2>/dev/null || true
 
-    if [ "$action" = "connect" ]; then
-        esc_ssid="$(printf '%s' "$ssid" | sed 's/\\/\\\\/g; s/"/\\"/g')"
-        {
-            printf 'network={\n'
-            printf '\tssid="%s"\n' "$esc_ssid"
-            if [ -n "$psk" ]; then
-                esc_psk="$(printf '%s' "$psk" | sed 's/\\/\\\\/g; s/"/\\"/g')"
-                printf '\tpsk="%s"\n' "$esc_psk"
-            else
-                printf '\tkey_mgmt=NONE\n'
-            fi
-            printf '}\n'
-        } >> "$tmp"
-    elif [ "$action" != "forget" ]; then
-        rm -f "$tmp"
-        echo "Unknown action: $action" >&2
-        exit 1
+    profile_exists=no
+    awk -v target="$ssid" '
+        /^[[:space:]]*ssid="/ {
+            line = $0
+            sub(/^[[:space:]]*ssid="/, "", line)
+            sub(/"[[:space:]]*$/, "", line)
+            gsub(/\\"/, "\"", line)
+            if (line == target)
+                found = 1
+        }
+        END { exit found ? 0 : 1 }
+    ' "$wpa_conf" && profile_exists=yes || profile_exists=no
+
+    if [ "$action" = "connect" ] && [ -z "$psk" ] && [ "$profile_exists" = "yes" ]; then
+        cp "$wpa_conf" "$tmp"
+    else
+        awk -v target="$ssid" '
+            BEGIN { depth = 0; block = ""; block_ssid = "" }
+            /^[[:space:]]*network=\{/ {
+                depth = 1
+                block = $0 ORS
+                block_ssid = ""
+                next
+            }
+            depth > 0 {
+                block = block $0 ORS
+                if ($0 ~ /^[[:space:]]*ssid="/) {
+                    block_ssid = $0
+                    sub(/^[[:space:]]*ssid="/, "", block_ssid)
+                    sub(/"[[:space:]]*$/, "", block_ssid)
+                    gsub(/\\"/, "\"", block_ssid)
+                }
+                if ($0 ~ /^[[:space:]]*\}/) {
+                    if (block_ssid != target)
+                        printf "%s", block
+                    depth = 0
+                    block = ""
+                    block_ssid = ""
+                }
+                next
+            }
+            { print }
+        ' "$wpa_conf" > "$tmp"
+
+        if [ "$action" = "connect" ]; then
+            esc_ssid="$(printf '%s' "$ssid" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+            {
+                printf 'network={\n'
+                printf '\tssid="%s"\n' "$esc_ssid"
+                if [ -n "$psk" ]; then
+                    esc_psk="$(printf '%s' "$psk" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+                    printf '\tpsk="%s"\n' "$esc_psk"
+                else
+                    printf '\tkey_mgmt=NONE\n'
+                fi
+                printf '}\n'
+            } >> "$tmp"
+        elif [ "$action" != "forget" ]; then
+            rm -f "$tmp"
+            echo "Unknown action: $action" >&2
+            exit 1
+        fi
     fi
 
     chmod 600 "$tmp"
-    chown root:wheel "$tmp"
+    chown root:wheel "$tmp" 2>/dev/null || true
     mv "$tmp" "$wpa_conf"
-    service netif restart "$iface"
+
+    if [ "$action" = "connect" ]; then
+        ifconfig "$iface" up
+        pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
+        wpa_supplicant -B -i "$iface" -c "$wpa_conf"
+        dhclient "$iface" >/dev/null 2>&1 || true
+    fi
 }
 
 case "${1:-scan}" in
@@ -182,14 +220,7 @@ case "${1:-scan}" in
         list_profiles
         ;;
     connect)
-        ssid="${2:-}"
-        psk="${3:-}"
-        if [ -n "$psk" ]; then
-            doas "$0" root-update connect "$ssid" "$psk"
-        else
-            doas ifconfig "$iface" ssid "$ssid"
-            doas service netif restart "$iface"
-        fi
+        doas "$0" root-update connect "${2:-}" "${3:-}"
         ;;
     forget)
         doas "$0" root-update forget "${2:-}"
