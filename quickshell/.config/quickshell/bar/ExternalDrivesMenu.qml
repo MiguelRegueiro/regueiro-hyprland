@@ -30,8 +30,8 @@ PanelWindow {
     readonly property real surfaceOffsetY: -(1 - root.reveal) * externalPanel.height
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
-    readonly property int openDuration: Theme.panelOpenSpatialDuration
-    readonly property int closeDuration: Theme.panelCloseDuration
+    readonly property int openDuration: Theme.topBarMenuOpenDuration
+    readonly property int closeDuration: Theme.topBarMenuCloseDuration
 
     signal closeRequested()
 
