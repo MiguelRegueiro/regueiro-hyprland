@@ -100,6 +100,17 @@ PanelWindow {
                 top: parent.top
             }
 
+            ExternalDriveButton {
+                Layout.alignment: Qt.AlignVCenter
+                barHeight: Theme.barHeight
+                onClicked: bar.externalDrivesClicked()
+                onRightClicked: {
+                    if (bar.externalDrivesService)
+                        bar.externalDrivesService.refresh();
+
+                }
+            }
+
             SshSessionsButton {
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
@@ -108,17 +119,6 @@ PanelWindow {
                 onRightClicked: {
                     if (bar.sshSessionsService)
                         bar.sshSessionsService.refresh();
-
-                }
-            }
-
-            ExternalDriveButton {
-                Layout.alignment: Qt.AlignVCenter
-                barHeight: Theme.barHeight
-                onClicked: bar.externalDrivesClicked()
-                onRightClicked: {
-                    if (bar.externalDrivesService)
-                        bar.externalDrivesService.refresh();
 
                 }
             }
