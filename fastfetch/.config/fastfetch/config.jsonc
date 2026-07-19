@@ -12,7 +12,7 @@
       "5": "#eb3325"
     },
     "padding": {
-      "top": 3,
+      "top": 2,
       "left": 1,
       "right": 2
     }
@@ -79,6 +79,11 @@
     {
       "type": "packages",
       "key": "Packages",
+      "keyColor": "#fe4719"
+    },
+    {
+      "type": "wm",
+      "key": "WM",
       "keyColor": "#fe4719"
     },
     {
