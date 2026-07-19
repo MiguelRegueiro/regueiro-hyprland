@@ -26,6 +26,7 @@ Item {
     readonly property var currentSink: defaultSink
     readonly property string currentSinkName: sinkDisplayName(currentSink)
     readonly property string currentSinkIcon: sinkIconText(currentSink)
+    readonly property string currentSinkOsdLabel: sinkOsdLabel(currentSink)
     readonly property int actualVolumePercent: pipewireVolume >= 0 ? pipewireVolume : polledVolume
     readonly property bool actualMuted: sinkAudio ? sinkAudio.muted : polledMuted
     readonly property int volumePercent: optimisticStateActive ? optimisticVolumePercent : actualVolumePercent
@@ -107,6 +108,44 @@ Item {
             return "󰍹";
 
         return "󰓃";
+    }
+
+    function sinkOsdLabel(node) {
+        if (!node)
+            return "";
+
+        const metadata = sinkMetadataFor(node);
+        const properties = node.properties || {
+        };
+        const portType = String(metadata && metadata.portType || "").toLowerCase();
+        const portName = String(metadata && metadata.portName || "").toLowerCase();
+        const formFactor = String(metadata && metadata.formFactor || properties["device.form_factor"] || properties["device.form-factor"] || "").toLowerCase();
+        const deviceBus = String(metadata && metadata.deviceBus || properties["device.bus"] || "").toLowerCase();
+        const haystack = [portType, portName, formFactor, deviceBus, node.description || "", node.nickname || "", node.name || "", properties["device.icon-name"] || "", properties["device.icon_name"] || "", properties["device.description"] || "", properties["node.name"] || ""].join(" ").toLowerCase();
+        const isHeadphones = portType === "headphones" || haystack.includes("headphone") || haystack.includes("headset") || haystack.includes("earbud") || haystack.includes("earphone");
+        const isHdmi = portType === "hdmi" || haystack.includes("hdmi") || haystack.includes("displayport");
+        const isLineOut = portType === "line" || portName.includes("lineout") || portName.includes("line-out");
+        const isBluetooth = deviceBus === "bluetooth" || haystack.includes("bluetooth") || haystack.includes("bluez");
+        const isUsb = deviceBus === "usb";
+        const isSpeaker = portType === "speaker" || formFactor === "speaker" || haystack.includes("external speaker");
+        const isInternal = formFactor === "internal" || deviceBus === "pci" || haystack.includes("built-in") || haystack.includes("internal audio");
+
+        if (isHeadphones)
+            return "Headphones";
+
+        if (isHdmi)
+            return "HDMI";
+
+        if (isLineOut)
+            return "Speakers";
+
+        if (isSpeaker)
+            return isInternal && !isBluetooth && !isUsb ? "" : "Speakers";
+
+        if (isBluetooth || isUsb)
+            return sinkDisplayName(node);
+
+        return "";
     }
 
     function sinkMetadataFor(node) {
@@ -201,7 +240,10 @@ Item {
                     "availability": activePort && activePort.availability ? activePort.availability : "availability unknown",
                     "displayName": displayName,
                     "secondaryName": secondaryName,
+                    "portName": activePort && activePort.name ? activePort.name : "",
                     "portType": activePort && activePort.type ? activePort.type : "",
+                    "formFactor": properties["device.form_factor"] || properties["device.form-factor"] || "",
+                    "deviceBus": properties["device.bus"] || "",
                     "priority": Number(properties["priority.session"] || 0)
                 };
             }
