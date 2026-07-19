@@ -141,6 +141,7 @@ toggle() {
 }
 
 connect_device() {
+    detect_dev
     mac="${1:-}"
     [ -n "$mac" ] || {
         echo "No Bluetooth address specified" >&2
@@ -157,6 +158,7 @@ connect_device() {
 }
 
 disconnect_device() {
+    detect_dev
     mac="${1:-}"
     [ -n "$mac" ] || {
         echo "No Bluetooth address specified" >&2
@@ -172,6 +174,7 @@ disconnect_device() {
 }
 
 forget_device() {
+    detect_dev
     mac="${1:-}"
     [ -n "$mac" ] || {
         echo "No Bluetooth address specified" >&2
@@ -245,13 +248,14 @@ case "${1:-poll}" in
         forget_device "${2:-}"
         ;;
     settings)
+        detect_dev
         title="Bluetooth Settings"
-        cmd="doas bluetooth-config scan -n $dev; printf '\\nPress Enter to close...'; read _"
+        cmd="doas bluetooth-config scan -n '$dev'; printf '\\nPress Enter to close...'; read _"
         if command -v kitty >/dev/null 2>&1; then
-            exec kitty --title "$title" sh -lc "$cmd"
+            exec kitty --title "$title" sh -c "$cmd"
         fi
         if command -v xterm >/dev/null 2>&1; then
-            exec xterm -T "$title" -e sh -lc "$cmd"
+            exec xterm -T "$title" -e sh -c "$cmd"
         fi
         echo "No terminal emulator is available for Bluetooth settings" >&2
         exit 1
