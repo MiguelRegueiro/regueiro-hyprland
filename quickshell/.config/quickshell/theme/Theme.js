@@ -133,14 +133,14 @@ var popupButtonColorDuration = 90;
 var outputItemColorDuration = 85;
 
 // Panel animation durations (ms)
-var panelOpenDuration = 140;
-var panelCloseDuration = 65;
-var panelOpenSpatialDuration = 150;
-var topBarMenuOpenDuration = 105;
-var topBarMenuCloseDuration = 55;
-var qsPageSlideDuration = 210;
-var qsPageFadeDuration = 145;
-var qsHeightDuration = 180;
+var panelOpenDuration = 90;
+var panelCloseDuration = 45;
+var panelOpenSpatialDuration = 85;
+var topBarMenuOpenDuration = 70;
+var topBarMenuCloseDuration = 40;
+var qsPageSlideDuration = 150;
+var qsPageFadeDuration = 100;
+var qsHeightDuration = 120;
 var batteryFillDuration = 200;
 
 // Material 3 motion curves (caelestia-derived)
