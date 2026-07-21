@@ -58,7 +58,7 @@ linux_enable="YES"
 powerd_enable="YES"
 powerd_flags="-a hiadaptive -b adaptive -n adaptive"
 
-kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket fusefs"
+kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
 wlans_rtw880="wlan0"
 create_args_wlan0="country ES regdomain ETSI"
@@ -77,7 +77,7 @@ doas sysrc seatd_enable=YES
 doas sysrc linux_enable=YES
 doas sysrc powerd_enable=YES
 doas sysrc powerd_flags='-a hiadaptive -b adaptive -n adaptive'
-doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket fusefs"
+doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
 doas sysrc wlans_rtw880=wlan0
 doas sysrc create_args_wlan0="country ES regdomain ETSI"
@@ -97,6 +97,7 @@ kern.geom.label.gptid.enable="0"
 zfs_load="YES"
 cpu_microcode_load="YES"
 cpu_microcode_name="/boot/firmware/intel-ucode.bin"
+hint.hwpstate_intel.0.disabled="1"
 ```
 
 Copy-paste setup:
@@ -104,9 +105,43 @@ Copy-paste setup:
 ```sh
 doas sysrc -f /boot/loader.conf cpu_microcode_load=YES
 doas sysrc -f /boot/loader.conf cpu_microcode_name=/boot/firmware/intel-ucode.bin
+doas sh -c 'grep -qxF '\''hint.hwpstate_intel.0.disabled="1"'\'' /boot/loader.conf || printf '\''%s\n'\'' '\''hint.hwpstate_intel.0.disabled="1"'\'' >> /boot/loader.conf'
 ```
 
 Reboot after changing loader or kernel-module settings.
+
+## CPU Power Management
+
+This laptop should not use FreeBSD's `hwpstate_intel` path. With
+`hwpstate_intel` enabled, the i7-10510U behaved like it was in a firmware power
+saver state: all-core load stayed around `799-1101 MHz`, and a single busy
+thread only reached about `1100-1300 MHz`.
+
+Disabling `hwpstate_intel` in `/boot/loader.conf` made the CPU hold normal base
+clocks under load:
+
+```conf
+hint.hwpstate_intel.0.disabled="1"
+```
+
+Expected quick check after reboot:
+
+```sh
+kldstat | grep hwpstate
+sysctl dev.cpu.0.freq dev.cpu.0.freq_levels
+```
+
+`kldstat | grep hwpstate` should print nothing. In the fixed state, a short
+full-load test held roughly:
+
+```text
+2301 1800 1800 1800 1800 1800 1800 1800 MHz
+```
+
+The QuickShell power-profile helper still restarts `powerd` with matching
+`minimum`, `hiadaptive`/`adaptive`, or `maximum` flags. It also writes Intel HWP
+EPP values when those sysctls exist, but those writes are harmless no-ops on
+this laptop while `hwpstate_intel` is disabled.
 
 ## Groups
 

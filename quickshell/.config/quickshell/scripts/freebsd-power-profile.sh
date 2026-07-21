@@ -26,6 +26,23 @@ flags_for_mode() {
     esac
 }
 
+epp_for_mode() {
+    case "${1:-}" in
+        power-saver)
+            printf '%s\n' "100"
+            ;;
+        balanced)
+            printf '%s\n' "50"
+            ;;
+        performance)
+            printf '%s\n' "0"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+}
+
 mode_from_flags() {
     flags=" ${1:-} "
 
@@ -83,11 +100,25 @@ get_mode() {
 set_mode() {
     mode="${1:-}"
     flags="$(flags_for_mode "$mode")"
+    epp="$(epp_for_mode "$mode")"
 
     # Live media can have a read-only /etc, so do not rely on sysrc here.
     # Restart powerd directly with the requested transient flags instead.
     # shellcheck disable=SC2086
-    doas sh -c 'service powerd onestop >/dev/null 2>&1 || true; /usr/sbin/powerd "$@" >/dev/null 2>&1' sh $flags
+    doas sh -c '
+        epp="$1"
+        shift
+
+        service powerd onestop >/dev/null 2>&1 || true
+        /usr/sbin/powerd "$@" >/dev/null 2>&1
+
+        ncpu="$(sysctl -n hw.ncpu 2>/dev/null || printf 0)"
+        cpu=0
+        while [ "$cpu" -lt "$ncpu" ]; do
+            sysctl "dev.hwpstate_intel.${cpu}.epp=${epp}" >/dev/null 2>&1 || true
+            cpu=$((cpu + 1))
+        done
+    ' sh "$epp" $flags
     printf '%s\n' "$mode" > "$state_file"
 
     printf '%s\n' "$mode"

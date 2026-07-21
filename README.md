@@ -66,7 +66,7 @@ doas sysrc seatd_enable=YES
 doas sysrc linux_enable=YES
 doas sysrc powerd_enable=YES
 doas sysrc powerd_flags='-a hiadaptive -b adaptive -n adaptive'
-doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket fusefs"
+doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
 doas service dbus start
 doas service seatd start
@@ -94,9 +94,15 @@ Enable early Intel microcode loading:
 ```sh
 doas sysrc -f /boot/loader.conf cpu_microcode_load=YES
 doas sysrc -f /boot/loader.conf cpu_microcode_name=/boot/firmware/intel-ucode.bin
+doas sh -c 'grep -qxF '\''hint.hwpstate_intel.0.disabled="1"'\'' /boot/loader.conf || printf '\''%s\n'\'' '\''hint.hwpstate_intel.0.disabled="1"'\'' >> /boot/loader.conf'
 ```
 
 Reboot after changing `/boot/loader.conf` or `kld_list`.
+
+On this HP Pavilion x360, FreeBSD's `hwpstate_intel` path made the i7-10510U
+collapse to roughly `799-1101 MHz` under sustained load. Keep
+`hint.hwpstate_intel.0.disabled="1"` in `/boot/loader.conf`; after reboot,
+`kldstat | grep hwpstate` should print nothing.
 
 ### Intel DRM Driver
 
@@ -123,17 +129,27 @@ pw groupmod video -m "$USER"
 ```
 
 External drive support uses `bsdisks` as the UDisks2-compatible backend.
-Install `fusefs-ext2` and `e2fsprogs` for ext2/3/4 USB drives. If `fusefs` was
-not already included in `kld_list`, load it at boot:
+Install `e2fsprogs` for ext2/3/4 inspection/repair tools. Keep `ext2fs`
+loaded for FreeBSD's native ext driver, and keep `fusefs-ext2` available only
+as a compatibility fallback. If either module was not already included in
+`kld_list`, load it at boot:
 
 ```sh
-doas sysrc kld_list+="fusefs"
+doas sysrc kld_list+="ext2fs fusefs"
+doas kldload ext2fs
 doas kldload fusefs
 ```
 
-FreeBSD can mount ext drives, but the ext/FUSE path is noticeably slower than
-Linux for trees with many small files, such as icon themes. For a USB drive
-shared between Linux and FreeBSD, exFAT is usually the smoother filesystem.
+Prefer the native ext driver in `bsdisks`; `fuse-ext2` can issue tiny 4K reads
+and make large copies crawl:
+
+```sh
+doas sed -i .bak -e 's/^prefer_native_ext2 = false$/prefer_native_ext2 = true/' /usr/local/etc/bsdisks.conf
+```
+
+FreeBSD's native ext driver is the practical choice for fast read-only access
+to Linux ext4 USB drives. For a USB drive shared read/write between Linux and
+FreeBSD, exFAT is usually the smoother filesystem.
 
 ## Install
 
@@ -351,7 +367,9 @@ Some QuickShell services are FreeBSD-specific:
 
 - Wi-Fi uses FreeBSD helper scripts.
 - Bluetooth uses FreeBSD `hccontrol` / service helpers.
-- Power mode uses FreeBSD `powerd` profile helpers.
+- Power mode uses FreeBSD `powerd` profile helpers. The helper also sets Intel
+  HWP EPP values when `hwpstate_intel` is present, but this laptop keeps that
+  driver disabled because it caused severe CPU downclocking.
 - SSH sessions use `who`, `ps`, `sockstat`, and `pkill` to show active logins
   in the bar and end same-user sessions from the menu.
 - Battery, brightness, disks, and audio are wired to the FreeBSD device/service model.
