@@ -39,6 +39,11 @@ PanelWindow {
     }
 
     Connections {
+        function onVolumeLimitReached() {
+            root._lastVolume = root.audioService.volumePercent;
+            root.showMode("volume");
+        }
+
         function onVolumePercentChanged() {
             if (root._lastVolume !== audioService.volumePercent) {
                 root._lastVolume = audioService.volumePercent;

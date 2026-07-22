@@ -47,6 +47,8 @@ Item {
         return "";
     }
 
+    signal volumeLimitReached()
+
     function sinkDisplayName(node) {
         if (!node)
             return "";
@@ -354,7 +356,16 @@ Item {
             return ;
 
         const basePercent = root.optimisticStateActive ? root.optimisticVolumePercent : root.actualVolumePercent;
+        const currentPercent = root.snapVolumePercent(basePercent);
+        const targetPercent = root.snapVolumePercent(basePercent + delta);
         root.setVolumePercent(basePercent + delta);
+        if (targetPercent === currentPercent) {
+            root.volumeLimitReached();
+            if (targetPercent > 0)
+                root.requestVolumeFeedback();
+
+        }
+
     }
 
     function toggleMute() {
