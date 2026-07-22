@@ -7,6 +7,7 @@ Item {
     property int percent: 0
     property bool charging: false
     property bool full: false
+    readonly property real fillFraction: Math.max(0, Math.min(1, root.percent / 100))
     readonly property color outlineColor: Qt.rgba(1, 1, 1, 0.9)
 
     width: 24
@@ -14,6 +15,8 @@ Item {
 
     // Body outline
     Rectangle {
+        id: batteryBody
+
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         width: 21
@@ -24,6 +27,8 @@ Item {
         border.color: root.outlineColor
 
         Item {
+            id: chargeArea
+
             clip: true
 
             anchors {
@@ -39,7 +44,7 @@ Item {
             }
 
             Rectangle {
-                width: Math.max(0, parent.width * root.percent / 100)
+                width: chargeArea.width * root.fillFraction
                 radius: 1
                 color: root.charging || root.full ? Theme.green : root.percent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
 
@@ -61,12 +66,42 @@ Item {
         }
 
         Text {
+            id: chargeBoltBase
+
             anchors.centerIn: parent
             visible: root.charging
             text: "󱐋"
             font.family: Theme.fontIcons
             font.pixelSize: 8 + Theme.fontSizeDelta
-            color: Qt.rgba(0, 0, 0, 0.9)
+            color: root.outlineColor
+        }
+
+        Item {
+            id: chargedBoltClip
+
+            x: chargeArea.x
+            y: 0
+            width: chargeArea.width * root.fillFraction
+            height: parent.height
+            visible: root.charging
+            clip: true
+
+            Text {
+                x: (batteryBody.width - implicitWidth) / 2 - chargedBoltClip.x
+                y: (batteryBody.height - implicitHeight) / 2
+                text: "󱐋"
+                font.family: Theme.fontIcons
+                font.pixelSize: 8 + Theme.fontSizeDelta
+                color: Qt.rgba(0, 0, 0, 0.9)
+            }
+
+            Behavior on width {
+                NumberAnimation {
+                    duration: Theme.batteryFillDuration
+                }
+
+            }
+
         }
 
     }
