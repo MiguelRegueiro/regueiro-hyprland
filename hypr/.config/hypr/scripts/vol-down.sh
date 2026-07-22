@@ -1,6 +1,8 @@
 #!/bin/sh
 
 lockdir="${TMPDIR:-/tmp}/regueiro-volume-step.lock"
+qs_bin="${QS_BIN:-$(command -v qs 2>/dev/null || true)}"
+
 if ! mkdir "$lockdir" 2>/dev/null; then
     exit 0
 fi
@@ -20,6 +22,7 @@ next=$(/usr/sbin/mixer -f /dev/mixer0 vol 2>/dev/null | awk '
 
 [ -n "$next" ] || exit 1
 /usr/sbin/mixer -f /dev/mixer0 vol="$next%" >/dev/null
+[ -z "$qs_bin" ] || "$qs_bin" ipc call audio osd -- "$next" >/dev/null 2>&1 || true
 (
     /usr/local/bin/canberra-gtk-play -i audio-volume-change -d 'Volume changed' 2>/dev/null ||
         /usr/local/bin/paplay /usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null ||

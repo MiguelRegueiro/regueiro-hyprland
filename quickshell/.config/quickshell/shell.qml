@@ -718,6 +718,22 @@ ShellRoot {
         model: Quickshell.screens
 
         delegate: Component {
+            Overlays.BatteryWarningOSD {
+                required property var modelData
+
+                targetScreen: modelData
+                batteryService: batteryServiceState
+                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
             Overlays.PowerMenuOSD {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected

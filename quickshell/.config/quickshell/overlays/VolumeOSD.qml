@@ -15,6 +15,8 @@ PanelWindow {
     property bool osdVisible: false
     property string currentMode: "volume"
     property int _lastVolume: -1
+    readonly property string outputLabel: currentMode === "volume" ? audioService.currentSinkOsdLabel : ""
+    readonly property bool showOutputLabel: outputLabel.length > 0
 
     function showMode(mode) {
         currentMode = mode;
@@ -30,7 +32,7 @@ PanelWindow {
     color: "transparent"
     anchors.bottom: true
     margins.bottom: Theme.borderSize - 4
-    implicitWidth: 320
+    implicitWidth: root.showOutputLabel ? 360 : 320
     implicitHeight: 100
     Component.onCompleted: {
         _lastVolume = audioService.volumePercent;
@@ -45,6 +47,11 @@ PanelWindow {
         }
 
         function onMutedChanged() {
+            root.showMode("volume");
+        }
+
+        function onOsdRequested() {
+            root._lastVolume = audioService.volumePercent;
             root.showMode("volume");
         }
 
@@ -71,7 +78,7 @@ PanelWindow {
         id: osdRect
 
         anchors.centerIn: parent
-        width: 280
+        width: root.showOutputLabel ? 320 : 280
         height: 60
         radius: 30
         color: Theme.popupBg
@@ -83,12 +90,13 @@ PanelWindow {
         layer.enabled: true
 
         RowLayout {
-            spacing: 3
+            id: controlsRow
 
-            anchors {
-                fill: parent
-                margins: 16
-            }
+            spacing: 3
+            x: 16
+            y: root.showOutputLabel ? 27 : Math.round((parent.height - height) / 2)
+            width: parent.width - 32
+            height: 20
 
             Item {
                 implicitWidth: 30
@@ -141,6 +149,22 @@ PanelWindow {
                 horizontalAlignment: Text.AlignRight
             }
 
+        }
+
+        Text {
+            visible: root.showOutputLabel
+            x: 16
+            y: 8
+            width: parent.width - 32
+            height: 18
+            text: root.outputLabel
+            font.family: Theme.fontUi
+            font.pixelSize: 13 + Theme.fontSizeDelta
+            font.weight: Font.DemiBold
+            color: Theme.textDim
+            elide: Text.ElideRight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
         }
 
         Behavior on opacity {

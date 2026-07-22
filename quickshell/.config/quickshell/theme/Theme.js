@@ -182,5 +182,6 @@ var toastSlideDuration = 180;
 
 // Thresholds
 var batteryLowThreshold = 25;
+var batteryCriticalThreshold = 15;
 var cpuWarnThreshold = 70;
 var cpuCritThreshold = 90;
