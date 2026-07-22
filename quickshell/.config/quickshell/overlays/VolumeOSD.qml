@@ -89,7 +89,7 @@ PanelWindow {
 
             spacing: 3
             x: 16
-            y: root.showOutputLabel ? 21 : Math.round((parent.height - height) / 2)
+            y: root.showOutputLabel ? 27 : Math.round((parent.height - height) / 2)
             width: parent.width - 32
             height: 20
 
@@ -149,7 +149,7 @@ PanelWindow {
         Text {
             visible: root.showOutputLabel
             x: 16
-            y: 5
+            y: 8
             width: parent.width - 32
             height: 18
             text: root.outputLabel
