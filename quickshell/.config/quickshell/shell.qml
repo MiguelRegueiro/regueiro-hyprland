@@ -711,6 +711,21 @@ ShellRoot {
         model: Quickshell.screens
 
         delegate: Component {
+            Overlays.BatteryWarningOSD {
+                required property var modelData
+
+                targetScreen: modelData
+                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
             Overlays.InputMethodOSD {
                 required property var modelData
 
