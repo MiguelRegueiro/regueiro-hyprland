@@ -36,7 +36,7 @@ abbr -a pi "doas pkg install"
 abbr -a pr "doas pkg remove"
 abbr -a pu "doas pkg update"
 abbr -a pup "doas pkg upgrade"
-abbr -a up "doas pkg update && doas pkg upgrade"
+abbr -a up "doas pkg upgrade"
 abbr -a autoremove "doas pkg autoremove"
 
 # FreeBSD services/system.
