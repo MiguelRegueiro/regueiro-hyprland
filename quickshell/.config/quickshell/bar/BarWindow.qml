@@ -12,6 +12,7 @@ PanelWindow {
     required property var audioService
     required property var batteryService
     required property var brightnessService
+    required property var networkService
     required property var externalDrivesService
     required property var sshSessionsService
     property bool externalConnected: false
@@ -145,6 +146,7 @@ PanelWindow {
                 menuOpen: bar.quickSettingsOpen
                 audioService: bar.audioService
                 batteryService: bar.batteryService
+                networkService: bar.networkService
                 onClicked: bar.quickSettingsClicked()
             }
 

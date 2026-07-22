@@ -15,6 +15,7 @@ FocusScope {
     required property var audioService
     required property var batteryService
     required property var brightnessService
+    required property var networkService
     property bool open: false
     property real topOffset: 0
     property bool hovered: panelHover.hovered || boundsHover.hovered
@@ -439,6 +440,7 @@ FocusScope {
                             audioService: root.audioService
                             batteryService: root.batteryService
                             brightnessService: root.brightnessService
+                            networkService: root.networkService
                             wifiPage: wifiPageView
                             bluetoothPage: bluetoothPageView
                             powerMode: root.powerMode

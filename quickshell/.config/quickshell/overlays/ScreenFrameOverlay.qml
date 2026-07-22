@@ -15,6 +15,7 @@ PanelWindow {
     required property var audioService
     required property var batteryService
     required property var brightnessService
+    required property var networkService
     property bool hasBar: true
     property bool quickSettingsVisible: false
     property bool quickSettingsCursorInside: false
@@ -433,6 +434,7 @@ PanelWindow {
         audioService: root.audioService
         batteryService: root.batteryService
         brightnessService: root.brightnessService
+        networkService: root.networkService
         onPowerActionRequested: (actionId) => {
             return root.powerActionRequested(actionId);
         }

@@ -1,6 +1,4 @@
 import QtQuick
-import Quickshell
-import Quickshell.Io
 import "../components" as Components
 import "../theme/Theme.js" as Theme
 
@@ -9,13 +7,14 @@ Rectangle {
 
     required property var audioService
     required property var batteryService
+    required property var networkService
     property int barHeight: 34
     property bool menuOpen: false
     readonly property bool hovered: triggerHover.hovered
     property int batteryPercent: batteryService ? batteryService.percent : -1
     property bool batteryCharging: batteryService && batteryService.charging
     property bool batteryFull: batteryService && batteryService.full
-    property string networkIcon: "󰤭"
+    readonly property string networkIcon: networkService.networkIcon
 
     signal clicked()
 
@@ -29,39 +28,6 @@ Rectangle {
 
         blocking: false
         cursorShape: Qt.ArrowCursor
-    }
-
-    Timer {
-        interval: Theme.networkPollInterval
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!networkPoll.running)
-                networkPoll.running = true;
-
-        }
-    }
-
-    Process {
-        id: networkPoll
-
-        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-wifi.sh", "network-state"]
-
-        stdout: StdioCollector {
-            id: networkOut
-
-            onStreamFinished: {
-                const state = networkOut.text.trim();
-                if (state === "eth")
-                    root.networkIcon = "󰌗";
-                else if (state === "wifi_up")
-                    root.networkIcon = "󰤨";
-                else
-                    root.networkIcon = "󰤭";
-            }
-        }
-
     }
 
     Row {

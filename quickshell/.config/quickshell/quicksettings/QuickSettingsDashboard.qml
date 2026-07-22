@@ -11,6 +11,7 @@ Item {
     required property var audioService
     required property var batteryService
     required property var brightnessService
+    required property var networkService
     required property var wifiPage
     required property var bluetoothPage
     required property string powerMode
@@ -130,6 +131,75 @@ Item {
                             font.family: Theme.fontUi
                             font.pixelSize: 13 + Theme.fontSizeDelta
                             color: Theme.textDim
+                        }
+
+                    }
+
+                }
+
+            }
+
+            Item {
+                visible: root.networkService && root.networkService.ethernetAvailable
+                Layout.preferredWidth: visible ? 38 : 0
+                Layout.preferredHeight: 38
+
+                Rectangle {
+                    id: ethernetButton
+
+                    anchors.fill: parent
+                    radius: 19
+                    color: {
+                        if (root.networkService.ethernetConnected)
+                            return ethernetHover.hovered ? Theme.tileActiveBgHover : Theme.tileActiveBg;
+
+                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? Theme.qsCardBgHover : Theme.qsCardBg;
+                    }
+                    border.width: 1
+                    border.color: {
+                        if (root.networkService.ethernetConnected)
+                            return ethernetHover.hovered ? Theme.tileActiveBorderHover : Theme.tileActiveBorder;
+
+                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? Theme.qsCardBorderHover : Theme.qsCardBorder;
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰌗"
+                        font.family: Theme.fontIcons
+                        font.pixelSize: 17 + Theme.fontSizeDelta
+                        color: root.networkService.ethernetConnected ? "white" : (root.networkService.ethernetCanToggle ? Theme.textPrimary : Theme.textDisabled)
+                    }
+
+                    HoverHandler {
+                        id: ethernetHover
+
+                        enabled: root.networkService.ethernetAvailable && root.networkService.ethernetCanToggle
+                        blocking: false
+                        cursorShape: Qt.ArrowCursor
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.networkService.ethernetAvailable && root.networkService.ethernetCanToggle
+                        cursorShape: Qt.ArrowCursor
+                        onClicked: {
+                            root.powerMenuOpen = false;
+                            root.audioOutputPopupRequest(false);
+                            root.networkService.toggleEthernet();
+                        }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.hoverAnimDuration
+                        }
+
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.hoverAnimDuration
                         }
 
                     }

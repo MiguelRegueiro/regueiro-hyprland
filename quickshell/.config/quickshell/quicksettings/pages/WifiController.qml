@@ -40,9 +40,11 @@ Item {
     }
 
     function toggle() {
-        wifiOn = !wifiOn;
+        if (wifiToggleProc.running)
+            return ;
+
+        connectError = "";
         wifiToggleProc.running = true;
-        afterToggle.start();
     }
 
     function openPasswordPrompt(ssid, security) {
@@ -465,6 +467,18 @@ Item {
         id: wifiToggleProc
 
         command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/freebsd-wifi.sh", "toggle"]
+        onExited: (code) => {
+            if (!pollProc.running)
+                pollProc.running = true;
+
+            if (code !== 0)
+                connectError = (wifiToggleErr.text || "Could not toggle Wi-Fi").trim();
+
+        }
+
+        stderr: StdioCollector {
+            id: wifiToggleErr
+        }
     }
 
 }

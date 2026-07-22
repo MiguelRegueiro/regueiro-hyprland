@@ -520,6 +520,10 @@ ShellRoot {
         id: brightnessServiceState
     }
 
+    Services.NetworkService {
+        id: networkServiceState
+    }
+
     Services.ClipboardService {
         id: clipboardServiceState
     }
@@ -563,6 +567,7 @@ ShellRoot {
                 audioService: audioServiceState
                 batteryService: batteryServiceState
                 brightnessService: brightnessServiceState
+                networkService: networkServiceState
                 externalDrivesService: externalDrivesServiceState
                 sshSessionsService: sshSessionsServiceState
                 onQuickSettingsClicked: root.toggleQuickSettings()
@@ -675,6 +680,7 @@ ShellRoot {
                 audioService: audioServiceState
                 batteryService: batteryServiceState
                 brightnessService: brightnessServiceState
+                networkService: networkServiceState
                 onOutsidePressed: root.closeAllPanels()
                 onQuickSettingsRequested: root.toggleQuickSettings()
                 onNotificationCenterRequested: root.toggleNotificationCenter()
