@@ -11,6 +11,7 @@ Item {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
+    required property var networkService
     required property var wifiPage
     required property var bluetoothPage
     required property string powerMode
@@ -82,7 +83,7 @@ Item {
             spacing: 8
 
             Item {
-                id: batteryInfo
+                id: headerStatus
 
                 property var dev: UPower.displayDevice
                 property bool hasBattery: dev && dev.percentage >= 0
@@ -90,6 +91,17 @@ Item {
                 property bool charging: hasBattery && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
                 property bool full: hasBattery && dev.state === UPowerDeviceState.FullyCharged
                 property real secondsLeft: hasBattery && !charging ? dev.timeToEmpty : 0
+
+                function batteryText() {
+                    if (full)
+                        return "Charged";
+
+                    if (charging)
+                        return percent + "% · Charging";
+
+                    const t = formatTime(secondsLeft);
+                    return percent + "%" + (t ? " · " + t : "");
+                }
 
                 function formatTime(secs) {
                     if (secs <= 0)
@@ -107,7 +119,6 @@ Item {
                 }
 
                 Layout.fillWidth: true
-                visible: batteryInfo.hasBattery
                 Layout.preferredHeight: 38
 
                 Rectangle {
@@ -115,37 +126,98 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 38
                     radius: 19
+                    visible: headerStatus.hasBattery
                     color: Theme.qsCardBg
                     border.width: 1
                     border.color: Theme.qsCardBorder
-                    width: pillRow.implicitWidth + 20
+                    width: Math.min(headerStatus.width, batteryRow.implicitWidth + 20)
 
                     RowLayout {
-                        id: pillRow
+                        id: batteryRow
 
-                        anchors.centerIn: parent
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
                         spacing: 6
 
                         Components.BatteryIcon {
-                            percent: batteryInfo.percent
-                            charging: batteryInfo.charging
-                            full: batteryInfo.full
+                            percent: headerStatus.percent
+                            charging: headerStatus.charging
+                            full: headerStatus.full
                         }
 
                         Text {
-                            text: {
-                                if (batteryInfo.full)
-                                    return "Charged";
-
-                                if (batteryInfo.charging)
-                                    return batteryInfo.percent + "% · Charging";
-
-                                const t = batteryInfo.formatTime(batteryInfo.secondsLeft);
-                                return batteryInfo.percent + "%" + (t ? " · " + t : "");
-                            }
+                            Layout.fillWidth: true
+                            text: headerStatus.batteryText()
                             font.family: Theme.fontUi
                             font.pixelSize: 13
                             color: Theme.textDim
+                            elide: Text.ElideRight
+                        }
+
+                    }
+
+                }
+
+            }
+
+            Item {
+                visible: root.networkService.ethernetAvailable
+                Layout.preferredWidth: visible ? 38 : 0
+                Layout.preferredHeight: 38
+
+                Rectangle {
+                    id: ethernetButton
+
+                    anchors.fill: parent
+                    radius: 19
+                    color: {
+                        if (root.networkService.ethernetConnected)
+                            return ethernetHover.hovered ? Theme.tileActiveBgHover : Theme.tileActiveBg;
+
+                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? Theme.qsCardBgHover : Theme.qsCardBg;
+                    }
+                    border.width: 1
+                    border.color: {
+                        if (root.networkService.ethernetConnected)
+                            return ethernetHover.hovered ? Theme.tileActiveBorderHover : Theme.tileActiveBorder;
+
+                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? Theme.qsCardBorderHover : Theme.qsCardBorder;
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰌗"
+                        font.family: Theme.fontIcons
+                        font.pixelSize: 17
+                        color: root.networkService.ethernetConnected ? "white" : (root.networkService.ethernetCanToggle ? Theme.textPrimary : Theme.textDisabled)
+                    }
+
+                    HoverHandler {
+                        id: ethernetHover
+
+                        enabled: root.networkService.ethernetAvailable && root.networkService.ethernetCanToggle
+                        blocking: false
+                        cursorShape: Qt.ArrowCursor
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.networkService.ethernetAvailable && root.networkService.ethernetCanToggle
+                        cursorShape: Qt.ArrowCursor
+                        onClicked: root.networkService.toggleEthernet()
+                    }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.hoverAnimDuration
+                        }
+
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.hoverAnimDuration
                         }
 
                     }

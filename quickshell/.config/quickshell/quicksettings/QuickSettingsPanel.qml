@@ -14,6 +14,7 @@ FocusScope {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
+    required property var networkService
     property bool open: false
     property real topOffset: 0
     property bool hovered: panelHover.hovered || boundsHover.hovered
@@ -436,6 +437,7 @@ FocusScope {
                             notificationStore: root.notificationStore
                             audioService: root.audioService
                             brightnessService: root.brightnessService
+                            networkService: root.networkService
                             wifiPage: wifiPageView
                             bluetoothPage: bluetoothPageView
                             powerMode: root.powerMode

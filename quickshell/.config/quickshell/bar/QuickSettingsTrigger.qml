@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Io
 import Quickshell.Services.UPower
 import "../components" as Components
 import "../theme/Theme.js" as Theme
@@ -8,6 +7,7 @@ Rectangle {
     id: root
 
     required property var audioService
+    required property var networkService
     property int barHeight: 34
     property bool menuOpen: false
     readonly property bool hovered: triggerHover.hovered
@@ -15,7 +15,7 @@ Rectangle {
     property int batteryPercent: batteryDevice ? Math.min(100, Math.round(batteryDevice.percentage * 100)) : -1
     property bool batteryCharging: batteryDevice && (batteryDevice.state === UPowerDeviceState.Charging || batteryDevice.state === UPowerDeviceState.FullyCharged)
     property bool batteryFull: batteryDevice && batteryDevice.state === UPowerDeviceState.FullyCharged
-    property string networkIcon: "󰤭"
+    readonly property string networkIcon: networkService.networkIcon
 
     signal clicked()
 
@@ -29,39 +29,6 @@ Rectangle {
 
         blocking: false
         cursorShape: Qt.ArrowCursor
-    }
-
-    Timer {
-        interval: Theme.networkPollInterval
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!networkPoll.running)
-                networkPoll.running = true;
-
-        }
-    }
-
-    Process {
-        id: networkPoll
-
-        command: ["bash", "-c", "eth=$(nmcli -t -f DEVICE,TYPE,STATE dev 2>/dev/null | " + "awk -F: '$2==\"ethernet\" && $1!~/^(docker|br[0-9]|virbr|veth)/ {print $3; exit}'); " + "if [ \"$eth\" = 'connected' ]; then echo eth; " + "else w=$(nmcli radio wifi 2>/dev/null); " + "s=$(nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | head -1); " + "if [ \"$w\" = 'enabled' ] && [ -n \"$s\" ]; then echo wifi_up; " + "elif [ \"$w\" = 'enabled' ]; then echo wifi_off; " + "else echo off; fi; fi"]
-
-        stdout: StdioCollector {
-            id: networkOut
-
-            onStreamFinished: {
-                const state = networkOut.text.trim();
-                if (state === "eth")
-                    root.networkIcon = "󰌗";
-                else if (state === "wifi_up")
-                    root.networkIcon = "󰤨";
-                else
-                    root.networkIcon = "󰤭";
-            }
-        }
-
     }
 
     Row {

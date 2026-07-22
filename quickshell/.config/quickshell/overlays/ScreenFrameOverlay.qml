@@ -14,6 +14,7 @@ PanelWindow {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
+    required property var networkService
     property bool hasBar: true
     property bool quickSettingsVisible: false
     property bool quickSettingsCursorInside: false
@@ -431,6 +432,7 @@ PanelWindow {
         notificationStore: root.notificationStore
         audioService: root.audioService
         brightnessService: root.brightnessService
+        networkService: root.networkService
         onPowerActionRequested: (actionId) => {
             return root.powerActionRequested(actionId);
         }

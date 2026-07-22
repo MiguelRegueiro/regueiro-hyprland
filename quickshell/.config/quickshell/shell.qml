@@ -515,6 +515,10 @@ ShellRoot {
         id: brightnessServiceState
     }
 
+    Services.NetworkService {
+        id: networkServiceState
+    }
+
     Services.InputService {
         id: inputServiceState
     }
@@ -562,6 +566,7 @@ ShellRoot {
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
+                networkService: networkServiceState
                 inputService: inputServiceState
                 externalDrivesService: externalDrivesServiceState
                 sshSessionsService: sshSessionsServiceState
@@ -674,6 +679,7 @@ ShellRoot {
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
+                networkService: networkServiceState
                 onOutsidePressed: root.closeAllPanels()
                 onQuickSettingsRequested: root.toggleQuickSettings()
                 onNotificationCenterRequested: root.toggleNotificationCenter()

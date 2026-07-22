@@ -11,6 +11,7 @@ PanelWindow {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
+    required property var networkService
     required property var inputService
     required property var externalDrivesService
     required property var sshSessionsService
@@ -149,6 +150,7 @@ PanelWindow {
                 barHeight: Theme.barHeight
                 menuOpen: bar.quickSettingsOpen
                 audioService: bar.audioService
+                networkService: bar.networkService
                 onClicked: bar.quickSettingsClicked()
             }
 
