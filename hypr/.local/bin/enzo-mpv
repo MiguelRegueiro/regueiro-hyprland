@@ -1,0 +1,17 @@
+#!/bin/sh
+
+url=
+for arg in "$@"; do
+    case "$arg" in
+        http://* | https://* | file://* | /*)
+            url="$arg"
+            ;;
+    esac
+done
+
+if [ -z "$url" ]; then
+    printf "%s\n" "enzo-mpv: no media URL found" >&2
+    exit 1
+fi
+
+exec enzo "$url"

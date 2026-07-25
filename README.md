@@ -130,7 +130,8 @@ If you want to keep existing GTK settings instead, merge `gtk-im-module=fcitx` i
 flatpak install flathub app.zen_browser.zen
 ```
 
-Some personal keybinds also expect `anitrack`, `elio`, `normcap`, and `runin`.
+Some personal keybinds also expect `anitrack`, `elio`, `enzo`, `normcap`, and `runin`.
+The `Super+W` anime tracker bind sets `ANI_CLI_PLAYER=enzo-mpv`; that wrapper is stowed by the `hypr` package to `~/.local/bin/enzo-mpv` and forwards the media URL to `enzo`.
 If you do not use those apps, either skip them or change the matching binds in `hypr/.config/hypr/conf/binds.conf`.
 
 ### Power menu
