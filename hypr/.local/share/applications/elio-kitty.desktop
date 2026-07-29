@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Elio
+Comment=Open folders in Elio inside Kitty
+Icon=elio
+TryExec=kitty
+Exec=kitty -e elio %f
+Terminal=false
+MimeType=inode/directory;
+Categories=System;FileManager;FileTools;
+Keywords=Files;Folders;Directory;Manager;Explorer;Terminal;TUI;Preview;

@@ -2,7 +2,7 @@
 # Hyprland-only defaults. Keep GNOME's own gnome-mimeapps.list untouched.
 
 # File manager
-inode/directory=elio.desktop
+inode/directory=elio-kitty.desktop
 
 # Plain text
 text/plain=org.kde.kate.desktop
