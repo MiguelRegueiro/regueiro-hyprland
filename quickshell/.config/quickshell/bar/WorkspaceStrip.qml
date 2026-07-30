@@ -11,6 +11,13 @@ Row {
     property bool externalConnected: false
     readonly property var pinnedWorkspaceIds: externalConnected && screenName === Theme.primaryScreen ? [10] : [1, 2, 3, 4, 5]
 
+    function dispatchWorkspace(workspace) {
+        if (typeof workspace === "number")
+            Hyprland.dispatch("hl.dsp.focus({ workspace = " + workspace + " })");
+        else
+            Hyprland.dispatch("hl.dsp.focus({ workspace = \"" + workspace + "\" })");
+    }
+
     function belongsToScreen(workspace) {
         const id = Number(workspace.id);
 
@@ -57,22 +64,6 @@ Row {
                 font.weight: modelData.active ? Font.Bold : Font.Normal
             }
 
-            // Urgent indicator — small dot at bottom
-            Rectangle {
-                visible: modelData.urgent
-                width: 4
-                height: 4
-                radius: 2
-                color: Theme.red
-
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                    bottom: parent.bottom
-                    bottomMargin: 2
-                }
-
-            }
-
             HoverHandler {
                 id: hover
 
@@ -82,12 +73,12 @@ Row {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: Hyprland.dispatch("workspace " + wsBtn.modelData.id)
+                onClicked: wsRow.dispatchWorkspace(wsBtn.modelData.id)
                 onWheel: (wheel) => {
                     if (wheel.angleDelta.y > 0)
-                        Hyprland.dispatch("workspace e-1");
+                        wsRow.dispatchWorkspace("e-1");
                     else
-                        Hyprland.dispatch("workspace e+1");
+                        wsRow.dispatchWorkspace("e+1");
                 }
             }
 
