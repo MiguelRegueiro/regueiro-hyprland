@@ -58,14 +58,12 @@ ethernet_state() {
 }
 
 ensure_iface() {
-    parent="$(wifi_parent)"
     if ifconfig "$iface" >/dev/null 2>&1; then
         return 0
     fi
 
-    [ -n "$parent" ] || return 1
-    doas ifconfig "$iface" create wlandev "$parent" >/dev/null 2>&1 || true
-    ifconfig "$iface" >/dev/null 2>&1
+    echo "$iface does not exist; reboot to let FreeBSD rc.conf create it safely" >&2
+    return 1
 }
 
 current_ssid() {
@@ -207,12 +205,13 @@ status() {
 start_wifi() {
     rm -f "$disabled_marker"
     ensure_iface || return 1
-    if doas service netif start "$iface"; then
-        return 0
+
+    doas service netif start "$iface" || true
+    if ! iface_is_up "$(ifconfig "$iface" 2>/dev/null || true)"; then
+        echo "FreeBSD netif did not bring $iface up; reboot instead of cycling rtw88 manually" >&2
+        return 1
     fi
 
-    doas ifconfig "$iface" country ES regdomain ETSI >/dev/null 2>&1 || true
-    doas ifconfig "$iface" up
     if [ -s "$wpa_conf" ]; then
         doas pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
         doas wpa_supplicant -B -i "$iface" -c "$wpa_conf"
@@ -363,11 +362,11 @@ root_update_wifi() {
 
     if [ "$action" = "connect" ]; then
         if ! ifconfig "$iface" >/dev/null 2>&1; then
-            echo "$iface does not exist; run 'doas service netif start $iface'" >&2
+            echo "$iface does not exist; reboot to let FreeBSD rc.conf create it safely" >&2
             exit 1
         fi
         if ! iface_is_up "$(ifconfig "$iface" 2>/dev/null || true)"; then
-            echo "$iface is down; run 'doas service netif start $iface'" >&2
+            echo "$iface is down; use the Wi-Fi toggle once or reboot instead of cycling rtw88 manually" >&2
             exit 1
         fi
         pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
