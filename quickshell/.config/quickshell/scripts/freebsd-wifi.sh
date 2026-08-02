@@ -21,6 +21,16 @@ iface_is_up() {
     printf '%s\n' "$1" | sed -n '1p' | grep -Eq '<([^>]*,)?UP(,|>)'
 }
 
+iface_has_ipv4() {
+    printf '%s\n' "$1" | grep -Eq '^[[:space:]]*inet[[:space:]]'
+}
+
+ethernet_is_connected() {
+    iface_is_up "$1" &&
+        printf '%s\n' "$1" | grep -q "status: active" &&
+        iface_has_ipv4 "$1"
+}
+
 wifi_disabled() {
     [ -e "$disabled_marker" ]
 }
@@ -50,7 +60,7 @@ ethernet_state() {
     fi
 
     eth_ifconfig="$(ifconfig "$eth_iface" 2>/dev/null || true)"
-    if iface_is_up "$eth_ifconfig" && printf '%s\n' "$eth_ifconfig" | grep -q "status: active"; then
+    if ethernet_is_connected "$eth_ifconfig"; then
         printf '%s\n' "connected"
     else
         printf '%s\n' "available"
@@ -169,7 +179,7 @@ status() {
     eth_state="unavailable"
     if [ -n "$eth_iface" ]; then
         eth_ifconfig="$(ifconfig "$eth_iface" 2>/dev/null || true)"
-        if iface_is_up "$eth_ifconfig" && printf '%s\n' "$eth_ifconfig" | grep -q "status: active"; then
+        if ethernet_is_connected "$eth_ifconfig"; then
             eth_state="connected"
         else
             eth_state="available"
@@ -261,13 +271,17 @@ toggle_ethernet() {
     fi
 
     eth_ifconfig="$(ifconfig "$eth_iface" 2>/dev/null || true)"
-    if iface_is_up "$eth_ifconfig" && printf '%s\n' "$eth_ifconfig" | grep -q "status: active"; then
-        doas service netif stop "$eth_iface" || doas ifconfig "$eth_iface" down
+    if ethernet_is_connected "$eth_ifconfig"; then
+        doas service dhclient stop "$eth_iface" >/dev/null 2>&1 || \
+            doas pkill -f "dhclient:.*$eth_iface" >/dev/null 2>&1 || true
+        inet_addr="$(printf '%s\n' "$eth_ifconfig" | awk '/^[[:space:]]*inet / { print $2; exit }')"
+        if [ -n "$inet_addr" ]; then
+            doas ifconfig "$eth_iface" inet "$inet_addr" delete
+        fi
+        doas ifconfig "$eth_iface" down
     else
-        doas service netif start "$eth_iface" || {
-            doas ifconfig "$eth_iface" up
-            doas dhclient "$eth_iface" >/dev/null 2>&1 || true
-        }
+        doas ifconfig "$eth_iface" up
+        doas dhclient "$eth_iface"
     fi
 }
 
