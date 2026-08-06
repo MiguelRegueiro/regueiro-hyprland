@@ -1,17 +1,39 @@
 #!/bin/sh
 
 url=
-for arg in "$@"; do
-    case "$arg" in
+media_title=
+media_title_set=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --force-media-title=*)
+            media_title=${1#--force-media-title=}
+            media_title_set=1
+            ;;
+        --force-media-title)
+            shift
+            if [ "$#" -eq 0 ]; then
+                printf "%s\n" "enzo-mpv: --force-media-title requires a title" >&2
+                exit 1
+            fi
+            media_title=$1
+            media_title_set=1
+            ;;
         http://* | https://* | file://* | /*)
-            url="$arg"
+            url=$1
             ;;
     esac
+    shift
 done
 
 if [ -z "$url" ]; then
     printf "%s\n" "enzo-mpv: no media URL found" >&2
     exit 1
+fi
+
+if [ "$media_title_set" -eq 1 ] &&
+    enzo --help 2>/dev/null | grep -q -- "--force-media-title"; then
+    exec enzo "--force-media-title=$media_title" "$url"
 fi
 
 exec enzo "$url"
