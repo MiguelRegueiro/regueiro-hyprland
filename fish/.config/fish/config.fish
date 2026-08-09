@@ -19,6 +19,14 @@ if test -f /etc/os-release
 end
 
 fish_add_path $HOME/.local/bin
+
+# Keep ani-cli/anitrack on the terminal-native Enzo player in regular shells,
+# not only when launched through the dedicated Hyprland keybind.
+if command -sq enzo-mpv
+    set -gx ANI_CLI_PLAYER enzo-mpv
+    set -gx ANI_CLI_NO_DETACH 1
+end
+
 if command -sq zoxide
     zoxide init fish | source
 end
