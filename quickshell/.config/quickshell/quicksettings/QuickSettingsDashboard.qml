@@ -24,6 +24,8 @@ Item {
     readonly property real audioOutputPopupTopInViewport: mapToItem(null, 0, volumeRow.y + volumeRow.height + audioOutputPopupGap).y
     readonly property real audioOutputPopupMaxHeight: Math.max(180, viewportHeight - audioOutputPopupTopInViewport - Theme.borderSize - 12)
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? Math.max(0, audioOutputPopupBottom - root.implicitHeight + 12) : 0
+    readonly property real appVolumeListTopInViewport: mapToItem(null, 0, controlsColumn.y + applicationVolumeList.y).y
+    readonly property real appVolumeListMaxHeight: Math.max(56, viewportHeight - appVolumeListTopInViewport - Theme.qsContentPadding * 2 - Theme.barCornerRadius)
 
     signal wifiPageRequested()
     signal bluetoothPageRequested()
@@ -477,6 +479,8 @@ Item {
         }
 
         ColumnLayout {
+            id: controlsColumn
+
             Layout.fillWidth: true
             spacing: 8
 
@@ -545,7 +549,10 @@ Item {
             }
 
             Widgets.ApplicationVolumeList {
+                id: applicationVolumeList
+
                 Layout.fillWidth: true
+                maximumHeight: root.appVolumeListMaxHeight
             }
 
         }

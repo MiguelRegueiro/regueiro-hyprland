@@ -1,11 +1,13 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Quickshell.Io
 import "../../theme/Theme.js" as Theme
 
-ColumnLayout {
+ListView {
     id: root
 
+    required property real maximumHeight
     property var streams: []
     property string streamsKey: ""
     property int activeDragCount: 0
@@ -81,7 +83,12 @@ ColumnLayout {
     }
 
     Layout.fillWidth: true
+    Layout.preferredHeight: implicitHeight
+    implicitHeight: Math.min(Math.max(0, contentHeight), maximumHeight)
     spacing: 8
+    model: root.streams
+    clip: true
+    boundsBehavior: Flickable.StopAtBounds
 
     Timer {
         id: pollTimer
@@ -134,48 +141,56 @@ ColumnLayout {
         command: ["echo"]
     }
 
-    Repeater {
-        model: root.streams
+    ScrollBar.vertical: ScrollBar {
+        width: 4
+        policy: ScrollBar.AsNeeded
+        background: null
 
-        delegate: QuickSettingsSliderRow {
-            required property var modelData
-            property bool _countedDrag: false
-
-            Layout.fillWidth: true
-            backgroundRadius: 16
-            iconText: "󰎇"
-            label: root.streamLabel(modelData)
-            value: modelData.volume
-            maxValue: Math.max(1, modelData.volume)
-            stepSize: 0.02
-            muted: modelData.muted
-            onDraggingChanged: {
-                if (dragging && !_countedDrag) {
-                    root.activeDragCount += 1;
-                    _countedDrag = true;
-                    return ;
-                }
-                if (!dragging && _countedDrag) {
-                    root.activeDragCount = Math.max(0, root.activeDragCount - 1);
-                    _countedDrag = false;
-                    refreshSoon.restart();
-                }
-            }
-            onSliderMoved: function(val) {
-                setAppVolProc.command = ["pactl", "set-sink-input-volume", String(modelData.id), Math.round(val * 100) + "%"];
-                setAppVolProc.running = true;
-            }
-            onMuteClicked: {
-                setAppMuteProc.command = ["pactl", "set-sink-input-mute", String(modelData.id), "toggle"];
-                setAppMuteProc.running = true;
-            }
-            Component.onDestruction: {
-                if (_countedDrag)
-                    root.activeDragCount = Math.max(0, root.activeDragCount - 1);
-
-            }
+        contentItem: Rectangle {
+            implicitWidth: 4
+            radius: 2
+            color: Qt.rgba(1, 1, 1, 0.2)
         }
 
+    }
+
+    delegate: QuickSettingsSliderRow {
+        required property var modelData
+        property bool _countedDrag: false
+
+        width: ListView.view.width
+        backgroundRadius: 16
+        iconText: "󰎇"
+        label: root.streamLabel(modelData)
+        value: modelData.volume
+        maxValue: Math.max(1, modelData.volume)
+        stepSize: 0.02
+        muted: modelData.muted
+        onDraggingChanged: {
+            if (dragging && !_countedDrag) {
+                root.activeDragCount += 1;
+                _countedDrag = true;
+                return ;
+            }
+            if (!dragging && _countedDrag) {
+                root.activeDragCount = Math.max(0, root.activeDragCount - 1);
+                _countedDrag = false;
+                refreshSoon.restart();
+            }
+        }
+        onSliderMoved: function(val) {
+            setAppVolProc.command = ["pactl", "set-sink-input-volume", String(modelData.id), Math.round(val * 100) + "%"];
+            setAppVolProc.running = true;
+        }
+        onMuteClicked: {
+            setAppMuteProc.command = ["pactl", "set-sink-input-mute", String(modelData.id), "toggle"];
+            setAppMuteProc.running = true;
+        }
+        Component.onDestruction: {
+            if (_countedDrag)
+                root.activeDragCount = Math.max(0, root.activeDragCount - 1);
+
+        }
     }
 
 }
