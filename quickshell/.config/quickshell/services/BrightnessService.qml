@@ -31,6 +31,19 @@ Item {
 
     }
 
+    function requestBrightnessOsd(percent) {
+        const nextPercent = Number(percent);
+        if (!isNaN(nextPercent)) {
+            const clamped = Math.max(0, Math.min(100, Math.round(nextPercent)));
+            root.percent = clamped;
+            root.maxValue = 100;
+            root.rawValue = clamped;
+        }
+
+        root.adjusted();
+        refreshSoon.restart();
+    }
+
     function setPercent(nextPercent) {
         const clamped = Math.max(0, Math.min(100, Math.round(nextPercent)));
         root.percent = clamped;
@@ -138,6 +151,10 @@ Item {
 
         function set(percent: string) {
             root.setPercent(Number(percent));
+        }
+
+        function osd(percent: string) {
+            root.requestBrightnessOsd(percent);
         }
 
         target: "brightness"
