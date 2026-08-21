@@ -55,8 +55,7 @@ Current relevant service/module setup:
 dbus_enable="YES"
 seatd_enable="YES"
 linux_enable="YES"
-powerd_enable="YES"
-powerd_flags="-a hiadaptive -b adaptive -n adaptive"
+powerd_enable="NO"
 
 kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
@@ -75,8 +74,8 @@ Copy-paste setup:
 doas sysrc dbus_enable=YES
 doas sysrc seatd_enable=YES
 doas sysrc linux_enable=YES
-doas sysrc powerd_enable=YES
-doas sysrc powerd_flags='-a hiadaptive -b adaptive -n adaptive'
+doas sysrc powerd_enable=NO
+doas sysrc -x powerd_flags
 doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
 doas sysrc wlans_rtw880=wlan0
@@ -97,7 +96,7 @@ kern.geom.label.gptid.enable="0"
 zfs_load="YES"
 cpu_microcode_load="YES"
 cpu_microcode_name="/boot/firmware/intel-ucode.bin"
-hint.hwpstate_intel.0.disabled="1"
+machdep.hwpstate_pkg_ctrl="0"
 ```
 
 Copy-paste setup:
@@ -105,43 +104,57 @@ Copy-paste setup:
 ```sh
 doas sysrc -f /boot/loader.conf cpu_microcode_load=YES
 doas sysrc -f /boot/loader.conf cpu_microcode_name=/boot/firmware/intel-ucode.bin
-doas sh -c 'grep -qxF '\''hint.hwpstate_intel.0.disabled="1"'\'' /boot/loader.conf || printf '\''%s\n'\'' '\''hint.hwpstate_intel.0.disabled="1"'\'' >> /boot/loader.conf'
+doas sysrc -x -f /boot/loader.conf hint.hwpstate_intel.0.disabled
+doas sysrc -f /boot/loader.conf machdep.hwpstate_pkg_ctrl=0
 ```
 
 Reboot after changing loader or kernel-module settings.
 
 ## CPU Power Management
 
-This laptop should not use FreeBSD's `hwpstate_intel` path. With
-`hwpstate_intel` enabled, the i7-10510U behaved like it was in a firmware power
-saver state: all-core load stayed around `799-1101 MHz`, and a single busy
-thread only reached about `1100-1300 MHz`.
-
-Disabling `hwpstate_intel` in `/boot/loader.conf` made the CPU hold normal base
-clocks under load:
+The validated configuration keeps `hwpstate_intel` enabled, disables HWP
+package control, and does not run `powerd`:
 
 ```conf
-hint.hwpstate_intel.0.disabled="1"
+# /boot/loader.conf
+machdep.hwpstate_pkg_ctrl="0"
+
+# /etc/rc.conf
+powerd_enable="NO"
 ```
 
-Expected quick check after reboot:
+Expected runtime state:
 
 ```sh
-kldstat | grep hwpstate
-sysctl dev.cpu.0.freq dev.cpu.0.freq_levels
+sysctl dev.cpufreq.0.freq_driver
+sysctl dev.hwpstate_intel | grep '\.epp'
 ```
-
-`kldstat | grep hwpstate` should print nothing. In the fixed state, a short
-full-load test held roughly:
 
 ```text
-2301 1800 1800 1800 1800 1800 1800 1800 MHz
+dev.cpufreq.0.freq_driver: hwpstate_intel0
 ```
 
-The QuickShell power-profile helper still restarts `powerd` with matching
-`minimum`, `hiadaptive`/`adaptive`, or `maximum` flags. It also writes Intel HWP
-EPP values when those sysctls exist, but those writes are harmless no-ops on
-this laptop while `hwpstate_intel` is disabled.
+Each `dev.hwpstate_intel.0.epp` through `dev.hwpstate_intel.7.epp` value should
+be `50`.
+
+Set EPP 50 on all eight logical CPUs if needed:
+
+```sh
+for cpu in 0 1 2 3 4 5 6 7; do
+    doas sysctl "dev.hwpstate_intel.${cpu}.epp=50"
+done
+```
+
+The old `est0` plus `powerd` workaround is obsolete. HWP package control
+performed badly; per-core HWP with `machdep.hwpstate_pkg_ctrl=0` improved
+performance substantially. EPP 50 was clearly best in real benchmarks, while
+EPP 0 and 100 both performed significantly worse. The QuickShell `performance`
+preset selects EPP 0 and starts transient `powerd`, so it is not recommended for
+this laptop's validated configuration.
+
+Zen running through Flatpak on FreeBSD improved dramatically with this setup.
+The same 1080p24 YouTube test dropped about one frame after more than 1200
+frames, comparable to Linux.
 
 ## Groups
 

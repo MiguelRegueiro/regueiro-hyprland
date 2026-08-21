@@ -58,19 +58,18 @@ doas pkg install fd-find
 
 ## System Setup
 
-Enable desktop services and the required kernel modules:
+Configure desktop services and the required kernel modules:
 
 ```sh
 doas sysrc dbus_enable=YES
 doas sysrc seatd_enable=YES
 doas sysrc linux_enable=YES
-doas sysrc powerd_enable=YES
-doas sysrc powerd_flags='-a hiadaptive -b adaptive -n adaptive'
+doas sysrc powerd_enable=NO
+doas sysrc -x powerd_flags
 doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
 doas service dbus start
 doas service seatd start
-doas service powerd start
 ```
 
 Configure `doas` manually as root-owned system policy, not through stow. The
@@ -94,15 +93,17 @@ Enable early Intel microcode loading:
 ```sh
 doas sysrc -f /boot/loader.conf cpu_microcode_load=YES
 doas sysrc -f /boot/loader.conf cpu_microcode_name=/boot/firmware/intel-ucode.bin
-doas sh -c 'grep -qxF '\''hint.hwpstate_intel.0.disabled="1"'\'' /boot/loader.conf || printf '\''%s\n'\'' '\''hint.hwpstate_intel.0.disabled="1"'\'' >> /boot/loader.conf'
+doas sysrc -x -f /boot/loader.conf hint.hwpstate_intel.0.disabled
+doas sysrc -f /boot/loader.conf machdep.hwpstate_pkg_ctrl=0
 ```
 
 Reboot after changing `/boot/loader.conf` or `kld_list`.
 
-On this HP Pavilion x360, FreeBSD's `hwpstate_intel` path made the i7-10510U
-collapse to roughly `799-1101 MHz` under sustained load. Keep
-`hint.hwpstate_intel.0.disabled="1"` in `/boot/loader.conf`; after reboot,
-`kldstat | grep hwpstate` should print nothing.
+On this HP Pavilion x360, keep `hwpstate_intel` enabled but disable HWP package
+control with `machdep.hwpstate_pkg_ctrl="0"`. The validated runtime uses
+per-core HWP with EPP 50 on CPUs 0-7 and leaves `powerd` disabled. The old
+`est0` plus `powerd` workaround is obsolete; EPP 0 and 100 both performed
+significantly worse than 50 in real benchmarks.
 
 ### Intel DRM Driver
 
@@ -367,9 +368,10 @@ Some QuickShell services are FreeBSD-specific:
 
 - Wi-Fi uses FreeBSD helper scripts.
 - Bluetooth uses FreeBSD `hccontrol` / service helpers.
-- Power mode uses FreeBSD `powerd` profile helpers. The helper also sets Intel
-  HWP EPP values when `hwpstate_intel` is present, but this laptop keeps that
-  driver disabled because it caused severe CPU downclocking.
+- Power mode uses a FreeBSD-specific helper, but its `performance` preset is not
+  recommended on this laptop: it starts `powerd` and selects EPP 0. The
+  validated configuration keeps `powerd` disabled and uses per-core HWP at
+  EPP 50.
 - SSH sessions use `who`, `ps`, `sockstat`, and `pkill` to show active logins
   in the bar and end same-user sessions from the menu.
 - Battery, brightness, disks, and audio are wired to the FreeBSD device/service model.
