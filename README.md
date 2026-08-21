@@ -208,28 +208,40 @@ ck-list-sessions
 
 ## Hyprland Notes
 
+The compositor config uses Hyprland's native Lua API and requires Hyprland
+0.55 or newer. `hypr/.config/hypr/hyprland.lua` is the entrypoint and loads the
+focused modules under `hypr/.config/hypr/conf/`. The `hypridle.conf`,
+`hyprlock.conf`, and `hyprpaper.conf` files remain in their programs' native
+config formats.
+
+When switching an existing session from `hyprland.conf` to `hyprland.lua`, log
+out and start Hyprland again. A normal `hyprctl reload` keeps the config
+provider selected when the compositor started.
+
 FreeBSD installs `hyprpolkitagent` at `/usr/local/libexec/hyprpolkitagent`, so autostart must use the full path:
 
-```ini
-exec-once = /usr/local/libexec/hyprpolkitagent
+```lua
+hl.exec_cmd("/usr/local/libexec/hyprpolkitagent")
 ```
 
-The checked-in monitor config is for this laptop. Adjust `hypr/.config/hypr/conf/monitors.conf` if your monitor names differ, and see [docs/freebsd-hardware-notes.md](docs/freebsd-hardware-notes.md) for the current hardware-specific values.
+The checked-in monitor config is for this laptop. Adjust `hypr/.config/hypr/conf/monitors.lua` if your monitor names differ, and see [docs/freebsd-hardware-notes.md](docs/freebsd-hardware-notes.md) for the current hardware-specific values.
 
 XWayland should render unscaled so Electron apps can scale themselves cleanly:
 
-```ini
-xwayland {
-    force_zero_scaling = true
-}
+```lua
+hl.config({
+    xwayland = {
+        force_zero_scaling = true,
+    },
+})
 ```
 
 This is especially important for Discord font rendering.
 
 Wallpaper is applied through `hyprpaper` in Hyprland autostart:
 
-```ini
-exec-once = hyprpaper
+```lua
+hl.exec_cmd("hyprpaper")
 ```
 
 System suspend is disabled in QuickShell on this laptop. FreeBSD reports S3
@@ -257,9 +269,9 @@ Expected useful entries include:
 
 The Hyprland session exports:
 
-```ini
-env = LIBVA_DRIVER_NAME,iHD
-env = MOZ_ENABLE_WAYLAND,1
+```lua
+hl.env("LIBVA_DRIVER_NAME", "iHD")
+hl.env("MOZ_ENABLE_WAYLAND", "1")
 ```
 
 Firefox profile prefs used for smooth YouTube playback:
@@ -391,16 +403,20 @@ qs ipc call powermenu
 
 The Hyprland autostart must start QuickShell:
 
-```ini
-exec-once = qs -n -d
+```lua
+hl.exec_cmd("qs -n -d")
 ```
 
 ## Keyboard
 
 The Hyprland keyboard config uses:
 
-```ini
-kb_options = lv3:switch
+```lua
+hl.config({
+    input = {
+        kb_options = "lv3:switch",
+    },
+})
 ```
 
 Right Ctrl acts as an additional AltGr / level-3 key, useful on the Spanish layout.

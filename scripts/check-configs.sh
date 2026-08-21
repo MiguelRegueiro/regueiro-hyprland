@@ -15,6 +15,13 @@ if ! command -v qmllint >/dev/null 2>&1; then
     exit 1
 fi
 
+if ! command -v Hyprland >/dev/null 2>&1; then
+    echo "Hyprland is required but not installed" >&2
+    exit 1
+fi
+
+Hyprland --verify-config --config "$repo_root/hypr/.config/hypr/hyprland.lua"
+
 while IFS= read -r -d '' file; do
     qmlformat -n "$file" >/dev/null
 done < <(find quickshell/.config/quickshell -type f -name '*.qml' ! -name 'NotificationStore.qml' -print0 | sort -z)

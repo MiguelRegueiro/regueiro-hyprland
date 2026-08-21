@@ -176,8 +176,13 @@ doas pw groupmod video -m "$USER"
 
 Current laptop monitor rule:
 
-```ini
-monitor = eDP-1,1920x1080@60,0x120,1.25
+```lua
+hl.monitor({
+    output = "eDP-1",
+    mode = "1920x1080@60",
+    position = "0x120",
+    scale = 1.25,
+})
 ```
 
 This is hardware-specific because `eDP-1`, the offset, and the scale may not make sense on another machine.
@@ -198,10 +203,12 @@ fetch -o ~/.local/share/color/icc/BOE082C-Notebookcheck-HP-Pavilion-x360-14.icm 
 
 Hyprland 0.55 has color-management support, but direct ICC loading should be tested before making it persistent. The compositor-level setting that was kept:
 
-```ini
-render {
-    cm_sdr_eotf = srgb
-}
+```lua
+hl.config({
+    render = {
+        cm_sdr_eotf = "srgb",
+    },
+})
 ```
 
 Subjective gamma/temperature testing used `wl-gammarelay-rs`, but it is not a true calibration tool.
@@ -284,10 +291,12 @@ doas chflags noschg ~/.config/discord/settings.json
 
 The working Discord rendering setup is:
 
-```ini
-xwayland {
-    force_zero_scaling = true
-}
+```lua
+hl.config({
+    xwayland = {
+        force_zero_scaling = true,
+    },
+})
 ```
 
 ```sh
@@ -315,8 +324,8 @@ Current live wallpaper:
 The autostart line uses `hyprpaper` and the stowed `hyprpaper.conf` points to
 the repo-managed wallpaper:
 
-```ini
-exec-once = hyprpaper
+```lua
+hl.exec_cmd("hyprpaper")
 ```
 
 ## Suspend / Resume
