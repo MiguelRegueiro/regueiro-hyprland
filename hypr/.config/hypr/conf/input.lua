@@ -1,0 +1,44 @@
+-- Input devices and gestures.
+
+hl.config({
+    input = {
+        kb_layout = "es",
+        kb_options = "lv3:switch",
+        follow_mouse = 1,
+        sensitivity = 0,
+        accel_profile = "flat",
+        repeat_rate = 25,
+        repeat_delay = 500,
+        touchpad = {
+            natural_scroll = true,
+            tap_to_click = true,
+            disable_while_typing = true,
+            scroll_factor = 0.3,
+        },
+    },
+    gestures = {
+        workspace_swipe_distance = 280,
+        workspace_swipe_cancel_ratio = 0.3,
+        workspace_swipe_min_speed_to_force = 30,
+    },
+})
+
+hl.device({
+    name = "razer-razer-viper-ultimate",
+    sensitivity = 0,
+    accel_profile = "flat",
+})
+
+hl.device({
+    name = "syna32ee:00-06cb:cfc5-touchpad",
+    sensitivity = 0,
+    accel_profile = "custom 1.0 0.0 1.28",
+    natural_scroll = true,
+    tap_to_click = true,
+})
+
+hl.gesture({
+    fingers = 3,
+    direction = "horizontal",
+    action = "workspace",
+})
