@@ -77,9 +77,10 @@
       "keyColor": "#fe4719"
     },
     {
-      "type": "packages",
+      "type": "command",
       "key": "Packages",
-      "keyColor": "#fe4719"
+      "keyColor": "#fe4719",
+      "text": "printf '%s (pkg), %s (flatpak)\\n' \"$(pkg info | wc -l | tr -d ' ')\" \"$(flatpak list | tail -n +2 | wc -l | tr -d ' ')\""
     },
     {
       "type": "wm",
