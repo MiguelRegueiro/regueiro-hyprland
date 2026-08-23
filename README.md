@@ -72,6 +72,16 @@ doas service dbus start
 doas service seatd start
 ```
 
+### pkg
+
+The tracked `pkg/pkg.conf` changes interactive pkg prompts to default to yes
+(`[Y/n]`) while still allowing cancellation. Install it as a root-owned system
+configuration rather than stowing it:
+
+```sh
+doas install -o root -g wheel -m 644 pkg/pkg.conf /usr/local/etc/pkg.conf
+```
+
 Configure `doas` manually as root-owned system policy, not through stow. The
 tracked `docs/doas.conf.example` mirrors the current local
 `/usr/local/etc/doas.conf`, so it can be copied directly when rebuilding the
