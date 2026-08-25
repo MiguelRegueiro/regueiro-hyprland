@@ -72,7 +72,8 @@ fi
 
 if [ "$last_direction" = "$direction" ]; then
     age_ms=$((now_ms - last_step_ms))
-    [ "$age_ms" -lt 0 ] && age_ms=999999
+    # A newer helper reached the state lock first; discard this stale event.
+    [ "$age_ms" -lt 0 ] && age_ms=0
     if [ "$age_ms" -lt "$min_step_ms" ]; then
         printf '%s %s %s\n' "$direction" "$now_ms" "$last_step_ms" > "$state_file"
         cleanup_state
@@ -80,7 +81,8 @@ if [ "$last_direction" = "$direction" ]; then
     fi
 elif [ -n "$last_direction" ]; then
     age_ms=$((now_ms - last_seen_ms))
-    [ "$age_ms" -lt 0 ] && age_ms=999999
+    # Never let an out-of-order opposite event bypass the direction guard.
+    [ "$age_ms" -lt 0 ] && age_ms=0
     if [ "$age_ms" -lt "$opposite_guard_ms" ]; then
         cleanup_state
         exit 0
