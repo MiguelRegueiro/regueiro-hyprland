@@ -9,6 +9,7 @@ Item {
     property int percent: 0
     property int rawValue: 0
     property int maxValue: 0
+    property bool brightnessPollInitialized: false
     readonly property bool available: maxValue > 0
     // Edit this list to change the brightness stops.
     // All values are percentages (0–100). Tune freely.
@@ -104,6 +105,21 @@ Item {
         onTriggered: root.refresh()
     }
 
+    Timer {
+        id: brightnessStoreDelay
+
+        interval: Theme.brightnessStoreDelay
+        repeat: false
+        onTriggered: {
+            storeBrightness.command = [
+                Quickshell.env("HOME") + "/.config/hypr/scripts/brightness-store.sh",
+                "save",
+                String(root.percent)
+            ];
+            storeBrightness.running = true;
+        }
+    }
+
     Process {
         id: brightnessPoll
 
@@ -125,9 +141,16 @@ Item {
                     const match = text.match(/brightness:\s*([0-9]+)/i);
                     current = match ? (parseInt(match[1]) || 0) : 0;
                 }
+                const nextPercent = Math.max(0, Math.min(100, current));
+                const brightnessChanged = root.brightnessPollInitialized && nextPercent !== root.percent;
                 root.maxValue = 100;
                 root.rawValue = current;
-                root.percent = Math.max(0, Math.min(100, current));
+                root.percent = nextPercent;
+                root.brightnessPollInitialized = true;
+                if (brightnessChanged) {
+                    root.adjusted();
+                    brightnessStoreDelay.restart();
+                }
             }
         }
 
@@ -138,6 +161,12 @@ Item {
 
         command: ["echo"]
         onExited: root.refresh()
+    }
+
+    Process {
+        id: storeBrightness
+
+        command: ["echo"]
     }
 
     IpcHandler {

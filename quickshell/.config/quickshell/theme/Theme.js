@@ -115,7 +115,7 @@ var inputPollInterval = 250;
 var networkPollInterval = 3000;
 var statsFastInterval = 2000;
 var statsSlowInterval = 5000;
-var brightnessPollInterval = 2000;
+var brightnessPollInterval = 40;
 var sshSessionsPollInterval = 2000;
 var audioPollFastInterval = 40;
 var audioPollSlowInterval = 1500;
@@ -124,6 +124,7 @@ var audioOptimisticReset = 700;
 var mediaActionRefreshDelay = 180;
 var notificationHoldDelay = 500;
 var brightnessRefreshDelay = 160;
+var brightnessStoreDelay = 500;
 var appVolumePollInterval = 1200;
 var panelTickInterval = 40;
 

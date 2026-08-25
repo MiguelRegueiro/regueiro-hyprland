@@ -1,3 +1,3 @@
 #!/bin/sh
 
-"$HOME/.config/hypr/scripts/brightness-step.sh" up
+exec /usr/bin/backlight incr 5 >/dev/null
