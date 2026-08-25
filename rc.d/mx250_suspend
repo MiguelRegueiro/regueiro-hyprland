@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# PROVIDE: mx250_suspend
+# REQUIRE: DAEMON
+# BEFORE: LOGIN
+
+. /etc/rc.subr
+
+name="mx250_suspend"
+rcvar="mx250_suspend_enable"
+
+load_rc_config "$name"
+: ${mx250_suspend_enable:="NO"}
+
+start_cmd="${name}_start"
+stop_cmd=":"
+
+mx250_suspend_start()
+{
+	device=$(/usr/sbin/pciconf -l pci0:2:0:0 2>/dev/null)
+	if [ $? -ne 0 ] || [ -z "$device" ]; then
+		echo "No PCI device found at pci0:2:0:0; skipping MX250 suspension"
+		return 0
+	fi
+
+	case "$device" in
+	*"vendor=0x10de"*"device=0x1d13"*)
+		;;
+	*)
+		echo "Expected NVIDIA MX250 not found at pci0:2:0:0; skipping suspension"
+		return 0
+		;;
+	esac
+
+	state=$(/usr/sbin/pciconf -lvc pci0:2:0:0)
+
+	case "$state" in
+	*"current D3"*)
+		echo "NVIDIA MX250 already suspended (D3)"
+		return 0
+		;;
+	esac
+
+	echo "Suspending NVIDIA MX250"
+	/usr/sbin/devctl suspend pci0:2:0:0
+}
+
+run_rc_command "$1"

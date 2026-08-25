@@ -17,6 +17,44 @@ These notes are for the current laptop and are intentionally not all represented
 
 The NVIDIA MX250 is not worth configuring for this setup. The internal panel is driven by Intel, and the dGPU adds complexity and power draw.
 
+## NVIDIA MX250 Suspension
+
+This laptop's unused NVIDIA MX250 is at `pci0:2:0:0`; Intel i915 remains the
+display GPU. The tracked rc service suspends the MX250 into PCI D3 during boot.
+This is a machine-specific power-management workaround. In real use, such as
+playing video or running a jail, the desktop feels drastically better: CPU
+usage spikes less severely and recovers faster.
+
+The PCI address is hardware-specific. Do not blindly reuse it on another
+machine. Confirm the device address before installing or enabling the service.
+
+Install the tracked script as a root-owned rc service:
+
+```sh
+doas install -o root -g wheel -m 555 rc.d/mx250_suspend /usr/local/etc/rc.d/mx250_suspend
+```
+
+Enable it with the other `/etc/rc.conf` settings below, then reboot. Verify the
+device reached D3 with:
+
+```sh
+doas pciconf -lvc pci0:2:0:0 | grep powerspec
+```
+
+Expected output includes `current D3`.
+
+Temporarily reverse the workaround without changing its boot-time setting:
+
+```sh
+doas devctl resume pci0:2:0:0
+```
+
+Re-suspend the device with:
+
+```sh
+doas devctl suspend pci0:2:0:0
+```
+
 ## Intel DRM Driver
 
 Current working package:
@@ -56,6 +94,7 @@ dbus_enable="YES"
 seatd_enable="YES"
 linux_enable="YES"
 powerd_enable="NO"
+mx250_suspend_enable="YES"
 
 kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
@@ -76,6 +115,7 @@ doas sysrc seatd_enable=YES
 doas sysrc linux_enable=YES
 doas sysrc powerd_enable=NO
 doas sysrc -x powerd_flags
+doas sysrc mx250_suspend_enable=YES
 doas sysrc kld_list="i915kms acpi_video ng_ubt ng_hci ng_l2cap ng_btsocket ext2fs fusefs"
 
 doas sysrc wlans_rtw880=wlan0
