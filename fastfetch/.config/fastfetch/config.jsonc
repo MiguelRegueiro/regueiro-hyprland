@@ -52,10 +52,10 @@
       "keyColor": "#FB4934"
     },
     {
-      "type": "disk",
-      "key": "Disk",
-      "keyColor": "#FB4934",
-      "folders": "/"
+    "type": "zpool",
+    "key": "Disk",
+    "keyColor": "#FB4934",
+     "format": "{size-allocated} / {size-total} ({allocated-percentage}) - ZFS"
     },
 
     "break",
@@ -105,7 +105,7 @@
       "type": "command",
       "key": "OS Age ",
       "keyColor": "#C1121F",
-      "text": "install_epoch=$(stat -f %B /); printf '%s days\\n' \"$((( $(date +%s) - install_epoch ) / 86400))\""
+      "text": "born=$(zfs get -Hp -o value creation zroot); printf '%s days\\n' \"$((($(date +%s) - born) / 86400))\""
     },
     {
       "type": "uptime",
