@@ -18,12 +18,12 @@ Item {
     property int pipewireVolume: sinkAudio ? Math.min(100, Math.round(sinkAudio.volume * 100)) : -1
     property int polledVolume: 0
     property bool polledMuted: false
+    property bool volumePollInitialized: false
     property string mixerDeviceName: "Default Output"
     property int optimisticVolumePercent: -1
     property bool optimisticMuted: false
     readonly property int volumeStepPercent: 2
-    readonly property int volumeFeedbackDelayMs: 28
-    readonly property int volumeFeedbackQuietMs: 180
+    readonly property int volumeFeedbackQuietMs: 100
     readonly property bool hasDirectSinkControl: false
     readonly property bool optimisticStateActive: optimisticVolumePercent >= 0
     readonly property string currentSinkName: currentSink ? sinkDisplayName(currentSink) : mixerDeviceName
@@ -381,11 +381,10 @@ Item {
         if (root.muted || root.volumePercent <= 0)
             return ;
 
-        if (volumeFeedbackDelay.running || volumeFeedbackQuiet.running || volumeFeedback.running) {
-            volumeFeedbackQuiet.restart();
+        if (volumeFeedbackQuiet.running || volumeFeedback.running)
             return ;
-        }
-        volumeFeedbackDelay.restart();
+
+        root.playVolumeFeedback();
         volumeFeedbackQuiet.restart();
     }
 
@@ -527,14 +526,6 @@ Item {
     }
 
     Timer {
-        id: volumeFeedbackDelay
-
-        interval: root.volumeFeedbackDelayMs
-        repeat: false
-        onTriggered: root.playVolumeFeedback()
-    }
-
-    Timer {
         id: volumeFeedbackQuiet
 
         interval: root.volumeFeedbackQuietMs
@@ -582,7 +573,12 @@ Item {
                     const left = parseFloat(volMatch[1]);
                     const right = parseFloat(volMatch[2]);
                     const avg = ((isNaN(left) ? 0 : left) + (isNaN(right) ? 0 : right)) / 2;
-                    root.polledVolume = root.mixerToLogicalPercent(Math.round(avg * 100));
+                    const nextVolume = root.mixerToLogicalPercent(Math.round(avg * 100));
+                    const volumeChanged = root.volumePollInitialized && nextVolume !== root.polledVolume;
+                    root.polledVolume = nextVolume;
+                    root.volumePollInitialized = true;
+                    if (volumeChanged)
+                        root.requestVolumeFeedback();
                 }
 
                 const muteMatch = volumeOut.text.match(/vol\.mute=(on|off)/);
