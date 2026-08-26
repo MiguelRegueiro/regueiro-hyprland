@@ -43,6 +43,41 @@ doas pkg install -y git gh stow \
     cpu-microcode-intel cpu-microcode-rc
 ```
 
+### Building QuickShell against the installed Qt
+
+QuickShell uses private Qt APIs, which are not ABI-stable across Qt releases.
+The packaged QuickShell is useful for bootstrapping the desktop, but rebuild it
+locally whenever Qt is upgraded (or whenever `qs` reports that its build-time
+and runtime Qt versions differ).
+
+Use the official FreeBSD port so its dependency list, patches, and build
+options remain the source of truth. Initialize or update a Ports Collection at
+`/usr/ports`, then reinstall QuickShell from the current port:
+
+```sh
+# If /usr/ports does not exist yet:
+doas git clone --depth 1 https://git.FreeBSD.org/ports.git /usr/ports
+
+# If /usr/ports is already a Git checkout:
+doas git -C /usr/ports pull --ff-only
+
+doas make -C /usr/ports/x11/quickshell BATCH=yes reinstall clean
+qs --version
+```
+
+The port installs its own complete build dependency set. At the time of this
+setup that includes CMake (`cmake-core`), Ninja, `pkgconf`, CLI11, SPIR-V Tools,
+Vulkan headers, the Wayland scanner and protocols, Qt 6 build tools such as
+`qt6-shadertools`, and the Qt/runtime libraries selected by the port's default
+options. `rhash` is only a dependency of `cmake-core`; it is not a direct
+QuickShell dependency and should not be recorded or installed separately. Do
+not pin the versions from one rebuild: the purpose of rebuilding is to link
+QuickShell against the Qt version currently installed by pkg/ports.
+
+On the first install, use `install clean` instead of `reinstall clean` if the
+bootstrap `quickshell` package was omitted. After a Qt upgrade, repeat the
+`reinstall clean` command before starting the shell again.
+
 Optional packages depending on what you use:
 
 ```sh
@@ -410,6 +445,31 @@ adjustment, then returns to the idle interval. Brightness and volume controls
 update optimistically, so the UI responds immediately while the bridge applies
 the ioctl. Re-run its `build.sh` after cloning this configuration or after
 changing the helper source.
+
+The helper uses only FreeBSD base-system headers and `cc`; it does not share
+QuickShell's CMake/Qt build dependencies. The install steps build it in place,
+and after stowing this repository QuickShell expects the executable at:
+
+```text
+~/.config/quickshell/helpers/qs-freebsd-hardware
+```
+
+The process runs as the desktop user and needs read/write access to both device
+nodes. `/dev/backlight/backlight0` is normally owned by `root:video` with group
+read/write access, which is why the setup adds the user to `video`; log out and
+back in after changing group membership. `/dev/mixer0` must likewise be
+readable and writable by the desktop user. Verify both before starting
+QuickShell:
+
+```sh
+ls -l /dev/backlight/backlight0 /dev/mixer0
+test -r /dev/backlight/backlight0 && test -w /dev/backlight/backlight0
+test -r /dev/mixer0 && test -w /dev/mixer0
+```
+
+If a local devfs policy tightens `/dev/mixer0`, grant the desktop user access
+through that policy rather than running the helper or QuickShell as root. The
+backlight device also depends on the `i915kms` setup documented above.
 
 QuickShell and the Hyprland volume scripts use the freedesktop volume-change
 sound for audible volume feedback. Install the sound theme if it is missing:

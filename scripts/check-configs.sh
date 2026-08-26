@@ -5,6 +5,10 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+if [[ -d /usr/local/lib/qt6/bin ]]; then
+    PATH="/usr/local/lib/qt6/bin:$PATH"
+fi
+
 if ! command -v qmlformat >/dev/null 2>&1; then
     echo "qmlformat is required but not installed" >&2
     exit 1
