@@ -170,13 +170,13 @@ PanelWindow {
         Behavior on opacity {
             Components.Anim {
                 curve: Components.Anim.DefaultEffects
-                duration: Theme.animDurDefaultEffects
+                duration: Theme.osdSelectorDuration
             }
         }
         Behavior on scale {
             Components.Anim {
                 curve: Components.Anim.DefaultEffects
-                duration: Theme.animDurDefaultEffects
+                duration: Theme.osdSelectorDuration
             }
         }
 

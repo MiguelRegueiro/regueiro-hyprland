@@ -6,11 +6,12 @@ import "../theme/Theme.js" as Theme
 Item {
     id: root
 
+    property var hardwareService: null
     property int percent: 0
     property int rawValue: 0
     property int maxValue: 0
-    property bool brightnessPollInitialized: false
-    readonly property bool available: maxValue > 0
+    property bool brightnessInitialized: false
+    readonly property bool available: hardwareService && hardwareService.brightnessAvailable
     // Edit this list to change the brightness stops.
     // All values are percentages (0–100). Tune freely.
     readonly property var stops: [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90, 100]
@@ -26,10 +27,22 @@ Item {
 
     signal adjusted()
 
-    function refresh() {
-        if (!brightnessPoll.running)
-            brightnessPoll.running = true;
+    function applyHardwareBrightness(nextPercent) {
+        const next = Math.max(0, Math.min(100, Math.round(Number(nextPercent))));
+        const brightnessChanged = root.brightnessInitialized && next !== root.percent;
+        root.maxValue = 100;
+        root.rawValue = next;
+        root.percent = next;
+        root.brightnessInitialized = true;
+        if (brightnessChanged) {
+            root.adjusted();
+            brightnessStoreDelay.restart();
+        }
+    }
 
+    function refresh() {
+        if (root.hardwareService)
+            root.hardwareService.refresh();
     }
 
     function requestBrightnessOsd(percent) {
@@ -50,13 +63,11 @@ Item {
         root.percent = clamped;
         root.maxValue = 100;
         root.rawValue = clamped;
-        setBrightness.command = [
-            Quickshell.env("HOME") + "/.config/hypr/scripts/brightness-set.sh",
-            String(clamped)
-        ];
-        setBrightness.running = true;
+        if (root.hardwareService)
+            root.hardwareService.setBrightness(clamped);
+
         root.adjusted();
-        refreshSoon.restart();
+        brightnessStoreDelay.restart();
     }
 
     function adjust(direction) {
@@ -78,23 +89,15 @@ Item {
         if (target === undefined)
             return ;
 
-        root.percent = target;
-        root.rawValue = target;
-        setBrightness.command = [
-            Quickshell.env("HOME") + "/.config/hypr/scripts/brightness-set.sh",
-            String(target)
-        ];
-        setBrightness.running = true;
-        root.adjusted();
-        refreshSoon.restart();
+        root.setPercent(target);
     }
 
-    Timer {
-        interval: Theme.brightnessPollInterval
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.refresh()
+    Connections {
+        target: root.hardwareService
+
+        function onBrightnessUpdated(percent) {
+            root.applyHardwareBrightness(percent);
+        }
     }
 
     Timer {
@@ -118,49 +121,6 @@ Item {
             ];
             storeBrightness.running = true;
         }
-    }
-
-    Process {
-        id: brightnessPoll
-
-        command: [
-            "sh",
-            "-c",
-            "if [ -x /usr/bin/backlight ]; then /usr/bin/backlight -q 2>/dev/null; else printf 'brightness: 0\\n'; fi"
-        ]
-
-        stdout: StdioCollector {
-            id: brightnessOut
-
-            onStreamFinished: {
-                const text = brightnessOut.text.trim();
-                let current = 0;
-                if (/^[0-9]+$/.test(text)) {
-                    current = parseInt(text) || 0;
-                } else {
-                    const match = text.match(/brightness:\s*([0-9]+)/i);
-                    current = match ? (parseInt(match[1]) || 0) : 0;
-                }
-                const nextPercent = Math.max(0, Math.min(100, current));
-                const brightnessChanged = root.brightnessPollInitialized && nextPercent !== root.percent;
-                root.maxValue = 100;
-                root.rawValue = current;
-                root.percent = nextPercent;
-                root.brightnessPollInitialized = true;
-                if (brightnessChanged) {
-                    root.adjusted();
-                    brightnessStoreDelay.restart();
-                }
-            }
-        }
-
-    }
-
-    Process {
-        id: setBrightness
-
-        command: ["echo"]
-        onExited: root.refresh()
     }
 
     Process {
@@ -188,5 +148,4 @@ Item {
 
         target: "brightness"
     }
-
 }

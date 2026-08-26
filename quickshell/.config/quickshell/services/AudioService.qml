@@ -6,6 +6,7 @@ import "../theme/Theme.js" as Theme
 Item {
     id: root
 
+    property var hardwareService: null
     property var defaultSink: Pipewire.defaultAudioSink
     property var sinkAudio: (defaultSink && defaultSink.ready) ? defaultSink.audio : null
     property var sinkMetadata: ({
@@ -297,7 +298,7 @@ Item {
         }
 
         const next = [];
-        const defaultName = (defaultSinkOut.text || "").trim();
+        const defaultName = root.defaultSink && root.defaultSink.name ? root.defaultSink.name : "";
         let active = null;
         let defaultCandidate = null;
         if (Array.isArray(parsed)) {
@@ -344,9 +345,8 @@ Item {
     }
 
     function refresh() {
-        if (!volumePoll.running)
-            volumePoll.running = true;
-
+        if (root.hardwareService)
+            root.hardwareService.refresh();
     }
 
     function setOptimisticState(nextPercent, nextMuted) {
@@ -407,8 +407,8 @@ Item {
         root.setOptimisticState(clamped, false);
         root.osdRequested();
         const mixerPercent = root.logicalToMixerPercent(clamped);
-        setVolume.command = ["sh", "-c", "/usr/sbin/mixer -f /dev/mixer0 vol=" + mixerPercent + "%"];
-        setVolume.running = true;
+        if (root.hardwareService)
+            root.hardwareService.setVolume(mixerPercent);
         if (shouldPlayFeedback)
             root.requestVolumeFeedback();
 
@@ -427,7 +427,8 @@ Item {
     function toggleMute() {
         const nextMuted = !root.muted;
         root.setOptimisticState(root.volumePercent, nextMuted);
-        muteToggle.running = true;
+        if (root.hardwareService)
+            root.hardwareService.toggleMute();
         refreshSoon.restart();
     }
 
@@ -487,26 +488,9 @@ Item {
         moveSinkInput.running = true;
     }
 
-    Component.onCompleted: root.updateSinks()
-
-    Timer {
-        interval: Theme.audioPollFastInterval
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.refresh()
-    }
-
-    Timer {
-        interval: Theme.audioPollSlowInterval
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!sinkPoll.running)
-                sinkPoll.running = true;
-
-        }
+    Component.onCompleted: {
+        root.updateSinks();
+        sinkPoll.running = true;
     }
 
     Timer {
@@ -532,11 +516,41 @@ Item {
         repeat: false
     }
 
+    Timer {
+        id: sinkMetadataRefresh
+
+        interval: 250
+        repeat: false
+        onTriggered: {
+            if (!sinkPoll.running)
+                sinkPoll.running = true;
+
+        }
+    }
+
+    Connections {
+        function onAudioUpdated(percent, nextMuted) {
+            const nextVolume = root.mixerToLogicalPercent(percent);
+            const volumeChanged = root.volumePollInitialized && nextVolume !== root.polledVolume;
+            root.polledVolume = nextVolume;
+            root.polledMuted = nextMuted;
+            root.volumePollInitialized = true;
+            if (root.optimisticStateActive && root.optimisticVolumePercent === nextVolume && root.optimisticMuted === nextMuted)
+                root.clearOptimisticState();
+
+            if (volumeChanged)
+                root.requestVolumeFeedback();
+        }
+
+        target: root.hardwareService
+    }
+
     Connections {
         function onDefaultAudioSinkChanged() {
             root.clearOptimisticState();
             root.updateSinks();
             refreshSoon.restart();
+            sinkMetadataRefresh.restart();
         }
 
         target: Pipewire
@@ -545,75 +559,23 @@ Item {
     Connections {
         function onValuesChanged() {
             root.updateSinks();
+            sinkMetadataRefresh.restart();
         }
 
         target: Pipewire.nodes
     }
 
     Process {
-        id: volumePoll
-
-        command: ["sh", "-c", "/usr/sbin/mixer -f /dev/mixer0 vol 2>/dev/null"]
-
-        stdout: StdioCollector {
-            id: volumeOut
-
-            onStreamFinished: {
-                const lines = volumeOut.text.split(/\r?\n/);
-                for (const line of lines) {
-                    const deviceMatch = line.match(/^[^:]+:mixer:\s+<([^>]+)>.*\(default\)/);
-                    if (deviceMatch) {
-                        root.mixerDeviceName = (deviceMatch[1] || "").trim() || "Default Output";
-                        break;
-                    }
-                }
-
-                const volMatch = volumeOut.text.match(/vol\.volume=([0-9.]+):([0-9.]+)/);
-                if (volMatch) {
-                    const left = parseFloat(volMatch[1]);
-                    const right = parseFloat(volMatch[2]);
-                    const avg = ((isNaN(left) ? 0 : left) + (isNaN(right) ? 0 : right)) / 2;
-                    const nextVolume = root.mixerToLogicalPercent(Math.round(avg * 100));
-                    const volumeChanged = root.volumePollInitialized && nextVolume !== root.polledVolume;
-                    root.polledVolume = nextVolume;
-                    root.volumePollInitialized = true;
-                    if (volumeChanged)
-                        root.requestVolumeFeedback();
-                }
-
-                const muteMatch = volumeOut.text.match(/vol\.mute=(on|off)/);
-                if (muteMatch)
-                    root.polledMuted = muteMatch[1] === "on";
-            }
-        }
-
-    }
-
-    Process {
         id: sinkPoll
 
-        command: ["sh", "-c", "/usr/local/bin/pactl get-default-sink; /usr/local/bin/pactl -f json list sinks"]
+        command: ["/usr/local/bin/pactl", "-f", "json", "list", "sinks"]
 
         stdout: StdioCollector {
             id: sinkPollOut
 
-            onStreamFinished: {
-                const firstNewline = sinkPollOut.text.indexOf("\n");
-                if (firstNewline < 0) {
-                    root.updatePulseSinks("[]");
-                    return ;
-                }
-                defaultSinkOut.text = sinkPollOut.text.slice(0, firstNewline);
-                root.updatePulseSinks(sinkPollOut.text.slice(firstNewline + 1));
-            }
+            onStreamFinished: root.updatePulseSinks(sinkPollOut.text)
         }
 
-    }
-
-    Text {
-        id: defaultSinkOut
-
-        visible: false
     }
 
     Process {
@@ -642,41 +604,15 @@ Item {
     }
 
     Process {
-        id: volumeUp
-
-        command: ["/usr/local/bin/wpctl", "set-volume", "-l", "1", "@DEFAULT_AUDIO_SINK@", "2%+"]
-    }
-
-    Process {
-        id: volumeDown
-
-        command: ["/usr/local/bin/wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "2%-"]
-    }
-
-    Process {
-        id: muteToggle
-
-        command: ["/usr/sbin/mixer", "-f", "/dev/mixer0", "vol.mute=toggle"]
-        onExited: root.refresh()
-    }
-
-    Process {
         id: setDefaultSink
 
         command: ["echo"]
     }
 
     Process {
-        id: setVolume
-
-        command: ["echo"]
-        onExited: root.refresh()
-    }
-
-    Process {
         id: volumeFeedback
 
-        command: ["sh", "-c", "/usr/local/bin/canberra-gtk-play -i audio-volume-change -d 'Volume changed' 2>/dev/null || /usr/local/bin/paplay /usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null || /usr/local/bin/pw-play /usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga 2>/dev/null || true"]
+        command: ["/usr/local/bin/paplay", "/usr/local/share/sounds/freedesktop/stereo/audio-volume-change.oga"]
     }
 
     IpcHandler {

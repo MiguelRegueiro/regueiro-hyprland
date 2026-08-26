@@ -508,8 +508,14 @@ ShellRoot {
         popupSuppressed: root.notificationCenterVisible
     }
 
+    Services.FreeBsdHardwareService {
+        id: freeBsdHardwareServiceState
+    }
+
     Services.AudioService {
         id: audioServiceState
+
+        hardwareService: freeBsdHardwareServiceState
     }
 
     Services.BatteryService {
@@ -518,6 +524,8 @@ ShellRoot {
 
     Services.BrightnessService {
         id: brightnessServiceState
+
+        hardwareService: freeBsdHardwareServiceState
     }
 
     Services.NetworkService {

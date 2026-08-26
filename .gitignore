@@ -17,3 +17,5 @@ core
 # generated icon theme caches
 icon-theme.cache
 quickshell/.config/quickshell/.qmlls.ini
+# Locally compiled Quickshell FreeBSD hardware bridge.
+quickshell/.config/quickshell/helpers/qs-freebsd-hardware

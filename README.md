@@ -168,6 +168,7 @@ FreeBSD, exFAT is usually the smoother filesystem.
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
 stow hypr quickshell fish starship fastfetch kitty gtk xresources discord runin elio fontconfig mimeapps user-dirs desktop-overrides
+./quickshell/.config/quickshell/helpers/build.sh
 ```
 
 The `hypr` package owns the active Hyprland config, including `hypridle.conf`.
@@ -397,6 +398,18 @@ Some QuickShell services are FreeBSD-specific:
 - SSH sessions use `who`, `ps`, `sockstat`, and `pkill` to show active logins
   in the bar and end same-user sessions from the menu.
 - Battery, brightness, disks, and audio are wired to the FreeBSD device/service model.
+
+Brightness and master-volume state use the locally built
+`qs-freebsd-hardware` bridge. It keeps `/dev/backlight/backlight0` and
+`/dev/mixer0` open, streams changes to QuickShell, and accepts updates over the
+same persistent process. FreeBSD does not expose change subscriptions for the
+backlight ioctl, so the bridge uses cheap adaptive in-process polling instead
+of repeatedly launching `backlight`, `mixer`, or a shell. It checks every 200
+ms while idle, switches to 40 ms for two seconds after a detected or requested
+adjustment, then returns to the idle interval. Brightness and volume controls
+update optimistically, so the UI responds immediately while the bridge applies
+the ioctl. Re-run its `build.sh` after cloning this configuration or after
+changing the helper source.
 
 QuickShell and the Hyprland volume scripts use the freedesktop volume-change
 sound for audible volume feedback. Install the sound theme if it is missing:
