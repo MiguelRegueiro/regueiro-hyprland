@@ -60,6 +60,10 @@ abbr -a myip "ifconfig | grep 'inet '"
 
 # Optional extras if you install them later.
 if command -sq zoxide
+    # Fish 4.8 embeds its stock functions, while zoxide 0.9.8 still tries to
+    # read cd.fish from disk. Seed the function zoxide needs from Fish itself.
+    functions --query __zoxide_cd_internal
+    or functions --copy cd __zoxide_cd_internal
     zoxide init fish | source
 end
 
