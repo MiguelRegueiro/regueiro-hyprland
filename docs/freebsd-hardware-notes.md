@@ -137,6 +137,7 @@ zfs_load="YES"
 cpu_microcode_load="YES"
 cpu_microcode_name="/boot/firmware/intel-ucode.bin"
 machdep.hwpstate_pkg_ctrl="0"
+mac_priority_load="YES"
 ```
 
 Copy-paste setup:
@@ -146,6 +147,7 @@ doas sysrc -f /boot/loader.conf cpu_microcode_load=YES
 doas sysrc -f /boot/loader.conf cpu_microcode_name=/boot/firmware/intel-ucode.bin
 doas sysrc -x -f /boot/loader.conf hint.hwpstate_intel.0.disabled
 doas sysrc -f /boot/loader.conf machdep.hwpstate_pkg_ctrl=0
+./scripts/setup-freebsd-realtime.sh
 ```
 
 Reboot after changing loader or kernel-module settings.
@@ -201,7 +203,7 @@ frames, comparable to Linux.
 Current user groups:
 
 ```sh
-wheel operator video
+wheel operator video realtime
 ```
 
 Copy-paste setup:
@@ -210,6 +212,17 @@ Copy-paste setup:
 doas pw groupmod wheel -m "$USER"
 doas pw groupmod operator -m "$USER"
 doas pw groupmod video -m "$USER"
+./scripts/setup-freebsd-realtime.sh
+```
+
+The realtime helper persists and loads `mac_priority(4)`, adds the desktop user
+to FreeBSD's standard `realtime` group, and performs an unprivileged scheduling
+probe. Fully log out and back in afterward so Hyprland inherits the new group,
+then check the current instance:
+
+```fish
+set hypr_pid (hyprctl instances -j | jq -r --arg instance "$HYPRLAND_INSTANCE_SIGNATURE" '.[] | select(.instance == $instance) | .pid')
+rtprio -"$hypr_pid"
 ```
 
 ## Hyprland Monitor

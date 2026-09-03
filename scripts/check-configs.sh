@@ -35,6 +35,7 @@ while IFS= read -r -d '' file; do
 done < <(find quickshell/.config/quickshell -type f -name '*.qml' -print0 | sort -z)
 
 bash -n hypr/.config/hypr/scripts/*.sh
+sh -n scripts/setup-freebsd-realtime.sh
 git diff --check
 
 echo "Formatting and syntax checks passed."

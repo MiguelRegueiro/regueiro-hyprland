@@ -107,6 +107,34 @@ doas service dbus start
 doas service seatd start
 ```
 
+### Hyprland realtime scheduling
+
+Hyprland requests the lowest `SCHED_RR` realtime priority for its compositor
+thread. FreeBSD deliberately denies that request to ordinary users unless the
+`mac_priority(4)` policy grants it through membership in the standard
+`realtime` group. Configure both parts with the idempotent setup helper:
+
+```sh
+./scripts/setup-freebsd-realtime.sh
+```
+
+The helper sets `mac_priority_load="YES"` in `/boot/loader.conf`, loads the
+module for the current boot, adds the non-root desktop user to `realtime`, and
+verifies realtime scheduling using a fresh set of user credentials. It rejects
+root as the desktop user and does not make the Hyprland executable setuid.
+
+Group membership is captured when a login session starts. Log out completely
+and back in after the first run, then verify the compositor itself:
+
+```fish
+set hypr_pid (hyprctl instances -j | jq -r --arg instance "$HYPRLAND_INSTANCE_SIGNATURE" '.[] | select(.instance == $instance) | .pid')
+rtprio -"$hypr_pid"
+```
+
+The result should report a realtime priority instead of `normal priority`, and
+Hyprland should no longer print `Failed to change process scheduling strategy`
+at startup.
+
 ### pkg
 
 The tracked `pkg/pkg.conf` changes interactive pkg prompts to default to yes
@@ -169,9 +197,10 @@ ready and be prepared to remove the bad driver from `/etc/rc.conf` or reinstall
 The user should be in at least these groups:
 
 ```sh
-pw groupmod wheel -m "$USER"
-pw groupmod operator -m "$USER"
-pw groupmod video -m "$USER"
+doas pw groupmod wheel -m "$USER"
+doas pw groupmod operator -m "$USER"
+doas pw groupmod video -m "$USER"
+./scripts/setup-freebsd-realtime.sh
 ```
 
 External drive support uses `bsdisks` as the UDisks2-compatible backend.
