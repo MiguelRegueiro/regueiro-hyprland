@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import "../theme/Theme.js" as Theme
 
@@ -13,9 +12,8 @@ PanelWindow {
     property bool showLayer: true
     property bool notificationCenterVisible: false
     property bool quickSettingsVisible: false
-    property bool notificationCenterCursorInside: false
     property bool forceOverlay: false
-    readonly property bool notificationCenterHovered: notificationCenter.hovered || root.notificationCenterCursorInside
+    readonly property bool notificationCenterHovered: notificationCenter.hovered
     readonly property real toastGap: Theme.borderSize + 28
     readonly property real quickSettingsReserveWidth: root.quickSettingsVisible ? (Theme.qsWidth + Theme.qsAttachRight + 16) : 0
     readonly property real toastX: Math.round(Math.max(root.toastGap, root.width - toastStack.width - root.toastGap - root.quickSettingsReserveWidth))
@@ -48,23 +46,6 @@ PanelWindow {
         return false;
     }
 
-    function updateNotificationCenterCursor(rawText) {
-        const match = rawText.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
-        if (!match) {
-            root.notificationCenterCursorInside = false;
-            return ;
-        }
-        const cursorX = Number(match[1]);
-        const cursorY = Number(match[2]);
-        const panelLeft = Number(root.targetScreen.x) + notificationCenter.x - 18;
-        const panelTop = Number(root.targetScreen.y) + notificationCenter.y - 18;
-        const panelRight = panelLeft + notificationCenter.width + 36;
-        const panelBottom = panelTop + notificationCenter.height + 36;
-        const ncBarLeft = Number(root.targetScreen.x) + Math.round((root.targetScreen.width - Theme.ncBarTriggerWidth) / 2);
-        const ncBarRight = ncBarLeft + Theme.ncBarTriggerWidth;
-        const inBarTrigger = cursorY >= Number(root.targetScreen.y) && cursorY < Number(root.targetScreen.y) + Theme.barHeight && cursorX >= ncBarLeft && cursorX <= ncBarRight;
-        root.notificationCenterCursorInside = root.notificationCenterVisible && (inBarTrigger || (cursorX >= panelLeft && cursorX <= panelRight && cursorY >= panelTop && cursorY <= panelBottom));
-    }
 
     screen: targetScreen
     visible: showLayer && (root.notificationCenterVisible || root.notificationStore.popups.length > 0)
@@ -81,30 +62,6 @@ PanelWindow {
         right: true
     }
 
-    Timer {
-        interval: Theme.panelTickInterval
-        running: root.notificationCenterVisible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!cursorPosProc.running)
-                cursorPosProc.running = true;
-
-        }
-    }
-
-    Process {
-        id: cursorPosProc
-
-        command: ["hyprctl", "cursorpos"]
-
-        stdout: StdioCollector {
-            id: cursorPosOut
-
-            onStreamFinished: root.updateNotificationCenterCursor(cursorPosOut.text.trim())
-        }
-
-    }
 
     Item {
         visible: root.notificationCenterVisible

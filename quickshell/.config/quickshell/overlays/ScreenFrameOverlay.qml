@@ -2,7 +2,6 @@ import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import "../theme/Theme.js" as Theme
 import "../quicksettings" as QuickSettings
@@ -17,9 +16,8 @@ PanelWindow {
     required property var networkService
     property bool hasBar: true
     property bool quickSettingsVisible: false
-    property bool quickSettingsCursorInside: false
     property bool forceOverlay: false
-    readonly property bool quickSettingsHovered: quickSettingsPanel.hovered || root.quickSettingsCursorInside
+    readonly property bool quickSettingsHovered: quickSettingsPanel.hovered
     readonly property real topY: hasBar ? Theme.barHeight - Theme.frameTopOverlap : 0
     readonly property real innerTopY: hasBar ? Theme.barHeight - Theme.frameTopOverlap : Theme.borderSize
     readonly property real quickSettingsRegionX: quickSettingsPanel.x + quickSettingsPanel.inputRegion.x
@@ -52,22 +50,6 @@ PanelWindow {
         return false;
     }
 
-    function updateQuickSettingsCursor(rawText) {
-        const match = rawText.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
-        if (!match) {
-            root.quickSettingsCursorInside = false;
-            return ;
-        }
-        const cursorX = Number(match[1]);
-        const cursorY = Number(match[2]);
-        const panelLeft = Number(root.targetScreen.x) + quickSettingsPanel.x - 18;
-        const panelTop = Number(root.targetScreen.y) + quickSettingsPanel.y - 18;
-        const panelRight = panelLeft + quickSettingsPanel.width + 36;
-        const panelBottom = panelTop + quickSettingsPanel.height + 36;
-        const barTriggerLeft = Number(root.targetScreen.x) + quickSettingsPanel.x;
-        const inBarTrigger = cursorY >= Number(root.targetScreen.y) && cursorY < Number(root.targetScreen.y) + Theme.barHeight && cursorX >= barTriggerLeft;
-        root.quickSettingsCursorInside = root.quickSettingsVisible && (inBarTrigger || (cursorX >= panelLeft && cursorX <= panelRight && cursorY >= panelTop && cursorY <= panelBottom));
-    }
 
     screen: targetScreen
     exclusiveZone: 0
@@ -176,30 +158,6 @@ PanelWindow {
 
     }
 
-    Timer {
-        interval: Theme.panelTickInterval
-        running: root.quickSettingsVisible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!cursorPosProc.running)
-                cursorPosProc.running = true;
-
-        }
-    }
-
-    Process {
-        id: cursorPosProc
-
-        command: ["hyprctl", "cursorpos"]
-
-        stdout: StdioCollector {
-            id: cursorPosOut
-
-            onStreamFinished: root.updateQuickSettingsCursor(cursorPosOut.text.trim())
-        }
-
-    }
 
     DropShadow {
         anchors.fill: shadowSource

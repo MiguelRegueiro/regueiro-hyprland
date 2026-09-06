@@ -21,8 +21,6 @@ Item {
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
     readonly property real revealProgress: reveal
-    readonly property real animTopLeftRadius: root.topLeftRadius * root.reveal
-    readonly property real animTopRightRadius: root.topRightRadius * root.reveal
     readonly property real bodyWidth: Theme.ncWidth
     readonly property real calendarWidth: 268
     readonly property real fuseOverhang: Theme.barCornerRadius
@@ -35,7 +33,11 @@ Item {
     readonly property real mergedTopLeftRadius: 0.001
     readonly property real mergedTopRightRadius: 0.001
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
-    readonly property real surfaceOffsetY: -(1 - root.reveal) * root.height
+    readonly property real visibleBodyHeight: Math.max(0, Math.min(root.height, root.height * root.reveal))
+    readonly property real revealFrontY: root.visibleBodyHeight
+    readonly property real revealFrontLeftRadius: Math.min(root.bottomLeftRadius, root.visibleBodyHeight / 2)
+    readonly property real revealFrontRightRadius: Math.min(root.bottomRightRadius, root.visibleBodyHeight / 2)
+    readonly property real contentRevealProgress: Math.max(0, Math.min(1, (root.reveal - 0.1) / 0.38))
 
     implicitWidth: root.bodyWidth + root.fuseOverhang * 2
     implicitHeight: contentColumn.implicitHeight + root.attachTop
@@ -50,7 +52,7 @@ Item {
 
             Components.Anim {
                 property: "reveal"
-                curve: Components.Anim.EmphasizedDecel
+                curve: Components.Anim.DefaultSpatial
                 duration: Theme.panelOpenSpatialDuration
             }
 
@@ -103,7 +105,7 @@ Item {
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Math.max(1, root.clipSurfaceWidth)
-                height: Math.max(1, root.height)
+                height: Math.max(1, root.visibleBodyHeight)
                 clip: true
 
                 HoverHandler {
@@ -119,9 +121,6 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: root.bodyWidth
                     height: root.height
-                    transform: Translate {
-                        y: root.surfaceOffsetY
-                    }
 
                     Shape {
                         anchors.fill: parent
@@ -154,30 +153,30 @@ Item {
                         // Left body edge.
                         PathLine {
                             x: 0
-                            y: frame.height - root.bottomLeftRadius
+                            y: root.revealFrontY - root.revealFrontLeftRadius
                         }
 
-                        // Bottom-left corner.
+                        // Bottom-left corner grows continuously with the reveal front.
                         PathArc {
-                            x: root.bottomLeftRadius
-                            y: frame.height
-                            radiusX: root.bottomLeftRadius
-                            radiusY: root.bottomLeftRadius
+                            x: root.revealFrontLeftRadius
+                            y: root.revealFrontY
+                            radiusX: root.revealFrontLeftRadius
+                            radiusY: root.revealFrontLeftRadius
                             direction: PathArc.Counterclockwise
                         }
 
                         // Bottom edge.
                         PathLine {
-                            x: frame.width - root.bottomRightRadius
-                            y: frame.height
+                            x: frame.width - root.revealFrontRightRadius
+                            y: root.revealFrontY
                         }
 
-                        // Bottom-right corner.
+                        // Bottom-right corner grows continuously with the reveal front.
                         PathArc {
                             x: frame.width
-                            y: frame.height - root.bottomRightRadius
-                            radiusX: root.bottomRightRadius
-                            radiusY: root.bottomRightRadius
+                            y: root.revealFrontY - root.revealFrontRightRadius
+                            radiusX: root.revealFrontRightRadius
+                            radiusY: root.revealFrontRightRadius
                             direction: PathArc.Counterclockwise
                         }
 
@@ -237,30 +236,30 @@ Item {
                         // Left edge.
                         PathLine {
                             x: 0
-                            y: frame.height - root.bottomLeftRadius
+                            y: root.revealFrontY - root.revealFrontLeftRadius
                         }
 
-                        // Bottom-left corner.
+                        // Bottom-left corner grows continuously with the reveal front.
                         PathArc {
-                            x: root.bottomLeftRadius
-                            y: frame.height
-                            radiusX: root.bottomLeftRadius
-                            radiusY: root.bottomLeftRadius
+                            x: root.revealFrontLeftRadius
+                            y: root.revealFrontY
+                            radiusX: root.revealFrontLeftRadius
+                            radiusY: root.revealFrontLeftRadius
                             direction: PathArc.Counterclockwise
                         }
 
                         // Bottom edge.
                         PathLine {
-                            x: frame.width - root.bottomRightRadius
-                            y: frame.height
+                            x: frame.width - root.revealFrontRightRadius
+                            y: root.revealFrontY
                         }
 
-                        // Bottom-right corner.
+                        // Bottom-right corner grows continuously with the reveal front.
                         PathArc {
                             x: frame.width
-                            y: frame.height - root.bottomRightRadius
-                            radiusX: root.bottomRightRadius
-                            radiusY: root.bottomRightRadius
+                            y: root.revealFrontY - root.revealFrontRightRadius
+                            radiusX: root.revealFrontRightRadius
+                            radiusY: root.revealFrontRightRadius
                             direction: PathArc.Counterclockwise
                         }
 
@@ -296,15 +295,15 @@ Item {
                         }
 
                         PathLine {
-                            x: root.animTopLeftRadius
+                            x: root.topLeftRadius
                             y: 0
                         }
 
                         PathArc {
                             x: 0
-                            y: root.animTopLeftRadius
-                            radiusX: root.animTopLeftRadius
-                            radiusY: root.animTopLeftRadius
+                            y: root.topLeftRadius
+                            radiusX: root.topLeftRadius
+                            radiusY: root.topLeftRadius
                             direction: PathArc.Counterclockwise
                         }
 
@@ -329,15 +328,15 @@ Item {
                         }
 
                         PathLine {
-                            x: frame.width - root.animTopRightRadius
+                            x: frame.width - root.topRightRadius
                             y: 0
                         }
 
                         PathArc {
                             x: frame.width
-                            y: root.animTopRightRadius
-                            radiusX: root.animTopRightRadius
-                            radiusY: root.animTopRightRadius
+                            y: root.topRightRadius
+                            radiusX: root.topRightRadius
+                            radiusY: root.topRightRadius
                             direction: PathArc.Counterclockwise
                         }
 
@@ -360,6 +359,7 @@ Item {
                     id: contentColumn
 
                     width: parent.width
+                    opacity: root.contentRevealProgress
 
                     anchors {
                         top: parent.top

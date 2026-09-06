@@ -22,7 +22,7 @@ FocusScope {
     readonly property real attachBottom: Theme.launcherAttachBottom
     readonly property real topLeftRadius: Theme.launcherSurfaceTopLeftRadius
     readonly property real topRightRadius: Theme.launcherSurfaceTopRightRadius
-    readonly property int openDuration: Theme.panelCloseDuration
+    readonly property int openDuration: Theme.panelSnappyOpenDuration
     readonly property real bottomLeftRadius: 0.001
     readonly property real bottomRightRadius: 0.001
     readonly property real revealProgress: reveal
@@ -41,7 +41,8 @@ FocusScope {
     readonly property real bottomFuseJoinY: frame.height - root.fuseBottomInset - Theme.barCornerRadius
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
     readonly property real clipSurfaceHeight: root.bodyHeight + root.attachBottom
-    readonly property real surfaceOffsetY: (1 - root.reveal) * root.clipSurfaceHeight
+    readonly property real surfaceOffsetY: (1 - root.reveal) * 16
+    readonly property real surfaceOpacity: Math.max(0, Math.min(1, (root.reveal - 0.02) / 0.34))
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: root.launcherService.searchEntries(root.searchQuery)
     readonly property var allEntries: {
@@ -303,7 +304,7 @@ FocusScope {
             Components.Anim {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.EmphasizedDecel
+                curve: Components.Anim.FastSpatial
                 duration: root.openDuration
             }
         },
@@ -354,6 +355,7 @@ FocusScope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: root.bodyWidth
                     height: root.bodyHeight
+                    opacity: root.surfaceOpacity
                     transform: Translate {
                         y: root.surfaceOffsetY
                     }

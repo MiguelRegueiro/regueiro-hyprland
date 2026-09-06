@@ -126,8 +126,6 @@ var mediaActionRefreshDelay = 180;
 var notificationHoldDelay = 500;
 var brightnessRefreshDelay = 160;
 var appVolumePollInterval = 1200;
-var panelTickInterval = 40;
-
 // Widget hover color durations (ms)
 var sliderColorDuration = 100;
 var popupButtonColorDuration = 90;
@@ -135,8 +133,9 @@ var outputItemColorDuration = 85;
 
 // Panel animation durations (ms)
 var panelOpenDuration = 140;
-var panelCloseDuration = 65;
-var panelOpenSpatialDuration = 150;
+var panelCloseDuration = 140;
+var panelOpenSpatialDuration = 210;
+var panelSnappyOpenDuration = 180;
 var topBarMenuOpenDuration = 105;
 var topBarMenuCloseDuration = 55;
 var qsPageSlideDuration = 210;

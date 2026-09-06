@@ -34,8 +34,6 @@ FocusScope {
     readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
     readonly property real revealProgress: reveal
-    readonly property real animTopLeftRadius: root.surfaceTopLeftRadius * root.reveal
-    readonly property real animTopRightRadius: root.surfaceTopRightRadius * root.reveal
     readonly property real bodyWidth: Theme.qsWidth + Theme.qsAttachRight
     readonly property real bodyHeight: contentLayout.implicitHeight + Theme.qsContentPadding * 2 + root.attachTop
     readonly property real fuseLeftOverhang: Theme.barCornerRadius
@@ -47,7 +45,11 @@ FocusScope {
     readonly property real bottomFuseJoinX: root.bodyWidth - Theme.borderSize - Theme.barCornerRadius
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseLeftOverhang
     readonly property real clipSurfaceHeight: root.bodyHeight + root.fuseBottomOverhang
-    readonly property real surfaceOffsetY: -(1 - root.reveal) * root.clipSurfaceHeight
+    readonly property real visibleBodyHeight: Math.max(0, Math.min(root.bodyHeight, root.bodyHeight * root.reveal))
+    readonly property real revealFrontY: root.visibleBodyHeight
+    readonly property real revealFrontLeftRadius: Math.min(root.surfaceBottomLeftRadius, root.visibleBodyHeight / 2)
+    readonly property real revealFrontRightRadius: Math.min(root.mergedBottomRightRadius, root.visibleBodyHeight / 2)
+    readonly property real contentRevealProgress: Math.max(0, Math.min(1, (root.reveal - 0.1) / 0.38))
 
     signal powerActionRequested(string actionId)
 
@@ -80,7 +82,7 @@ FocusScope {
             Components.Anim {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.EmphasizedDecel
+                curve: Components.Anim.DefaultSpatial
                 duration: Theme.panelOpenSpatialDuration
             }
 
@@ -133,7 +135,7 @@ FocusScope {
                 anchors.top: parent.top
                 anchors.right: parent.right
                 width: Math.max(1, root.clipSurfaceWidth)
-                height: Math.max(1, root.clipSurfaceHeight)
+                height: Math.max(1, root.visibleBodyHeight + root.fuseBottomOverhang)
                 clip: !root.audioOutputPopupOpen
 
                 HoverHandler {
@@ -149,9 +151,6 @@ FocusScope {
                     anchors.right: parent.right
                     width: root.bodyWidth
                     height: root.bodyHeight
-                    transform: Translate {
-                        y: root.surfaceOffsetY
-                    }
 
                     Shape {
                         anchors.fill: parent
@@ -194,17 +193,17 @@ FocusScope {
 
                         PathMove {
                             x: frame.width - Theme.borderSize
-                            y: frame.height
+                            y: root.revealFrontY
                         }
 
                         PathLine {
                             x: root.bottomFuseJoinX
-                            y: frame.height
+                            y: root.revealFrontY
                         }
 
                         PathArc {
                             x: frame.width - Theme.borderSize
-                            y: frame.height + Theme.barCornerRadius
+                            y: root.revealFrontY + Theme.barCornerRadius
                             radiusX: Theme.barCornerRadius
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
@@ -212,7 +211,7 @@ FocusScope {
 
                         PathLine {
                             x: frame.width - Theme.borderSize
-                            y: frame.height
+                            y: root.revealFrontY
                         }
 
                     }
@@ -228,41 +227,41 @@ FocusScope {
                         }
 
                         PathLine {
-                            x: frame.width - root.animTopRightRadius
+                            x: frame.width - root.surfaceTopRightRadius
                             y: 0
                         }
 
                         PathArc {
                             x: frame.width
-                            y: root.animTopRightRadius
-                            radiusX: root.animTopRightRadius
-                            radiusY: root.animTopRightRadius
+                            y: root.surfaceTopRightRadius
+                            radiusX: root.surfaceTopRightRadius
+                            radiusY: root.surfaceTopRightRadius
                             direction: PathArc.Clockwise
                         }
 
                         PathLine {
                             x: frame.width
-                            y: frame.height - root.mergedBottomRightRadius
+                            y: root.revealFrontY - root.revealFrontRightRadius
                         }
 
                         PathArc {
-                            x: frame.width - root.mergedBottomRightRadius
-                            y: frame.height
-                            radiusX: root.mergedBottomRightRadius
-                            radiusY: root.mergedBottomRightRadius
+                            x: frame.width - root.revealFrontRightRadius
+                            y: root.revealFrontY
+                            radiusX: root.revealFrontRightRadius
+                            radiusY: root.revealFrontRightRadius
                             direction: PathArc.Clockwise
                         }
 
                         PathLine {
-                            x: root.surfaceBottomLeftRadius
-                            y: frame.height
+                            x: root.revealFrontLeftRadius
+                            y: root.revealFrontY
                         }
 
                         PathArc {
-                            relativeX: -root.surfaceBottomLeftRadius
-                            relativeY: -root.surfaceBottomLeftRadius
-                            radiusX: root.surfaceBottomLeftRadius
-                            radiusY: root.surfaceBottomLeftRadius
+                            relativeX: -root.revealFrontLeftRadius
+                            relativeY: -root.revealFrontLeftRadius
+                            radiusX: root.revealFrontLeftRadius
+                            radiusY: root.revealFrontLeftRadius
                             direction: PathArc.Clockwise
                         }
 
@@ -290,19 +289,19 @@ FocusScope {
 
                         PathMove {
                             x: root.bottomFuseJoinX
-                            y: frame.height
+                            y: root.revealFrontY
                         }
 
                         PathLine {
-                            x: root.surfaceBottomLeftRadius
-                            y: frame.height
+                            x: root.revealFrontLeftRadius
+                            y: root.revealFrontY
                         }
 
                         PathArc {
-                            relativeX: -root.surfaceBottomLeftRadius
-                            relativeY: -root.surfaceBottomLeftRadius
-                            radiusX: root.surfaceBottomLeftRadius
-                            radiusY: root.surfaceBottomLeftRadius
+                            relativeX: -root.revealFrontLeftRadius
+                            relativeY: -root.revealFrontLeftRadius
+                            radiusX: root.revealFrontLeftRadius
+                            radiusY: root.revealFrontLeftRadius
                             direction: PathArc.Clockwise
                         }
 
@@ -324,15 +323,15 @@ FocusScope {
                         }
 
                         PathLine {
-                            x: frame.width - root.animTopRightRadius
+                            x: frame.width - root.surfaceTopRightRadius
                             y: 0
                         }
 
                         PathArc {
                             x: frame.width
-                            y: root.animTopRightRadius
-                            radiusX: root.animTopRightRadius
-                            radiusY: root.animTopRightRadius
+                            y: root.surfaceTopRightRadius
+                            radiusX: root.surfaceTopRightRadius
+                            radiusY: root.surfaceTopRightRadius
                             direction: PathArc.Counterclockwise
                         }
 
@@ -369,12 +368,12 @@ FocusScope {
 
                         PathMove {
                             x: root.bottomFuseJoinX
-                            y: frame.height
+                            y: root.revealFrontY
                         }
 
                         PathArc {
                             x: frame.width - Theme.borderSize
-                            y: frame.height + Theme.barCornerRadius
+                            y: root.revealFrontY + Theme.barCornerRadius
                             radiusX: Theme.barCornerRadius
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
@@ -394,6 +393,7 @@ FocusScope {
                     id: contentLayout
 
                     spacing: 0
+                    opacity: root.contentRevealProgress
 
                     anchors {
                         top: parent.top

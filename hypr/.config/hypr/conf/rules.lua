@@ -18,6 +18,13 @@ hl.layer_rule({
     blur = false,
 })
 
+-- Quickshell surfaces animate their own fused panel geometry.
+hl.layer_rule({
+    name = "quickshell-self-animated",
+    match = { namespace = "^qs-.*" },
+    no_anim = true,
+})
+
 hl.window_rule({
     name = "suppress-maximize-events",
     match = { class = ".*" },
