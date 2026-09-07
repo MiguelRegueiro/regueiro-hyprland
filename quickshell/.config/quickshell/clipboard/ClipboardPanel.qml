@@ -549,8 +549,9 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 16
-                        color: root.searchVisuallyActive ? Qt.rgba(1, 1, 1, 0.105) : Qt.rgba(1, 1, 1, 0.058)
-                        border.width: 0
+                        color: Theme.qsCardBg
+                        border.width: 1
+                        border.color: Theme.qsCardBorder
                         layer.enabled: root.searchVisuallyActive
                         layer.effect: MultiEffect {
                             shadowEnabled: true
@@ -799,8 +800,9 @@ FocusScope {
                                     width: listView.width - 8
                                     implicitHeight: Math.max(58, previewLabel.implicitHeight + 22)
                                     radius: 14
-                                    color: selected ? Qt.rgba(1, 1, 1, 0.12) : hovered ? Qt.rgba(1, 1, 1, 0.085) : Qt.rgba(1, 1, 1, 0.055)
-                                    border.width: 0
+                                    color: selected ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+                                    border.width: 1
+                                    border.color: selected ? Qt.rgba(1, 1, 1, 0.14) : hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
 
                                     HoverHandler {
                                         id: rowHover
@@ -874,9 +876,9 @@ FocusScope {
                                             width: 28
                                             height: 28
                                             radius: 14
-                                            color: deleteHover.hovered ? Qt.rgba(0, 0, 0, 0.18) : Qt.rgba(1, 1, 1, 0.08)
-                                            border.width: deleteHover.hovered ? 1 : 0
-                                            border.color: Qt.rgba(1, 1, 1, 0.16)
+                                            color: deleteHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+                                            border.width: 1
+                                            border.color: deleteHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
 
                                             Text {
                                                 anchors.centerIn: parent
