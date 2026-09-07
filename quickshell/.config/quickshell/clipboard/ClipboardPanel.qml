@@ -14,6 +14,9 @@ FocusScope {
     property int selectedIndex: -1
     property bool hasOpenedOnce: false
     property bool closeAfterCopy: false
+    property int heldVerticalKey: 0
+    property int heldVerticalDirection: 0
+    property bool verticalReleasePending: false
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: panelHover.hovered || boundsHover.hovered
@@ -34,6 +37,9 @@ FocusScope {
     readonly property real surfaceOffsetY: (1 - root.reveal) * 16
     readonly property real surfaceOpacity: Math.max(0, Math.min(1, (root.reveal - 0.02) / 0.34))
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
+    readonly property int verticalHoldDelayMs: 480
+    readonly property int verticalKeyRepeatMs: 240
+    readonly property int verticalReleaseQuietMs: 8
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: {
         const query = root.searchQuery;
@@ -100,6 +106,45 @@ FocusScope {
         listView.positionViewAtIndex(nextIndex, ListView.Contain);
     }
 
+    function handleVerticalPress(key) {
+        const direction = key === Qt.Key_Up ? -1 : key === Qt.Key_Down ? 1 : 0;
+        if (direction === 0)
+            return false;
+
+        if (root.heldVerticalKey === key) {
+            if (root.verticalReleasePending) {
+                root.verticalReleasePending = false;
+                verticalReleaseTimer.stop();
+            }
+            return true;
+        }
+
+        root.resetVerticalNavigation();
+        root.heldVerticalKey = key;
+        root.heldVerticalDirection = direction;
+        root.moveSelection(direction);
+        verticalHoldTimer.restart();
+        return true;
+    }
+
+    function handleVerticalRelease(key) {
+        if (key !== root.heldVerticalKey)
+            return false;
+
+        root.verticalReleasePending = true;
+        verticalReleaseTimer.restart();
+        return true;
+    }
+
+    function resetVerticalNavigation() {
+        root.heldVerticalKey = 0;
+        root.heldVerticalDirection = 0;
+        root.verticalReleasePending = false;
+        verticalHoldTimer.stop();
+        verticalRepeatTimer.stop();
+        verticalReleaseTimer.stop();
+    }
+
     function activateEntry(entry) {
         if (!entry || root.clipboardService.mutating)
             return;
@@ -125,6 +170,7 @@ FocusScope {
     }
 
     onOpenChanged: {
+        root.resetVerticalNavigation();
         if (open) {
             root.hasOpenedOnce = false;
             root.clipboardService.refresh();
@@ -140,23 +186,44 @@ FocusScope {
             root.hasOpenedOnce = false;
         }
     }
+    onActiveFocusChanged: {
+        if (!activeFocus)
+            root.resetVerticalNavigation();
+    }
     onFilteredEntriesChanged: clampSelection()
     onSelectedIndexChanged: {
         if (root.selectedIndex >= 0 && root.selectedIndex < root.filteredEntries.length)
             listView.positionViewAtIndex(root.selectedIndex, ListView.Contain);
     }
-    Shortcut {
-        sequence: "Up"
-        context: Qt.WindowShortcut
-        enabled: root.open
-        onActivated: root.moveSelection(-1)
+    Timer {
+        id: verticalHoldTimer
+
+        interval: root.verticalHoldDelayMs
+        repeat: false
+        onTriggered: {
+            if (root.heldVerticalKey !== 0)
+                root.moveSelection(root.heldVerticalDirection);
+            verticalRepeatTimer.start();
+        }
     }
 
-    Shortcut {
-        sequence: "Down"
-        context: Qt.WindowShortcut
-        enabled: root.open
-        onActivated: root.moveSelection(1)
+    Timer {
+        id: verticalRepeatTimer
+
+        interval: root.verticalKeyRepeatMs
+        repeat: true
+        onTriggered: {
+            if (root.heldVerticalKey !== 0)
+                root.moveSelection(root.heldVerticalDirection);
+        }
+    }
+
+    Timer {
+        id: verticalReleaseTimer
+
+        interval: root.verticalReleaseQuietMs
+        repeat: false
+        onTriggered: root.resetVerticalNavigation()
     }
 
     Shortcut {
@@ -590,6 +657,16 @@ FocusScope {
                             selectByMouse: true
                             activeFocusOnPress: true
                             onTextEdited: root.selectedIndex = 0
+
+                            Keys.onPressed: (event) => {
+                                if (root.handleVerticalPress(event.key))
+                                    event.accepted = true;
+                            }
+
+                            Keys.onReleased: (event) => {
+                                if (root.handleVerticalRelease(event.key))
+                                    event.accepted = true;
+                            }
 
                             anchors {
                                 left: searchIcon.right

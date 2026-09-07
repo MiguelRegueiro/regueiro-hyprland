@@ -30,11 +30,15 @@ FocusScope {
     readonly property real bodyHeight: Theme.launcherHeight
     readonly property real touchpadScrollMultiplier: 3.2
     readonly property real mouseWheelScrollRows: 2.4
-    readonly property int horizontalKeyRepeatMs: Theme.qsPageFadeDuration
-    readonly property int verticalKeyRepeatMs: 95
+    readonly property int arrowHoldDelayMs: 480
+    readonly property int horizontalKeyRepeatMs: 160
+    readonly property int verticalKeyRepeatMs: 240
+    readonly property int arrowReleaseQuietMs: 8
     readonly property int gridColumnCount: 5
-    property real lastHorizontalKeyMoveMs: 0
-    property real lastVerticalKeyMoveMs: 0
+    property int heldArrowKey: 0
+    property int heldArrowDirection: 0
+    property bool heldArrowVertical: false
+    property bool arrowReleasePending: false
     readonly property real fuseOverhang: Theme.barCornerRadius
     readonly property real fuseOpticalInset: 2
     readonly property real fuseBottomInset: root.attachBottom
@@ -101,19 +105,10 @@ FocusScope {
     }
 
     function moveHorizontalSelection(delta) {
-        const now = Date.now();
-        if (now - root.lastHorizontalKeyMoveMs < root.horizontalKeyRepeatMs)
-            return;
-
-        root.lastHorizontalKeyMoveMs = now;
         root.moveSelection(delta);
     }
 
     function moveVerticalSelection(direction) {
-        const now = Date.now();
-        if (now - root.lastVerticalKeyMoveMs < root.verticalKeyRepeatMs)
-            return;
-
         if (root.filteredEntries.length === 0)
             return;
 
@@ -128,9 +123,86 @@ FocusScope {
         if (targetIndex >= root.filteredEntries.length)
             return;
 
-        root.lastVerticalKeyMoveMs = now;
         root.selectedIndex = targetIndex;
         root.ensureSelectionVisible(targetIndex);
+    }
+
+    function isArrowKey(key) {
+        return key === Qt.Key_Left || key === Qt.Key_Right || key === Qt.Key_Up || key === Qt.Key_Down;
+    }
+
+    function beginArrowHold(key, direction, vertical) {
+        root.heldArrowKey = key;
+        root.heldArrowDirection = direction;
+        root.heldArrowVertical = vertical;
+        root.arrowReleasePending = false;
+        if (vertical)
+            root.moveVerticalSelection(direction);
+        else
+            root.moveHorizontalSelection(direction);
+
+        arrowHoldTimer.restart();
+    }
+
+    function handleArrowPress(key) {
+        let direction = 0;
+        let vertical = false;
+        if (key === Qt.Key_Left)
+            direction = -1;
+        else if (key === Qt.Key_Right)
+            direction = 1;
+        else if (key === Qt.Key_Up) {
+            direction = -1;
+            vertical = true;
+        } else if (key === Qt.Key_Down) {
+            direction = 1;
+            vertical = true;
+        } else {
+            return false;
+        }
+
+        if (root.heldArrowKey === key) {
+            // Hyprland repeat arrives as release/press pairs with no auto-repeat
+            // flag. A same-key press inside the quiet window is synthetic.
+            if (root.arrowReleasePending) {
+                root.arrowReleasePending = false;
+                arrowReleaseTimer.stop();
+            }
+            return true;
+        }
+
+        root.resetArrowNavigation();
+        root.beginArrowHold(key, direction, vertical);
+        return true;
+    }
+
+    function handleArrowRelease(key) {
+        if (key !== root.heldArrowKey)
+            return false;
+
+        root.arrowReleasePending = true;
+        arrowReleaseTimer.restart();
+        return true;
+    }
+
+    function repeatHeldArrow() {
+        if (root.heldArrowKey === 0)
+            return;
+
+        if (root.heldArrowVertical)
+            root.moveVerticalSelection(root.heldArrowDirection);
+        else
+            root.moveHorizontalSelection(root.heldArrowDirection);
+    }
+
+    function resetArrowNavigation() {
+        root.heldArrowKey = 0;
+        root.heldArrowDirection = 0;
+        root.heldArrowVertical = false;
+        root.arrowReleasePending = false;
+        arrowHoldTimer.stop();
+        arrowRepeatTimer.stop();
+        arrowReleaseTimer.stop();
     }
 
     function gridColumns() {
@@ -184,11 +256,10 @@ FocusScope {
     }
 
     onOpenChanged: {
+        root.resetArrowNavigation();
         root.launcherService.iconRasterApplyBlocked = open;
         if (open) {
             root.hasOpenedOnce = false;
-            root.lastHorizontalKeyMoveMs = 0;
-            root.lastVerticalKeyMoveMs = 0;
             root.launcherService.clearError();
             searchInput.text = "";
             root.selectedIndex = 0;
@@ -200,10 +271,12 @@ FocusScope {
             searchInput.text = "";
             root.selectedIndex = -1;
             root.hasOpenedOnce = false;
-            root.lastHorizontalKeyMoveMs = 0;
-            root.lastVerticalKeyMoveMs = 0;
             root.launcherService.flushPendingIconRasterCache();
         }
+    }
+    onActiveFocusChanged: {
+        if (!activeFocus)
+            root.resetArrowNavigation();
     }
     onFilteredEntriesChanged: {
         clampSelection();
@@ -213,32 +286,31 @@ FocusScope {
             root.ensureSelectionVisible(root.selectedIndex);
     }
 
-    Shortcut {
-        sequence: "Up"
-        context: Qt.WindowShortcut
-        enabled: root.open
-        onActivated: root.moveVerticalSelection(-1)
+    Timer {
+        id: arrowHoldTimer
+
+        interval: root.arrowHoldDelayMs
+        repeat: false
+        onTriggered: {
+            root.repeatHeldArrow();
+            arrowRepeatTimer.start();
+        }
     }
 
-    Shortcut {
-        sequence: "Down"
-        context: Qt.WindowShortcut
-        enabled: root.open
-        onActivated: root.moveVerticalSelection(1)
+    Timer {
+        id: arrowRepeatTimer
+
+        interval: root.heldArrowVertical ? root.verticalKeyRepeatMs : root.horizontalKeyRepeatMs
+        repeat: true
+        onTriggered: root.repeatHeldArrow()
     }
 
-    Shortcut {
-        sequence: "Left"
-        context: Qt.WindowShortcut
-        enabled: root.open
-        onActivated: root.moveHorizontalSelection(-1)
-    }
+    Timer {
+        id: arrowReleaseTimer
 
-    Shortcut {
-        sequence: "Right"
-        context: Qt.WindowShortcut
-        enabled: root.open
-        onActivated: root.moveHorizontalSelection(1)
+        interval: root.arrowReleaseQuietMs
+        repeat: false
+        onTriggered: root.resetArrowNavigation()
     }
 
     Shortcut {
@@ -623,6 +695,16 @@ FocusScope {
                             activeFocusOnPress: true
                             onTextEdited: root.selectedIndex = 0
 
+                            Keys.onPressed: (event) => {
+                                if (root.handleArrowPress(event.key))
+                                    event.accepted = true;
+                            }
+
+                            Keys.onReleased: (event) => {
+                                if (root.handleArrowRelease(event.key))
+                                    event.accepted = true;
+                            }
+
                             anchors {
                                 left: searchIcon.right
                                 right: clearSearch.left
@@ -631,15 +713,6 @@ FocusScope {
                                 verticalCenter: parent.verticalCenter
                             }
 
-                            Keys.onLeftPressed: (event) => {
-                                root.moveHorizontalSelection(-1);
-                                event.accepted = true;
-                            }
-
-                            Keys.onRightPressed: (event) => {
-                                root.moveHorizontalSelection(1);
-                                event.accepted = true;
-                            }
                         }
 
                         Text {
