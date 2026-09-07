@@ -784,8 +784,6 @@ FocusScope {
 
                                 anchors {
                                     fill: parent
-                                    leftMargin: 4
-                                    rightMargin: 4
                                     topMargin: 4
                                     bottomMargin: 4
                                 }
@@ -796,8 +794,7 @@ FocusScope {
 
                                     readonly property bool selected: index === root.selectedIndex
                                     readonly property bool hovered: rowHover.hovered
-                                    x: 4
-                                    width: listView.width - 8
+                                    width: listView.width
                                     implicitHeight: Math.max(58, previewLabel.implicitHeight + 22)
                                     radius: 14
                                     color: selected ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : hovered ? Theme.qsCardBgHover : Theme.qsCardBg
