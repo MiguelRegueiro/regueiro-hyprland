@@ -804,6 +804,7 @@ FocusScope {
                                             readonly property int filteredIndex: typeof mappedIndex === "number" ? mappedIndex : -1
                                             readonly property bool matched: filteredIndex >= 0
                                             readonly property bool selected: filteredIndex === root.selectedIndex
+                                            readonly property bool hovered: appTileHover.hovered
                                             // Keep delegates and their 256px icon images alive across searches.
                                             // Toggling visible/size to 0 makes Qt drop/reload async images, which is
                                             // exactly the slow blank-icon flash this drawer must avoid.
@@ -817,12 +818,12 @@ FocusScope {
                                             Rectangle {
                                                 id: appTile
 
-                                                width: Math.min(134, parent.width - 6)
-                                                height: 122
-                                                radius: 16
-                                                color: selected ? Qt.rgba(1, 1, 1, 0.095) : "transparent"
-                                                border.width: selected ? 1 : 0
-                                                border.color: selected ? Qt.rgba(1, 1, 1, 0.16) : "transparent"
+                                                width: Math.min(126, parent.width - 10)
+                                                height: 118
+                                                radius: 15
+                                                color: selected ? Qt.rgba(1, 1, 1, 0.075) : hovered ? Qt.rgba(1, 1, 1, 0.045) : "transparent"
+                                                border.width: selected || hovered ? 1 : 0
+                                                border.color: selected ? Qt.rgba(1, 1, 1, 0.20) : hovered ? Theme.qsCardBorder : "transparent"
                                                 scale: selected ? 1.012 : 1
 
                                                 anchors.centerIn: parent
@@ -833,7 +834,7 @@ FocusScope {
 
                                                     anchors {
                                                         top: parent.top
-                                                        topMargin: 9
+                                                        topMargin: 5
                                                         horizontalCenter: parent.horizontalCenter
                                                     }
 
@@ -892,12 +893,23 @@ FocusScope {
                                                         wrapMode: Text.WordWrap
                                                         maximumLineCount: 2
                                                         elide: Text.ElideRight
-                                                        color: selected ? Theme.textPrimary : Theme.textDim
+                                                        color: selected ? Theme.textPrimary : Qt.rgba(0.965, 0.961, 0.957, 0.84)
                                                         font.family: Theme.fontUi
                                                         font.pixelSize: 12
                                                         lineHeight: 0.94
 
                                                         anchors.horizontalCenter: parent.horizontalCenter
+                                                    }
+                                                }
+
+                                                HoverHandler {
+                                                    id: appTileHover
+
+                                                    blocking: false
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onHoveredChanged: {
+                                                        if (hovered && matched)
+                                                            root.selectedIndex = filteredIndex;
                                                     }
                                                 }
 
