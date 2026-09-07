@@ -82,17 +82,21 @@ var ncSurfaceTopRightRadius = barCornerRadius + 2;
 var ncSurfaceBottomLeftRadius = barCornerRadius + 6;
 var ncSurfaceBottomRightRadius = barCornerRadius + 6;
 
+// Bottom-center panels
+var bottomPanelWidth = 760;
+var bottomPanelHeight = 630;
+
 // Clipboard
-var clipboardWidth = 620;
-var clipboardHeight = 560;
+var clipboardWidth = bottomPanelWidth;
+var clipboardHeight = bottomPanelHeight;
 var clipboardAttachBottom = borderSize;
 var clipboardBorderFuseInset = 2;
 var clipboardSurfaceTopLeftRadius = barCornerRadius + 6;
 var clipboardSurfaceTopRightRadius = barCornerRadius + 6;
 
 // Launcher
-var launcherWidth = 760;
-var launcherHeight = 600;
+var launcherWidth = bottomPanelWidth;
+var launcherHeight = bottomPanelHeight;
 var launcherAttachBottom = borderSize;
 var launcherSurfaceTopLeftRadius = barCornerRadius + 6;
 var launcherSurfaceTopRightRadius = barCornerRadius + 6;

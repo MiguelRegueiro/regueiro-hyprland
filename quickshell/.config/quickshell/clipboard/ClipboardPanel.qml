@@ -33,6 +33,7 @@ FocusScope {
     readonly property real clipSurfaceHeight: root.bodyHeight + root.attachBottom
     readonly property real surfaceOffsetY: (1 - root.reveal) * 16
     readonly property real surfaceOpacity: Math.max(0, Math.min(1, (root.reveal - 0.02) / 0.34))
+    readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: {
         const query = root.searchQuery;
@@ -548,9 +549,9 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 16
-                        color: searchInput.activeFocus ? Qt.rgba(1, 1, 1, 0.105) : Qt.rgba(1, 1, 1, 0.058)
+                        color: root.searchVisuallyActive ? Qt.rgba(1, 1, 1, 0.105) : Qt.rgba(1, 1, 1, 0.058)
                         border.width: 0
-                        layer.enabled: searchInput.activeFocus
+                        layer.enabled: root.searchVisuallyActive
                         layer.effect: MultiEffect {
                             shadowEnabled: true
                             shadowColor: Qt.rgba(0, 0, 0, 0.34)
@@ -572,7 +573,7 @@ FocusScope {
                             text: "󰍉"
                             font.family: Theme.fontIcons
                             font.pixelSize: 14
-                            color: searchInput.activeFocus ? Theme.textPrimary : Theme.textDim
+                            color: root.searchVisuallyActive ? Theme.textPrimary : Theme.textDim
                         }
 
                         TextInput {
