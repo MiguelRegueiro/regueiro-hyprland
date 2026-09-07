@@ -333,6 +333,36 @@ ShellRoot {
         closePowerMenu();
     }
 
+    function routeBarMenuPress(targetScreen, pointX, pointY) {
+        for (let i = 0; i < barWindows.instances.length; ++i) {
+            const barWindow = barWindows.instances[i];
+            if (barWindow.targetScreen === targetScreen)
+                return barWindow.routeMenuPress(pointX, pointY);
+        }
+
+        return false;
+    }
+
+    function routeBarMenuHover(targetScreen, pointX, pointY) {
+        for (let i = 0; i < barWindows.instances.length; ++i) {
+            const barWindow = barWindows.instances[i];
+            if (barWindow.targetScreen === targetScreen)
+                return barWindow.routeMenuHover(pointX, pointY);
+        }
+
+        return false;
+    }
+
+    function clearBarMenuHover(targetScreen) {
+        for (let i = 0; i < barWindows.instances.length; ++i) {
+            const barWindow = barWindows.instances[i];
+            if (barWindow.targetScreen === targetScreen) {
+                barWindow.clearMenuHover();
+                return;
+            }
+        }
+    }
+
     IpcHandler {
         function toggle() {
             root.toggleQuickSettings();
@@ -544,6 +574,8 @@ ShellRoot {
     }
 
     Variants {
+        id: barWindows
+
         model: Quickshell.screens
 
         delegate: Component {
@@ -596,11 +628,15 @@ ShellRoot {
             Bar.CpuStatsMenu {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
                 targetScreen: modelData
                 detailsService: systemDetailsServiceState
                 open: root.cpuStatsMenuVisible && activeScreen
+                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
                 onCloseRequested: root.closeCpuStatsMenu()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
 
         }
@@ -614,11 +650,15 @@ ShellRoot {
             Bar.RamStatsMenu {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
                 targetScreen: modelData
                 detailsService: systemDetailsServiceState
                 open: root.ramStatsMenuVisible && activeScreen
+                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
                 onCloseRequested: root.closeRamStatsMenu()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
 
         }
@@ -632,11 +672,15 @@ ShellRoot {
             Bar.SshSessionsMenu {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
                 targetScreen: modelData
                 sshService: sshSessionsServiceState
                 open: root.sshSessionsMenuVisible && activeScreen
+                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
                 onCloseRequested: root.closeSshSessionsMenu()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
 
         }
@@ -650,11 +694,15 @@ ShellRoot {
             Bar.ExternalDrivesMenu {
                 required property var modelData
                 readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
                 targetScreen: modelData
                 driveService: externalDrivesServiceState
                 open: root.externalDrivesMenuVisible && activeScreen
+                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
                 onCloseRequested: root.closeExternalDrivesMenu()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
 
         }
@@ -681,8 +729,7 @@ ShellRoot {
                 brightnessService: brightnessServiceState
                 networkService: networkServiceState
                 onOutsidePressed: root.closeAllPanels()
-                onQuickSettingsRequested: root.toggleQuickSettings()
-                onNotificationCenterRequested: root.toggleNotificationCenter()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onPowerActionRequested: (actionId) => {
                     return root.requestPowerAction(actionId);
                 }
@@ -787,8 +834,7 @@ ShellRoot {
                 notificationCenterVisible: root.notificationCenterVisible && activeScreen
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
                 onOutsidePressed: root.closeAllPanels()
-                onQuickSettingsRequested: root.toggleQuickSettings()
-                onNotificationCenterRequested: root.toggleNotificationCenter()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onNotificationCenterHoveredChanged: {
                     if (activeScreen)
                         ncController.panelHovered = notificationCenterHovered;
@@ -817,8 +863,9 @@ ShellRoot {
                 forceOverlay: launcherOverlayActive
                 launcherService: launcherServiceState
                 onOutsidePressed: root.closeLauncher()
-                onQuickSettingsRequested: root.toggleQuickSettings()
-                onNotificationCenterRequested: root.toggleNotificationCenter()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
+                onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
+                onBarHoverCleared: root.clearBarMenuHover(modelData)
             }
 
         }
@@ -842,8 +889,9 @@ ShellRoot {
                 forceOverlay: clipboardOverlayActive
                 clipboardService: clipboardServiceState
                 onOutsidePressed: root.closeClipboard()
-                onQuickSettingsRequested: root.toggleQuickSettings()
-                onNotificationCenterRequested: root.toggleNotificationCenter()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
+                onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
+                onBarHoverCleared: root.clearBarMenuHover(modelData)
             }
 
         }

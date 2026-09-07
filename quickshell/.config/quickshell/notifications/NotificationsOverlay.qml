@@ -23,27 +23,14 @@ PanelWindow {
     readonly property real notificationCenterRegionHeight: notificationCenter.inputRegion.height
 
     signal outsidePressed()
-    signal quickSettingsRequested()
-    signal notificationCenterRequested()
+    signal barPressed(real x, real y)
 
     function routeBarPress(mouse) {
         if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
             return false;
 
-        const ncLeft = Math.round((root.width - Theme.ncBarTriggerWidth) / 2);
-        const ncRight = ncLeft + Theme.ncBarTriggerWidth;
-        if (mouse.x >= ncLeft && mouse.x <= ncRight) {
-            root.notificationCenterRequested();
-            return true;
-        }
-
-        const qsLeft = Math.max(0, root.width - Theme.qsBarTriggerWidth);
-        if (mouse.x >= qsLeft) {
-            root.quickSettingsRequested();
-            return true;
-        }
-
-        return false;
+        root.barPressed(mouse.x, mouse.y);
+        return true;
     }
 
 
@@ -150,35 +137,10 @@ PanelWindow {
 
     mask: Region {
         Region {
-            item: notificationCenter.inputRegion
-        }
-
-        Region {
             x: 0
-            y: 0
+            y: root.forceOverlay ? 0 : Theme.barHeight
             width: root.notificationCenterVisible ? Math.round(root.width) : 0
-            height: root.notificationCenterVisible ? Math.max(0, Math.round(root.notificationCenterRegionY)) : 0
-        }
-
-        Region {
-            x: 0
-            y: Math.max(0, Math.round(root.notificationCenterRegionY))
-            width: root.notificationCenterVisible ? Math.max(0, Math.round(root.notificationCenterRegionX)) : 0
-            height: root.notificationCenterVisible ? Math.max(0, Math.round(root.notificationCenterRegionHeight)) : 0
-        }
-
-        Region {
-            x: Math.round(root.notificationCenterRegionX + root.notificationCenterRegionWidth)
-            y: Math.max(0, Math.round(root.notificationCenterRegionY))
-            width: root.notificationCenterVisible ? Math.max(0, Math.round(root.width - (root.notificationCenterRegionX + root.notificationCenterRegionWidth))) : 0
-            height: root.notificationCenterVisible ? Math.max(0, Math.round(root.notificationCenterRegionHeight)) : 0
-        }
-
-        Region {
-            x: 0
-            y: Math.round(root.notificationCenterRegionY + root.notificationCenterRegionHeight)
-            width: root.notificationCenterVisible ? Math.round(root.width) : 0
-            height: root.notificationCenterVisible ? Math.max(0, Math.round(root.height - (root.notificationCenterRegionY + root.notificationCenterRegionHeight))) : 0
+            height: root.notificationCenterVisible ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
         }
 
         Region {

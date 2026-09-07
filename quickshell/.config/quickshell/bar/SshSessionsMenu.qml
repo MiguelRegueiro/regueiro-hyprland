@@ -13,6 +13,7 @@ PanelWindow {
     required property var targetScreen
     required property var sshService
     property bool open: false
+    property bool fullscreenActive: false
     readonly property real reveal: sshPanel.reveal
     readonly property var sessions: sshService && sshService.sessions ? sshService.sessions : []
     readonly property string lastError: sshService && sshService.lastError ? sshService.lastError : ""
@@ -33,6 +34,15 @@ PanelWindow {
     readonly property int closeDuration: Theme.topBarMenuCloseDuration
 
     signal closeRequested()
+    signal barPressed(real x, real y)
+
+    function routeBarPress(mouse) {
+        if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
+            return false;
+
+        root.barPressed(mouse.x, mouse.y);
+        return true;
+    }
 
     function remoteLabel(session) {
         const address = session.remoteAddress || session.remoteHost || "";
@@ -65,6 +75,13 @@ PanelWindow {
         right: true
     }
 
+    mask: Region {
+        x: 0
+        y: root.fullscreenActive ? 0 : Theme.barHeight
+        width: root.open ? Math.round(root.width) : 0
+        height: root.open ? Math.max(0, Math.round(root.height - (root.fullscreenActive ? 0 : Theme.barHeight))) : 0
+    }
+
     Timer {
         interval: 1000
         running: root.open
@@ -80,7 +97,12 @@ PanelWindow {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
         enabled: root.open
-        onPressed: root.closeRequested()
+        onPressed: (mouse) => {
+            if (root.fullscreenActive && root.routeBarPress(mouse))
+                return ;
+
+            root.closeRequested();
+        }
     }
 
     Item {

@@ -72,8 +72,6 @@ var qsCardChipBorderHover = Qt.rgba(1, 1, 1, 0.11);
 
 // Notification center
 var ncWidth = 760;
-var ncBarTriggerWidth = 150;
-var qsBarTriggerWidth = 180;
 var toastWidth = 500;
 var notificationImageSize = 88;
 var notificationImageCompactSize = 72;

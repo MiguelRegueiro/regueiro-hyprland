@@ -13,6 +13,7 @@ PanelWindow {
     required property var targetScreen
     required property var driveService
     property bool open: false
+    property bool fullscreenActive: false
     readonly property real reveal: externalPanel.reveal
     readonly property var drives: driveService && driveService.drives ? driveService.drives : []
     readonly property string lastError: driveService && driveService.lastError ? driveService.lastError : ""
@@ -34,6 +35,15 @@ PanelWindow {
     readonly property int closeDuration: Theme.topBarMenuCloseDuration
 
     signal closeRequested()
+    signal barPressed(real x, real y)
+
+    function routeBarPress(mouse) {
+        if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
+            return false;
+
+        root.barPressed(mouse.x, mouse.y);
+        return true;
+    }
 
     screen: targetScreen
     visible: root.open || root.reveal > 0.001
@@ -50,11 +60,23 @@ PanelWindow {
         right: true
     }
 
+    mask: Region {
+        x: 0
+        y: root.fullscreenActive ? 0 : Theme.barHeight
+        width: root.open ? Math.round(root.width) : 0
+        height: root.open ? Math.max(0, Math.round(root.height - (root.fullscreenActive ? 0 : Theme.barHeight))) : 0
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
         enabled: root.open
-        onPressed: root.closeRequested()
+        onPressed: (mouse) => {
+            if (root.fullscreenActive && root.routeBarPress(mouse))
+                return ;
+
+            root.closeRequested();
+        }
     }
 
     Item {

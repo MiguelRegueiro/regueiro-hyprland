@@ -10,6 +10,8 @@ Row {
     property bool ramMenuOpen: false
     property int cpuPct: 0
     property real ramUsedGb: 0
+    property alias cpuTriggerItem: cpuTrigger
+    property alias ramTriggerItem: ramTrigger
     // ── CPU polling ────────────────────────────────────────────
     // Read /proc/stat twice to compute delta
     property var _prevIdle: 0
@@ -19,6 +21,24 @@ Row {
 
     signal cpuClicked()
     signal ramClicked()
+
+    function containsPoint(item, pointX, pointY) {
+        const localPoint = item.mapFromItem(root, pointX, pointY);
+        return localPoint.x >= 0 && localPoint.x < item.width && localPoint.y >= 0 && localPoint.y < item.height;
+    }
+
+    function routeMenuPress(pointX, pointY) {
+        if (containsPoint(cpuTrigger, pointX, pointY)) {
+            cpuClicked();
+            return true;
+        }
+        if (containsPoint(ramTrigger, pointX, pointY)) {
+            ramClicked();
+            return true;
+        }
+
+        return false;
+    }
 
     Timer {
         interval: Theme.statsFastInterval
@@ -88,6 +108,8 @@ Row {
     }
     // ── CPU display ────────────────────────────────────────────
     Rectangle {
+        id: cpuTrigger
+
         height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: cpuRow.implicitWidth + 20
         radius: Theme.radiusSmall
@@ -144,6 +166,8 @@ Row {
     }
     // ── RAM display ────────────────────────────────────────────
     Rectangle {
+        id: ramTrigger
+
         height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: ramRow.implicitWidth + 20
         radius: Theme.radiusSmall

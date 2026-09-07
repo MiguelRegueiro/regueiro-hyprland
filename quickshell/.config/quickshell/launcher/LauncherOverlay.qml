@@ -20,27 +20,23 @@ PanelWindow {
     readonly property real launcherRegionHeight: launcherPanel.inputRegion.height
 
     signal outsidePressed()
-    signal quickSettingsRequested()
-    signal notificationCenterRequested()
+    signal barPressed(real x, real y)
+    signal barHovered(real x, real y)
+    signal barHoverCleared()
 
     function routeBarPress(mouse) {
         if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
             return false;
 
-        const ncLeft = Math.round((root.width - Theme.ncBarTriggerWidth) / 2);
-        const ncRight = ncLeft + Theme.ncBarTriggerWidth;
-        if (mouse.x >= ncLeft && mouse.x <= ncRight) {
-            root.notificationCenterRequested();
-            return true;
-        }
+        root.barPressed(mouse.x, mouse.y);
+        return true;
+    }
 
-        const qsLeft = Math.max(0, root.width - Theme.qsBarTriggerWidth);
-        if (mouse.x >= qsLeft) {
-            root.quickSettingsRequested();
-            return true;
-        }
-
-        return false;
+    function routeBarHover(mouse) {
+        if (mouse.y >= 0 && mouse.y < Theme.barHeight)
+            root.barHovered(mouse.x, mouse.y);
+        else
+            root.barHoverCleared();
     }
 
     function closeFromOutside() {
@@ -66,6 +62,7 @@ PanelWindow {
             root.openingGuard = false;
             openingGuardTimer.stop();
             launcherFocusGrab.active = false;
+            root.barHoverCleared();
         }
     }
 
@@ -116,8 +113,11 @@ PanelWindow {
             width: parent.width
             height: Math.max(0, Math.round(root.launcherRegionY))
             acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+            onPositionChanged: (mouse) => root.routeBarHover(mouse)
+            onExited: root.barHoverCleared()
             onPressed: (mouse) => {
-                if (root.forceOverlay && root.routeBarPress(mouse))
+                if (root.routeBarPress(mouse))
                     return ;
 
                 root.closeFromOutside();
@@ -164,35 +164,10 @@ PanelWindow {
 
     mask: Region {
         Region {
-            item: launcherPanel.inputRegion
-        }
-
-        Region {
             x: 0
-            y: 0
+            y: root.forceOverlay ? 0 : Theme.barHeight
             width: root.launcherVisible ? Math.round(root.width) : 0
-            height: root.launcherVisible ? Math.max(0, Math.round(root.launcherRegionY)) : 0
-        }
-
-        Region {
-            x: 0
-            y: Math.max(0, Math.round(root.launcherRegionY))
-            width: root.launcherVisible ? Math.max(0, Math.round(root.launcherRegionX)) : 0
-            height: root.launcherVisible ? Math.max(0, Math.round(root.launcherRegionHeight)) : 0
-        }
-
-        Region {
-            x: Math.round(root.launcherRegionX + root.launcherRegionWidth)
-            y: Math.max(0, Math.round(root.launcherRegionY))
-            width: root.launcherVisible ? Math.max(0, Math.round(root.width - (root.launcherRegionX + root.launcherRegionWidth))) : 0
-            height: root.launcherVisible ? Math.max(0, Math.round(root.launcherRegionHeight)) : 0
-        }
-
-        Region {
-            x: 0
-            y: Math.round(root.launcherRegionY + root.launcherRegionHeight)
-            width: root.launcherVisible ? Math.round(root.width) : 0
-            height: root.launcherVisible ? Math.max(0, Math.round(root.height - (root.launcherRegionY + root.launcherRegionHeight))) : 0
+            height: root.launcherVisible ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
         }
     }
 }

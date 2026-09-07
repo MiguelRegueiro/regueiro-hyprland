@@ -13,6 +13,7 @@ PanelWindow {
     required property var targetScreen
     required property var detailsService
     property bool open: false
+    property bool fullscreenActive: false
     readonly property real reveal: statsPanel.reveal
     readonly property real menuWidth: 430
     readonly property real menuLeft: 124
@@ -28,6 +29,15 @@ PanelWindow {
     readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
 
     signal closeRequested()
+    signal barPressed(real x, real y)
+
+    function routeBarPress(mouse) {
+        if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
+            return false;
+
+        root.barPressed(mouse.x, mouse.y);
+        return true;
+    }
 
     function shortCpuModel(model) {
         return String(model || "").replace(/\s+CPU\s+@.*$/, "").replace(/\(R\)|\(TM\)/g, "").trim();
@@ -48,6 +58,13 @@ PanelWindow {
         right: true
     }
 
+    mask: Region {
+        x: 0
+        y: root.fullscreenActive ? 0 : Theme.barHeight
+        width: root.open ? Math.round(root.width) : 0
+        height: root.open ? Math.max(0, Math.round(root.height - (root.fullscreenActive ? 0 : Theme.barHeight))) : 0
+    }
+
     onOpenChanged: {
         if (open && detailsService)
             detailsService.refreshCpu();
@@ -64,7 +81,12 @@ PanelWindow {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
         enabled: root.open
-        onPressed: root.closeRequested()
+        onPressed: (mouse) => {
+            if (root.fullscreenActive && root.routeBarPress(mouse))
+                return ;
+
+            root.closeRequested();
+        }
     }
 
     Item {

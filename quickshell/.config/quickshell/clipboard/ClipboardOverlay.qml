@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Wayland
 import "." as Clipboard
 import "../theme/Theme.js" as Theme
@@ -19,39 +18,28 @@ PanelWindow {
     readonly property real clipboardRegionHeight: clipboardPanel.inputRegion.height
 
     signal outsidePressed()
-    signal quickSettingsRequested()
-    signal notificationCenterRequested()
+    signal barPressed(real x, real y)
+    signal barHovered(real x, real y)
+    signal barHoverCleared()
 
     function routeBarPress(mouse) {
         if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
             return false;
 
-        const ncLeft = Math.round((root.width - Theme.ncBarTriggerWidth) / 2);
-        const ncRight = ncLeft + Theme.ncBarTriggerWidth;
-        if (mouse.x >= ncLeft && mouse.x <= ncRight) {
-            root.notificationCenterRequested();
-            return true;
-        }
+        root.barPressed(mouse.x, mouse.y);
+        return true;
+    }
 
-        const qsLeft = Math.max(0, root.width - Theme.qsBarTriggerWidth);
-        if (mouse.x >= qsLeft) {
-            root.quickSettingsRequested();
-            return true;
-        }
-
-        return false;
+    function routeBarHover(mouse) {
+        if (mouse.y >= 0 && mouse.y < Theme.barHeight)
+            root.barHovered(mouse.x, mouse.y);
+        else
+            root.barHoverCleared();
     }
 
     onClipboardVisibleChanged: {
-        if (root.clipboardVisible) {
-            Qt.callLater(function() {
-                if (root.clipboardVisible)
-                    clipboardFocusGrab.active = true;
-
-            });
-        } else {
-            clipboardFocusGrab.active = false;
-        }
+        if (!root.clipboardVisible)
+            root.barHoverCleared();
     }
 
     screen: targetScreen
@@ -60,7 +48,7 @@ PanelWindow {
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-clipboard"
-    WlrLayershell.keyboardFocus: root.clipboardVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: root.clipboardVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
 
     anchors {
@@ -68,17 +56,6 @@ PanelWindow {
         bottom: true
         left: true
         right: true
-    }
-
-    HyprlandFocusGrab {
-        id: clipboardFocusGrab
-
-        windows: [root]
-        onCleared: {
-            if (root.clipboardVisible)
-                root.outsidePressed();
-
-        }
     }
 
     Item {
@@ -91,8 +68,11 @@ PanelWindow {
             width: parent.width
             height: Math.max(0, Math.round(root.clipboardRegionY))
             acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+            onPositionChanged: (mouse) => root.routeBarHover(mouse)
+            onExited: root.barHoverCleared()
             onPressed: (mouse) => {
-                if (root.forceOverlay && root.routeBarPress(mouse))
+                if (root.routeBarPress(mouse))
                     return ;
 
                 root.outsidePressed();
@@ -139,35 +119,10 @@ PanelWindow {
 
     mask: Region {
         Region {
-            item: clipboardPanel.inputRegion
-        }
-
-        Region {
             x: 0
-            y: 0
+            y: root.forceOverlay ? 0 : Theme.barHeight
             width: root.clipboardVisible ? Math.round(root.width) : 0
-            height: root.clipboardVisible ? Math.max(0, Math.round(root.clipboardRegionY)) : 0
-        }
-
-        Region {
-            x: 0
-            y: Math.max(0, Math.round(root.clipboardRegionY))
-            width: root.clipboardVisible ? Math.max(0, Math.round(root.clipboardRegionX)) : 0
-            height: root.clipboardVisible ? Math.max(0, Math.round(root.clipboardRegionHeight)) : 0
-        }
-
-        Region {
-            x: Math.round(root.clipboardRegionX + root.clipboardRegionWidth)
-            y: Math.max(0, Math.round(root.clipboardRegionY))
-            width: root.clipboardVisible ? Math.max(0, Math.round(root.width - (root.clipboardRegionX + root.clipboardRegionWidth))) : 0
-            height: root.clipboardVisible ? Math.max(0, Math.round(root.clipboardRegionHeight)) : 0
-        }
-
-        Region {
-            x: 0
-            y: Math.round(root.clipboardRegionY + root.clipboardRegionHeight)
-            width: root.clipboardVisible ? Math.round(root.width) : 0
-            height: root.clipboardVisible ? Math.max(0, Math.round(root.height - (root.clipboardRegionY + root.clipboardRegionHeight))) : 0
+            height: root.clipboardVisible ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
         }
     }
 
