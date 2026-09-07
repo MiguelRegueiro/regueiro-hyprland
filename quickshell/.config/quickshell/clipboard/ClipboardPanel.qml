@@ -622,9 +622,52 @@ FocusScope {
                             verticalAlignment: Text.AlignVCenter
 
                             anchors {
-                                right: clearSearch.left
+                                right: clearAllButton.left
                                 rightMargin: 8
                                 verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        Rectangle {
+                            id: clearAllButton
+
+                            width: clearAllLabel.implicitWidth + 22
+                            height: 32
+                            radius: 16
+                            color: clearAllHover.hovered && clearAllEnabled ? Theme.hoverBgStrong : Theme.qsCardBg
+                            border.width: 1
+                            border.color: clearAllEnabled ? (clearAllHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder) : Theme.qsEdgeSoft
+                            opacity: clearAllEnabled ? 1 : 0.5
+                            readonly property bool clearAllEnabled: root.clipboardService.entries.length > 0 && !root.clipboardService.mutating
+
+                            anchors {
+                                right: clearSearch.visible ? clearSearch.left : parent.right
+                                rightMargin: 8
+                                verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                id: clearAllLabel
+
+                                anchors.centerIn: parent
+                                text: "Clear all"
+                                font.family: Theme.fontUi
+                                font.pixelSize: 12
+                                color: Theme.textPrimary
+                            }
+
+                            HoverHandler {
+                                id: clearAllHover
+
+                                blocking: false
+                                cursorShape: parent.clearAllEnabled ? Qt.ArrowCursor : Qt.ForbiddenCursor
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: parent.clearAllEnabled
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ForbiddenCursor
+                                onClicked: root.clipboardService.wipe()
                             }
                         }
 
@@ -867,50 +910,6 @@ FocusScope {
                         }
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-
-                        Rectangle {
-                            Layout.alignment: Qt.AlignVCenter
-                            implicitWidth: clearAllLabel.implicitWidth + 22
-                            implicitHeight: 32
-                            radius: 16
-                            color: clearAllHover.hovered && clearAllEnabled ? Theme.hoverBgStrong : Theme.qsCardBg
-                            border.width: 1
-                            border.color: clearAllEnabled ? (clearAllHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder) : Theme.qsEdgeSoft
-                            opacity: clearAllEnabled ? 1 : 0.5
-                            readonly property bool clearAllEnabled: root.clipboardService.entries.length > 0 && !root.clipboardService.mutating
-
-                            Text {
-                                id: clearAllLabel
-
-                                anchors.centerIn: parent
-                                text: "Clear all"
-                                font.family: Theme.fontUi
-                                font.pixelSize: 12
-                                color: Theme.textPrimary
-                            }
-
-                            HoverHandler {
-                                id: clearAllHover
-
-                                blocking: false
-                                cursorShape: parent.clearAllEnabled ? Qt.ArrowCursor : Qt.ForbiddenCursor
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: parent.clearAllEnabled
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ForbiddenCursor
-                                onClicked: root.clipboardService.wipe()
-                            }
-
-                        }
-                    }
                 }
 
                 layer.effect: MultiEffect {
