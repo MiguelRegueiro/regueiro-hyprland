@@ -79,8 +79,8 @@ for i = 1, 10 do
     hl.bind(main_mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i, follow = true }))
 end
 
-hl.bind(main_mod .. " + Page_Up", hl.dsp.focus({ workspace = "m-1" }))
-hl.bind(main_mod .. " + Page_Down", hl.dsp.focus({ workspace = "m+1" }))
+hl.bind(main_mod .. " + Page_Up", hl.dsp.focus({ workspace = "m+1" }))
+hl.bind(main_mod .. " + Page_Down", hl.dsp.focus({ workspace = "m-1" }))
 hl.bind(main_mod .. " + KP_Prior", hl.dsp.focus({ workspace = "m-1" }))
 hl.bind(main_mod .. " + KP_Next", hl.dsp.focus({ workspace = "m+1" }))
 hl.bind(main_mod .. " + ALT + Left", hl.dsp.focus({ workspace = "m-1" }))
