@@ -3,6 +3,7 @@
 url=
 media_title=
 media_title_set=0
+referrer=
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -19,6 +20,17 @@ while [ "$#" -gt 0 ]; do
             media_title=$1
             media_title_set=1
             ;;
+        --referrer=* | --http-referrer=*)
+            referrer=${1#*=}
+            ;;
+        --referrer | --http-referrer)
+            shift
+            if [ "$#" -eq 0 ]; then
+                printf "%s\n" "enzo-mpv: --referrer requires a URL" >&2
+                exit 1
+            fi
+            referrer=$1
+            ;;
         http://* | https://* | file://* | /*)
             url=$1
             ;;
@@ -31,8 +43,11 @@ if [ -z "$url" ]; then
     exit 1
 fi
 
-if [ "$media_title_set" -eq 1 ] &&
-    enzo --help 2>/dev/null | grep -q -- "--force-media-title"; then
+if [ -n "$referrer" ]; then
+    export ENZO_HTTP_REFERER=$referrer
+fi
+
+if [ "$media_title_set" -eq 1 ]; then
     exec enzo "--force-media-title=$media_title" "$url"
 fi
 
