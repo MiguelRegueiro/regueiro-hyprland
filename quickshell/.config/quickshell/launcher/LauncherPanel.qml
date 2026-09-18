@@ -78,6 +78,10 @@ FocusScope {
         searchInput.cursorPosition = searchInput.text.length;
     }
 
+    function appCountText(count) {
+        return count === 1 ? "1 app" : `${count} apps`;
+    }
+
     function clampSelection() {
         if (root.filteredEntries.length === 0) {
             root.selectedIndex = -1;
@@ -707,7 +711,7 @@ FocusScope {
 
                             anchors {
                                 left: searchIcon.right
-                                right: clearSearch.left
+                                right: appCountLabel.left
                                 leftMargin: 12
                                 rightMargin: 8
                                 verticalCenter: parent.verticalCenter
@@ -724,6 +728,22 @@ FocusScope {
 
                             anchors {
                                 left: searchInput.left
+                                verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        Text {
+                            id: appCountLabel
+
+                            text: root.appCountText(root.allEntries.length)
+                            color: Theme.textDim
+                            font.family: Theme.fontUi
+                            font.pixelSize: 12
+                            verticalAlignment: Text.AlignVCenter
+
+                            anchors {
+                                right: clearSearch.visible ? clearSearch.left : parent.right
+                                rightMargin: clearSearch.visible ? 8 : 12
                                 verticalCenter: parent.verticalCenter
                             }
                         }
