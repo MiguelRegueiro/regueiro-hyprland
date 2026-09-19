@@ -14,6 +14,8 @@ case "$wallpaper" in
     *) printf 'Wallpaper must be inside %s\n' "$wallpaper_dir" >&2; exit 2 ;;
 esac
 
+config_wallpaper="~/regueiro-hyprland/wallpapers/${wallpaper##*/}"
+
 case "${wallpaper##*.}" in
     png|PNG|jpg|JPG|jpeg|JPEG|webp|WEBP) ;;
     *) printf 'Unsupported wallpaper format: %s\n' "$wallpaper" >&2; exit 2 ;;
@@ -22,10 +24,10 @@ esac
 mkdir -p -- "$state_dir"
 printf '%s\n' "$wallpaper" > "$state"
 cat > "$config" <<EOF
-preload = $wallpaper
+preload = $config_wallpaper
 wallpaper {
     monitor =
-    path = $wallpaper
+    path = $config_wallpaper
 }
 
 splash = false
