@@ -263,7 +263,7 @@ FocusScope {
             font {
                 family: Theme.fontUi
                 letterSpacing: password.text.length > 0 && !root.passwordVisible ? 2 : 0
-                pixelSize: password.text.length > 0 && !root.passwordVisible ? 18 : 16
+                pixelSize: password.text.length > 0 && !root.passwordVisible ? 18 : 17
                 weight: password.text.length > 0 && !root.passwordVisible ? Font.Bold : Font.Normal
             }
         }
