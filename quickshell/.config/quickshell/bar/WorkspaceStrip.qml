@@ -45,20 +45,22 @@ Row {
             radius: Theme.radiusSmall
             color: {
                 if (modelData.active)
-                    return Theme.activeBg;
+                    return hovered ? Theme.workspaceActiveHoverBg : Theme.workspaceActiveBg;
 
                 if (hovered)
                     return Theme.hoverBg;
 
                 return "transparent";
             }
+            border.width: modelData.active ? 1 : 0
+            border.color: Theme.workspaceActiveBorder
 
             Text {
                 id: wsLabel
 
                 anchors.centerIn: parent
                 text: modelData.name
-                color: modelData.active ? Theme.textPrimary : Theme.textDim
+                color: modelData.active ? "#ffffff" : Theme.textDim
                 font.family: Theme.fontUi
                 font.pixelSize: 14
                 font.weight: modelData.active ? Font.Bold : Font.Normal

@@ -25,7 +25,7 @@ Item {
     readonly property real audioOutputPopupMaxHeight: Math.max(180, viewportHeight - audioOutputPopupTopInViewport - Theme.borderSize - 12)
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? Math.max(0, audioOutputPopupBottom - root.implicitHeight + 12) : 0
     readonly property real appVolumeListTopInViewport: mapToItem(null, 0, controlsColumn.y + applicationVolumeList.y).y
-    readonly property real appVolumeListMaxHeight: Math.max(56, viewportHeight - appVolumeListTopInViewport - Theme.qsContentPadding * 2 - Theme.barCornerRadius)
+    readonly property real appVolumeListMaxHeight: Math.min(Theme.qsApplicationVolumeMaxHeight, Math.max(56, viewportHeight - appVolumeListTopInViewport - Theme.qsContentPadding * 2 - Theme.barCornerRadius))
 
     signal wifiPageRequested()
     signal bluetoothPageRequested()

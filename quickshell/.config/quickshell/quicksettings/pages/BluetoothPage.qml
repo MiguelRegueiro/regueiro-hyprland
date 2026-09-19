@@ -218,9 +218,9 @@ Item {
                         Layout.fillWidth: true
                         height: 52
                         radius: 18
-                        color: devRow.modelData.connected ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : (btHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                        color: devRow.modelData.connected ? Theme.qsCardActiveBg : (btHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                         border.width: 1
-                        border.color: devRow.modelData.connected ? Qt.rgba(1, 1, 1, 0.14) : (btHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+                        border.color: devRow.modelData.connected ? Theme.qsCardActiveBorder : (btHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                         RowLayout {
                             spacing: 10

@@ -98,8 +98,9 @@ PanelWindow {
 
     screen: targetScreen
     visible: showBar
-    exclusiveZone: Theme.barHeight - Theme.borderSize
+    exclusiveZone: Theme.barHeight
     WlrLayershell.layer: bar.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
+    WlrLayershell.namespace: "qs-bar-blur"
     implicitHeight: Theme.barHeight
     color: Theme.barBg
 

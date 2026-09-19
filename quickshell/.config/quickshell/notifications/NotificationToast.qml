@@ -12,8 +12,8 @@ Item {
     readonly property var notif: item ? item.notif : null
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
-    readonly property color toastSurfaceColor: Qt.rgba(0.098, 0.098, 0.098, 1)
-    readonly property color toastSurfaceHoverColor: Qt.rgba(0.115, 0.115, 0.115, 1)
+    readonly property color toastSurfaceColor: Theme.qsCardBg
+    readonly property color toastSurfaceHoverColor: Theme.qsCardBgHover
     property real revealProgress: 0
     property bool exiting: false
 
@@ -94,7 +94,7 @@ Item {
             radius: Theme.qsRadius + 3
             color: toastHover.hovered && root.canActivate ? root.toastSurfaceHoverColor : root.toastSurfaceColor
             border.width: 1
-            border.color: root.isCritical ? (toastHover.hovered && root.canActivate ? Theme.urgentBorderHover : Theme.urgentBorder) : (toastHover.hovered && root.canActivate ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.1))
+            border.color: root.isCritical ? (toastHover.hovered && root.canActivate ? Theme.urgentBorderHover : Theme.urgentBorder) : (toastHover.hovered && root.canActivate ? Theme.qsCardBorderHover : Theme.qsCardBorder)
             layer.enabled: true
 
             anchors {

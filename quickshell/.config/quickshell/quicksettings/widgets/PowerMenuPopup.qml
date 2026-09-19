@@ -133,9 +133,9 @@ Item {
                 Layout.fillWidth: true
                 height: 50
                 radius: height / 2
-                color: actionRow.active ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                color: actionRow.active ? Theme.qsCardActiveBg : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
                 border.width: 1
-                border.color: actionRow.active ? Qt.rgba(1, 1, 1, 0.14) : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+                border.color: actionRow.active ? Theme.qsCardActiveBorder : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
 
                 RowLayout {
                     spacing: 10

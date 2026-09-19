@@ -147,6 +147,7 @@ PanelWindow {
 
 
     DropShadow {
+        visible: false
         anchors.fill: shadowSource
         source: shadowSource
         horizontalOffset: 0
@@ -160,13 +161,14 @@ PanelWindow {
     }
 
     Shape {
+        visible: false
         anchors.fill: parent
         layer.enabled: true
         layer.samples: 4
 
         ShapePath {
             fillRule: ShapePath.OddEvenFill
-            fillColor: Theme.screenFrameBg
+            fillColor: "transparent"
             strokeColor: "transparent"
             strokeWidth: 0
 

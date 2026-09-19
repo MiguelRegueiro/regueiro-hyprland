@@ -1,11 +1,11 @@
 .pragma library
 
 // Bar
-var barBg = Qt.rgba(0, 0, 0, 1.0);
-var screenFrameBg = Qt.rgba(0, 0, 0, 1.0);
-var menuBg = Qt.rgba(0, 0, 0, 1.0);
-var popupBg = Qt.rgba(0.075, 0.075, 0.075, 1.0);
-var barBorder = Qt.rgba(1, 1, 1, 0.08);
+var barBg = Qt.rgba(0.015, 0.02, 0.035, 0.68);
+var screenFrameBg = "#000000";
+var menuBg = screenFrameBg;
+var popupBg = "#131313";
+var barBorder = Qt.rgba(0.88, 0.92, 1, 0.11);
 var barHeight = 28;
 var barItemHeight = 26;
 var barCornerRadius = 16; // matches hyprland rounding = 16
@@ -18,13 +18,16 @@ var textDim = Qt.rgba(0.965, 0.961, 0.957, 0.75);
 var textDisabled = Qt.rgba(0.965, 0.961, 0.957, 0.35);
 
 // Interactive
-var hoverBg = Qt.rgba(1, 1, 1, 0.11);
-var hoverBgStrong = Qt.rgba(1, 1, 1, 0.17);
-var activeBg = Qt.rgba(1, 1, 1, 0.18);
+var hoverBg = Qt.rgba(0.72, 0.80, 0.96, 0.12);
+var hoverBgStrong = Qt.rgba(0.72, 0.80, 0.96, 0.18);
+var activeBg = Qt.rgba(0.72, 0.80, 0.96, 0.22);
+var workspaceActiveBg = "#343438";
+var workspaceActiveHoverBg = "#414146";
+var workspaceActiveBorder = Qt.rgba(1, 1, 1, 0.24);
 var hoverAnimDuration = 105;
 
 // State colors
-var accent = "#3584e4";
+var accent = "#3f6fd5";
 var green = "#8ff0a4";
 var yellow = "#f8e45c";
 var red = "#ff7b63";
@@ -44,8 +47,8 @@ var fontIcons = "Symbols Nerd Font Mono";
 var fontSizeDelta = 0;
 
 // Quick Settings
-var qsBg = Qt.rgba(0.16, 0.18, 0.24, 0.18);
-var qsBorder = Qt.rgba(1, 1, 1, 0.10);
+var qsBg = Qt.rgba(0.09, 0.11, 0.15, 0.96);
+var qsBorder = Qt.rgba(0.82, 0.88, 1, 0.14);
 var qsWidth = 400;
 var qsRadius = 12;
 var qsBarFuseOverlap = 2;
@@ -56,19 +59,22 @@ var qsSurfaceTopRightRadius = barCornerRadius;
 var qsSurfaceBottomLeftRadius = barCornerRadius + 6;
 var qsSurfaceBottomRightRadius = barCornerRadius + 2;
 var qsContentPadding = 14;
-var qsEdge = Qt.rgba(1, 1, 1, 0.08);
-var qsEdgeSoft = Qt.rgba(1, 1, 1, 0.06);
-var qsGlow = Qt.rgba(0.28, 0.49, 0.88, 0.08);
-var qsRowBg = Qt.rgba(1, 1, 1, 0.08);
-var qsRowBgHover = Qt.rgba(1, 1, 1, 0.12);
-var qsCardBg = Qt.rgba(0.094, 0.094, 0.094, 0.96);
-var qsCardBgHover = Qt.rgba(0.112, 0.112, 0.112, 0.98);
-var qsCardBorder = Qt.rgba(1, 1, 1, 0.10);
-var qsCardBorderHover = Qt.rgba(1, 1, 1, 0.13);
-var qsCardChipBg = Qt.rgba(1, 1, 1, 0.05);
-var qsCardChipBgHover = Qt.rgba(1, 1, 1, 0.09);
-var qsCardChipBorder = Qt.rgba(1, 1, 1, 0.08);
-var qsCardChipBorderHover = Qt.rgba(1, 1, 1, 0.11);
+var qsApplicationVolumeMaxHeight = 216;
+var qsEdge = Qt.rgba(0.82, 0.88, 1, 0.13);
+var qsEdgeSoft = Qt.rgba(0.82, 0.88, 1, 0.08);
+var qsGlow = Qt.rgba(0.28, 0.49, 0.88, 0.12);
+var qsRowBg = Qt.rgba(0.58, 0.68, 0.86, 0.10);
+var qsRowBgHover = Qt.rgba(0.58, 0.68, 0.86, 0.16);
+var qsCardBg = "#181818";
+var qsCardBgHover = "#202020";
+var qsCardActiveBg = "#282828";
+var qsCardBorder = Qt.rgba(0.82, 0.88, 1, 0.12);
+var qsCardBorderHover = Qt.rgba(0.82, 0.88, 1, 0.19);
+var qsCardActiveBorder = Qt.rgba(0.62, 0.74, 0.96, 0.25);
+var qsCardChipBg = Qt.rgba(0.72, 0.80, 0.96, 0.08);
+var qsCardChipBgHover = Qt.rgba(0.72, 0.80, 0.96, 0.14);
+var qsCardChipBorder = Qt.rgba(0.82, 0.88, 1, 0.10);
+var qsCardChipBorderHover = Qt.rgba(0.82, 0.88, 1, 0.16);
 
 // Notification center
 var ncWidth = 760;
@@ -85,6 +91,18 @@ var ncSurfaceBottomRightRadius = barCornerRadius + 6;
 // Bottom-center panels
 var bottomPanelWidth = 760;
 var bottomPanelHeight = 630;
+var bottomPanelBg = Qt.rgba(0.063, 0.075, 0.106, 0.68);
+var bottomPanelSearchBg = Qt.rgba(0.106, 0.114, 0.129, 0.30);
+var bottomPanelCardBg = Qt.rgba(0.106, 0.114, 0.129, 0.20);
+var bottomPanelCardBgHover = Qt.rgba(0.106, 0.114, 0.129, 0.30);
+var bottomPanelCardActiveBg = Qt.rgba(0.18, 0.20, 0.24, 0.42);
+var bottomPanelOutline = Qt.rgba(0.851, 0.867, 0.902, 0.44);
+var bottomPanelTextPrimary = "#ffffff";
+var bottomPanelTextSecondary = Qt.rgba(1, 1, 1, 0.78);
+var bottomPanelTextMuted = Qt.rgba(1, 1, 1, 0.56);
+var bottomPanelCardBorder = Qt.rgba(0.75, 0.77, 0.81, 0.12);
+var bottomPanelCardBorderHover = Qt.rgba(0.75, 0.77, 0.81, 0.20);
+var bottomPanelCardActiveBorder = Qt.rgba(0.75, 0.80, 0.88, 0.28);
 
 // Clipboard
 var clipboardWidth = bottomPanelWidth;
@@ -102,10 +120,10 @@ var launcherSurfaceTopLeftRadius = barCornerRadius + 6;
 var launcherSurfaceTopRightRadius = barCornerRadius + 6;
 
 // Tile active state -- accent blue (#3584e4) at two opacities
-var tileActiveBg = Qt.rgba(0.208, 0.518, 0.894, 0.82);
-var tileActiveBgHover = Qt.rgba(0.208, 0.518, 0.894, 0.92);
-var tileActiveBorder = Qt.rgba(0.82, 0.90, 1.0, 0.18);
-var tileActiveBorderHover = Qt.rgba(0.84, 0.92, 1.0, 0.22);
+var tileActiveBg = "#264fa8";
+var tileActiveBgHover = "#2f64c9";
+var tileActiveBorder = Qt.rgba(0.60, 0.75, 1.0, 0.24);
+var tileActiveBorderHover = Qt.rgba(0.66, 0.80, 1.0, 0.32);
 
 // Screen identity
 var primaryScreen = "eDP-1";

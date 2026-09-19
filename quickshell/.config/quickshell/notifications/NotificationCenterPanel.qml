@@ -570,7 +570,7 @@ Item {
         }
 
         layer.effect: MultiEffect {
-            shadowEnabled: true
+            shadowEnabled: false
             shadowColor: Qt.rgba(0, 0, 0, 0.96)
             shadowBlur: 0.72
             shadowVerticalOffset: 2

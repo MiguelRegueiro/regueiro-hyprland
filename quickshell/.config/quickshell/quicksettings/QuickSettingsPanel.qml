@@ -40,9 +40,9 @@ FocusScope {
     readonly property real fuseBottomOverhang: Theme.barCornerRadius
     readonly property real fuseTopInset: Theme.qsBarFuseOverlap + 2
     readonly property real mergedTopLeftRadius: 0.001
-    readonly property real mergedBottomRightRadius: Theme.borderSize
+    readonly property real mergedBottomRightRadius: Theme.qsSurfaceBottomRightRadius
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
-    readonly property real bottomFuseJoinX: root.bodyWidth - Theme.borderSize - Theme.barCornerRadius
+    readonly property real bottomFuseJoinX: root.bodyWidth - root.surfaceBottomRightRadius
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseLeftOverhang
     readonly property real clipSurfaceHeight: root.bodyHeight + root.fuseBottomOverhang
     readonly property real visibleBodyHeight: Math.max(0, Math.min(root.bodyHeight, root.bodyHeight * root.reveal))
@@ -192,36 +192,6 @@ FocusScope {
                         strokeWidth: -1
 
                         PathMove {
-                            x: frame.width - Theme.borderSize
-                            y: root.revealFrontY
-                        }
-
-                        PathLine {
-                            x: root.bottomFuseJoinX
-                            y: root.revealFrontY
-                        }
-
-                        PathArc {
-                            x: frame.width - Theme.borderSize
-                            y: root.revealFrontY + Theme.barCornerRadius
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        PathLine {
-                            x: frame.width - Theme.borderSize
-                            y: root.revealFrontY
-                        }
-
-                    }
-
-                    ShapePath {
-                        fillColor: Theme.menuBg
-                        strokeColor: "transparent"
-                        strokeWidth: -1
-
-                        PathMove {
                             x: root.mergedTopLeftRadius
                             y: 0
                         }
@@ -352,28 +322,6 @@ FocusScope {
                         PathArc {
                             x: 0
                             y: root.topFuseJoinY
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                    }
-
-                    ShapePath {
-                        fillColor: "transparent"
-                        strokeColor: Theme.qsEdge
-                        strokeWidth: 1.1
-                        capStyle: ShapePath.FlatCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: root.bottomFuseJoinX
-                            y: root.revealFrontY
-                        }
-
-                        PathArc {
-                            x: frame.width - Theme.borderSize
-                            y: root.revealFrontY + Theme.barCornerRadius
                             radiusX: Theme.barCornerRadius
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
@@ -552,7 +500,7 @@ FocusScope {
         }
 
         layer.effect: MultiEffect {
-            shadowEnabled: true
+            shadowEnabled: false
             shadowColor: Qt.rgba(0, 0, 0, 0.7)
             shadowBlur: 0.88
             shadowVerticalOffset: 4

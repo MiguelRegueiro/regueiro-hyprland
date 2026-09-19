@@ -39,9 +39,9 @@ Flickable {
                 Layout.fillWidth: true
                 height: 52
                 radius: 18
-                color: modelData.active ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : (selectedForPrompt ? Theme.qsCardBgHover : (wifiHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg))
+                color: modelData.active ? Theme.qsCardActiveBg : (selectedForPrompt ? Theme.qsCardBgHover : (wifiHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg))
                 border.width: 1
-                border.color: modelData.active ? Qt.rgba(1, 1, 1, 0.14) : (selectedForPrompt ? Theme.tileActiveBorder : (wifiHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder))
+                border.color: modelData.active ? Theme.qsCardActiveBorder : (selectedForPrompt ? Theme.tileActiveBorder : (wifiHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder))
 
                 MouseArea {
                     anchors.fill: parent

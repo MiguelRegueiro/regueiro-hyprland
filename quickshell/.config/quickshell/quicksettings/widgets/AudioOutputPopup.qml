@@ -159,8 +159,8 @@ Item {
                 width: sinkList.width
                 height: secondaryText.length > 0 ? 56 : 48
                 radius: height / 2
-                color: active ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
-                border.color: active ? Qt.rgba(1, 1, 1, 0.14) : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+                color: active ? Theme.qsCardActiveBg : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                border.color: active ? Theme.qsCardActiveBorder : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
                 border.width: 1
 
                 Row {
