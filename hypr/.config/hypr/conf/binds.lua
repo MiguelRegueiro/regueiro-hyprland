@@ -138,8 +138,10 @@ hl.bind("SHIFT + code:107", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.s
 hl.bind("ALT + code:107", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh window 0.15"))
 hl.bind(main_mod .. " + P", hl.dsp.exec_cmd("hyprpicker -a"))
 hl.bind(main_mod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
+hl.bind("F11", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 
 -- Hardware media keys.
+hl.bind("F8", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/vol-up.sh"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/vol-down.sh"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
