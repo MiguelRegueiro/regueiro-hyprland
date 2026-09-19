@@ -10,6 +10,8 @@ import "lockscreen"
 ShellRoot {
     id: root
 
+    property string passwordText: ""
+    property bool passwordVisible: false
     property bool revealed: false
 
     Component.onCompleted: {
@@ -63,11 +65,17 @@ ShellRoot {
                 anchors.fill: parent
                 busy: auth.busy || !sessionLock.secure
                 message: auth.message
+                passwordText: root.passwordText
+                passwordVisible: root.passwordVisible
                 prompt: auth.prompt
                 revealed: root.revealed
 
+                onPasswordEdited: text => root.passwordText = text
+                onPasswordVisibilityRequested: visible => root.passwordVisible = visible
                 onResetRequested: {
                     auth.cancel();
+                    root.passwordText = "";
+                    root.passwordVisible = false;
                     root.revealed = false;
                 }
                 onRevealRequested: root.revealed = true
@@ -75,7 +83,8 @@ ShellRoot {
 
                 Connections {
                     function onClearInputs() {
-                        scene.clearInput();
+                        root.passwordText = "";
+                        root.passwordVisible = false;
                     }
 
                     target: auth

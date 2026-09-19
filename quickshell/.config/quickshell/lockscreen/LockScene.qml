@@ -9,33 +9,34 @@ FocusScope {
 
     property bool busy: false
     property string message: ""
+    property string passwordText: ""
     property bool passwordVisible: false
     property string prompt: "Password"
     property real revealProgress: revealed ? 1 : 0
     property bool revealed: false
     readonly property real uiScale: Math.min(1, width / 800, height / 650)
 
+    signal passwordEdited(string text)
+    signal passwordVisibilityRequested(bool visible)
     signal resetRequested
     signal revealRequested
     signal submitRequested(string secret)
 
     function clearInput() {
-        password.clear();
-        passwordVisible = false;
+        passwordEdited("");
+        passwordVisibilityRequested(false);
     }
     function goBack() {
         if (revealed) {
-            password.clear();
-            passwordVisible = false;
+            clearInput();
             resetRequested();
         }
     }
     function submit() {
         if (busy || !revealed || password.text.length === 0)
             return;
-        submitRequested(password.text);
-        password.clear();
-        passwordVisible = false;
+        submitRequested(passwordText);
+        clearInput();
     }
 
     clip: true
@@ -99,7 +100,6 @@ FocusScope {
     }
     Column {
         anchors.horizontalCenter: parent.horizontalCenter
-        scale: root.uiScale
         spacing: 4
         y: parent.height * 0.39 - height / 2
 
@@ -107,14 +107,15 @@ FocusScope {
             anchors.horizontalCenter: parent.horizontalCenter
             antialiasing: true
             color: Theme.textPrimary
-            // Preserve smooth glyph curves at this large size and display scale.
-            renderType: Text.CurveRendering
+            // Native rasterization avoids small gaps in large curved glyphs
+            // that can occur with the GPU curve renderer on some drivers.
+            renderType: Text.NativeRendering
             text: Qt.formatDateTime(clock.date, "HH:mm")
 
             font {
                 family: Theme.fontUi
-                letterSpacing: -5
-                pixelSize: 128
+                letterSpacing: -5 * root.uiScale
+                pixelSize: Math.round(128 * root.uiScale)
                 weight: Font.Bold
             }
         }
@@ -125,7 +126,7 @@ FocusScope {
 
             font {
                 family: Theme.fontUi
-                pixelSize: 25
+                pixelSize: Math.round(25 * root.uiScale)
                 weight: Font.Medium
             }
         }
@@ -156,6 +157,7 @@ FocusScope {
             readOnly: root.busy
             rightPadding: 84
             selectByMouse: true
+            text: root.passwordText
             width: parent.width
 
             background: Rectangle {
@@ -186,10 +188,10 @@ FocusScope {
                 if (preeditText.length > 0 && !root.revealed)
                     root.revealRequested();
             }
-
             // Focused even while transparent: the first character goes directly
             // into the real editor, including composed/input-method text.
             onTextEdited: {
+                root.passwordEdited(text);
                 if (!root.revealed)
                     root.revealRequested();
             }
@@ -219,7 +221,7 @@ FocusScope {
 
                 Keys.onEscapePressed: root.goBack()
                 onClicked: {
-                    root.passwordVisible = !root.passwordVisible;
+                    root.passwordVisibilityRequested(!root.passwordVisible);
                     password.forceActiveFocus();
                 }
             }
