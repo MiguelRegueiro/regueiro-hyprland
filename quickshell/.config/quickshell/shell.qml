@@ -11,6 +11,7 @@ import "notifications" as Notifications
 import "overlays" as Overlays
 import "services" as Services
 import "theme/Theme.js" as Theme
+import "wallpaper" as Wallpaper
 
 ShellRoot {
     id: root
@@ -23,6 +24,7 @@ ShellRoot {
     readonly property bool clipboardRequested: clipboardVisible || clipboardOpening
     property bool launcherVisible: false
     readonly property bool launcherRequested: launcherVisible
+    property bool wallpaperPickerVisible: false
     property bool externalDrivesMenuVisible: false
     property bool cpuStatsMenuVisible: false
     property bool ramStatsMenuVisible: false
@@ -126,6 +128,19 @@ ShellRoot {
         launcherVisible = false;
     }
 
+    function closeWallpaperPicker() {
+        wallpaperPickerVisible = false;
+    }
+
+    function toggleWallpaperPicker() {
+        if (powerMenuVisible)
+            return;
+
+        const shouldClose = wallpaperPickerVisible;
+        closeAllPanels();
+        wallpaperPickerVisible = !shouldClose;
+    }
+
     function openClipboard() {
         if (powerMenuVisible)
             return ;
@@ -208,6 +223,7 @@ ShellRoot {
         closeSshSessionsMenu();
         closeClipboard();
         closeLauncher();
+        closeWallpaperPicker();
         qsController.pinned = false;
         ncController.pinned = false;
         qsController.closeImmediately();
@@ -401,6 +417,18 @@ ShellRoot {
         }
 
         target: "launcher"
+    }
+
+    IpcHandler {
+        function toggle() {
+            root.toggleWallpaperPicker();
+        }
+
+        function close() {
+            root.closeWallpaperPicker();
+        }
+
+        target: "wallpaper"
     }
 
     Timer {
@@ -844,6 +872,21 @@ ShellRoot {
 
         }
 
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Wallpaper.WallpaperOverlay {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                open: root.wallpaperPickerVisible && activeScreen
+                onRequestClose: root.closeWallpaperPicker()
+            }
+        }
     }
 
     Variants {

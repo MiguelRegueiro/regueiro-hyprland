@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Io
 import "../theme/Theme.js" as Theme
 
 FocusScope {
@@ -15,6 +16,7 @@ FocusScope {
     property real revealProgress: revealed ? 1 : 0
     property bool revealed: false
     readonly property real uiScale: Math.min(1, width / 800, height / 650)
+    property string wallpaperPath: Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/wallpaper5.png"
 
     signal passwordEdited(string text)
     signal passwordVisibilityRequested(bool visible)
@@ -63,14 +65,24 @@ FocusScope {
 
         precision: SystemClock.Minutes
     }
+    FileView {
+        id: wallpaperState
+
+        path: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/regueiro-hyprland/wallpaper"
+        watchChanges: true
+        onLoaded: {
+            const path = wallpaperState.text().trim();
+            if (path.length > 0)
+                root.wallpaperPath = path;
+        }
+    }
     Image {
         id: wallpaper
 
         anchors.fill: parent
         anchors.margins: -96
         fillMode: Image.PreserveAspectCrop
-        // Same wallpaper as this repository's hyprpaper.conf; optional override.
-        source: Quickshell.env("LOCK_WALLPAPER") || "file://" + Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/wallpaper5.png"
+        source: "file://" + root.wallpaperPath
         visible: false
     }
     MultiEffect {

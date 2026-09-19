@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wallpaper=${1:?usage: set-wallpaper /absolute/path/to/image}
+repo="$HOME/regueiro-hyprland"
+wallpaper_dir="$repo/wallpapers"
+config="$HOME/.config/hypr/hyprpaper.conf"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/regueiro-hyprland"
+state="$state_dir/wallpaper"
+
+wallpaper=$(realpath -e -- "$wallpaper")
+case "$wallpaper" in
+    "$wallpaper_dir"/*) ;;
+    *) printf 'Wallpaper must be inside %s\n' "$wallpaper_dir" >&2; exit 2 ;;
+esac
+
+case "${wallpaper##*.}" in
+    png|PNG|jpg|JPG|jpeg|JPEG|webp|WEBP) ;;
+    *) printf 'Unsupported wallpaper format: %s\n' "$wallpaper" >&2; exit 2 ;;
+esac
+
+mkdir -p -- "$state_dir"
+printf '%s\n' "$wallpaper" > "$state"
+cat > "$config" <<EOF
+preload = $wallpaper
+wallpaper {
+    monitor =
+    path = $wallpaper
+}
+
+splash = false
+EOF
+
+if ! hyprctl hyprpaper listloaded >/dev/null 2>&1; then
+    hyprpaper >/dev/null 2>&1 &
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        if hyprctl hyprpaper listloaded >/dev/null 2>&1; then
+            break
+        fi
+        sleep 0.1
+    done
+fi
+
+hyprctl hyprpaper preload "$wallpaper" >/dev/null 2>&1 || true
+hyprctl hyprpaper wallpaper ",$wallpaper" >/dev/null 2>&1 || true
+hyprctl hyprpaper unload unused >/dev/null 2>&1 || true

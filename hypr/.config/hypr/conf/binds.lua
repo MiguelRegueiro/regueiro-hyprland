@@ -8,6 +8,7 @@ local file_manager = vars.file_manager
 local menu = vars.menu
 local run_menu = vars.run_menu
 local clipboard_menu = vars.clipboard_menu
+local wallpaper_menu = vars.wallpaper_menu
 local power_menu = vars.power_menu
 local snap = vars.snap
 
@@ -24,6 +25,7 @@ hl.bind(main_mod .. " + B", hl.dsp.exec_cmd("flatpak run app.zen_browser.zen"))
 hl.bind(main_mod .. " + R", hl.dsp.exec_cmd(terminal .. " -e btop"))
 hl.bind(main_mod .. " + D", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'elio; exec fish'"))
 hl.bind(main_mod .. " + W", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'env ANI_CLI_PLAYER=enzo-mpv ANI_CLI_NO_DETACH=1 anitrack; exec fish'"))
+hl.bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaper_menu))
 hl.bind(main_mod .. " + F9", hl.dsp.exec_cmd("normcap"))
 
 -- Window management.
