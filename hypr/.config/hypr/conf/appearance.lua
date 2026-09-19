@@ -4,11 +4,11 @@ hl.config({
     general = {
         gaps_workspaces = 24,
         gaps_in = 2,
-        gaps_out = 24,
+        gaps_out = 12,
         border_size = 2,
         col = {
-            active_border = "rgba(818a9cff)",
-            inactive_border = "rgba(393c44dd)",
+            active_border = "rgba(d9dde670)",
+            inactive_border = "rgba(bfc4ce26)",
         },
         resize_on_border = true,
         allow_tearing = false,

@@ -7,6 +7,26 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
+    name = "qs-bar-blur",
+    match = { namespace = "qs-bar-blur" },
+    blur = true,
+})
+
+hl.layer_rule({
+    name = "qs-launcher-backdrop-blur",
+    match = { namespace = "qs-launcher-backdrop" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
+    name = "qs-clipboard-backdrop-blur",
+    match = { namespace = "qs-clipboard-backdrop" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
     name = "rofi-blur",
     match = { namespace = "rofi" },
     blur = true,
