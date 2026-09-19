@@ -101,7 +101,7 @@ FocusScope {
     Column {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 4
-        y: parent.height * 0.39 - height / 2
+        y: parent.height * 0.41 - height / 2
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -137,7 +137,7 @@ FocusScope {
         scale: root.uiScale * (0.985 + 0.015 * root.revealProgress)
         spacing: 16
         width: Math.min(320, parent.width - 48)
-        y: parent.height * 0.62 - height / 2 + 16 * (1 - root.revealProgress)
+        y: parent.height * 0.59 - height / 2 + 16 * (1 - root.revealProgress)
 
         TextField {
             id: password
