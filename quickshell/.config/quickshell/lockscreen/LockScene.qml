@@ -69,7 +69,7 @@ FocusScope {
         anchors.margins: -96
         fillMode: Image.PreserveAspectCrop
         // Same wallpaper as this repository's hyprpaper.conf; optional override.
-        source: Quickshell.env("LOCK_WALLPAPER") || "file://" + Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/wallpaper1.jpg"
+        source: Quickshell.env("LOCK_WALLPAPER") || "file://" + Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/wallpaper5.png"
         visible: false
     }
     MultiEffect {
