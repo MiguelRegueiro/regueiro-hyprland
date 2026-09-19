@@ -45,6 +45,8 @@ hl.config({
         preserve_split = true,
     },
     misc = {
+        -- Let Quickshell restore its lock after a crash without unlocking.
+        allow_session_lock_restore = true,
         force_default_wallpaper = 0,
         disable_hyprland_logo = true,
         disable_splash_rendering = true,

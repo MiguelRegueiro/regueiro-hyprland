@@ -16,13 +16,10 @@ esac
 
 case "$action" in
     lock)
-        exec ~/.config/hypr/scripts/hyprlock-smart
+        exec ~/.config/hypr/scripts/quickshell-lock
         ;;
     suspend)
-        if command -v hyprlock >/dev/null 2>&1 && ! pgrep -x hyprlock >/dev/null 2>&1; then
-            ~/.config/hypr/scripts/hyprlock-smart --grace 0 --immediate-render --no-fade-in >/dev/null 2>&1 &
-            sleep 1
-        fi
+        ~/.config/hypr/scripts/quickshell-lock --wait || exit 1
         exec systemctl suspend
         ;;
     toggle | open | close | logout | reboot | shutdown)

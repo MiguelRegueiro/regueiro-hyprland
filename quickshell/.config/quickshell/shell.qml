@@ -457,7 +457,7 @@ ShellRoot {
     Process {
         id: lockProc
 
-        command: ["sh", "-lc", "if command -v hyprlock >/dev/null 2>&1; then \"$HOME/.config/hypr/scripts/hyprlock-smart\"; elif command -v swaylock >/dev/null 2>&1; then swaylock; else loginctl lock-session; fi"]
+        command: ["sh", "-c", "exec \"$HOME/.config/hypr/scripts/quickshell-lock\""]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("lock");
@@ -468,7 +468,7 @@ ShellRoot {
     Process {
         id: suspendProc
 
-        command: ["sh", "-lc", "if command -v hyprlock >/dev/null 2>&1 && ! pgrep -x hyprlock >/dev/null 2>&1; then \"$HOME/.config/hypr/scripts/hyprlock-smart\" >/dev/null 2>&1 & sleep 1; elif command -v swaylock >/dev/null 2>&1 && ! pgrep -x swaylock >/dev/null 2>&1; then swaylock >/dev/null 2>&1 & sleep 1; else loginctl lock-session >/dev/null 2>&1 || true; fi; systemctl suspend"]
+        command: ["sh", "-c", "exec \"$HOME/.config/hypr/scripts/power-menu\" suspend"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("suspend");

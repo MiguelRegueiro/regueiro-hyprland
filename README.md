@@ -1,6 +1,6 @@
 # regueiro-hyprland
 
-Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShell bar and panels, aiming for a GNOME-like experience but faster and more customizable. Feel free to use as inspiration but expect rough edges.
+Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShell bar and panels, built for a consistent, responsive desktop. Feel free to use as inspiration but expect rough edges.
 
 ## Stack
 
@@ -8,16 +8,40 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 - **Bar / panels** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
 - **Launcher / power menu** — [QuickShell](https://quickshell.outfoxxed.me/) (custom QML)
 - **Wallpaper** — [hyprpaper](https://github.com/hyprwm/hyprpaper)
-- **Lock screen** — [hyprlock](https://github.com/hyprwm/hyprlock)
+- **Lock screen** — Quickshell with system PAM authentication
 - **Input method** — [Fcitx 5](https://fcitx-im.org/wiki/Fcitx_5/en)
 - **Terminal** — [Kitty](https://sw.kovidgoyal.net/kitty/)
 - **Shell** — [Fish](https://fishshell.com/) + [Starship](https://starship.rs/)
+
+## Lock screen
+
+**Super+L**, the power menu, the 20-minute idle timeout, and suspend use the standalone Quickshell locker. Type immediately to reveal the password field; Enter or the arrow submits your Linux password. Escape clears the field and returns to the clock without unlocking. The session unlocks only after successful authentication.
+
+The entry point is `quickshell/.config/quickshell/lock.qml`. It uses Wayland's `ext-session-lock-v1` on every display and `/etc/pam.d/login`, retaining the system's password and failed-attempt policy. It runs separately from the bar, with file watching disabled. The launcher disables core dumps and external input-method integration for password entry. Passwords are not written to files or logs; QML strings cannot provide a guarantee of zeroing every in-memory copy.
+
+`hypr/.config/hypr/scripts/quickshell-lock` supervises the process and retries up to three times after an unexpected exit. Hyprland's `allow_session_lock_restore` lets Quickshell recover while the compositor keeps the session locked. Hypridle uses `inhibit_sleep = 3` to wait for the compositor's lock notification. The power menu refuses to suspend unless Quickshell confirms its lock.
+
+To lock manually:
+
+```bash
+~/.config/hypr/scripts/quickshell-lock
+```
+
+If automatic recovery fails, sign in on a TTY and relaunch Quickshell in the correct Hyprland instance (find its ID with `hyprctl instances`):
+
+```bash
+hyprctl -i INSTANCE dispatch exec ~/.config/hypr/scripts/quickshell-lock
+```
+
+Do not kill or forcibly clear a live lock to unlock it. Compositor crash behavior, suspend/resume, and graphics-driver failures are outside the QML authentication tests; keep those limits in mind when changing this security-sensitive code.
+
+The previous Hyprlock theme remains in the repository as an inactive configuration; no lock action launches it. The password eye toggles visibility and resets to hidden on submission or cancellation. `LOCK_WALLPAPER=file:///absolute/path/to/image` can override the wallpaper.
 
 ## Dependencies
 
 ```sh
 sudo pacman -S git stow \
-               hyprland hyprpaper hyprlock hyprpicker hypridle \
+               hyprland hyprpaper hyprpicker hypridle \
                hyprpolkitagent \
                quickshell \
                kitty fish starship fastfetch btop \
