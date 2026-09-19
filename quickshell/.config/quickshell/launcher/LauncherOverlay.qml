@@ -5,7 +5,7 @@ import Quickshell.Wayland
 import "." as Launcher
 import "../theme/Theme.js" as Theme
 
-PanelWindow {
+Scope {
     id: root
 
     required property var targetScreen
@@ -74,13 +74,49 @@ PanelWindow {
         onTriggered: root.openingGuard = false
     }
 
+    PanelWindow {
+        id: backdrop
+
+        screen: root.targetScreen
+        visible: root.showLayer && (root.launcherVisible || launcherPanel.reveal > 0.001)
+        exclusiveZone: 0
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "qs-launcher-backdrop"
+        color: "transparent"
+        property int shadowMargin: 24
+        implicitWidth: Theme.launcherWidth + shadowMargin * 2
+        implicitHeight: Theme.launcherHeight + shadowMargin * 2
+
+        anchors {
+            left: true
+            bottom: true
+        }
+
+        margins.left: Math.round((root.targetScreen.width - implicitWidth) / 2)
+        margins.bottom: Theme.borderSize + 70 - shadowMargin
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: backdrop.shadowMargin
+            radius: Theme.launcherSurfaceTopLeftRadius
+            color: Theme.bottomPanelBg
+            opacity: launcherPanel.surfaceOpacity
+            border.width: 2
+            border.color: Theme.bottomPanelOutline
+        }
+    }
+
+    PanelWindow {
+        id: overlay
+
     screen: targetScreen
     // Match clipboard focus behavior: unmap the layer after the close animation
     // so Hyprland immediately returns typing to the client under the cursor.
     visible: showLayer && (root.launcherVisible || launcherPanel.reveal > 0.001)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
+    WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qs-launcher"
     WlrLayershell.keyboardFocus: root.launcherVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
@@ -95,7 +131,7 @@ PanelWindow {
     HyprlandFocusGrab {
         id: launcherFocusGrab
 
-        windows: [root]
+        windows: [overlay]
         onCleared: {
             if (root.launcherVisible)
                 root.closeFromOutside();
@@ -156,7 +192,7 @@ PanelWindow {
         id: launcherPanel
 
         x: Math.round((parent.width - implicitWidth) / 2)
-        y: Math.round(parent.height - Theme.borderSize - bodyHeight)
+        y: Math.round(parent.height - Theme.borderSize - bodyHeight - 70)
         open: root.launcherVisible
         launcherService: root.launcherService
         onRequestClose: root.outsidePressed()
@@ -166,8 +202,9 @@ PanelWindow {
         Region {
             x: 0
             y: root.forceOverlay ? 0 : Theme.barHeight
-            width: root.launcherVisible ? Math.round(root.width) : 0
-            height: root.launcherVisible ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
+            width: root.launcherVisible ? Math.round(overlay.width) : 0
+            height: root.launcherVisible ? Math.max(0, Math.round(overlay.height - Theme.barHeight)) : 0
         }
+    }
     }
 }

@@ -118,13 +118,23 @@ ShellRoot {
             powerBusyAction = "";
     }
 
+    function retainActiveWorkspaceFocus() {
+        const workspace = Hyprland.focusedWorkspace;
+        if (workspace)
+            Hyprland.dispatch("hl.dsp.focus({ workspace = " + workspace.id + " })");
+    }
+
     function closeClipboard() {
+        if (clipboardVisible || clipboardOpening)
+            retainActiveWorkspaceFocus();
         clipboardOpenTimer.stop();
         clipboardOpening = false;
         clipboardVisible = false;
     }
 
     function closeLauncher() {
+        if (launcherVisible)
+            retainActiveWorkspaceFocus();
         launcherVisible = false;
     }
 

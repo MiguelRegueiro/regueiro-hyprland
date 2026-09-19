@@ -20,7 +20,9 @@ FocusScope {
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: panelHover.hovered || boundsHover.hovered
-    readonly property real attachBottom: Theme.clipboardAttachBottom
+    // This is now a standalone surface, rather than a continuation of the old
+    // screen frame at the bottom edge.
+    readonly property real attachBottom: 0
     readonly property real topLeftRadius: Theme.clipboardSurfaceTopLeftRadius
     readonly property real topRightRadius: Theme.clipboardSurfaceTopRightRadius
     readonly property real bottomLeftRadius: 0.001
@@ -28,17 +30,16 @@ FocusScope {
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.clipboardWidth
     readonly property real bodyHeight: Theme.clipboardHeight
-    readonly property real fuseOverhang: Theme.barCornerRadius
-    readonly property real fuseOpticalInset: 2
+    readonly property real fuseOverhang: 0
     readonly property real fuseBottomInset: root.attachBottom
     readonly property real bottomFuseJoinY: frame.height - root.fuseBottomInset - Theme.barCornerRadius
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
     readonly property real clipSurfaceHeight: root.bodyHeight + root.attachBottom
-    readonly property real surfaceOffsetY: (1 - root.reveal) * 16
-    readonly property real surfaceOpacity: Math.max(0, Math.min(1, (root.reveal - 0.02) / 0.34))
+    readonly property real surfaceOffsetY: 0
+    readonly property real surfaceOpacity: root.reveal
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
-    readonly property int verticalHoldDelayMs: 480
-    readonly property int verticalKeyRepeatMs: 240
+    readonly property int verticalHoldDelayMs: 360
+    readonly property int verticalKeyRepeatMs: 120
     readonly property int verticalReleaseQuietMs: 8
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: {
@@ -285,11 +286,11 @@ FocusScope {
             from: ""
             to: "open"
 
-            Components.Anim {
+            NumberAnimation {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.FastSpatial
-                duration: Theme.panelSnappyOpenDuration
+                duration: 120
+                easing.type: Easing.OutCubic
             }
 
         },
@@ -297,11 +298,11 @@ FocusScope {
             from: "open"
             to: ""
 
-            Components.Anim {
+            NumberAnimation {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.EmphasizedAccel
-                duration: Theme.panelCloseDuration
+                duration: 90
+                easing.type: Easing.InCubic
             }
 
         }
@@ -377,8 +378,16 @@ FocusScope {
                         y: root.surfaceOffsetY
                     }
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: root.topLeftRadius
+                        color: "transparent"
+                        border.width: 0
+                    }
+
                     Shape {
                         anchors.fill: parent
+                        visible: false
                         preferredRendererType: Shape.CurveRenderer
 
                     // One continuous fill surface.
@@ -616,9 +625,9 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 16
-                        color: Theme.qsCardBg
-                        border.width: 1
-                        border.color: Theme.qsCardBorder
+                        color: Theme.bottomPanelSearchBg
+                        border.width: 2
+                        border.color: Theme.bottomPanelCardBorder
                         layer.enabled: root.searchVisuallyActive
                         layer.effect: MultiEffect {
                             shadowEnabled: true
@@ -641,13 +650,13 @@ FocusScope {
                             text: "󰍉"
                             font.family: Theme.fontIcons
                             font.pixelSize: 14
-                            color: root.searchVisuallyActive ? Theme.textPrimary : Theme.textDim
+                            color: root.searchVisuallyActive ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
                         }
 
                         TextInput {
                             id: searchInput
 
-                            color: Theme.textPrimary
+                            color: Theme.bottomPanelTextPrimary
                             font.family: Theme.fontUi
                             font.pixelSize: 13
                             selectionColor: Theme.accent
@@ -680,7 +689,7 @@ FocusScope {
                         Text {
                             visible: searchInput.text.length === 0
                             text: "Search"
-                            color: Theme.textDisabled
+                            color: Theme.bottomPanelTextMuted
                             font.family: Theme.fontUi
                             font.pixelSize: 13
 
@@ -694,7 +703,7 @@ FocusScope {
                             id: countLabel
 
                             text: root.visibleEntryCountText()
-                            color: Theme.textDim
+                            color: Theme.bottomPanelTextSecondary
                             font.family: Theme.fontUi
                             font.pixelSize: 12
                             verticalAlignment: Text.AlignVCenter
@@ -709,18 +718,17 @@ FocusScope {
                         Rectangle {
                             id: clearAllButton
 
-                            width: clearAllLabel.implicitWidth + 22
-                            height: 32
-                            radius: 16
-                            color: clearAllHover.hovered && clearAllEnabled ? Theme.hoverBgStrong : Theme.qsCardBg
-                            border.width: 1
-                            border.color: clearAllEnabled ? (clearAllHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder) : Theme.qsEdgeSoft
+                            width: clearAllLabel.implicitWidth + 28
+                            height: parent.height - 4
+                            radius: 13
+                            color: clearAllHover.hovered && clearAllEnabled ? Theme.hoverBgStrong : "transparent"
+                            border.width: 0
                             opacity: clearAllEnabled ? 1 : 0.5
                             readonly property bool clearAllEnabled: root.clipboardService.entries.length > 0 && !root.clipboardService.mutating
 
                             anchors {
                                 right: clearSearch.visible ? clearSearch.left : parent.right
-                                rightMargin: 8
+                                rightMargin: 2
                                 verticalCenter: parent.verticalCenter
                             }
 
@@ -731,7 +739,7 @@ FocusScope {
                                 text: "Clear all"
                                 font.family: Theme.fontUi
                                 font.pixelSize: 12
-                                color: Theme.textPrimary
+                                color: Theme.bottomPanelTextPrimary
                             }
 
                             HoverHandler {
@@ -769,7 +777,7 @@ FocusScope {
                                 text: "󰅖"
                                 font.family: Theme.fontIcons
                                 font.pixelSize: 13
-                                color: Theme.textDim
+                                color: Theme.bottomPanelTextSecondary
                             }
 
                             HoverHandler {
@@ -814,7 +822,7 @@ FocusScope {
                                     text: "󰑐"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.textDisabled
+                                    color: Theme.bottomPanelTextMuted
                                 }
 
                                 Text {
@@ -822,7 +830,7 @@ FocusScope {
                                     text: "Refreshing clipboard..."
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.textDim
+                                    color: Theme.bottomPanelTextSecondary
                                 }
                             }
 
@@ -838,7 +846,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "󰅍" : "󰍉"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.textDisabled
+                                    color: Theme.bottomPanelTextMuted
                                 }
 
                                 Text {
@@ -846,7 +854,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "Clipboard is empty" : "No matches for this search"
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.textDim
+                                    color: Theme.bottomPanelTextSecondary
                                 }
                             }
 
@@ -861,6 +869,7 @@ FocusScope {
 
                                 anchors {
                                     fill: parent
+                                    rightMargin: 18
                                     topMargin: 4
                                     bottomMargin: 4
                                 }
@@ -874,9 +883,9 @@ FocusScope {
                                     width: listView.width
                                     implicitHeight: Math.max(58, previewLabel.implicitHeight + 22)
                                     radius: 14
-                                    color: selected ? Qt.rgba(0.122, 0.122, 0.122, 0.98) : hovered ? Theme.qsCardBgHover : Theme.qsCardBg
-                                    border.width: 1
-                                    border.color: selected ? Qt.rgba(1, 1, 1, 0.14) : hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+                                    color: selected ? Theme.bottomPanelCardActiveBg : hovered ? Qt.rgba(0.15, 0.16, 0.19, 0.44) : Theme.bottomPanelCardBg
+                                    border.width: selected ? 2 : 1
+                                    border.color: selected ? Theme.bottomPanelCardActiveBorder : hovered ? Qt.rgba(0.851, 0.867, 0.902, 0.24) : Theme.bottomPanelCardBorder
 
                                     HoverHandler {
                                         id: rowHover
@@ -903,7 +912,7 @@ FocusScope {
                                                 text: root.iconForKind(modelData.kind)
                                                 font.family: Theme.fontIcons
                                                 font.pixelSize: 14
-                                                color: selected ? Theme.textPrimary : Theme.textDim
+                                                color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
                                             }
                                         }
 
@@ -915,7 +924,7 @@ FocusScope {
                                             wrapMode: Text.Wrap
                                             maximumLineCount: 2
                                             elide: Text.ElideRight
-                                            color: Theme.textPrimary
+                                            color: Theme.bottomPanelTextPrimary
                                             font.family: Theme.fontUi
                                             font.pixelSize: 13
                                         }
@@ -960,7 +969,7 @@ FocusScope {
                                                 text: "󰆴"
                                                 font.family: Theme.fontIcons
                                                 font.pixelSize: 13
-                                                color: selected ? Theme.textPrimary : Theme.textDim
+                                                color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
                                             }
 
                                             HoverHandler {
@@ -979,6 +988,73 @@ FocusScope {
                                                 }
                                             }
                                         }
+                                    }
+                                }
+                            }
+
+                            Item {
+                                id: clipboardScrollTrack
+
+                                visible: listView.visible && listView.visibleArea.heightRatio < 0.999
+                                width: 14
+                                z: 10
+                                readonly property real thumbHeight: Math.max(28, height * listView.visibleArea.heightRatio)
+                                readonly property real maxContentY: Math.max(0, listView.contentHeight - listView.height)
+
+                                function moveTo(pointerY) {
+                                    const travel = Math.max(1, height - thumbHeight);
+                                    const next = Math.max(0, Math.min(travel, pointerY - thumbHeight / 2));
+                                    listView.contentY = maxContentY * next / travel;
+                                }
+
+                                anchors {
+                                    top: listView.top
+                                    bottom: listView.bottom
+                                    right: parent.right
+                                    rightMargin: -2
+                                }
+
+                                Rectangle {
+                                    anchors {
+                                        top: parent.top
+                                        bottom: parent.bottom
+                                        horizontalCenter: parent.horizontalCenter
+                                    }
+                                    width: 3
+                                    radius: width / 2
+                                    color: Qt.rgba(0.851, 0.867, 0.902, 0.16)
+                                }
+
+                                Rectangle {
+                                    id: clipboardScrollThumb
+
+                                    width: clipboardScrollDrag.containsMouse || clipboardScrollDrag.pressed ? 9 : 5
+                                    height: clipboardScrollTrack.thumbHeight
+                                    radius: width / 2
+                                    color: Qt.rgba(0.851, 0.867, 0.902, clipboardScrollDrag.containsMouse || clipboardScrollDrag.pressed ? 0.68 : 0.42)
+                                    x: (parent.width - width) / 2
+                                    y: clipboardScrollTrack.maxContentY > 0
+                                       ? (parent.height - height) * listView.contentY / clipboardScrollTrack.maxContentY
+                                       : 0
+
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: 100
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: clipboardScrollDrag
+
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                                    onPressed: (mouse) => clipboardScrollTrack.moveTo(mouse.y)
+                                    onPositionChanged: (mouse) => {
+                                        if (pressed)
+                                            clipboardScrollTrack.moveTo(mouse.y);
                                     }
                                 }
                             }

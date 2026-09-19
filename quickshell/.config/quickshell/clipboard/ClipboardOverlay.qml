@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import "." as Clipboard
 import "../theme/Theme.js" as Theme
 
-PanelWindow {
+Scope {
     id: root
 
     required property var targetScreen
@@ -42,11 +42,47 @@ PanelWindow {
             root.barHoverCleared();
     }
 
+    PanelWindow {
+        id: backdrop
+
+        screen: root.targetScreen
+        visible: root.showLayer && (root.clipboardVisible || clipboardPanel.visible)
+        exclusiveZone: 0
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "qs-clipboard-backdrop"
+        color: "transparent"
+        property int shadowMargin: 24
+        implicitWidth: Theme.clipboardWidth + shadowMargin * 2
+        implicitHeight: Theme.clipboardHeight + shadowMargin * 2
+
+        anchors {
+            left: true
+            bottom: true
+        }
+
+        margins.left: Math.round((root.targetScreen.width - implicitWidth) / 2)
+        margins.bottom: Theme.borderSize + 70 - shadowMargin
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: backdrop.shadowMargin
+            radius: Theme.clipboardSurfaceTopLeftRadius
+            color: Theme.bottomPanelBg
+            opacity: clipboardPanel.surfaceOpacity
+            border.width: 2
+            border.color: Theme.bottomPanelOutline
+        }
+    }
+
+    PanelWindow {
+        id: overlay
+
     screen: targetScreen
     visible: showLayer && (root.clipboardVisible || clipboardPanel.visible)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
+    WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qs-clipboard"
     WlrLayershell.keyboardFocus: root.clipboardVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
@@ -111,7 +147,7 @@ PanelWindow {
         id: clipboardPanel
 
         x: Math.round((parent.width - implicitWidth) / 2)
-        y: Math.round(parent.height - Theme.borderSize - bodyHeight)
+        y: Math.round(parent.height - Theme.borderSize - bodyHeight - 70)
         open: root.clipboardVisible
         clipboardService: root.clipboardService
         onRequestClose: root.outsidePressed()
@@ -121,9 +157,10 @@ PanelWindow {
         Region {
             x: 0
             y: root.forceOverlay ? 0 : Theme.barHeight
-            width: root.clipboardVisible ? Math.round(root.width) : 0
-            height: root.clipboardVisible ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
+            width: root.clipboardVisible ? Math.round(overlay.width) : 0
+            height: root.clipboardVisible ? Math.max(0, Math.round(overlay.height - Theme.barHeight)) : 0
         }
     }
 
+    }
 }

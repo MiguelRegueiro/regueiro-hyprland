@@ -19,7 +19,9 @@ FocusScope {
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: panelHover.hovered || boundsHover.hovered
-    readonly property real attachBottom: Theme.launcherAttachBottom
+    // This is now a standalone surface, rather than a continuation of the old
+    // screen frame at the bottom edge.
+    readonly property real attachBottom: 0
     readonly property real topLeftRadius: Theme.launcherSurfaceTopLeftRadius
     readonly property real topRightRadius: Theme.launcherSurfaceTopRightRadius
     readonly property int openDuration: Theme.panelSnappyOpenDuration
@@ -29,24 +31,23 @@ FocusScope {
     readonly property real bodyWidth: Theme.launcherWidth
     readonly property real bodyHeight: Theme.launcherHeight
     readonly property real touchpadScrollMultiplier: 3.2
-    readonly property real mouseWheelScrollRows: 2.4
-    readonly property int arrowHoldDelayMs: 480
+    readonly property real mouseWheelScrollRows: 0.9
+    readonly property int arrowHoldDelayMs: 400
     readonly property int horizontalKeyRepeatMs: 160
-    readonly property int verticalKeyRepeatMs: 240
+    readonly property int verticalKeyRepeatMs: 160
     readonly property int arrowReleaseQuietMs: 8
     readonly property int gridColumnCount: 5
     property int heldArrowKey: 0
     property int heldArrowDirection: 0
     property bool heldArrowVertical: false
     property bool arrowReleasePending: false
-    readonly property real fuseOverhang: Theme.barCornerRadius
-    readonly property real fuseOpticalInset: 2
+    readonly property real fuseOverhang: 0
     readonly property real fuseBottomInset: root.attachBottom
     readonly property real bottomFuseJoinY: frame.height - root.fuseBottomInset - Theme.barCornerRadius
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
     readonly property real clipSurfaceHeight: root.bodyHeight + root.attachBottom
-    readonly property real surfaceOffsetY: (1 - root.reveal) * 16
-    readonly property real surfaceOpacity: Math.max(0, Math.min(1, (root.reveal - 0.02) / 0.34))
+    readonly property real surfaceOffsetY: 0
+    readonly property real surfaceOpacity: root.reveal
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: root.launcherService.searchEntries(root.searchQuery)
@@ -71,6 +72,20 @@ FocusScope {
     }
 
     signal requestClose()
+
+    Timer {
+        id: launchTimer
+
+        property var entryToLaunch: null
+        interval: 140
+        repeat: false
+        onTriggered: {
+            const entry = entryToLaunch;
+            entryToLaunch = null;
+            if (!root.launcherService.launchEntry(entry))
+                root.focusSearch();
+        }
+    }
 
     function focusSearch() {
         root.forceActiveFocus();
@@ -249,10 +264,12 @@ FocusScope {
         if (!entry)
             return;
 
-        if (root.launcherService.launchEntry(entry))
-            root.requestClose();
-        else
-            Qt.callLater(root.focusSearch);
+        // Return focus to the workspace currently on screen before spawning the
+        // client. Otherwise Hyprland can place it on the workspace that owned
+        // the launcher layer when the drawer was opened.
+        launchTimer.entryToLaunch = entry;
+        root.requestClose();
+        launchTimer.restart();
     }
 
     function activateSelection() {
@@ -378,22 +395,22 @@ FocusScope {
             from: ""
             to: "open"
 
-            Components.Anim {
+            NumberAnimation {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.FastSpatial
-                duration: root.openDuration
+                duration: 120
+                easing.type: Easing.OutCubic
             }
         },
         Transition {
             from: "open"
             to: ""
 
-            Components.Anim {
+            NumberAnimation {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.EmphasizedAccel
-                duration: Theme.panelCloseDuration
+                duration: 90
+                easing.type: Easing.InCubic
             }
         }
     ]
@@ -437,8 +454,16 @@ FocusScope {
                         y: root.surfaceOffsetY
                     }
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: root.topLeftRadius
+                        color: "transparent"
+                        border.width: 0
+                    }
+
                     Shape {
                         anchors.fill: parent
+                        visible: false
                         preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
@@ -657,9 +682,9 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 16
-                        color: Theme.qsCardBg
-                        border.width: 1
-                        border.color: Theme.qsCardBorder
+                        color: Theme.bottomPanelSearchBg
+                        border.width: 2
+                        border.color: Theme.bottomPanelCardBorder
                         layer.enabled: root.searchVisuallyActive
                         layer.effect: MultiEffect {
                             shadowEnabled: true
@@ -682,13 +707,13 @@ FocusScope {
                             text: "󰍉"
                             font.family: Theme.fontIcons
                             font.pixelSize: 14
-                            color: root.searchVisuallyActive ? Theme.textPrimary : Theme.textDim
+                            color: root.searchVisuallyActive ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
                         }
 
                         TextInput {
                             id: searchInput
 
-                            color: Theme.textPrimary
+                            color: Theme.bottomPanelTextPrimary
                             font.family: Theme.fontUi
                             font.pixelSize: 13
                             selectionColor: Theme.accent
@@ -722,7 +747,7 @@ FocusScope {
                         Text {
                             visible: searchInput.text.length === 0
                             text: "Search"
-                            color: Theme.textDisabled
+                            color: Theme.bottomPanelTextMuted
                             font.family: Theme.fontUi
                             font.pixelSize: 13
 
@@ -736,7 +761,7 @@ FocusScope {
                             id: appCountLabel
 
                             text: root.appCountText(root.allEntries.length)
-                            color: Theme.textDim
+                            color: Theme.bottomPanelTextSecondary
                             font.family: Theme.fontUi
                             font.pixelSize: 12
                             verticalAlignment: Text.AlignVCenter
@@ -768,7 +793,7 @@ FocusScope {
                                 text: "󰅖"
                                 font.family: Theme.fontIcons
                                 font.pixelSize: 13
-                                color: Theme.textDim
+                                color: Theme.bottomPanelTextSecondary
                             }
 
                             HoverHandler {
@@ -794,9 +819,8 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: 22
-                        color: Qt.rgba(0.075, 0.075, 0.075, 0.88)
-                        border.width: 1
-                        border.color: Theme.qsEdge
+                        color: "transparent"
+                        border.width: 0
                         clip: true
 
                         Item {
@@ -813,7 +837,7 @@ FocusScope {
                                     text: "󰑐"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.textDisabled
+                                    color: Theme.bottomPanelTextMuted
                                 }
 
                                 Text {
@@ -821,7 +845,7 @@ FocusScope {
                                     text: "Loading applications..."
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.textDim
+                                    color: Theme.bottomPanelTextSecondary
                                 }
                             }
 
@@ -837,7 +861,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "󰀻" : "󰍉"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.textDisabled
+                                    color: Theme.bottomPanelTextMuted
                                 }
 
                                 Text {
@@ -845,7 +869,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "No applications found" : "No matches for this search"
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.textDim
+                                    color: Theme.bottomPanelTextSecondary
                                 }
                             }
 
@@ -914,9 +938,9 @@ FocusScope {
                                                 width: Math.min(126, parent.width - 10)
                                                 height: 118
                                                 radius: 15
-                                                color: selected ? Qt.rgba(1, 1, 1, 0.075) : hovered ? Qt.rgba(1, 1, 1, 0.045) : "transparent"
-                                                border.width: selected || hovered ? 1 : 0
-                                                border.color: selected ? Qt.rgba(1, 1, 1, 0.20) : hovered ? Theme.qsCardBorder : "transparent"
+                                                color: selected ? Theme.bottomPanelCardActiveBg : hovered ? Theme.bottomPanelCardBgHover : "transparent"
+                                                border.width: selected ? 2 : hovered ? 1 : 0
+                                                border.color: selected ? Theme.bottomPanelCardActiveBorder : hovered ? Theme.bottomPanelCardBorderHover : "transparent"
                                                 scale: selected ? 1.012 : 1
 
                                                 anchors.centerIn: parent
@@ -956,9 +980,9 @@ FocusScope {
                                                             width: 22
                                                             height: 18
                                                             radius: 9
-                                                            color: Theme.qsCardBg
+                                                            color: Theme.bottomPanelCardBg
                                                             border.width: 1
-                                                            border.color: Theme.qsCardBorder
+                                                            border.color: Theme.bottomPanelCardBorder
 
                                                             anchors {
                                                                 top: parent.top
@@ -970,7 +994,7 @@ FocusScope {
                                                             Text {
                                                                 anchors.centerIn: parent
                                                                 text: ""
-                                                                color: Theme.textDim
+                                                                color: Theme.bottomPanelTextSecondary
                                                                 font.family: Theme.fontIcons
                                                                 font.pixelSize: 10
                                                             }
@@ -986,7 +1010,7 @@ FocusScope {
                                                         wrapMode: Text.WordWrap
                                                         maximumLineCount: 2
                                                         elide: Text.ElideRight
-                                                        color: selected ? Theme.textPrimary : Qt.rgba(0.965, 0.961, 0.957, 0.84)
+                                                        color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
                                                         font.family: Theme.fontUi
                                                         font.pixelSize: 12
                                                         lineHeight: 0.94
@@ -1003,18 +1027,6 @@ FocusScope {
                                                     onHoveredChanged: {
                                                         if (hovered && matched)
                                                             root.selectedIndex = filteredIndex;
-                                                    }
-                                                }
-
-                                                Behavior on color {
-                                                    ColorAnimation {
-                                                        duration: Theme.qsPageFadeDuration
-                                                    }
-                                                }
-
-                                                Behavior on border.color {
-                                                    ColorAnimation {
-                                                        duration: Theme.qsPageFadeDuration
                                                     }
                                                 }
 
@@ -1049,11 +1061,20 @@ FocusScope {
                                 }
                             }
 
-                            Rectangle {
+                            Item {
+                                id: appGridScrollTrack
+
                                 visible: appGrid.visible && appGrid.visibleArea.heightRatio < 0.999
-                                width: 4
-                                radius: 2
-                                color: Theme.qsEdgeSoft
+                                width: 14
+                                z: 10
+                                readonly property real thumbHeight: Math.max(28, height * appGrid.visibleArea.heightRatio)
+                                readonly property real maxContentY: Math.max(0, appGrid.contentHeight - appGrid.height)
+
+                                function moveTo(pointerY) {
+                                    const travel = Math.max(1, height - thumbHeight);
+                                    const next = Math.max(0, Math.min(travel, pointerY - thumbHeight / 2));
+                                    appGrid.contentY = maxContentY * next / travel;
+                                }
 
                                 anchors {
                                     top: parent.top
@@ -1061,15 +1082,51 @@ FocusScope {
                                     right: parent.right
                                     topMargin: 10
                                     bottomMargin: 10
-                                    rightMargin: 8
+                                    rightMargin: 3
                                 }
 
                                 Rectangle {
-                                    width: parent.width
-                                    radius: 2
-                                    color: Theme.qsCardBorderHover
-                                    y: parent.height * appGrid.visibleArea.yPosition
-                                    height: Math.max(28, parent.height * appGrid.visibleArea.heightRatio)
+                                    anchors {
+                                        top: parent.top
+                                        bottom: parent.bottom
+                                        horizontalCenter: parent.horizontalCenter
+                                    }
+                                    width: 3
+                                    radius: width / 2
+                                    color: Qt.rgba(0.851, 0.867, 0.902, 0.16)
+                                }
+
+                                Rectangle {
+                                    id: appGridScrollThumb
+
+                                    width: scrollDrag.containsMouse || scrollDrag.pressed ? 9 : 5
+                                    height: appGridScrollTrack.thumbHeight
+                                    radius: width / 2
+                                    color: Qt.rgba(0.851, 0.867, 0.902, scrollDrag.containsMouse || scrollDrag.pressed ? 0.68 : 0.42)
+                                    x: (parent.width - width) / 2
+                                    y: appGridScrollTrack.maxContentY > 0
+                                       ? (parent.height - height) * appGrid.contentY / appGridScrollTrack.maxContentY
+                                       : 0
+
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: 100
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: scrollDrag
+
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                                    onPressed: (mouse) => appGridScrollTrack.moveTo(mouse.y)
+                                    onPositionChanged: (mouse) => {
+                                        if (pressed)
+                                            appGridScrollTrack.moveTo(mouse.y);
+                                    }
                                 }
                             }
                         }
