@@ -59,7 +59,7 @@ hl.config({
         direct_scanout = false,
     },
     opengl = {
-        nvidia_anti_flicker = true,
+        nvidia_anti_flicker = false,
     },
     cursor = {
         no_hardware_cursors = true,
