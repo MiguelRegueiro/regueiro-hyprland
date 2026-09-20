@@ -18,7 +18,7 @@ Item {
     property color cardBorderColor: root.isCritical ? (root.canActivate && cardHover.hovered ? Theme.urgentBorderHover : Theme.urgentBorder) : (root.canActivate && cardHover.hovered ? Theme.notificationCardBorderHover : Theme.notificationCardBorder)
 
     width: ListView.view ? ListView.view.width : 0
-    implicitHeight: card.implicitHeight
+    implicitHeight: card.implicitHeight + 16
 
     HoverHandler {
         id: cardHover
@@ -29,7 +29,9 @@ Item {
     Rectangle {
         id: card
 
-        width: parent.width
+        x: 8
+        y: 8
+        width: parent.width - 16
         implicitHeight: content.implicitHeight + 26
         radius: Theme.qsRadius + 1
         scale: root.canActivate && cardHover.hovered ? 1.006 : 1
@@ -37,7 +39,6 @@ Item {
         color: root.cardColor
         border.width: 1
         border.color: root.cardBorderColor
-        clip: true
         layer.enabled: true
 
         MouseArea {
@@ -79,11 +80,11 @@ Item {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, root.canActivate && cardHover.hovered ? 0.42 : 0.32)
-            shadowBlur: 0.65
-            shadowVerticalOffset: 1
+            shadowColor: Qt.rgba(0, 0, 0, root.canActivate && cardHover.hovered ? 0.92 : 0.82)
+            shadowBlur: 0.72
+            shadowVerticalOffset: 2
             shadowHorizontalOffset: 0
-            blurMax: 18
+            blurMax: 26
         }
 
         Behavior on scale {

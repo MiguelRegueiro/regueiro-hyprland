@@ -48,7 +48,7 @@ var fontSizeDelta = 0;
 
 // Quick Settings
 var qsBg = Qt.rgba(0.09, 0.11, 0.15, 0.96);
-var qsSurfaceBg = Qt.rgba(0.063, 0.075, 0.106, 0.68);
+var qsSurfaceBg = Qt.rgba(0.063, 0.075, 0.106, 0.78);
 var qsBorder = Qt.rgba(0.82, 0.88, 1, 0.14);
 var qsWidth = 400;
 var qsRadius = 12;
@@ -101,7 +101,7 @@ var ncSurfaceBottomRightRadius = barCornerRadius + 6;
 var bottomPanelWidth = 760;
 var bottomPanelHeight = 630;
 var bottomPanelBg = Qt.rgba(0.063, 0.075, 0.106, 0.68);
-var notificationPanelBg = Qt.rgba(0.063, 0.075, 0.106, 0.54);
+var notificationPanelBg = Qt.rgba(0.063, 0.075, 0.106, 0.64);
 var notificationCardBg = qsCardBg;
 var notificationCardBgHover = qsCardBgHover;
 var notificationCardBorder = qsCardBorder;

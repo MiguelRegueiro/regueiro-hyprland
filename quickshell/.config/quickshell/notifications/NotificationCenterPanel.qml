@@ -512,7 +512,7 @@ Item {
 
                                     visible: root.notificationStore.count > 0
                                     model: root.notificationStore.notifications
-                                    spacing: 8
+                                    spacing: 0
                                     clip: true
                                     boundsBehavior: Flickable.StopAtBounds
 
