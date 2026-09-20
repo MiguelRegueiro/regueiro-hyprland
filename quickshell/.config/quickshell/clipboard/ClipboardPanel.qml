@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Shapes
 import QtQuick.Effects
 import "../components" as Components
 import "../theme/Theme.js" as Theme
@@ -20,21 +19,11 @@ FocusScope {
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: panelHover.hovered || boundsHover.hovered
-    // This is now a standalone surface, rather than a continuation of the old
-    // screen frame at the bottom edge.
-    readonly property real attachBottom: 0
     readonly property real topLeftRadius: Theme.clipboardSurfaceTopLeftRadius
     readonly property real topRightRadius: Theme.clipboardSurfaceTopRightRadius
-    readonly property real bottomLeftRadius: 0.001
-    readonly property real bottomRightRadius: 0.001
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.clipboardWidth
     readonly property real bodyHeight: Theme.clipboardHeight
-    readonly property real fuseOverhang: 0
-    readonly property real fuseBottomInset: root.attachBottom
-    readonly property real bottomFuseJoinY: frame.height - root.fuseBottomInset - Theme.barCornerRadius
-    readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
-    readonly property real clipSurfaceHeight: root.bodyHeight + root.attachBottom
     readonly property real surfaceOffsetY: 0
     readonly property real surfaceOpacity: root.reveal
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
@@ -276,8 +265,8 @@ FocusScope {
     }
 
     state: open ? "open" : ""
-    implicitWidth: root.bodyWidth + root.fuseOverhang * 2
-    implicitHeight: root.bodyHeight + root.attachBottom
+    implicitWidth: root.bodyWidth
+    implicitHeight: root.bodyHeight
     width: implicitWidth
     height: implicitHeight
     visible: reveal > 0.001
@@ -356,8 +345,8 @@ FocusScope {
             Item {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.max(1, root.clipSurfaceWidth)
-                height: Math.max(1, root.clipSurfaceHeight)
+                width: Math.max(1, root.bodyWidth)
+                height: Math.max(1, root.bodyHeight)
                 clip: true
 
                 HoverHandler {
@@ -385,222 +374,6 @@ FocusScope {
                         border.width: 0
                     }
 
-                    Shape {
-                        anchors.fill: parent
-                        visible: false
-                        preferredRendererType: Shape.CurveRenderer
-
-                    // One continuous fill surface.
-                    ShapePath {
-                        fillColor: Theme.menuBg
-                        strokeColor: "transparent"
-                        strokeWidth: -1
-                        capStyle: ShapePath.FlatCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: -root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                        }
-
-                        // Left fused corner into body.
-                        PathArc {
-                            x: 0
-                            y: root.bottomFuseJoinY
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        // Left body edge.
-                        PathLine {
-                            x: 0
-                            y: root.topLeftRadius
-                        }
-
-                        // Top-left corner.
-                        PathArc {
-                            x: root.topLeftRadius
-                            y: 0
-                            radiusX: root.topLeftRadius
-                            radiusY: root.topLeftRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        // Top edge.
-                        PathLine {
-                            x: frame.width - root.topRightRadius
-                            y: 0
-                        }
-
-                        // Top-right corner.
-                        PathArc {
-                            x: frame.width
-                            y: root.topRightRadius
-                            radiusX: root.topRightRadius
-                            radiusY: root.topRightRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        // Right body edge.
-                        PathLine {
-                            x: frame.width
-                            y: root.bottomFuseJoinY
-                        }
-
-                        // Right fused corner into bar.
-                        PathArc {
-                            x: frame.width + root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        // Close through the hidden/merged bottom area.
-                        PathLine {
-                            x: frame.width + root.fuseOverhang
-                            y: frame.height
-                        }
-
-                        PathLine {
-                            x: -root.fuseOverhang
-                            y: frame.height
-                        }
-                    }
-
-                    // One matching outline path.
-                    ShapePath {
-                        fillColor: "transparent"
-                        strokeColor: Theme.qsEdge
-                        strokeWidth: 1
-                        capStyle: ShapePath.FlatCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: -root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                        }
-
-                        // Left fuse arc.
-                        PathArc {
-                            x: 0
-                            y: root.bottomFuseJoinY
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        // Left edge.
-                        PathLine {
-                            x: 0
-                            y: root.topLeftRadius
-                        }
-
-                        // Top-left corner.
-                        PathArc {
-                            x: root.topLeftRadius
-                            y: 0
-                            radiusX: root.topLeftRadius
-                            radiusY: root.topLeftRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        // Top edge.
-                        PathLine {
-                            x: frame.width - root.topRightRadius
-                            y: 0
-                        }
-
-                        // Top-right corner.
-                        PathArc {
-                            x: frame.width
-                            y: root.topRightRadius
-                            radiusX: root.topRightRadius
-                            radiusY: root.topRightRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        // Right edge.
-                        PathLine {
-                            x: frame.width
-                            y: root.bottomFuseJoinY
-                        }
-
-                        // Right fuse arc.
-                        PathArc {
-                            x: frame.width + root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-                    }
-
-                    // Bottom-left merge patch.
-                    ShapePath {
-                        fillColor: Theme.menuBg
-                        strokeColor: Theme.menuBg
-                        strokeWidth: 1
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: 0
-                            y: frame.height
-                        }
-
-                        PathLine {
-                            x: root.bottomLeftRadius * root.reveal
-                            y: frame.height
-                        }
-
-                        PathArc {
-                            x: 0
-                            y: frame.height - (root.bottomLeftRadius * root.reveal)
-                            radiusX: root.bottomLeftRadius * root.reveal
-                            radiusY: root.bottomLeftRadius * root.reveal
-                            direction: PathArc.Clockwise
-                        }
-
-                        PathLine {
-                            x: 0
-                            y: frame.height
-                        }
-                    }
-
-                    // Bottom-right merge patch.
-                    ShapePath {
-                        fillColor: Theme.menuBg
-                        strokeColor: Theme.menuBg
-                        strokeWidth: 1
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: frame.width
-                            y: frame.height
-                        }
-
-                        PathLine {
-                            x: frame.width - (root.bottomRightRadius * root.reveal)
-                            y: frame.height
-                        }
-
-                        PathArc {
-                            x: frame.width
-                            y: frame.height - (root.bottomRightRadius * root.reveal)
-                            radiusX: root.bottomRightRadius * root.reveal
-                            radiusY: root.bottomRightRadius * root.reveal
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        PathLine {
-                            x: frame.width
-                            y: frame.height
-                        }
-                    }
-                }
 
                 MouseArea {
                     anchors.fill: parent

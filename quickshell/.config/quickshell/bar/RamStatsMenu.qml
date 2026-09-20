@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import "../components" as Components
@@ -19,14 +18,8 @@ PanelWindow {
     readonly property real menuLeft: 24
     readonly property real menuY: Theme.barHeight + 24
     readonly property real attachTop: Theme.qsContentPadding
-    readonly property real fuseOverhang: 0
-    readonly property real fuseTopInset: Theme.qsBarFuseOverlap + 2
-    readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
-    readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
-    readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
     readonly property real surfaceOffsetY: -(1 - root.reveal) * 12
     readonly property real surfaceHeight: Math.max(118, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
-    readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
 
     signal closeRequested()
     signal barPressed(real x, real y)
@@ -99,9 +92,9 @@ PanelWindow {
         property bool open: root.open
 
         visible: reveal > 0.001
-        x: root.menuLeft - root.fuseOverhang
+        x: root.menuLeft
         y: root.menuY
-        width: root.menuWidth + root.fuseOverhang * 2
+        width: root.menuWidth
         height: root.surfaceHeight
         state: open ? "open" : ""
         transitions: [
@@ -142,7 +135,7 @@ PanelWindow {
             Item {
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.max(1, root.clipSurfaceWidth)
+                width: Math.max(1, root.menuWidth)
                 height: Math.max(1, statsPanel.height)
                 clip: true
 
@@ -157,47 +150,6 @@ PanelWindow {
                         y: root.surfaceOffsetY
                     }
 
-                    Shape {
-                        visible: false
-                        anchors.fill: parent
-                        preferredRendererType: Shape.CurveRenderer
-
-                        ShapePath {
-                            fillColor: Theme.menuBg
-                            strokeColor: "transparent"
-                            strokeWidth: 0
-                            capStyle: ShapePath.FlatCap
-                            joinStyle: ShapePath.RoundJoin
-
-                            PathMove { x: -root.fuseOverhang; y: root.fuseTopInset }
-                            PathArc { x: 0; y: root.topFuseJoinY; radiusX: Theme.barCornerRadius; radiusY: Theme.barCornerRadius; direction: PathArc.Clockwise }
-                            PathLine { x: 0; y: frame.height - root.bottomLeftRadius }
-                            PathArc { x: root.bottomLeftRadius; y: frame.height; radiusX: root.bottomLeftRadius; radiusY: root.bottomLeftRadius; direction: PathArc.Counterclockwise }
-                            PathLine { x: frame.width - root.bottomRightRadius; y: frame.height }
-                            PathArc { x: frame.width; y: frame.height - root.bottomRightRadius; radiusX: root.bottomRightRadius; radiusY: root.bottomRightRadius; direction: PathArc.Counterclockwise }
-                            PathLine { x: frame.width; y: root.topFuseJoinY }
-                            PathArc { x: frame.width + root.fuseOverhang; y: root.fuseTopInset; radiusX: Theme.barCornerRadius; radiusY: Theme.barCornerRadius; direction: PathArc.Clockwise }
-                            PathLine { x: frame.width + root.fuseOverhang; y: 0 }
-                            PathLine { x: -root.fuseOverhang; y: 0 }
-                        }
-
-                        ShapePath {
-                            fillColor: "transparent"
-                            strokeColor: Theme.qsEdge
-                            strokeWidth: 1
-                            capStyle: ShapePath.FlatCap
-                            joinStyle: ShapePath.RoundJoin
-
-                            PathMove { x: -root.fuseOverhang; y: root.fuseTopInset }
-                            PathArc { x: 0; y: root.topFuseJoinY; radiusX: Theme.barCornerRadius; radiusY: Theme.barCornerRadius; direction: PathArc.Clockwise }
-                            PathLine { x: 0; y: frame.height - root.bottomLeftRadius }
-                            PathArc { x: root.bottomLeftRadius; y: frame.height; radiusX: root.bottomLeftRadius; radiusY: root.bottomLeftRadius; direction: PathArc.Counterclockwise }
-                            PathLine { x: frame.width - root.bottomRightRadius; y: frame.height }
-                            PathArc { x: frame.width; y: frame.height - root.bottomRightRadius; radiusX: root.bottomRightRadius; radiusY: root.bottomRightRadius; direction: PathArc.Counterclockwise }
-                            PathLine { x: frame.width; y: root.topFuseJoinY }
-                            PathArc { x: frame.width + root.fuseOverhang; y: root.fuseTopInset; radiusX: Theme.barCornerRadius; radiusY: Theme.barCornerRadius; direction: PathArc.Clockwise }
-                        }
-                    }
 
                     Rectangle {
                         anchors.fill: parent

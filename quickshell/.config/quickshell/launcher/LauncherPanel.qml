@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Shapes
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
@@ -19,14 +18,9 @@ FocusScope {
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: panelHover.hovered || boundsHover.hovered
-    // This is now a standalone surface, rather than a continuation of the old
-    // screen frame at the bottom edge.
-    readonly property real attachBottom: 0
     readonly property real topLeftRadius: Theme.launcherSurfaceTopLeftRadius
     readonly property real topRightRadius: Theme.launcherSurfaceTopRightRadius
     readonly property int openDuration: Theme.panelSnappyOpenDuration
-    readonly property real bottomLeftRadius: 0.001
-    readonly property real bottomRightRadius: 0.001
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.launcherWidth
     readonly property real bodyHeight: Theme.launcherHeight
@@ -41,11 +35,6 @@ FocusScope {
     property int heldArrowDirection: 0
     property bool heldArrowVertical: false
     property bool arrowReleasePending: false
-    readonly property real fuseOverhang: 0
-    readonly property real fuseBottomInset: root.attachBottom
-    readonly property real bottomFuseJoinY: frame.height - root.fuseBottomInset - Theme.barCornerRadius
-    readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
-    readonly property real clipSurfaceHeight: root.bodyHeight + root.attachBottom
     readonly property real surfaceOffsetY: 0
     readonly property real surfaceOpacity: root.reveal
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
@@ -380,8 +369,8 @@ FocusScope {
     }
 
     state: open ? "open" : ""
-    implicitWidth: root.bodyWidth + root.fuseOverhang * 2
-    implicitHeight: root.bodyHeight + root.attachBottom
+    implicitWidth: root.bodyWidth
+    implicitHeight: root.bodyHeight
     width: implicitWidth
     height: implicitHeight
     // Never hide/unmap this subtree on close. Hiding it makes Qt drop the
@@ -432,8 +421,8 @@ FocusScope {
             Item {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.max(1, root.clipSurfaceWidth)
-                height: Math.max(1, root.clipSurfaceHeight)
+                width: Math.max(1, root.bodyWidth)
+                height: Math.max(1, root.bodyHeight)
                 clip: true
 
                 HoverHandler {
@@ -461,203 +450,6 @@ FocusScope {
                         border.width: 0
                     }
 
-                    Shape {
-                        anchors.fill: parent
-                        visible: false
-                        preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        fillColor: Theme.menuBg
-                        strokeColor: "transparent"
-                        strokeWidth: -1
-                        capStyle: ShapePath.FlatCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: -root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                        }
-
-                        PathArc {
-                            x: 0
-                            y: root.bottomFuseJoinY
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        PathLine {
-                            x: 0
-                            y: root.topLeftRadius
-                        }
-
-                        PathArc {
-                            x: root.topLeftRadius
-                            y: 0
-                            radiusX: root.topLeftRadius
-                            radiusY: root.topLeftRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        PathLine {
-                            x: frame.width - root.topRightRadius
-                            y: 0
-                        }
-
-                        PathArc {
-                            x: frame.width
-                            y: root.topRightRadius
-                            radiusX: root.topRightRadius
-                            radiusY: root.topRightRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        PathLine {
-                            x: frame.width
-                            y: root.bottomFuseJoinY
-                        }
-
-                        PathArc {
-                            x: frame.width + root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        PathLine {
-                            x: frame.width + root.fuseOverhang
-                            y: frame.height
-                        }
-
-                        PathLine {
-                            x: -root.fuseOverhang
-                            y: frame.height
-                        }
-                    }
-
-                    ShapePath {
-                        fillColor: "transparent"
-                        strokeColor: Theme.qsEdge
-                        strokeWidth: 1
-                        capStyle: ShapePath.FlatCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: -root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                        }
-
-                        PathArc {
-                            x: 0
-                            y: root.bottomFuseJoinY
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        PathLine {
-                            x: 0
-                            y: root.topLeftRadius
-                        }
-
-                        PathArc {
-                            x: root.topLeftRadius
-                            y: 0
-                            radiusX: root.topLeftRadius
-                            radiusY: root.topLeftRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        PathLine {
-                            x: frame.width - root.topRightRadius
-                            y: 0
-                        }
-
-                        PathArc {
-                            x: frame.width
-                            y: root.topRightRadius
-                            radiusX: root.topRightRadius
-                            radiusY: root.topRightRadius
-                            direction: PathArc.Clockwise
-                        }
-
-                        PathLine {
-                            x: frame.width
-                            y: root.bottomFuseJoinY
-                        }
-
-                        PathArc {
-                            x: frame.width + root.fuseOverhang
-                            y: frame.height - root.fuseBottomInset
-                            radiusX: Theme.barCornerRadius
-                            radiusY: Theme.barCornerRadius
-                            direction: PathArc.Counterclockwise
-                        }
-                    }
-
-                    ShapePath {
-                        fillColor: Theme.menuBg
-                        strokeColor: Theme.menuBg
-                        strokeWidth: 1
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: 0
-                            y: frame.height
-                        }
-
-                        PathLine {
-                            x: root.bottomLeftRadius * root.reveal
-                            y: frame.height
-                        }
-
-                        PathArc {
-                            x: 0
-                            y: frame.height - (root.bottomLeftRadius * root.reveal)
-                            radiusX: root.bottomLeftRadius * root.reveal
-                            radiusY: root.bottomLeftRadius * root.reveal
-                            direction: PathArc.Clockwise
-                        }
-
-                        PathLine {
-                            x: 0
-                            y: frame.height
-                        }
-                    }
-
-                    ShapePath {
-                        fillColor: Theme.menuBg
-                        strokeColor: Theme.menuBg
-                        strokeWidth: 1
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        PathMove {
-                            x: frame.width
-                            y: frame.height
-                        }
-
-                        PathLine {
-                            x: frame.width - (root.bottomRightRadius * root.reveal)
-                            y: frame.height
-                        }
-
-                        PathArc {
-                            x: frame.width
-                            y: frame.height - (root.bottomRightRadius * root.reveal)
-                            radiusX: root.bottomRightRadius * root.reveal
-                            radiusY: root.bottomRightRadius * root.reveal
-                            direction: PathArc.Counterclockwise
-                        }
-
-                        PathLine {
-                            x: frame.width
-                            y: frame.height
-                        }
-                    }
-                }
 
                 MouseArea {
                     anchors.fill: parent
