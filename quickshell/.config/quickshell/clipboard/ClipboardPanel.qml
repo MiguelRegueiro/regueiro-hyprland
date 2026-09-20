@@ -724,6 +724,8 @@ FocusScope {
                                             root.clipboardService.requestImagePreview(modelData);
                                     }
 
+                                    onModelDataChanged: root.clipboardService.requestImagePreview(modelData)
+
                                     Row {
                                         id: actionRow
                                         z: 2
@@ -817,12 +819,17 @@ FocusScope {
                                 width: 14
                                 z: 10
                                 readonly property real thumbHeight: Math.max(28, height * listView.visibleArea.heightRatio)
-                                readonly property real maxContentY: Math.max(0, listView.contentHeight - listView.height)
+                                readonly property real thumbTravel: Math.max(0, height - thumbHeight)
+                                readonly property real contentRange: Math.max(0, listView.contentHeight - listView.height)
+                                readonly property real minContentY: listView.originY
+                                readonly property real scrollProgress: contentRange > 0
+                                    ? Math.max(0, Math.min(1, (listView.contentY - minContentY) / contentRange))
+                                    : 0
 
                                 function moveTo(pointerY) {
-                                    const travel = Math.max(1, height - thumbHeight);
-                                    const next = Math.max(0, Math.min(travel, pointerY - thumbHeight / 2));
-                                    listView.contentY = maxContentY * next / travel;
+                                    const next = Math.max(0, Math.min(thumbTravel, pointerY - thumbHeight / 2));
+                                    const progress = thumbTravel > 0 ? next / thumbTravel : 0;
+                                    listView.contentY = minContentY + contentRange * progress;
                                 }
 
                                 anchors {
@@ -851,9 +858,7 @@ FocusScope {
                                     radius: width / 2
                                     color: Qt.rgba(0.851, 0.867, 0.902, clipboardScrollDrag.containsMouse || clipboardScrollDrag.pressed ? 0.68 : 0.42)
                                     x: (parent.width - width) / 2
-                                    y: clipboardScrollTrack.maxContentY > 0
-                                       ? (parent.height - height) * listView.contentY / clipboardScrollTrack.maxContentY
-                                       : 0
+                                    y: clipboardScrollTrack.thumbTravel * clipboardScrollTrack.scrollProgress
 
                                     Behavior on width {
                                         NumberAnimation {

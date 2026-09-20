@@ -34,6 +34,26 @@ Item {
         return root.imagePreviewCache[String(entryId)] || "";
     }
 
+    function imagePreviewCommand(entryId) {
+        const script = "set -euo pipefail\n"
+            + "cmd=\"$HOME/.cargo/bin/mimeclip\"\n"
+            + "if [ ! -x \"$cmd\" ]; then\n"
+            + "  if [ -x /usr/local/bin/mimeclip ]; then cmd=/usr/local/bin/mimeclip; else cmd=\"$(command -v mimeclip 2>/dev/null || true)\"; fi\n"
+            + "fi\n"
+            + "[ -n \"$cmd\" ] && [ -x \"$cmd\" ]\n"
+            + "cache_dir=\"$HOME/.cache/quickshell/clipboard-thumbnails\"\n"
+            + "mkdir -p \"$cache_dir\"\n"
+            + "target=\"$cache_dir/$1.png\"\n"
+            + "if [ ! -s \"$target\" ]; then\n"
+            + "  tmp=\"$target.tmp\"\n"
+            + "  trap 'rm -f \"$tmp\"' EXIT\n"
+            + "  \"$cmd\" decode \"$1\" | jq -r '.[] | select(.mime_type | startswith(\"image/\")) | .data_b64' | head -n 1 | base64 -d | magick - -auto-orient -thumbnail '128x128^' -gravity center -extent 128x128 \"png:$tmp\"\n"
+            + "  mv \"$tmp\" \"$target\"\n"
+            + "fi\n"
+            + "printf '%s' \"$target\"";
+        return ["bash", "-lc", script, "clipboard-thumbnail", entryId];
+    }
+
     function requestImagePreview(entry) {
         if (!entry || root.normalizeKind(entry.kind) !== "image")
             return;
@@ -56,7 +76,7 @@ Item {
         const entryId = root.imagePreviewQueue[0];
         root.imagePreviewQueue = root.imagePreviewQueue.slice(1);
         root.imagePreviewCurrentId = entryId;
-        imagePreviewProc.command = root.mimeclipCommand(["decode", entryId]);
+        imagePreviewProc.command = root.imagePreviewCommand(entryId);
         imagePreviewProc.running = true;
     }
 
@@ -72,13 +92,12 @@ Item {
         cache[entryId] = source;
         const order = root.imagePreviewOrder.filter((id) => id !== entryId);
         order.push(entryId);
-        while (order.length > 6)
+        while (order.length > 32)
             delete cache[order.shift()];
 
         root.imagePreviewCache = cache;
         root.imagePreviewOrder = order;
         root.imagePreviewCurrentId = "";
-        Qt.callLater(root.startNextImagePreview);
     }
 
     function titleCaseKind(kind) {
@@ -256,25 +275,15 @@ Item {
         stdout: StdioCollector {
             id: imagePreviewOut
             waitForEnd: true
-            onStreamFinished: {
-                const entryId = root.imagePreviewCurrentId;
-                if (entryId.length === 0)
-                    return;
-
-                let source = "";
-                try {
-                    const payloads = JSON.parse(imagePreviewOut.text);
-                    const imagePayload = payloads.find((payload) => payload && typeof payload.mime_type === "string" && payload.mime_type.startsWith("image/") && typeof payload.data_b64 === "string" && payload.data_b64.length > 0);
-                    if (imagePayload)
-                        source = `data:${imagePayload.mime_type};base64,${imagePayload.data_b64}`;
-                } catch (error) {
-                }
-                root.finishImagePreview(entryId, source);
-            }
         }
         onExited: (exitCode) => {
-            if (exitCode !== 0 && root.imagePreviewCurrentId.length > 0)
-                root.finishImagePreview(root.imagePreviewCurrentId, "");
+            const entryId = root.imagePreviewCurrentId;
+            Qt.callLater(function() {
+                if (entryId.length === 0 || root.imagePreviewCurrentId !== entryId)
+                    return;
+                root.finishImagePreview(entryId, exitCode === 0 ? imagePreviewOut.text.trim() : "");
+                root.startNextImagePreview();
+            });
         }
     }
 
