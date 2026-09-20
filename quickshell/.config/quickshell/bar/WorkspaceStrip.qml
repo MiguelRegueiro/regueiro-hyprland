@@ -6,9 +6,12 @@ import "../theme/Theme.js" as Theme
 Row {
     id: wsRow
 
+    property var targetScreen: null
     property string screenName: ""
     property int barHeight: 34
     property bool externalConnected: false
+    readonly property var hyprMonitor: targetScreen ? Hyprland.monitorFor(targetScreen) : null
+    readonly property int activeWorkspaceId: hyprMonitor && hyprMonitor.activeWorkspace ? Number(hyprMonitor.activeWorkspace.id) : -1
     readonly property var pinnedWorkspaceIds: externalConnected && screenName === Theme.primaryScreen ? [10] : [1, 2, 3, 4, 5]
 
     function dispatchWorkspace(workspace) {
@@ -54,13 +57,14 @@ Row {
 
             required property var modelData
             readonly property bool hovered: hover.hovered
+            readonly property bool active: Number(modelData.id) === wsRow.activeWorkspaceId
 
             visible: wsRow.belongsToScreen(modelData)
             height: barHeight
             width: visible ? Math.max(wsLabel.implicitWidth + 14, 28) : 0
             radius: Theme.radiusSmall
             color: {
-                if (modelData.active)
+                if (active)
                     return hovered ? Theme.workspaceActiveHoverBg : Theme.workspaceActiveBg;
 
                 if (hovered)
@@ -68,7 +72,7 @@ Row {
 
                 return "transparent";
             }
-            border.width: modelData.active ? 1 : 0
+            border.width: active ? 1 : 0
             border.color: Theme.workspaceActiveBorder
 
             Text {
@@ -76,10 +80,10 @@ Row {
 
                 anchors.centerIn: parent
                 text: wsRow.workspaceLabel(modelData)
-                color: modelData.active ? "#ffffff" : Theme.textDim
+                color: active ? "#ffffff" : Theme.textDim
                 font.family: Theme.fontUi
-                font.pixelSize: 14
-                font.weight: modelData.active ? Font.Bold : Font.Normal
+                font.pixelSize: 15
+                font.weight: active ? Font.Bold : Font.Normal
             }
 
             HoverHandler {
@@ -102,7 +106,10 @@ Row {
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Theme.hoverAnimDuration
+                    // Drop the old workspace immediately; only the new one gets
+                    // a short emphasis transition.
+                    duration: wsBtn.active ? 75 : 0
+                    easing.type: Easing.OutCubic
                 }
 
             }

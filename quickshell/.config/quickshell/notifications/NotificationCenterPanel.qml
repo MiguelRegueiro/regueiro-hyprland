@@ -33,11 +33,11 @@ Item {
     readonly property real mergedTopLeftRadius: 0.001
     readonly property real mergedTopRightRadius: 0.001
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseOverhang * 2
-    readonly property real visibleBodyHeight: Math.max(0, Math.min(root.height, root.height * root.reveal))
+    readonly property real visibleBodyHeight: root.height
     readonly property real revealFrontY: root.visibleBodyHeight
     readonly property real revealFrontLeftRadius: Math.min(root.bottomLeftRadius, root.visibleBodyHeight / 2)
     readonly property real revealFrontRightRadius: Math.min(root.bottomRightRadius, root.visibleBodyHeight / 2)
-    readonly property real contentRevealProgress: Math.max(0, Math.min(1, (root.reveal - 0.1) / 0.38))
+    readonly property real contentRevealProgress: root.reveal
 
     implicitWidth: root.bodyWidth
     implicitHeight: contentColumn.implicitHeight + root.attachTop + 10
@@ -52,8 +52,8 @@ Item {
 
             Components.Anim {
                 property: "reveal"
-                curve: Components.Anim.DefaultSpatial
-                duration: Theme.panelOpenSpatialDuration
+                curve: Components.Anim.StandardDecel
+                duration: Theme.topBarMenuOpenDuration
             }
 
         },
@@ -63,8 +63,8 @@ Item {
 
             Components.Anim {
                 property: "reveal"
-                curve: Components.Anim.EmphasizedAccel
-                duration: Theme.panelCloseDuration
+                curve: Components.Anim.StandardAccel
+                duration: Theme.topBarMenuCloseDuration
             }
 
         }
@@ -92,7 +92,8 @@ Item {
 
         width: root.width
         height: Math.max(1, root.height)
-        y: 0
+        y: (1 - root.reveal) * 6
+        opacity: root.reveal
         layer.enabled: true
 
             HoverHandler {
@@ -105,7 +106,7 @@ Item {
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Math.max(1, root.bodyWidth)
-                height: Math.max(1, root.visibleBodyHeight)
+                height: Math.max(1, root.height)
                 clip: true
 
                 HoverHandler {

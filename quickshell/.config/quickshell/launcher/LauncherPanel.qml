@@ -35,7 +35,7 @@ FocusScope {
     property int heldArrowDirection: 0
     property bool heldArrowVertical: false
     property bool arrowReleasePending: false
-    readonly property real surfaceOffsetY: 0
+    readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceOpacity: root.reveal
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
@@ -373,10 +373,8 @@ FocusScope {
     implicitHeight: root.bodyHeight
     width: implicitWidth
     height: implicitHeight
-    // Never hide/unmap this subtree on close. Hiding it makes Qt drop the
-    // Image scene-graph textures, so every reopen has to decode the 256px icons
-    // again. The closed state already moves the surface out through the clipped
-    // reveal animation; keep it alive so icons stay hot.
+    // Keep the icon scene graph alive while closed so reopening can reuse its
+    // already-rasterized texture instead of decoding the grid again.
     visible: true
 
     transitions: [
@@ -384,22 +382,22 @@ FocusScope {
             from: ""
             to: "open"
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
-                duration: 120
-                easing.type: Easing.OutCubic
+                curve: Components.Anim.StandardDecel
+                duration: Theme.topBarMenuOpenDuration
             }
         },
         Transition {
             from: "open"
             to: ""
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
-                duration: 90
-                easing.type: Easing.InCubic
+                curve: Components.Anim.StandardAccel
+                duration: Theme.topBarMenuCloseDuration
             }
         }
     ]
@@ -410,6 +408,7 @@ FocusScope {
         width: root.width
         height: Math.max(1, root.height)
         y: 0
+        opacity: root.surfaceOpacity
         layer.enabled: true
 
             HoverHandler {
@@ -438,11 +437,7 @@ FocusScope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: root.bodyWidth
                     height: root.bodyHeight
-                    opacity: root.surfaceOpacity
-                    transform: Translate {
-                        y: root.surfaceOffsetY
-                    }
-
+                    opacity: 1
                     Rectangle {
                         anchors.fill: parent
                         radius: root.topLeftRadius

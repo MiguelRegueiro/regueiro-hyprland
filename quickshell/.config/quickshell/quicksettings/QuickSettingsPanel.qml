@@ -45,11 +45,11 @@ FocusScope {
     readonly property real bottomFuseJoinX: root.bodyWidth - root.surfaceBottomRightRadius
     readonly property real clipSurfaceWidth: root.bodyWidth + root.fuseLeftOverhang
     readonly property real clipSurfaceHeight: root.bodyHeight + root.fuseBottomOverhang
-    readonly property real visibleBodyHeight: Math.max(0, Math.min(root.bodyHeight, root.bodyHeight * root.reveal))
+    readonly property real visibleBodyHeight: root.bodyHeight
     readonly property real revealFrontY: root.visibleBodyHeight
     readonly property real revealFrontLeftRadius: Math.min(root.surfaceBottomLeftRadius, root.visibleBodyHeight / 2)
     readonly property real revealFrontRightRadius: Math.min(root.mergedBottomRightRadius, root.visibleBodyHeight / 2)
-    readonly property real contentRevealProgress: Math.max(0, Math.min(1, (root.reveal - 0.1) / 0.38))
+    readonly property real contentRevealProgress: root.reveal
 
     signal powerActionRequested(string actionId)
 
@@ -82,8 +82,8 @@ FocusScope {
             Components.Anim {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.DefaultSpatial
-                duration: Theme.panelOpenSpatialDuration
+                curve: Components.Anim.StandardDecel
+                duration: Theme.topBarMenuOpenDuration
             }
 
         },
@@ -94,8 +94,8 @@ FocusScope {
             Components.Anim {
                 target: root
                 property: "reveal"
-                curve: Components.Anim.EmphasizedAccel
-                duration: Theme.panelCloseDuration
+                curve: Components.Anim.StandardAccel
+                duration: Theme.topBarMenuCloseDuration
             }
 
         }
@@ -123,7 +123,8 @@ FocusScope {
 
         width: root.width
         height: Math.max(1, root.height)
-        y: 0
+        y: (1 - root.reveal) * 6
+        opacity: root.reveal
         layer.enabled: true
 
             HoverHandler {
@@ -136,7 +137,7 @@ FocusScope {
                 anchors.top: parent.top
                 anchors.right: parent.right
                 width: Math.max(1, root.clipSurfaceWidth)
-                height: Math.max(1, root.visibleBodyHeight + root.fuseBottomOverhang)
+                height: Math.max(1, root.bodyHeight + root.fuseBottomOverhang)
                 clip: !root.audioOutputPopupOpen
 
                 HoverHandler {

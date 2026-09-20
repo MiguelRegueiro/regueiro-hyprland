@@ -21,7 +21,7 @@ PanelWindow {
     readonly property real menuRightMargin: 108
     readonly property real menuY: Theme.barHeight + 24
     readonly property real attachTop: Theme.qsContentPadding
-    readonly property real surfaceOffsetY: -(1 - root.reveal) * 12
+    readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property int openDuration: Theme.topBarMenuOpenDuration
     readonly property int closeDuration: Theme.topBarMenuCloseDuration
@@ -106,7 +106,8 @@ PanelWindow {
 
         visible: reveal > 0.001
         x: Math.max(8, root.width - root.menuWidth - root.menuRightMargin)
-        y: root.menuY
+        y: root.menuY + root.surfaceOffsetY
+        opacity: reveal
         width: root.menuWidth
         height: root.surfaceHeight
         state: open ? "open" : ""
@@ -117,7 +118,7 @@ PanelWindow {
 
                 Components.Anim {
                     property: "reveal"
-                    curve: Components.Anim.EmphasizedDecel
+                    curve: Components.Anim.StandardDecel
                     duration: root.openDuration
                 }
             },
@@ -127,7 +128,7 @@ PanelWindow {
 
                 Components.Anim {
                     property: "reveal"
-                    curve: Components.Anim.EmphasizedAccel
+                    curve: Components.Anim.StandardAccel
                     duration: root.closeDuration
                 }
             }
@@ -163,11 +164,6 @@ PanelWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: root.menuWidth
                     height: sshPanel.height
-                    transform: Translate {
-                        y: root.surfaceOffsetY
-                    }
-
-
                     Rectangle {
                         anchors.fill: parent
                         radius: Theme.ncSurfaceBottomLeftRadius

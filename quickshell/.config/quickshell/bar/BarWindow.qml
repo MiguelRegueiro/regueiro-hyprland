@@ -138,6 +138,7 @@ PanelWindow {
             }
 
             WorkspaceStrip {
+                targetScreen: bar.targetScreen
                 screenName: bar.targetScreen.name
                 barHeight: Theme.barHeight
                 externalConnected: bar.externalConnected

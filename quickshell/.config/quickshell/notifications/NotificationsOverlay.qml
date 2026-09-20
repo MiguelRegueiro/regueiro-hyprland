@@ -35,7 +35,10 @@ PanelWindow {
 
 
     screen: targetScreen
-    visible: showLayer && (root.notificationCenterVisible || root.notificationStore.popups.length > 0)
+    // Keep the layer mapped for the panel's exit transition.  Closing the
+    // controller flips notificationCenterVisible immediately, while the
+    // panel itself still needs a frame or two to animate reveal back to 0.
+    visible: showLayer && (root.notificationCenterVisible || notificationCenter.reveal > 0.001 || root.notificationStore.popups.length > 0)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
@@ -139,8 +142,8 @@ PanelWindow {
         Region {
             x: 0
             y: root.forceOverlay ? 0 : Theme.barHeight
-            width: root.notificationCenterVisible ? Math.round(root.width) : 0
-            height: root.notificationCenterVisible ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
+            width: (root.notificationCenterVisible || notificationCenter.reveal > 0.001) ? Math.round(root.width) : 0
+            height: (root.notificationCenterVisible || notificationCenter.reveal > 0.001) ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
         }
 
         Region {

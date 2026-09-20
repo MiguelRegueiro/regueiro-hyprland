@@ -18,7 +18,7 @@ PanelWindow {
     readonly property real menuLeft: 24
     readonly property real menuY: Theme.barHeight + 24
     readonly property real attachTop: Theme.qsContentPadding
-    readonly property real surfaceOffsetY: -(1 - root.reveal) * 12
+    readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceHeight: Math.max(118, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
 
     signal closeRequested()
@@ -93,7 +93,8 @@ PanelWindow {
 
         visible: reveal > 0.001
         x: root.menuLeft
-        y: root.menuY
+        y: root.menuY + root.surfaceOffsetY
+        opacity: reveal
         width: root.menuWidth
         height: root.surfaceHeight
         state: open ? "open" : ""
@@ -103,7 +104,7 @@ PanelWindow {
                 to: "open"
                 Components.Anim {
                     property: "reveal"
-                    curve: Components.Anim.EmphasizedDecel
+                    curve: Components.Anim.StandardDecel
                     duration: Theme.topBarMenuOpenDuration
                 }
             },
@@ -112,7 +113,7 @@ PanelWindow {
                 to: ""
                 Components.Anim {
                     property: "reveal"
-                    curve: Components.Anim.EmphasizedAccel
+                    curve: Components.Anim.StandardAccel
                     duration: Theme.topBarMenuCloseDuration
                 }
             }
@@ -146,11 +147,6 @@ PanelWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: root.menuWidth
                     height: statsPanel.height
-                    transform: Translate {
-                        y: root.surfaceOffsetY
-                    }
-
-
                     Rectangle {
                         anchors.fill: parent
                         radius: Theme.ncSurfaceBottomLeftRadius

@@ -24,7 +24,7 @@ FocusScope {
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.clipboardWidth
     readonly property real bodyHeight: Theme.clipboardHeight
-    readonly property real surfaceOffsetY: 0
+    readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceOpacity: root.reveal
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
     readonly property int verticalHoldDelayMs: 360
@@ -275,11 +275,11 @@ FocusScope {
             from: ""
             to: "open"
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
-                duration: 120
-                easing.type: Easing.OutCubic
+                curve: Components.Anim.StandardDecel
+                duration: Theme.topBarMenuOpenDuration
             }
 
         },
@@ -287,11 +287,11 @@ FocusScope {
             from: "open"
             to: ""
 
-            NumberAnimation {
+            Components.Anim {
                 target: root
                 property: "reveal"
-                duration: 90
-                easing.type: Easing.InCubic
+                curve: Components.Anim.StandardAccel
+                duration: Theme.topBarMenuCloseDuration
             }
 
         }
@@ -363,10 +363,6 @@ FocusScope {
                     width: root.bodyWidth
                     height: root.bodyHeight
                     opacity: root.surfaceOpacity
-                    transform: Translate {
-                        y: root.surfaceOffsetY
-                    }
-
                     Rectangle {
                         anchors.fill: parent
                         radius: root.topLeftRadius

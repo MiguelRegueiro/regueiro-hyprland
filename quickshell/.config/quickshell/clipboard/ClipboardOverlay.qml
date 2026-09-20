@@ -62,7 +62,7 @@ Scope {
         }
 
         margins.left: Math.round((root.targetScreen.width - implicitWidth) / 2)
-        margins.bottom: Theme.borderSize + 70 - shadowMargin
+        margins.bottom: Theme.borderSize + 70 - shadowMargin - clipboardPanel.surfaceOffsetY
 
         Rectangle {
             anchors.fill: parent
@@ -147,7 +147,7 @@ Scope {
         id: clipboardPanel
 
         x: Math.round((parent.width - implicitWidth) / 2)
-        y: Math.round(parent.height - Theme.borderSize - bodyHeight - 70)
+        y: Math.round(parent.height - Theme.borderSize - bodyHeight - 70 + surfaceOffsetY)
         open: root.clipboardVisible
         clipboardService: root.clipboardService
         onRequestClose: root.outsidePressed()
