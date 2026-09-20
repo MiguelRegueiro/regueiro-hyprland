@@ -364,30 +364,12 @@ PanelWindow {
                                     id: driveRow
 
                                     required property var modelData
-                                    readonly property bool hovered: rowHover.hovered
-
                                     Layout.fillWidth: true
                                     implicitHeight: 110
                                     radius: Theme.qsRadius + 1
-                                    scale: hovered ? 1.006 : 1
-                                    transformOrigin: Item.Center
-                                    color: hovered ? Qt.rgba(0.115, 0.115, 0.115, 1) : Theme.qsCardBg
+                                    color: Theme.qsCardBg
                                     border.width: 1
-                                    border.color: hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
-                                    layer.enabled: true
-
-                                    HoverHandler {
-                                        id: rowHover
-
-                                        blocking: false
-                                    }
-
-                                    Behavior on scale {
-                                        Components.Anim {
-                                            curve: Components.Anim.DefaultEffects
-                                            duration: Theme.hoverAnimDuration
-                                        }
-                                    }
+                                    border.color: Theme.qsCardBorder
 
                                     ColumnLayout {
                                         anchors.fill: parent

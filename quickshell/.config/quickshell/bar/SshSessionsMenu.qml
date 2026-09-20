@@ -20,14 +20,14 @@ PanelWindow {
     readonly property bool mutating: sshService && sshService.mutating
     readonly property real menuWidth: 460
     readonly property real menuRightMargin: 108
-    readonly property real menuY: Theme.barHeight - Theme.qsBarFuseOverlap - 2
-    readonly property real attachTop: Theme.ncAttachTop
-    readonly property real fuseOverhang: Theme.barCornerRadius
+    readonly property real menuY: Theme.barHeight + 24
+    readonly property real attachTop: Theme.qsContentPadding
+    readonly property real fuseOverhang: 0
     readonly property real fuseTopInset: Theme.qsBarFuseOverlap + 2
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
-    readonly property real surfaceOffsetY: -(1 - root.reveal) * sshPanel.height
+    readonly property real surfaceOffsetY: -(1 - root.reveal) * 12
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
     readonly property int openDuration: Theme.topBarMenuOpenDuration
@@ -175,6 +175,7 @@ PanelWindow {
                     }
 
                     Shape {
+                        visible: false
                         anchors.fill: parent
                         preferredRendererType: Shape.CurveRenderer
 
@@ -215,6 +216,14 @@ PanelWindow {
                         }
                     }
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.ncSurfaceBottomLeftRadius
+                        color: Theme.qsSurfaceBg
+                        border.width: 2
+                        border.color: Theme.bottomPanelOutline
+                    }
+
                     MouseArea {
                         anchors.fill: parent
                         acceptedButtons: Qt.AllButtons
@@ -236,7 +245,8 @@ PanelWindow {
 
                         Item {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 48
+                            visible: root.sessions.length > 0
+                            Layout.preferredHeight: visible ? 48 : 0
 
                             RowLayout {
                                 spacing: 10
@@ -290,26 +300,35 @@ PanelWindow {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 1
+                            visible: root.sessions.length > 0
+                            Layout.preferredHeight: visible ? 1 : 0
                             color: Theme.qsEdgeSoft
                         }
 
                         Item {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: root.sessions.length === 0 ? 64 : sessionsColumn.implicitHeight + 24
+                            Layout.preferredHeight: root.sessions.length === 0 ? 96 : sessionsColumn.implicitHeight + 24
                             clip: true
 
                             ColumnLayout {
                                 visible: root.sessions.length === 0
                                 anchors.centerIn: parent
                                 width: parent.width - 28
-                                spacing: 6
+                                spacing: 8
 
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
-                                    text: root.lastError.length > 0 ? root.lastError : "No active sessions"
+                                    text: ""
+                                    font.family: Theme.fontIcons
+                                    font.pixelSize: 22 + Theme.fontSizeDelta
+                                    color: Theme.textDim
+                                }
+
+                                Text {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: root.lastError.length > 0 ? root.lastError : "No active SSH sessions"
                                     font.family: Theme.fontUi
-                                    font.pixelSize: 12 + Theme.fontSizeDelta
+                                    font.pixelSize: 13 + Theme.fontSizeDelta
                                     font.weight: Font.DemiBold
                                     color: root.lastError.length > 0 ? Theme.red : Theme.textDim
                                     horizontalAlignment: Text.AlignHCenter
@@ -338,33 +357,26 @@ PanelWindow {
                                         id: sessionRow
 
                                         required property var modelData
-                                        readonly property bool hovered: rowHover.hovered
                                         readonly property bool canEnd: root.sshService && root.sshService.canTerminate(modelData)
                                         readonly property bool pending: root.sshService && root.sshService.pendingTty === modelData.tty
                                         readonly property bool terminating: root.sshService && root.sshService.terminatingTty === modelData.tty
 
                                         Layout.fillWidth: true
-                                        implicitHeight: 70
+                                        implicitHeight: 82
                                         radius: Theme.qsRadius + 1
-                                        color: hovered ? Qt.rgba(0.115, 0.115, 0.115, 1) : Theme.qsCardBg
+                                        color: Theme.qsCardBg
                                         border.width: 1
-                                        border.color: hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
-
-                                        HoverHandler {
-                                            id: rowHover
-
-                                            blocking: false
-                                        }
+                                        border.color: Theme.qsCardBorder
 
                                         RowLayout {
                                             anchors.fill: parent
-                                            anchors.margins: 12
-                                            spacing: 10
+                                            anchors.margins: 14
+                                            spacing: 12
 
                                             Rectangle {
-                                                Layout.preferredWidth: 30
-                                                Layout.preferredHeight: 30
-                                                radius: 15
+                                                Layout.preferredWidth: 36
+                                                Layout.preferredHeight: 36
+                                                radius: 18
                                                 color: Qt.rgba(1, 1, 1, 0.10)
                                                 border.width: 1
                                                 border.color: Qt.rgba(1, 1, 1, 0.12)
@@ -373,7 +385,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: ""
                                                     font.family: Theme.fontIcons
-                                                    font.pixelSize: 14 + Theme.fontSizeDelta
+                                                    font.pixelSize: 16 + Theme.fontSizeDelta
                                                     color: Theme.textPrimary
                                                 }
                                             }
@@ -386,7 +398,7 @@ PanelWindow {
                                                     Layout.fillWidth: true
                                                     text: `${modelData.user}  ${modelData.tty}  ${root.remoteLabel(modelData)}`
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 13 + Theme.fontSizeDelta
+                                                    font.pixelSize: 14 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                     elide: Text.ElideRight
@@ -397,7 +409,7 @@ PanelWindow {
                                                     visible: root.hostLabel(modelData).length > 0
                                                     text: root.hostLabel(modelData)
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11 + Theme.fontSizeDelta
+                                                    font.pixelSize: 12 + Theme.fontSizeDelta
                                                     color: Theme.textDim
                                                     elide: Text.ElideRight
                                                 }
@@ -406,8 +418,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: !sessionRow.canEnd
                                                 Layout.preferredWidth: 30
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: Theme.qsCardChipBorder
@@ -424,8 +436,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: sessionRow.canEnd && sessionRow.terminating
                                                 Layout.preferredWidth: 72
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: Theme.qsCardChipBorder
@@ -443,8 +455,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: sessionRow.canEnd && sessionRow.pending && !sessionRow.terminating
                                                 Layout.preferredWidth: 70
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: confirmHover.hovered ? Qt.rgba(1, 0.36, 0.32, 0.18) : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: confirmHover.hovered ? Qt.rgba(1, 0.48, 0.39, 0.20) : Theme.qsCardChipBorder
@@ -476,8 +488,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: sessionRow.canEnd && sessionRow.pending && !sessionRow.terminating
                                                 Layout.preferredWidth: 30
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: cancelHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: cancelHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
@@ -508,8 +520,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: sessionRow.canEnd && !sessionRow.pending && !sessionRow.terminating
                                                 Layout.preferredWidth: 52
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: endHover.hovered ? Qt.rgba(1, 0.36, 0.32, 0.18) : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: endHover.hovered ? Qt.rgba(1, 0.48, 0.39, 0.20) : Theme.qsCardChipBorder
@@ -539,13 +551,6 @@ PanelWindow {
                                             }
                                         }
 
-                                        Behavior on color {
-                                            ColorAnimation { duration: Theme.hoverAnimDuration }
-                                        }
-
-                                        Behavior on border.color {
-                                            ColorAnimation { duration: Theme.hoverAnimDuration }
-                                        }
                                     }
                                 }
                             }
