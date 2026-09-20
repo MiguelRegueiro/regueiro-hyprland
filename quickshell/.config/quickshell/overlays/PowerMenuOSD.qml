@@ -279,7 +279,7 @@ PanelWindow {
                     width: root.itemW
                     height: root.itemH
                     radius: 12
-                    color: Theme.activeBg
+                    color: Theme.osdSelectionBg
                 }
 
                 Row {
@@ -382,7 +382,7 @@ PanelWindow {
                             width: root.confirmButtonW
                             height: root.confirmButtonH
                             radius: root.confirmButtonH / 2
-                            color: Theme.activeBg
+                            color: Theme.osdSelectionBg
                         }
 
                         Row {

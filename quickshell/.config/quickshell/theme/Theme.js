@@ -83,7 +83,7 @@ var osdSurfaceBorder = Qt.rgba(1, 1, 1, 0.12);
 var osdTextPrimary = "#ffffff";
 var osdTextSecondary = Qt.rgba(1, 1, 1, 0.88);
 var osdTextMuted = Qt.rgba(1, 1, 1, 0.62);
-var osdSelectionBg = Qt.rgba(0.18, 0.19, 0.22, 0.96);
+var osdSelectionBg = Qt.rgba(0.29, 0.29, 0.30, 0.96);
 
 // Notification center
 var ncWidth = 760;
