@@ -13,6 +13,13 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
+    name = "qs-notification-blur",
+    match = { namespace = "qs-notif" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
     name = "qs-launcher-backdrop-blur",
     match = { namespace = "qs-launcher-backdrop" },
     blur = true,

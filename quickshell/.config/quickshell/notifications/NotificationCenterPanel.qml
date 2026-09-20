@@ -15,14 +15,14 @@ Item {
     readonly property alias inputRegion: inputRegion
     readonly property bool inputActive: reveal > 0.03
     readonly property bool hovered: hoverArea.hovered || boundsHover.hovered
-    readonly property real attachTop: Theme.ncAttachTop
-    readonly property real topLeftRadius: 0.001
-    readonly property real topRightRadius: 0.001
+    readonly property real attachTop: 10
+    readonly property real topLeftRadius: Theme.ncSurfaceTopLeftRadius
+    readonly property real topRightRadius: Theme.ncSurfaceTopRightRadius
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.ncWidth
-    readonly property real calendarWidth: 268
+    readonly property real calendarWidth: 300
     readonly property real fuseOverhang: Theme.barCornerRadius
     // Kept close to your original value, but isolated so the optical offset is intentional.
     // If the fuse still feels 1px too low, try changing this from 2 to 1, 0.5, or 0.
@@ -39,8 +39,8 @@ Item {
     readonly property real revealFrontRightRadius: Math.min(root.bottomRightRadius, root.visibleBodyHeight / 2)
     readonly property real contentRevealProgress: Math.max(0, Math.min(1, (root.reveal - 0.1) / 0.38))
 
-    implicitWidth: root.bodyWidth + root.fuseOverhang * 2
-    implicitHeight: contentColumn.implicitHeight + root.attachTop
+    implicitWidth: root.bodyWidth
+    implicitHeight: contentColumn.implicitHeight + root.attachTop + 10
     width: implicitWidth
     height: implicitHeight
     visible: reveal > 0.001
@@ -104,7 +104,7 @@ Item {
             Item {
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.max(1, root.clipSurfaceWidth)
+                width: Math.max(1, root.bodyWidth)
                 height: Math.max(1, root.visibleBodyHeight)
                 clip: true
 
@@ -123,6 +123,7 @@ Item {
                     height: root.height
 
                     Shape {
+                        visible: false
                         anchors.fill: parent
                         preferredRendererType: Shape.CurveRenderer
 
@@ -347,7 +348,15 @@ Item {
 
                     }
 
-                }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.ncSurfaceBottomLeftRadius
+                        color: Theme.notificationPanelBg
+                        border.width: 2
+                        border.color: Theme.bottomPanelOutline
+                    }
 
                 MouseArea {
                     anchors.fill: parent
@@ -365,7 +374,7 @@ Item {
                         top: parent.top
                         left: parent.left
                         right: parent.right
-                        topMargin: Math.max(0, root.attachTop - 6)
+                        topMargin: root.attachTop
                     }
 
                     RowLayout {
@@ -380,7 +389,7 @@ Item {
 
                             Item {
                                 width: parent.width
-                                height: 48
+                                height: 36
 
                                 RowLayout {
                                     spacing: 10
@@ -392,24 +401,15 @@ Item {
                                     }
 
                                     RowLayout {
-                                        spacing: 8
                                         Layout.alignment: Qt.AlignVCenter
-
-                                        Text {
-                                            text: "Notifications"
-                                            color: Theme.textPrimary
-                                            font.family: Theme.fontUi
-                                            font.pixelSize: 14
-                                            font.weight: Font.DemiBold
-                                        }
-
                                         Rectangle {
                                             Layout.alignment: Qt.AlignVCenter
-                                            width: Math.max(24, countText.implicitWidth + 14)
-                                            height: 24
-                                            radius: 12
-                                            color: Theme.qsRowBg
-                                            border.width: 0
+                                            width: Math.max(28, countText.implicitWidth + 14)
+                                            height: 28
+                                            radius: height / 2
+                                            color: Theme.bottomPanelSearchBg
+                                            border.width: 1
+                                            border.color: Theme.bottomPanelCardBorder
 
                                             Text {
                                                 id: countText
@@ -432,10 +432,12 @@ Item {
 
                                 Rectangle {
                                     visible: root.notificationStore.count > 0
-                                    width: clearText.implicitWidth + 18
+                                    width: clearText.implicitWidth + 20
                                     height: 28
-                                    radius: 8
-                                    color: clearHover.hovered ? Theme.qsRowBg : "transparent"
+                                    radius: height / 2
+                                    color: clearHover.hovered ? Theme.bottomPanelCardBgHover : Theme.bottomPanelCardBg
+                                    border.width: 1
+                                    border.color: clearHover.hovered ? Theme.bottomPanelOutline : Theme.bottomPanelCardBorder
 
                                     anchors {
                                         right: parent.right
@@ -447,8 +449,8 @@ Item {
                                         id: clearText
 
                                         anchors.centerIn: parent
-                                        text: "Clear"
-                                        color: clearHover.hovered ? Theme.textPrimary : Theme.textDim
+                                        text: "Clear all"
+                                        color: clearHover.hovered ? Theme.textPrimary : Theme.bottomPanelTextSecondary
                                         font.family: Theme.fontUi
                                         font.pixelSize: 12
                                         font.weight: Font.DemiBold
@@ -467,13 +469,6 @@ Item {
 
                                 }
 
-                            }
-
-                            Rectangle {
-                                width: parent.width - 28
-                                height: 1
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                color: Theme.qsEdgeSoft
                             }
 
                             Item {

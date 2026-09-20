@@ -19,7 +19,7 @@ Item {
     readonly property int visibleMonthIndex: root.visibleMonth.getMonth()
     readonly property int firstWeekday: (new Date(root.visibleYear, root.visibleMonthIndex, 1).getDay() + 6) % 7
     readonly property var monthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    readonly property var weekdayNames: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    readonly property var weekdayNames: ["月", "火", "水", "木", "金", "土", "日"]
     readonly property var weekdayNamesLong: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     readonly property string monthTitle: `${root.monthNames[root.visibleMonthIndex]} ${root.visibleYear}`
     readonly property string todayTitle: `${root.weekdayNamesLong[root.today.getDay()]}, ${root.monthNames[root.today.getMonth()]} ${root.today.getDate()}`
@@ -103,29 +103,17 @@ Item {
             width: parent.width
             height: 48
 
-            Column {
-                spacing: 3
-
+            Text {
                 anchors {
                     left: parent.left
                     verticalCenter: parent.verticalCenter
                 }
 
-                Text {
-                    text: root.monthTitle
-                    color: Theme.textPrimary
-                    font.family: Theme.fontUi
-                    font.pixelSize: 14
-                    font.weight: Font.DemiBold
-                }
-
-                Text {
-                    text: root.todayTitle
-                    color: Theme.textDim
-                    font.family: Theme.fontUi
-                    font.pixelSize: 11
-                }
-
+                text: root.monthTitle + "  ·  " + root.weekdayNamesLong[root.today.getDay()] + " " + root.today.getDate()
+                color: Theme.textPrimary
+                font.family: Theme.fontUi
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
             }
 
             Row {
@@ -137,20 +125,18 @@ Item {
                 }
 
                 Rectangle {
-                    width: 28
-                    height: 28
+                    width: 30
+                    height: 30
                     radius: 8
-                    color: previousHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
-                    border.width: 1
-                    border.color: previousHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+                    color: "transparent"
+                    border.width: 0
 
                     Text {
                         anchors.centerIn: parent
-                        text: "‹"
-                        color: Theme.textPrimary
-                        font.family: Theme.fontUi
+                        text: "󰅁"
+                        color: previousHover.hovered ? Theme.textPrimary : Theme.textDim
+                        font.family: Theme.fontIcons
                         font.pixelSize: 16
-                        font.weight: Font.DemiBold
                     }
 
                     HoverHandler {
@@ -181,20 +167,18 @@ Item {
                 }
 
                 Rectangle {
-                    width: 28
-                    height: 28
+                    width: 30
+                    height: 30
                     radius: 8
-                    color: nextHover.hovered ? Theme.qsRowBgHover : Theme.qsRowBg
-                    border.width: 1
-                    border.color: nextHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+                    color: "transparent"
+                    border.width: 0
 
                     Text {
                         anchors.centerIn: parent
-                        text: "›"
-                        color: Theme.textPrimary
-                        font.family: Theme.fontUi
+                        text: "󰅂"
+                        color: nextHover.hovered ? Theme.textPrimary : Theme.textDim
+                        font.family: Theme.fontIcons
                         font.pixelSize: 16
-                        font.weight: Font.DemiBold
                     }
 
                     HoverHandler {
@@ -249,8 +233,8 @@ Item {
                         text: modelData
                         color: Theme.textDisabled
                         font.family: Theme.fontUi
-                        font.pixelSize: 10
-                        font.weight: Font.DemiBold
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
                         horizontalAlignment: Text.AlignHCenter
                     }
 
@@ -295,18 +279,27 @@ Item {
                         readonly property bool isWeekend: dateValue.getDay() === 0 || dateValue.getDay() === 6
 
                         width: dayGrid.dayWidth
-                        height: 32
-                        radius: 8
-                        color: selected ? Theme.tileActiveBg : dayHover.hovered && inVisibleMonth ? Theme.qsRowBg : "transparent"
-                        border.width: isToday && !selected ? 1 : 0
-                        border.color: Theme.tileActiveBorderHover
+                        height: 34
+                        color: "transparent"
+                        border.width: 0
+
+                        Rectangle {
+                            visible: parent.selected || (dayHover.hovered && parent.inVisibleMonth) || (parent.isToday && !parent.selected)
+                            width: Math.min(parent.width, parent.height)
+                            height: width
+                            radius: width / 2
+                            color: parent.selected ? Theme.tileActiveBg : (dayHover.hovered && parent.inVisibleMonth ? Theme.qsRowBg : "transparent")
+                            border.width: parent.isToday && !parent.selected ? 1 : 0
+                            border.color: Theme.tileActiveBorderHover
+                            anchors.centerIn: parent
+                        }
 
                         Text {
                             anchors.centerIn: parent
                             text: String(parent.dateValue.getDate())
                             color: parent.selected ? Theme.textPrimary : parent.inVisibleMonth ? (parent.isWeekend ? Theme.textDim : Theme.textPrimary) : Theme.textDisabled
                             font.family: Theme.fontUi
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.weight: parent.selected || parent.isToday ? Font.DemiBold : Font.Medium
                         }
 

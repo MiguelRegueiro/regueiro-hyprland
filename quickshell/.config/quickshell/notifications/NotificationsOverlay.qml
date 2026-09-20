@@ -97,7 +97,7 @@ PanelWindow {
         id: notificationCenter
 
         x: Math.round((parent.width - implicitWidth) / 2)
-        y: Theme.barHeight - Theme.qsBarFuseOverlap - 2
+        y: Theme.barHeight + 24
         open: root.notificationCenterVisible
         notificationStore: root.notificationStore
     }

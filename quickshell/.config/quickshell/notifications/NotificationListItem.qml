@@ -14,8 +14,8 @@ Item {
     readonly property var notif: item ? item.notif : null
     readonly property bool isCritical: notif !== null && notif.urgency === NotificationUrgency.Critical
     readonly property bool canActivate: notif !== null && notificationStore.hasDefaultAction(notif)
-    property color cardColor: root.canActivate && cardHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
-    property color cardBorderColor: root.isCritical ? (root.canActivate && cardHover.hovered ? Theme.urgentBorderHover : Theme.urgentBorder) : (root.canActivate && cardHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+    property color cardColor: root.canActivate && cardHover.hovered ? Theme.notificationCardBgHover : Theme.notificationCardBg
+    property color cardBorderColor: root.isCritical ? (root.canActivate && cardHover.hovered ? Theme.urgentBorderHover : Theme.urgentBorder) : (root.canActivate && cardHover.hovered ? Theme.notificationCardBorderHover : Theme.notificationCardBorder)
 
     width: ListView.view ? ListView.view.width : 0
     implicitHeight: card.implicitHeight
