@@ -7,7 +7,7 @@ Item {
     property var entries: []
     property string lastListOutput: ""
     property bool loading: listProc.running
-    property bool mutating: copyProc.running || deleteProc.running || wipeProc.running
+    property bool mutating: copyProc.running || deleteProc.running || wipeProc.running || imagePathCopyProc.running
     property string lastError: ""
     property var imagePreviewCache: ({})
     property var imagePreviewOrder: []
@@ -20,6 +20,7 @@ Item {
     signal copyCompleted(bool success)
     signal deleteCompleted(bool success)
     signal wipeCompleted(bool success)
+    signal imagePathCopyCompleted(bool success)
 
     function normalizeKind(kind) {
         return typeof kind === "string" && kind.length > 0 ? kind.toLowerCase() : "other";
@@ -183,6 +184,38 @@ Item {
         copyProc.running = true;
     }
 
+    function copyImagePath(entry) {
+        if (!entry || root.normalizeKind(entry.kind) !== "image" || imagePathCopyProc.running)
+            return;
+
+        const entryId = String(entry.id);
+        if (!/^\d+$/.test(entryId))
+            return;
+
+        const script = "set -euo pipefail\n"
+            + "cmd=\"$HOME/.cargo/bin/mimeclip\"\n"
+            + "if [ ! -x \"$cmd\" ]; then\n"
+            + "  if [ -x /usr/local/bin/mimeclip ]; then cmd=/usr/local/bin/mimeclip; else cmd=\"$(command -v mimeclip 2>/dev/null || true)\"; fi\n"
+            + "fi\n"
+            + "[ -n \"$cmd\" ] && [ -x \"$cmd\" ]\n"
+            + "cache_dir=\"$HOME/.cache/quickshell/clipboard-images\"\n"
+            + "mkdir -p \"$cache_dir\"\n"
+            + "mime=\"$(\"$cmd\" decode \"$1\" | jq -r '.[] | select(.mime_type | startswith(\"image/\")) | .mime_type' | head -n 1)\"\n"
+            + "case \"$mime\" in\n"
+            + "  image/png) extension=png ;;\n"
+            + "  image/jpeg) extension=jpg ;;\n"
+            + "  image/webp) extension=webp ;;\n"
+            + "  image/gif) extension=gif ;;\n"
+            + "  *) extension=img ;;\n"
+            + "esac\n"
+            + "path=\"$cache_dir/$1.$extension\"\n"
+            + "\"$cmd\" decode \"$1\" | jq -r '.[] | select(.mime_type | startswith(\"image/\")) | .data_b64' | head -n 1 | base64 -d > \"$path\"\n"
+            + "wl-copy --type \"text/plain;charset=utf-8\" -- \"$path\"";
+        lastError = "";
+        imagePathCopyProc.command = ["bash", "-lc", script, "clipboard-image-path", entryId];
+        imagePathCopyProc.running = true;
+    }
+
     function deleteEntry(entry) {
         if (!entry || deleteProc.running)
             return;
@@ -254,6 +287,20 @@ Item {
             if (!success)
                 root.lastError = "Failed to restore clipboard entry";
             root.copyCompleted(success);
+        }
+    }
+
+    Process {
+        id: imagePathCopyProc
+
+        command: ["echo"]
+        onExited: (exitCode) => {
+            const success = exitCode === 0;
+            if (success)
+                root.refresh();
+            else
+                root.lastError = "Failed to copy image path";
+            root.imagePathCopyCompleted(success);
         }
     }
 

@@ -728,13 +728,47 @@ FocusScope {
                                         id: actionRow
                                         z: 2
                                         visible: hovered || selected
-                                        width: deleteButton.width
+                                        width: imagePathButton.visible ? imagePathButton.width + 10 + deleteButton.width : deleteButton.width
                                         height: 28
+                                        spacing: 10
 
                                         anchors {
                                             right: parent.right
                                             rightMargin: 8
                                             verticalCenter: parent.verticalCenter
+                                        }
+
+                                        Rectangle {
+                                            id: imagePathButton
+
+                                            visible: imageEntry
+                                            width: 28
+                                            height: 28
+                                            radius: 14
+                                            color: imagePathHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+                                            border.width: 1
+                                            border.color: imagePathHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "󰆏"
+                                                font.family: Theme.fontIcons
+                                                font.pixelSize: 13
+                                                color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
+                                            }
+
+                                            HoverHandler {
+                                                id: imagePathHover
+
+                                                blocking: false
+                                                cursorShape: Qt.ArrowCursor
+                                            }
+
+                                            TapHandler {
+                                                acceptedButtons: Qt.LeftButton
+                                                gesturePolicy: TapHandler.ReleaseWithinBounds
+                                                onTapped: root.clipboardService.copyImagePath(modelData)
+                                            }
                                         }
 
                                         Rectangle {
