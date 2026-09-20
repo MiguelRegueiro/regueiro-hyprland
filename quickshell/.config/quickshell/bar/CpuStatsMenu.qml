@@ -16,15 +16,15 @@ PanelWindow {
     property bool fullscreenActive: false
     readonly property real reveal: statsPanel.reveal
     readonly property real menuWidth: 430
-    readonly property real menuLeft: 124
-    readonly property real menuY: Theme.barHeight - Theme.qsBarFuseOverlap - 2
-    readonly property real attachTop: Theme.ncAttachTop
-    readonly property real fuseOverhang: Theme.barCornerRadius
+    readonly property real menuLeft: 24
+    readonly property real menuY: Theme.barHeight + 24
+    readonly property real attachTop: Theme.qsContentPadding
+    readonly property real fuseOverhang: 0
     readonly property real fuseTopInset: Theme.qsBarFuseOverlap + 2
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
-    readonly property real surfaceOffsetY: -(1 - root.reveal) * statsPanel.height
+    readonly property real surfaceOffsetY: -(1 - root.reveal) * 12
     readonly property real surfaceHeight: Math.max(180, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
 
@@ -155,6 +155,7 @@ PanelWindow {
                     }
 
                     Shape {
+                        visible: false
                         anchors.fill: parent
                         preferredRendererType: Shape.CurveRenderer
 
@@ -193,6 +194,14 @@ PanelWindow {
                             PathLine { x: frame.width; y: root.topFuseJoinY }
                             PathArc { x: frame.width + root.fuseOverhang; y: root.fuseTopInset; radiusX: Theme.barCornerRadius; radiusY: Theme.barCornerRadius; direction: PathArc.Clockwise }
                         }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.ncSurfaceBottomLeftRadius
+                        color: Theme.qsSurfaceBg
+                        border.width: 2
+                        border.color: Theme.bottomPanelOutline
                     }
 
                     MouseArea {

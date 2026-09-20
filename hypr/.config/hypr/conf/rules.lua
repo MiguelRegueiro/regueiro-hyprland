@@ -53,6 +53,20 @@ hl.layer_rule({
     ignore_alpha = 0.5,
 })
 
+hl.layer_rule({
+    name = "qs-cpu-stats-blur",
+    match = { namespace = "qs-cpu-stats" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
+    name = "qs-ram-stats-blur",
+    match = { namespace = "qs-ram-stats" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
 -- Quickshell surfaces animate their own fused panel geometry.
 hl.layer_rule({
     name = "quickshell-self-animated",
