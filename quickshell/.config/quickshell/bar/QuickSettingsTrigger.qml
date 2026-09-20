@@ -22,7 +22,7 @@ Rectangle {
     height: barHeight
     implicitWidth: contentRow.implicitWidth + 28
     radius: Theme.radiusSmall
-    color: hovered && !menuOpen ? Theme.hoverBg : "transparent"
+    color: hovered || menuOpen ? Theme.hoverBg : "transparent"
 
     HoverHandler {
         id: triggerHover

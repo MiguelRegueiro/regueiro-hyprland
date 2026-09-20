@@ -9,6 +9,7 @@ Rectangle {
     property string iconText: ""
     property color iconColor: Theme.textPrimary
     property int iconSize: 13
+    property bool menuOpen: false
     readonly property bool hovered: hover.hovered
 
     signal clicked()
@@ -19,7 +20,7 @@ Rectangle {
     height: Math.min(barHeight, Theme.barItemHeight)
     implicitWidth: lbl.implicitWidth + padH * 2
     radius: Theme.radiusSmall
-    color: hovered ? Theme.hoverBg : "transparent"
+    color: hovered || menuOpen ? Theme.hoverBg : "transparent"
 
     Text {
         id: lbl

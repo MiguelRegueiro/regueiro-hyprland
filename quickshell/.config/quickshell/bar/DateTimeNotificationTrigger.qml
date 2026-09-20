@@ -28,7 +28,7 @@ Row {
         height: Math.min(root.barHeight, Theme.barItemHeight)
         width: pillContent.implicitWidth + 20
         radius: Theme.radiusSmall
-        color: root.hovered && !root.menuOpen ? Theme.hoverBg : "transparent"
+        color: root.hovered || root.menuOpen ? Theme.hoverBg : "transparent"
 
         HoverHandler {
             id: triggerHover
@@ -102,8 +102,6 @@ Row {
         }
 
         Behavior on color {
-            enabled: !root.menuOpen
-
             ColorAnimation {
                 duration: Theme.hoverAnimDuration
             }

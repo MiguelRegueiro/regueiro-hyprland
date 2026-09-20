@@ -630,6 +630,8 @@ ShellRoot {
                 forceOverlay: fullscreenPanelChromeActive
                 quickSettingsOpen: root.quickSettingsVisible
                 notificationCenterOpen: root.notificationCenterVisible
+                clipboardOpen: root.clipboardRequested
+                externalDrivesOpen: root.externalDrivesMenuVisible
                 cpuStatsOpen: root.cpuStatsMenuVisible
                 ramStatsOpen: root.ramStatsMenuVisible
                 sshSessionsOpen: root.sshSessionsMenuVisible

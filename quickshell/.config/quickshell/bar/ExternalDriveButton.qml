@@ -6,6 +6,7 @@ Rectangle {
     id: btn
 
     property int barHeight: 34
+    property bool menuOpen: false
     readonly property bool hovered: hover.hovered
 
     signal clicked()
@@ -14,7 +15,7 @@ Rectangle {
     height: Math.min(barHeight, Theme.barItemHeight)
     implicitWidth: 34
     radius: Theme.radiusSmall
-    color: hovered ? Theme.hoverBg : "transparent"
+    color: hovered || menuOpen ? Theme.hoverBg : "transparent"
 
     Item {
         id: glyph

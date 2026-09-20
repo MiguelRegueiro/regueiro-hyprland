@@ -21,6 +21,8 @@ PanelWindow {
     property bool forceOverlay: false
     property bool quickSettingsOpen: false
     property bool notificationCenterOpen: false
+    property bool clipboardOpen: false
+    property bool externalDrivesOpen: false
     property bool cpuStatsOpen: false
     property bool ramStatsOpen: false
     property bool sshSessionsOpen: false
@@ -183,6 +185,7 @@ PanelWindow {
 
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
+                menuOpen: bar.externalDrivesOpen
                 onClicked: bar.externalDrivesClicked()
                 onRightClicked: {
                     if (bar.externalDrivesService)
@@ -196,6 +199,7 @@ PanelWindow {
 
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
+                menuOpen: bar.sshSessionsOpen
                 sshService: bar.sshSessionsService
                 onClicked: bar.sshSessionsClicked()
                 onRightClicked: {
@@ -211,6 +215,7 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
                 barHeight: Theme.barHeight
                 iconText: "󰅌"
+                menuOpen: bar.clipboardOpen
                 onClicked: bar.clipboardClicked()
             }
 

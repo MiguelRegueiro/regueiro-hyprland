@@ -113,7 +113,7 @@ Row {
         height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: cpuRow.implicitWidth + 20
         radius: Theme.radiusSmall
-        color: cpuHover.hovered && !root.cpuMenuOpen ? Theme.hoverBg : "transparent"
+        color: cpuHover.hovered || root.cpuMenuOpen ? Theme.hoverBg : "transparent"
         anchors.verticalCenter: parent.verticalCenter
 
         Row {
@@ -155,8 +155,6 @@ Row {
         }
 
         Behavior on color {
-            enabled: !root.cpuMenuOpen
-
             ColorAnimation {
                 duration: Theme.hoverAnimDuration
             }
@@ -171,7 +169,7 @@ Row {
         height: Math.min(root.barHeight, Theme.barItemHeight)
         implicitWidth: ramRow.implicitWidth + 20
         radius: Theme.radiusSmall
-        color: ramHover.hovered && !root.ramMenuOpen ? Theme.hoverBg : "transparent"
+        color: ramHover.hovered || root.ramMenuOpen ? Theme.hoverBg : "transparent"
         anchors.verticalCenter: parent.verticalCenter
 
         Row {
@@ -214,8 +212,6 @@ Row {
         }
 
         Behavior on color {
-            enabled: !root.ramMenuOpen
-
             ColorAnimation {
                 duration: Theme.hoverAnimDuration
             }

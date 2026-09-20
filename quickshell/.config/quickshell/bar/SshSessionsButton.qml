@@ -7,6 +7,7 @@ Item {
 
     required property var sshService
     property int barHeight: Theme.barHeight
+    property bool menuOpen: false
     signal clicked()
     signal rightClicked()
 
@@ -20,7 +21,7 @@ Item {
         width: 34
         height: Math.min(root.barHeight, Theme.barItemHeight)
         radius: Theme.radiusSmall
-        color: hover.hovered ? Theme.hoverBg : "transparent"
+        color: hover.hovered || root.menuOpen ? Theme.hoverBg : "transparent"
 
         Text {
             anchors.centerIn: parent
