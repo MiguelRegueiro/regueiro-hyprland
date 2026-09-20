@@ -7,8 +7,11 @@ Flickable {
     id: root
 
     required property var controller
+    readonly property real rowHeight: 50
+    readonly property real rowSpacing: 3
+    readonly property real bottomInset: 12
 
-    contentHeight: listCol.implicitHeight
+    contentHeight: listCol.implicitHeight + bottomInset
     clip: true
     boundsBehavior: Flickable.StopAtBounds
 
@@ -16,7 +19,7 @@ Flickable {
         id: listCol
 
         width: parent.width
-        spacing: 4
+        spacing: root.rowSpacing
 
         Repeater {
             model: root.controller.wifiOn ? root.controller.networks : []
@@ -37,7 +40,7 @@ Flickable {
                 readonly property bool forgetActionVisible: rememberedProfile && (wifiHover.hovered || forgetPending || forgetBusy || forgetHasResult)
 
                 Layout.fillWidth: true
-                height: 52
+                height: root.rowHeight
                 radius: 18
                 color: modelData.active ? Theme.qsCardActiveBg : (selectedForPrompt ? Theme.qsCardBgHover : (wifiHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg))
                 border.width: 1

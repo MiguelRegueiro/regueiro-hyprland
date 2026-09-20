@@ -35,7 +35,7 @@ FocusScope {
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.qsWidth
-    readonly property real bodyHeight: contentLayout.implicitHeight + Theme.qsContentPadding * 2 + root.attachTop
+    readonly property real bodyHeight: contentLayout.implicitHeight + (root.wifiPageOpen ? 0 : Theme.qsContentPadding * 2) + root.attachTop
     readonly property real fuseLeftOverhang: 0
     readonly property real fuseBottomOverhang: 0
     readonly property real fuseTopInset: Theme.qsBarFuseOverlap + 2
@@ -441,6 +441,7 @@ FocusScope {
                             id: wifiPageView
 
                             width: parent.width
+                            bottomViewportInset: Theme.qsContentPadding * 2
                             x: root.wifiPageOpen ? 0 : (root.bluetoothPageOpen ? -parent.width - 20 : parent.width + 20)
                             opacity: root.wifiPageOpen ? 1 : 0
                             menuOpen: root.wifiPageOpen

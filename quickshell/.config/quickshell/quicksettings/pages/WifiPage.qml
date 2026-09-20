@@ -10,11 +10,12 @@ FocusScope {
     property bool needsFocus: wifiCtrl.needsFocus
     required property var wifiService
     property bool menuOpen: false
+    property real bottomViewportInset: 0
 
     signal backClicked()
 
     Layout.fillWidth: true
-    implicitHeight: 460
+    implicitHeight: 460 + bottomViewportInset
     onMenuOpenChanged: wifiCtrl.onMenuOpen(menuOpen)
 
     WifiController {
@@ -177,7 +178,7 @@ FocusScope {
         }
 
         Item {
-            height: 8
+            Layout.preferredHeight: 8
             z: 3
         }
 
@@ -186,14 +187,15 @@ FocusScope {
 
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Math.min(col.width - 24, outerPill.implicitWidth)
-            Layout.preferredHeight: 28
+            Layout.preferredHeight: active ? 28 : 0
             active: !wifiCtrl.promptOpen() && wifiCtrl.showStatus
+            visible: active
             connecting: wifiCtrl.connecting
             message: wifiCtrl.statusText()
         }
 
         Item {
-            height: 8
+            Layout.preferredHeight: outerPill.active ? 8 : 0
             z: 3
         }
 
@@ -208,11 +210,19 @@ FocusScope {
             z: 3
         }
 
-        WifiNetworkList {
+        Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            controller: wifiCtrl
-            z: 1
+            clip: true
+
+            WifiNetworkList {
+                id: networkList
+
+                width: parent.width
+                height: Math.max(0, Math.floor((parent.height + rowSpacing) / (rowHeight + rowSpacing)) * (rowHeight + rowSpacing) - rowSpacing)
+                controller: wifiCtrl
+                z: 1
+            }
         }
 
     }
