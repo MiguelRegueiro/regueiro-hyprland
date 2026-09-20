@@ -100,7 +100,7 @@ var ncSurfaceBottomRightRadius = barCornerRadius + 6;
 // Bottom-center panels
 var bottomPanelWidth = 760;
 var bottomPanelHeight = 630;
-var bottomPanelBg = Qt.rgba(0.063, 0.075, 0.106, 0.68);
+var bottomPanelBg = qsSurfaceBg;
 var notificationPanelBg = Qt.rgba(0.063, 0.075, 0.106, 0.64);
 var notificationCardBg = qsCardBg;
 var notificationCardBgHover = qsCardBgHover;

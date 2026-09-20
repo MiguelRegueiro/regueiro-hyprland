@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell.Io
 import "../../theme/Theme.js" as Theme
 
@@ -35,8 +36,17 @@ Rectangle {
     implicitHeight: 92
     radius: 18
     color: Theme.qsCardBg
-    border.width: 0
-    border.color: "transparent"
+    border.width: 1
+    border.color: Theme.qsCardBorder
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: Qt.rgba(0, 0, 0, 0.34)
+        shadowBlur: 0.48
+        shadowVerticalOffset: 1
+        shadowHorizontalOffset: 0
+        blurMax: 16
+    }
 
     Timer {
         interval: Theme.audioPollSlowInterval
