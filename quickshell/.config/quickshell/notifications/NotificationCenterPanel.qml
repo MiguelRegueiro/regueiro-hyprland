@@ -450,7 +450,7 @@ Item {
 
                                         anchors.centerIn: parent
                                         text: "Clear all"
-                                        color: clearHover.hovered ? Theme.textPrimary : Theme.bottomPanelTextSecondary
+                                        color: "#ffffff"
                                         font.family: Theme.fontUi
                                         font.pixelSize: 12
                                         font.weight: Font.DemiBold
@@ -493,7 +493,7 @@ Item {
                                         text: "󰂜"
                                         font.family: Theme.fontIcons
                                         font.pixelSize: 28
-                                        color: Theme.textDisabled
+                                        color: Qt.rgba(1, 1, 1, 0.68)
                                     }
 
                                     Text {

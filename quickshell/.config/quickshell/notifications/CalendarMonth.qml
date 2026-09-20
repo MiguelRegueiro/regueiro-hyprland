@@ -86,6 +86,9 @@ Item {
         precision: SystemClock.Minutes
     }
 
+    readonly property color secondaryTextColor: Qt.rgba(1, 1, 1, 0.88)
+    readonly property color mutedTextColor: Qt.rgba(1, 1, 1, 0.68)
+
     Component.onCompleted: {
         root.selectDate(root.today);
         root.captureToday();
@@ -134,7 +137,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: "󰅁"
-                        color: previousHover.hovered ? Theme.textPrimary : Theme.textDim
+                        color: previousHover.hovered ? Theme.textPrimary : root.secondaryTextColor
                         font.family: Theme.fontIcons
                         font.pixelSize: 16
                     }
@@ -176,7 +179,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: "󰅂"
-                        color: nextHover.hovered ? Theme.textPrimary : Theme.textDim
+                        color: nextHover.hovered ? Theme.textPrimary : root.secondaryTextColor
                         font.family: Theme.fontIcons
                         font.pixelSize: 16
                     }
@@ -231,7 +234,7 @@ Item {
 
                         width: root.calendarCellWidth
                         text: modelData
-                        color: Theme.textDisabled
+                        color: root.mutedTextColor
                         font.family: Theme.fontUi
                         font.pixelSize: 12
                         font.weight: Font.Bold
@@ -297,7 +300,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: String(parent.dateValue.getDate())
-                            color: parent.selected ? Theme.textPrimary : parent.inVisibleMonth ? (parent.isWeekend ? Theme.textDim : Theme.textPrimary) : Theme.textDisabled
+                            color: parent.selected ? Theme.textPrimary : parent.inVisibleMonth ? root.secondaryTextColor : root.mutedTextColor
                             font.family: Theme.fontUi
                             font.pixelSize: 13
                             font.weight: parent.selected || parent.isToday ? Font.DemiBold : Font.Medium

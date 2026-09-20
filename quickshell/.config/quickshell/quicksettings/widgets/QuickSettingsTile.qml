@@ -28,7 +28,7 @@ Rectangle {
     Layout.minimumWidth: 0
     Layout.preferredWidth: 0
     height: 64
-    scale: !interactive ? 1 : (pressed ? 0.985 : (hovered ? 1.012 : 1))
+    scale: interactive && pressed ? 0.985 : 1
     transformOrigin: Item.Center
     radius: pillShape ? height / 2 : Theme.qsRadius
     color: {

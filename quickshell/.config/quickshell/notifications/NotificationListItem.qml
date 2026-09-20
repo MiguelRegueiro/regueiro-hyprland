@@ -58,6 +58,8 @@ Item {
             width: parent.width - 28
             notificationStore: root.notificationStore
             notif: root.notif
+            contentPrimaryColor: "#ffffff"
+            contentSecondaryColor: Qt.rgba(1, 1, 1, 0.88)
             minimalChrome: true
             timestampText: {
                 root.timeTick;

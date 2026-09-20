@@ -160,6 +160,7 @@ ListView {
 
         width: ListView.view.width
         backgroundRadius: 16
+        surfaceVisible: false
         iconText: "󰎇"
         label: root.streamLabel(modelData)
         value: modelData.volume

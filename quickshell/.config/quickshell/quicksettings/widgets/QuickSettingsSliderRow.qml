@@ -15,6 +15,7 @@ Item {
     property bool muted: false
     property bool showMute: true
     property bool showActionButton: false
+    property bool surfaceVisible: true
     property bool actionButtonActive: false
     property string actionIconText: "󰅂"
     property real actionIconOffsetX: 0
@@ -71,8 +72,8 @@ Item {
     }
 
     Layout.fillWidth: true
-    height: 56
-    scale: row.dragging ? 1.006 : (row.hovered ? 1.004 : 1)
+    height: surfaceVisible ? 56 : (showLabel ? 46 : 38)
+    scale: 1
     transformOrigin: Item.Center
     onValueChanged: syncFromSource()
     onMutedChanged: syncFromSource()
@@ -88,6 +89,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
+        visible: row.surfaceVisible
         radius: row.backgroundRadius
         color: row.dragging || row.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
         border.width: 1
@@ -121,8 +123,8 @@ Item {
 
         anchors {
             fill: parent
-            leftMargin: 14
-            rightMargin: 14
+            leftMargin: row.surfaceVisible ? 14 : 2
+            rightMargin: row.surfaceVisible ? 14 : 2
         }
 
         // Icon / mute button

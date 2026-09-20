@@ -66,16 +66,18 @@ var qsEdgeSoft = Qt.rgba(0.82, 0.88, 1, 0.08);
 var qsGlow = Qt.rgba(0.28, 0.49, 0.88, 0.12);
 var qsRowBg = Qt.rgba(0.58, 0.68, 0.86, 0.10);
 var qsRowBgHover = Qt.rgba(0.58, 0.68, 0.86, 0.16);
-var qsCardBg = Qt.rgba(0.106, 0.114, 0.129, 0.54);
-var qsCardBgHover = Qt.rgba(0.106, 0.114, 0.129, 0.66);
+var qsCardBg = Qt.rgba(0.16, 0.17, 0.20, 0.80);
+var qsCardBgHover = Qt.rgba(0.20, 0.21, 0.25, 0.88);
 var qsCardActiveBg = Qt.rgba(0.15, 0.16, 0.18, 0.66);
-var qsCardBorder = Qt.rgba(0.82, 0.88, 1, 0.12);
-var qsCardBorderHover = Qt.rgba(0.82, 0.88, 1, 0.19);
-var qsCardActiveBorder = Qt.rgba(0.62, 0.74, 0.96, 0.25);
-var qsCardChipBg = Qt.rgba(0.72, 0.80, 0.96, 0.08);
-var qsCardChipBgHover = Qt.rgba(0.72, 0.80, 0.96, 0.14);
-var qsCardChipBorder = Qt.rgba(0.82, 0.88, 1, 0.10);
-var qsCardChipBorderHover = Qt.rgba(0.82, 0.88, 1, 0.16);
+var qsCardBorder = Qt.rgba(0.82, 0.88, 1, 0.08);
+var qsCardBorderHover = Qt.rgba(0.82, 0.88, 1, 0.15);
+var qsCardActiveBorder = Qt.rgba(0.62, 0.74, 0.96, 0.20);
+var qsCardChipBg = Qt.rgba(0.20, 0.21, 0.25, 0.90);
+var qsCardChipBgHover = Qt.rgba(0.26, 0.27, 0.31, 0.95);
+var qsCardChipBorder = "transparent";
+var qsCardChipBorderHover = "transparent";
+var qsMediaControlBg = Qt.rgba(0.25, 0.26, 0.31, 0.96);
+var qsMediaControlBgHover = Qt.rgba(0.32, 0.33, 0.38, 1.0);
 
 // Notification center
 var ncWidth = 760;

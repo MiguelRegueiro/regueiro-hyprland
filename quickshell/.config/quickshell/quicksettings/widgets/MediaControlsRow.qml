@@ -13,6 +13,7 @@ Rectangle {
     property string artist: ""
     property bool playing: false
     readonly property bool hasPlayer: playerId.length > 0
+    visible: hasPlayer
     readonly property string titleText: hasPlayer ? (title.length > 0 ? title : "Unknown title") : "No media playing"
     readonly property string subtitleText: {
         if (!hasPlayer)
@@ -31,15 +32,15 @@ Rectangle {
     }
 
     Layout.fillWidth: true
-    implicitHeight: 102
+    implicitHeight: 92
     radius: 18
     color: Theme.qsCardBg
-    border.width: 1
-    border.color: Theme.qsCardBorder
+    border.width: 0
+    border.color: "transparent"
 
     Timer {
         interval: Theme.audioPollSlowInterval
-        running: row.visible
+        running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -107,8 +108,8 @@ Rectangle {
             fill: parent
             leftMargin: 16
             rightMargin: 16
-            topMargin: 14
-            bottomMargin: 18
+            topMargin: 6
+            bottomMargin: 6
         }
 
         Rectangle {
@@ -228,7 +229,7 @@ Rectangle {
         width: 38
         height: 38
         radius: 19
-        color: btn.hovered && btn.enabled ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+        color: btn.hovered && btn.enabled ? Theme.qsMediaControlBgHover : Theme.qsMediaControlBg
         border.width: 1
         border.color: btn.hovered && btn.enabled ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
         opacity: btn.enabled ? 1 : 0.45

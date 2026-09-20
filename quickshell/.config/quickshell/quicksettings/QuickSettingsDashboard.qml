@@ -76,7 +76,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: 12
+        spacing: 10
 
         RowLayout {
             id: headerRow
@@ -129,9 +129,8 @@ Item {
                     height: 38
                     radius: 19
                     visible: headerStatus.hasBattery
-                    color: Theme.qsCardBg
-                    border.width: 1
-                    border.color: Theme.qsCardBorder
+                    color: "transparent"
+                    border.width: 0
                     width: Math.min(headerStatus.width, batteryRow.implicitWidth + 20)
 
                     RowLayout {
@@ -489,6 +488,7 @@ Item {
 
                 Layout.fillWidth: true
                 backgroundRadius: 18
+                surfaceVisible: false
                 visible: root.brightnessService.available
                 label: ""
                 value: root.brightnessService.percent / 100
@@ -518,9 +518,10 @@ Item {
 
                 Layout.fillWidth: true
                 backgroundRadius: 18
+                surfaceVisible: false
                 z: root.audioOutputPopupOpen ? 100 : 0
                 iconOverride: volIconComponent
-                label: root.audioService.currentSinkName.length > 0 ? root.audioService.currentSinkName : "Output device"
+                label: ""
                 value: root.audioService.volumePercent / 100
                 muted: root.audioService.muted
                 showActionButton: true

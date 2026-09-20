@@ -8,6 +8,8 @@ Item {
 
     required property var notificationStore
     required property var notif
+    property color contentPrimaryColor: Theme.textPrimary
+    property color contentSecondaryColor: Theme.textDim
     property bool compact: false
     property bool minimalChrome: false
     property string timestampText: ""
@@ -63,7 +65,7 @@ Item {
                     text: parent.iconOverride.length > 0 ? parent.iconOverride : "󰂚"
                     font.family: Theme.fontIcons
                     font.pixelSize: root.minimalChrome ? 14 : (root.compact ? 12 : 15)
-                    color: root.isCritical ? Theme.urgentAccent : Theme.textDim
+                    color: root.isCritical ? Theme.urgentAccent : root.contentSecondaryColor
                 }
 
                 Image {
@@ -81,7 +83,7 @@ Item {
             Text {
                 Layout.fillWidth: true
                 text: root.notif ? (root.notif.appName || "Notification") : ""
-                color: Theme.textDim
+                color: root.contentSecondaryColor
                 font.family: Theme.fontUi
                 font.pixelSize: root.minimalChrome ? 12 : (root.compact ? 11 : 12)
                 font.weight: Font.Medium
@@ -93,7 +95,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 visible: root.timestampText.length > 0
                 text: root.timestampText
-                color: Theme.textDim
+                color: root.contentSecondaryColor
                 font.family: Theme.fontUi
                 font.pixelSize: root.minimalChrome ? 12 : (root.compact ? 11 : 12)
                 font.weight: Font.Medium
@@ -113,7 +115,7 @@ Item {
                     text: "󰅖"
                     font.family: Theme.fontIcons
                     font.pixelSize: root.minimalChrome ? 11 : (root.compact ? 9 : 10)
-                    color: closeHover.hovered ? Theme.textPrimary : Theme.textDim
+                    color: closeHover.hovered ? root.contentPrimaryColor : root.contentSecondaryColor
                 }
 
                 HoverHandler {
@@ -168,7 +170,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     text: root.notif ? root.notif.summary : ""
-                    color: Theme.textPrimary
+                    color: root.contentPrimaryColor
                     font.family: Theme.fontUi
                     font.pixelSize: root.compact ? 14 : 15
                     font.weight: Font.DemiBold
@@ -181,7 +183,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     text: root.notif ? root.notif.body : ""
-                    color: Theme.textDim
+                    color: root.contentSecondaryColor
                     font.family: Theme.fontUi
                     font.pixelSize: root.compact ? 12 : 13
                     wrapMode: Text.WordWrap
