@@ -628,15 +628,6 @@ FocusScope {
                         color: Theme.bottomPanelSearchBg
                         border.width: 2
                         border.color: Theme.bottomPanelCardBorder
-                        layer.enabled: root.searchVisuallyActive
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: Qt.rgba(0, 0, 0, 0.34)
-                            shadowBlur: 0.28
-                            shadowVerticalOffset: 2
-                            shadowHorizontalOffset: 0
-                            blurMax: 16
-                        }
 
                         Text {
                             id: searchIcon
