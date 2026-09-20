@@ -27,6 +27,22 @@ Row {
         return workspace.monitor !== null && workspace.monitor !== undefined && workspace.monitor.name === screenName;
     }
 
+    function workspaceLabel(workspace) {
+        const number = Number(workspace.name);
+        const numerals = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+
+        if (!Number.isInteger(number) || number < 1 || number > 99)
+            return workspace.name;
+        if (number < 10)
+            return numerals[number];
+        if (number === 10)
+            return "十";
+
+        const tens = Math.floor(number / 10);
+        const ones = number % 10;
+        return `${tens === 1 ? "" : numerals[tens]}十${ones === 0 ? "" : numerals[ones]}`;
+    }
+
     spacing: 0
     rightPadding: 4
 
@@ -59,7 +75,7 @@ Row {
                 id: wsLabel
 
                 anchors.centerIn: parent
-                text: modelData.name
+                text: wsRow.workspaceLabel(modelData)
                 color: modelData.active ? "#ffffff" : Theme.textDim
                 font.family: Theme.fontUi
                 font.pixelSize: 14
