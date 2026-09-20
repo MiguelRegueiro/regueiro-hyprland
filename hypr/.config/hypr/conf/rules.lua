@@ -40,9 +40,10 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
-    name = "qs-border-noblur",
+    name = "qs-border-blur",
     match = { namespace = "qs-border" },
-    blur = false,
+    blur = true,
+    ignore_alpha = 0.5,
 })
 
 -- Quickshell surfaces animate their own fused panel geometry.

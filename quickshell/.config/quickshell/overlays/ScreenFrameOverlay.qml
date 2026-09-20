@@ -375,7 +375,7 @@ PanelWindow {
         id: quickSettingsPanel
 
         open: root.quickSettingsVisible
-        topOffset: root.innerTopY - Theme.qsBarFuseOverlap - 2
+        topOffset: Theme.barHeight + 14
         notificationStore: root.notificationStore
         audioService: root.audioService
         brightnessService: root.brightnessService

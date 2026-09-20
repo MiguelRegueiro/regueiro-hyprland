@@ -30,14 +30,14 @@ FocusScope {
     readonly property real surfaceBottomLeftRadius: Theme.qsSurfaceBottomLeftRadius
     readonly property real surfaceBottomRightRadius: Theme.qsSurfaceBottomRightRadius
     readonly property real attachTop: Theme.qsAttachTop
-    readonly property real attachRight: Theme.qsAttachRight
+    readonly property real attachRight: 0
     readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
     readonly property real revealProgress: reveal
-    readonly property real bodyWidth: Theme.qsWidth + Theme.qsAttachRight
+    readonly property real bodyWidth: Theme.qsWidth
     readonly property real bodyHeight: contentLayout.implicitHeight + Theme.qsContentPadding * 2 + root.attachTop
-    readonly property real fuseLeftOverhang: Theme.barCornerRadius
-    readonly property real fuseBottomOverhang: Theme.barCornerRadius
+    readonly property real fuseLeftOverhang: 0
+    readonly property real fuseBottomOverhang: 0
     readonly property real fuseTopInset: Theme.qsBarFuseOverlap + 2
     readonly property real mergedTopLeftRadius: 0.001
     readonly property real mergedBottomRightRadius: Theme.qsSurfaceBottomRightRadius
@@ -105,6 +105,7 @@ FocusScope {
         top: parent.top
         right: parent.right
         topMargin: root.topOffset
+        rightMargin: 28
     }
 
     Item {
@@ -153,11 +154,12 @@ FocusScope {
                     height: root.bodyHeight
 
                     Shape {
+                        visible: false
                         anchors.fill: parent
                         preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        fillColor: Theme.menuBg
+                        fillColor: Theme.qsSurfaceBg
                         strokeColor: "transparent"
                         strokeWidth: -1
 
@@ -187,7 +189,7 @@ FocusScope {
                     }
 
                     ShapePath {
-                        fillColor: Theme.menuBg
+                        fillColor: Theme.qsSurfaceBg
                         strokeColor: "transparent"
                         strokeWidth: -1
 
@@ -283,7 +285,7 @@ FocusScope {
                     }
 
                     ShapePath {
-                        fillColor: Theme.menuBg
+                        fillColor: Theme.qsSurfaceBg
                         strokeColor: "transparent"
                         strokeWidth: -1
 
@@ -329,6 +331,17 @@ FocusScope {
 
                     }
 
+                }
+
+                Rectangle {
+                    x: frame.x
+                    y: frame.y
+                    width: frame.width
+                    height: root.visibleBodyHeight
+                    radius: Theme.qsSurfaceBottomLeftRadius
+                    color: Theme.qsSurfaceBg
+                    border.width: 2
+                    border.color: Theme.bottomPanelOutline
                 }
 
                 MouseArea {

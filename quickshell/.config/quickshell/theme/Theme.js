@@ -48,6 +48,7 @@ var fontSizeDelta = 0;
 
 // Quick Settings
 var qsBg = Qt.rgba(0.09, 0.11, 0.15, 0.96);
+var qsSurfaceBg = Qt.rgba(0.063, 0.075, 0.106, 0.68);
 var qsBorder = Qt.rgba(0.82, 0.88, 1, 0.14);
 var qsWidth = 400;
 var qsRadius = 12;
@@ -65,9 +66,9 @@ var qsEdgeSoft = Qt.rgba(0.82, 0.88, 1, 0.08);
 var qsGlow = Qt.rgba(0.28, 0.49, 0.88, 0.12);
 var qsRowBg = Qt.rgba(0.58, 0.68, 0.86, 0.10);
 var qsRowBgHover = Qt.rgba(0.58, 0.68, 0.86, 0.16);
-var qsCardBg = "#181818";
-var qsCardBgHover = "#202020";
-var qsCardActiveBg = "#282828";
+var qsCardBg = Qt.rgba(0.106, 0.114, 0.129, 0.54);
+var qsCardBgHover = Qt.rgba(0.106, 0.114, 0.129, 0.66);
+var qsCardActiveBg = Qt.rgba(0.15, 0.16, 0.18, 0.66);
 var qsCardBorder = Qt.rgba(0.82, 0.88, 1, 0.12);
 var qsCardBorderHover = Qt.rgba(0.82, 0.88, 1, 0.19);
 var qsCardActiveBorder = Qt.rgba(0.62, 0.74, 0.96, 0.25);
