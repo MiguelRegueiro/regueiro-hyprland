@@ -9,6 +9,11 @@ Item {
     property bool loading: listProc.running
     property bool mutating: copyProc.running || deleteProc.running || wipeProc.running
     property string lastError: ""
+    property var imagePreviewCache: ({})
+    property var imagePreviewOrder: []
+    property var imagePreviewPending: ({})
+    property var imagePreviewQueue: []
+    property string imagePreviewCurrentId: ""
     // Support the documented cargo install path, manual /usr/local installs, and PATH installs.
     property string mimeclipLauncher: 'cmd="$HOME/.cargo/bin/mimeclip"; if [ ! -x "$cmd" ]; then if [ -x /usr/local/bin/mimeclip ]; then cmd=/usr/local/bin/mimeclip; else cmd="$(command -v mimeclip 2>/dev/null || true)"; fi; fi; if [ -z "$cmd" ] || [ ! -x "$cmd" ]; then echo "mimeclip not found in $HOME/.cargo/bin, /usr/local/bin, or PATH" >&2; exit 127; fi; exec "$cmd" "$@"'
 
@@ -22,6 +27,57 @@ Item {
 
     function mimeclipCommand(args) {
         return ["bash", "-lc", root.mimeclipLauncher, "mimeclip"].concat(args);
+    }
+
+    function imagePreviewSource(entryId) {
+        return root.imagePreviewCache[String(entryId)] || "";
+    }
+
+    function requestImagePreview(entry) {
+        if (!entry || root.normalizeKind(entry.kind) !== "image")
+            return;
+
+        const entryId = String(entry.id);
+        if (!/^\d+$/.test(entryId) || Object.prototype.hasOwnProperty.call(root.imagePreviewCache, entryId) || root.imagePreviewPending[entryId])
+            return;
+
+        const pending = Object.assign({}, root.imagePreviewPending);
+        pending[entryId] = true;
+        root.imagePreviewPending = pending;
+        root.imagePreviewQueue = root.imagePreviewQueue.concat([entryId]);
+        root.startNextImagePreview();
+    }
+
+    function startNextImagePreview() {
+        if (imagePreviewProc.running || root.imagePreviewCurrentId.length > 0 || root.imagePreviewQueue.length === 0)
+            return;
+
+        const entryId = root.imagePreviewQueue[0];
+        root.imagePreviewQueue = root.imagePreviewQueue.slice(1);
+        root.imagePreviewCurrentId = entryId;
+        imagePreviewProc.command = root.mimeclipCommand(["decode", entryId]);
+        imagePreviewProc.running = true;
+    }
+
+    function finishImagePreview(entryId, source) {
+        if (root.imagePreviewCurrentId !== entryId)
+            return;
+
+        const pending = Object.assign({}, root.imagePreviewPending);
+        delete pending[entryId];
+        root.imagePreviewPending = pending;
+
+        const cache = Object.assign({}, root.imagePreviewCache);
+        cache[entryId] = source;
+        const order = root.imagePreviewOrder.filter((id) => id !== entryId);
+        order.push(entryId);
+        while (order.length > 6)
+            delete cache[order.shift()];
+
+        root.imagePreviewCache = cache;
+        root.imagePreviewOrder = order;
+        root.imagePreviewCurrentId = "";
+        Qt.callLater(root.startNextImagePreview);
     }
 
     function titleCaseKind(kind) {
@@ -157,6 +213,35 @@ Item {
         onExited: (exitCode) => {
             if (exitCode !== 0)
                 root.lastError = "Failed to load clipboard history";
+        }
+    }
+
+    Process {
+        id: imagePreviewProc
+
+        command: root.mimeclipCommand(["decode", "0"])
+        stdout: StdioCollector {
+            id: imagePreviewOut
+            waitForEnd: true
+            onStreamFinished: {
+                const entryId = root.imagePreviewCurrentId;
+                if (entryId.length === 0)
+                    return;
+
+                let source = "";
+                try {
+                    const payloads = JSON.parse(imagePreviewOut.text);
+                    const imagePayload = payloads.find((payload) => payload && typeof payload.mime_type === "string" && payload.mime_type.startsWith("image/") && typeof payload.data_b64 === "string" && payload.data_b64.length > 0);
+                    if (imagePayload)
+                        source = `data:${imagePayload.mime_type};base64,${imagePayload.data_b64}`;
+                } catch (error) {
+                }
+                root.finishImagePreview(entryId, source);
+            }
+        }
+        onExited: (exitCode) => {
+            if (exitCode !== 0 && root.imagePreviewCurrentId.length > 0)
+                root.finishImagePreview(root.imagePreviewCurrentId, "");
         }
     }
 

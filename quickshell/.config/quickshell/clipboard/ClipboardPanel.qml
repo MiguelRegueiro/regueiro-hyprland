@@ -640,8 +640,9 @@ FocusScope {
 
                                     readonly property bool selected: index === root.selectedIndex
                                     readonly property bool hovered: rowHover.hovered
+                                    readonly property bool imageEntry: modelData.kind === "image"
                                     width: listView.width
-                                    implicitHeight: Math.max(58, previewLabel.implicitHeight + 22)
+                                    implicitHeight: Math.max(imageEntry ? 82 : 58, previewLabel.implicitHeight + 22)
                                     radius: 14
                                     color: selected ? Theme.bottomPanelCardActiveBg : hovered ? Qt.rgba(0.15, 0.16, 0.19, 0.44) : Theme.bottomPanelCardBg
                                     border.width: selected ? 2 : 1
@@ -662,17 +663,35 @@ FocusScope {
                                         anchors.bottomMargin: 10
                                         spacing: 8
 
-                                        Item {
+                                        Rectangle {
                                             Layout.alignment: Qt.AlignVCenter
-                                            Layout.preferredWidth: 28
-                                            Layout.preferredHeight: 28
+                                            Layout.preferredWidth: imageEntry ? 64 : 28
+                                            Layout.preferredHeight: imageEntry ? 64 : 28
+                                            radius: imageEntry ? 12 : 14
+                                            color: imageEntry ? Qt.rgba(0, 0, 0, 0.28) : "transparent"
+                                            clip: imageEntry
 
                                             Text {
                                                 anchors.centerIn: parent
+                                                visible: !imageEntry || imagePreview.status !== Image.Ready
                                                 text: root.iconForKind(modelData.kind)
                                                 font.family: Theme.fontIcons
                                                 font.pixelSize: 14
                                                 color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
+                                            }
+
+                                            Image {
+                                                id: imagePreview
+
+                                                anchors.fill: parent
+                                                anchors.margins: 1
+                                                visible: imageEntry
+                                                source: imageEntry ? root.clipboardService.imagePreviewSource(modelData.id) : ""
+                                                fillMode: Image.PreserveAspectCrop
+                                                sourceSize.width: 128
+                                                sourceSize.height: 128
+                                                asynchronous: true
+                                                cache: true
                                             }
                                         }
 
@@ -698,6 +717,11 @@ FocusScope {
                                             root.selectedIndex = index;
                                             root.activateEntry(modelData);
                                         }
+                                    }
+
+                                    Component.onCompleted: {
+                                        if (imageEntry)
+                                            root.clipboardService.requestImagePreview(modelData);
                                     }
 
                                     Row {
