@@ -19,6 +19,7 @@ PanelWindow {
     readonly property int methodCount: root.inputService.methods.length
 
     screen: targetScreen
+    visible: root.osdVisible && root.active
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
@@ -70,7 +71,7 @@ PanelWindow {
             width: root.itemW
             height: root.itemH
             radius: 10
-            color: Theme.activeBg
+            color: Theme.osdSelectionBg
 
             Behavior on x {
                 NumberAnimation {
@@ -106,7 +107,7 @@ PanelWindow {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: modelData.label
                             font.family: Theme.fontUi
-                            font.pixelSize: 28
+                            font.pixelSize: 32
                             font.weight: Font.Bold
                             font.letterSpacing: 1
                             color: isActive ? Theme.osdTextPrimary : Theme.osdTextSecondary
