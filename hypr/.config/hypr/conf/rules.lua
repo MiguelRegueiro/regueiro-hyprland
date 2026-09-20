@@ -46,6 +46,13 @@ hl.layer_rule({
     ignore_alpha = 0.5,
 })
 
+hl.layer_rule({
+    name = "qs-osd-blur",
+    match = { namespace = "^qs-(volume|im|power|battery-warning)-osd$" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
 -- Quickshell surfaces animate their own fused panel geometry.
 hl.layer_rule({
     name = "quickshell-self-animated",

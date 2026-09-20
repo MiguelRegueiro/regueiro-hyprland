@@ -81,8 +81,8 @@ PanelWindow {
         width: root.showOutputLabel ? 320 : 280
         height: 60
         radius: 30
-        color: Theme.popupBg
-        border.color: Theme.barBorder
+        color: Theme.osdSurfaceBg
+        border.color: Theme.osdSurfaceBorder
         border.width: 1
         opacity: root.osdVisible ? 1 : 0
         scale: root.osdVisible ? 1 : 0.96
@@ -109,7 +109,7 @@ PanelWindow {
                     visible: root.currentMode === "volume"
                     muted: audioService.muted
                     volumePercent: audioService.volumePercent
-                    iconColor: Theme.textPrimary
+                    iconColor: Theme.osdTextPrimary
                     height: 20
                 }
 
@@ -117,7 +117,7 @@ PanelWindow {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     visible: root.currentMode === "brightness"
-                    iconColor: Theme.textPrimary
+                    iconColor: Theme.osdTextPrimary
                     height: 20
                 }
 
@@ -135,7 +135,7 @@ PanelWindow {
                     width: parent.width * parent.fillFraction
                     height: parent.height
                     radius: parent.radius
-                    color: Theme.textPrimary
+                    color: Theme.osdTextPrimary
                 }
 
             }
@@ -144,7 +144,7 @@ PanelWindow {
                 text: root.currentMode === "brightness" ? brightnessService.percent + "%" : (audioService.muted ? "Muted" : audioService.volumePercent + "%")
                 font.family: Theme.fontUi
                 font.pixelSize: 13
-                color: Theme.textDim
+                color: Theme.osdTextSecondary
                 Layout.leftMargin: 6
                 horizontalAlignment: Text.AlignRight
             }
@@ -161,7 +161,7 @@ PanelWindow {
             font.family: Theme.fontUi
             font.pixelSize: 13
             font.weight: Font.DemiBold
-            color: Theme.textDim
+            color: Theme.osdTextSecondary
             elide: Text.ElideRight
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

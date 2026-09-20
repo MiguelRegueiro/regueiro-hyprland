@@ -53,8 +53,8 @@ PanelWindow {
         width: root.pad * 2 + (root.methodCount > 0 ? root.itemW * root.methodCount + root.itemGap * (root.methodCount - 1) : root.itemW)
         height: root.pad * 2 + root.itemH
         radius: 18
-        color: Theme.popupBg
-        border.color: Theme.barBorder
+        color: Theme.osdSurfaceBg
+        border.color: Theme.osdSurfaceBorder
         border.width: 1
         opacity: root.osdVisible && root.active ? 1 : 0
         scale: root.osdVisible && root.active ? 1 : 0.96
@@ -109,7 +109,7 @@ PanelWindow {
                             font.pixelSize: 28
                             font.weight: Font.Bold
                             font.letterSpacing: 1
-                            color: isActive ? Theme.textPrimary : Theme.textDim
+                            color: isActive ? Theme.osdTextPrimary : Theme.osdTextSecondary
 
                             Behavior on color {
                                 ColorAnimation {
@@ -126,7 +126,7 @@ PanelWindow {
                             font.family: Theme.fontUi
                             font.pixelSize: 12
                             font.weight: Font.Medium
-                            color: isActive ? Theme.textDim : Theme.textDisabled
+                            color: isActive ? Theme.osdTextSecondary : Theme.osdTextMuted
 
                             Behavior on color {
                                 ColorAnimation {

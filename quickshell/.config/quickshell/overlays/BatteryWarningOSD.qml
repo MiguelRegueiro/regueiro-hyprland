@@ -36,7 +36,7 @@ PanelWindow {
         width: 390
         height: 72
         radius: 18
-        color: Theme.popupBg
+        color: Theme.osdSurfaceBg
         border.color: Theme.red
         border.width: 2
         opacity: root.warningVisible ? 1 : 0
@@ -69,7 +69,7 @@ PanelWindow {
                     font.family: Theme.fontUi
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
-                    color: Theme.textPrimary
+                    color: Theme.osdTextPrimary
                 }
 
                 Text {

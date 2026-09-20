@@ -78,6 +78,11 @@ var qsCardChipBorder = "transparent";
 var qsCardChipBorderHover = "transparent";
 var qsMediaControlBg = Qt.rgba(0.25, 0.26, 0.31, 0.96);
 var qsMediaControlBgHover = Qt.rgba(0.32, 0.33, 0.38, 1.0);
+var osdSurfaceBg = Qt.rgba(0.15, 0.15, 0.16, 0.84);
+var osdSurfaceBorder = Qt.rgba(1, 1, 1, 0.12);
+var osdTextPrimary = "#ffffff";
+var osdTextSecondary = Qt.rgba(1, 1, 1, 0.88);
+var osdTextMuted = Qt.rgba(1, 1, 1, 0.62);
 
 // Notification center
 var ncWidth = 760;

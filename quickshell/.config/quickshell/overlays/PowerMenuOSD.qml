@@ -260,8 +260,8 @@ PanelWindow {
             width: root.mode === "confirm" ? root.confirmW : root.menuW
             height: root.mode === "confirm" ? root.confirmH : root.menuH
             radius: 22
-            color: Theme.popupBg
-            border.color: Theme.barBorder
+            color: Theme.osdSurfaceBg
+            border.color: Theme.osdSurfaceBorder
             border.width: 1
             layer.enabled: true
 
@@ -312,7 +312,7 @@ PanelWindow {
                                     text: actionTile.busy ? "\uf110" : modelData.icon
                                     font.family: Theme.fontIcons
                                     font.pixelSize: modelData.iconPixelSize || 21
-                                    color: actionTile.selected ? Theme.textPrimary : Theme.textDim
+                                    color: actionTile.selected ? Theme.osdTextPrimary : Theme.osdTextSecondary
                                 }
 
                                 Text {
@@ -322,7 +322,7 @@ PanelWindow {
                                     font.family: Theme.fontUi
                                     font.pixelSize: 12
                                     font.weight: Font.Medium
-                                    color: actionTile.selected ? Theme.textPrimary : Theme.textDisabled
+                                    color: actionTile.selected ? Theme.osdTextPrimary : Theme.osdTextMuted
                                     horizontalAlignment: Text.AlignHCenter
                                     elide: Text.ElideRight
                                 }
@@ -367,7 +367,7 @@ PanelWindow {
                         font.family: Theme.fontUi
                         font.pixelSize: 17
                         font.weight: Font.Bold
-                        color: Theme.textPrimary
+                        color: Theme.osdTextPrimary
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
                     }
@@ -417,7 +417,7 @@ PanelWindow {
                                         font.family: Theme.fontUi
                                         font.pixelSize: 13
                                         font.weight: Font.Medium
-                                        color: confirmButton.selected ? Theme.textPrimary : Theme.textDim
+                                        color: confirmButton.selected ? Theme.osdTextPrimary : Theme.osdTextSecondary
                                     }
 
                                     MouseArea {
