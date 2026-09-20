@@ -21,14 +21,14 @@ PanelWindow {
     readonly property bool mutating: driveService && driveService.mutating
     readonly property real menuWidth: 320
     readonly property real menuRightMargin: 176
-    readonly property real menuY: Theme.barHeight - Theme.qsBarFuseOverlap - 2
-    readonly property real attachTop: Theme.ncAttachTop
-    readonly property real fuseOverhang: Theme.barCornerRadius
+    readonly property real menuY: Theme.barHeight + 24
+    readonly property real attachTop: Theme.qsContentPadding
+    readonly property real fuseOverhang: 0
     readonly property real fuseTopInset: Theme.qsBarFuseOverlap + 2
     readonly property real topFuseJoinY: root.fuseTopInset + Theme.barCornerRadius
     readonly property real bottomLeftRadius: Theme.ncSurfaceBottomLeftRadius
     readonly property real bottomRightRadius: Theme.ncSurfaceBottomRightRadius
-    readonly property real surfaceOffsetY: -(1 - root.reveal) * externalPanel.height
+    readonly property real surfaceOffsetY: -(1 - root.reveal) * 12
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property real clipSurfaceWidth: root.menuWidth + root.fuseOverhang * 2
     readonly property int openDuration: Theme.topBarMenuOpenDuration
@@ -152,6 +152,7 @@ PanelWindow {
                     }
 
                     Shape {
+                        visible: false
                             anchors.fill: parent
                             preferredRendererType: Shape.CurveRenderer
 
@@ -289,6 +290,14 @@ PanelWindow {
 
                 }
 
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Theme.ncSurfaceBottomLeftRadius
+                    color: Theme.qsSurfaceBg
+                    border.width: 2
+                    border.color: Theme.bottomPanelOutline
+                }
+
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.AllButtons
@@ -306,69 +315,6 @@ PanelWindow {
                         topMargin: root.attachTop
                         leftMargin: 14
                         rightMargin: 14
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 48
-
-                        RowLayout {
-                            spacing: 10
-
-                            anchors {
-                                left: parent.left
-                                right: parent.right
-                                verticalCenter: parent.verticalCenter
-                            }
-
-                            Text {
-                                text: ""
-                                font.family: Theme.fontIcons
-                                font.pixelSize: 16
-                                color: Theme.textPrimary
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.drives.length === 1 ? "External drive" : "External drives"
-                                font.family: Theme.fontUi
-                                font.pixelSize: 14
-                                font.weight: Font.DemiBold
-                                color: Theme.textPrimary
-                                elide: Text.ElideRight
-                            }
-
-                            Rectangle {
-                                Layout.alignment: Qt.AlignVCenter
-                                width: Math.max(24, countText.implicitWidth + 14)
-                                height: 24
-                                radius: 12
-                                color: Theme.qsRowBg
-
-                                Text {
-                                    id: countText
-
-                                    anchors.fill: parent
-                                    text: root.loading || root.mutating ? "…" : String(root.drives.length)
-                                    color: Theme.textPrimary
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 12
-                                    font.weight: Font.DemiBold
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        color: Theme.qsEdgeSoft
                     }
 
                     Item {
@@ -421,7 +367,7 @@ PanelWindow {
                                     readonly property bool hovered: rowHover.hovered
 
                                     Layout.fillWidth: true
-                                    implicitHeight: 92
+                                    implicitHeight: 110
                                     radius: Theme.qsRadius + 1
                                     scale: hovered ? 1.006 : 1
                                     transformOrigin: Item.Center
@@ -445,17 +391,17 @@ PanelWindow {
 
                                     ColumnLayout {
                                         anchors.fill: parent
-                                        anchors.margins: 12
-                                        spacing: 8
+                                        anchors.margins: 14
+                                        spacing: 10
 
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 10
+                                            spacing: 12
 
                                             Rectangle {
-                                                Layout.preferredWidth: 30
-                                                Layout.preferredHeight: 30
-                                                radius: 15
+                                                Layout.preferredWidth: 36
+                                                Layout.preferredHeight: 36
+                                                radius: 18
                                                 color: modelData.mounted ? Qt.rgba(1, 1, 1, 0.10) : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: modelData.mounted ? Qt.rgba(1, 1, 1, 0.12) : Theme.qsCardChipBorder
@@ -464,7 +410,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: ""
                                                     font.family: Theme.fontIcons
-                                                    font.pixelSize: 15
+                                                    font.pixelSize: 17
                                                     color: modelData.mounted ? Theme.textPrimary : Theme.textDim
                                                 }
 
@@ -478,7 +424,7 @@ PanelWindow {
                                                     Layout.fillWidth: true
                                                     text: modelData.label
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 13
+                                                    font.pixelSize: 15
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                     elide: Text.ElideRight
@@ -496,7 +442,7 @@ PanelWindow {
                                                         return bits.join(" · ");
                                                     }
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 12
                                                     color: Theme.textDim
                                                     elide: Text.ElideRight
                                                 }
@@ -512,8 +458,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: modelData.mounted
                                                 Layout.preferredWidth: 64
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: openHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: openHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
@@ -522,7 +468,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Open"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 12
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                 }
@@ -548,8 +494,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: !modelData.mounted
                                                 Layout.preferredWidth: 64
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: mountHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: mountHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
@@ -558,7 +504,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Mount"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 12
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                 }
@@ -581,8 +527,8 @@ PanelWindow {
                                             Rectangle {
                                                 visible: modelData.mounted
                                                 Layout.preferredWidth: 80
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: unmountHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: unmountHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
@@ -591,7 +537,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Unmount"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 12
                                                     font.weight: Font.DemiBold
                                                     color: Theme.textPrimary
                                                 }
@@ -613,8 +559,8 @@ PanelWindow {
 
                                             Rectangle {
                                                 Layout.preferredWidth: 58
-                                                Layout.preferredHeight: 26
-                                                radius: 8
+                                                Layout.preferredHeight: 30
+                                                radius: 10
                                                 color: ejectHover.hovered ? Qt.rgba(1, 0.36, 0.32, 0.18) : Theme.qsCardChipBg
                                                 border.width: 1
                                                 border.color: ejectHover.hovered ? Qt.rgba(1, 0.48, 0.39, 0.20) : Theme.qsCardChipBorder
@@ -623,7 +569,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: "Eject"
                                                     font.family: Theme.fontUi
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: 12
                                                     font.weight: Font.DemiBold
                                                     color: ejectHover.hovered ? Theme.red : Theme.textPrimary
                                                 }

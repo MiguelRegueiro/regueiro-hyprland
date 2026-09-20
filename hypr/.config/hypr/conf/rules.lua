@@ -67,6 +67,13 @@ hl.layer_rule({
     ignore_alpha = 0.5,
 })
 
+hl.layer_rule({
+    name = "qs-external-drives-blur",
+    match = { namespace = "qs-external-drives" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
 -- Quickshell surfaces animate their own fused panel geometry.
 hl.layer_rule({
     name = "quickshell-self-animated",
