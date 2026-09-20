@@ -105,7 +105,7 @@ FocusScope {
         top: parent.top
         right: parent.right
         topMargin: root.topOffset
-        rightMargin: 28
+        rightMargin: 20
     }
 
     Item {

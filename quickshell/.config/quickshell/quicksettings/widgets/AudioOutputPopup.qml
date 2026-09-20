@@ -91,23 +91,14 @@ Item {
             x: 12
             y: 12
             width: parent.width - 24
-            spacing: 10
+            spacing: 8
 
             Text {
-                text: "Output Device"
+                text: "Sound output"
                 color: Theme.textPrimary
                 font.family: Theme.fontUi
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
-            }
-
-            Text {
-                width: parent.width
-                text: popupRoot.audioService.currentSinkName.length > 0 ? popupRoot.audioService.currentSinkName : "No active output"
-                color: Theme.textDim
-                font.family: Theme.fontUi
-                font.pixelSize: 11
-                elide: Text.ElideRight
             }
 
             Rectangle {
