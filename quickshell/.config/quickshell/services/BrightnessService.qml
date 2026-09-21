@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import "../theme/Theme.js" as Theme
 
@@ -12,6 +13,25 @@ Item {
     // Edit this list to change the brightness stops.
     // All values are percentages (0–100). Tune freely.
     readonly property var stops: [2, 4, 8, 12, 18, 26, 36, 50, 66, 80, 90, 100]
+    // Optional machine-local settings; absent/invalid settings keep the stops above.
+    readonly property var localSettings: {
+        try {
+            return JSON.parse(localConfig.text()) || {};
+        } catch (error) {
+            return {};
+        }
+    }
+    readonly property int linearStep: Number.isInteger(localSettings.step) && localSettings.step >= 1 && localSettings.step <= 100 ? localSettings.step : 0
+    readonly property int minimumPercent: linearStep > 0 ? (Number.isInteger(localSettings.minimum) && localSettings.minimum >= 0 && localSettings.minimum < 100 ? localSettings.minimum : 2) : 0
+
+    FileView {
+        id: localConfig
+
+        path: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/quickshell-local/brightness.json"
+        printErrors: false
+        watchChanges: true
+        onFileChanged: reload()
+    }
     readonly property string iconText: {
         if (percent < 34)
             return "󰃞";
@@ -31,7 +51,7 @@ Item {
     }
 
     function setPercent(nextPercent) {
-        const clamped = Math.max(0, Math.min(100, Math.round(nextPercent)));
+        const clamped = Math.max(root.minimumPercent, Math.min(100, Math.round(nextPercent)));
         root.percent = clamped;
         root.rawValue = root.maxValue > 0 ? Math.round(clamped * root.maxValue / 100) : 0;
         setBrightness.command = ["brightnessctl", "set", clamped + "%"];
@@ -43,6 +63,11 @@ Item {
     function adjust(direction) {
         if (root.maxValue <= 0)
             return ;
+
+        if (root.linearStep > 0) {
+            root.setPercent(root.percent + (direction > 0 ? root.linearStep : -root.linearStep));
+            return ;
+        }
 
         const current = root.percent;
         let target;

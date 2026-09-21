@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-preferred_external="DP-1"
+preferred_external="${HYPR_PREFERRED_MONITOR:-DP-1}"
 settle_delay="0.8"
 
 monitor_json() {

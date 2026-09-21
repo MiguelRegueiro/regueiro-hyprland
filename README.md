@@ -111,10 +111,19 @@ On Fedora, keep `tuned-ppd` if it already provides power profiles. QuickShell us
 The launcher caches icons as PNGs. For SVG conversion, install `rsvg-convert`
 (`librsvg` on CachyOS/Arch, `librsvg2-tools` on Fedora) or ImageMagick as a fallback.
 
-### Monitor layout
+### Local overrides
 
-`hypr/.config/hypr/conf/monitors.lua` has a hardcoded monitor layout for my machine. Edit it to match yours before starting.
-`hypr/.config/hypr/scripts/startup-monitor-focus.sh` also prefers `DP-1` at session start when it is connected; change that script if your external monitor has a different name.
+The shared monitor layout and brightness stops remain the defaults. Optional
+machine-local files under `$XDG_CONFIG_HOME` (normally `~/.config`) can override them:
+
+- `hypr-local/monitors.lua`: replaces monitor configuration. `HYPR_PREFERRED_MONITOR`
+  selects startup focus, defaulting to `DP-1`. Workspace assignments remain in
+  `conf/workspaces.lua` unless also overridden.
+- `quickshell-local/brightness.json`: an integer `step` (1–100) enables linear
+  percentage-point adjustments; `minimum` (0–99, default 2) sets the lower bound.
+  Without a valid step, the original stops apply. Edits reload automatically.
+
+Keep these files outside Stow and version control.
 
 ### Portals and Elio file chooser
 
