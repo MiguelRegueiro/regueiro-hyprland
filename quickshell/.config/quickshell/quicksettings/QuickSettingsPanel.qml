@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Effects
+import Quickshell.Services.UPower
 import Quickshell.Io
 import "pages" as Pages
 import "../services" as Services
@@ -18,7 +19,14 @@ FocusScope {
     property bool open: false
     property real topOffset: 0
     property bool hovered: panelHover.hovered || boundsHover.hovered
-    property string powerMode: ""
+    readonly property string powerMode: {
+        switch (PowerProfiles.profile) {
+        case PowerProfile.PowerSaver: return "power-saver";
+        case PowerProfile.Balanced: return "balanced";
+        case PowerProfile.Performance: return "performance";
+        default: return "";
+        }
+    }
     property bool wifiPageOpen: false
     property bool bluetoothPageOpen: false
     property bool audioOutputPopupOpen: false
@@ -54,9 +62,12 @@ FocusScope {
     signal powerActionRequested(string actionId)
 
     function applyPowerMode(nextMode) {
-        powerMode = nextMode;
-        setPowerProfile.command = ["powerprofilesctl", "set", nextMode];
-        setPowerProfile.running = true;
+        if (nextMode === "power-saver")
+            PowerProfiles.profile = PowerProfile.PowerSaver;
+        else if (nextMode === "balanced")
+            PowerProfiles.profile = PowerProfile.Balanced;
+        else if (nextMode === "performance" && PowerProfiles.hasPerformanceProfile)
+            PowerProfiles.profile = PowerProfile.Performance;
     }
 
     onOpenChanged: {
@@ -403,6 +414,7 @@ FocusScope {
                             wifiPage: wifiPageView
                             bluetoothPage: bluetoothPageView
                             powerMode: root.powerMode
+                            hasPerformanceProfile: PowerProfiles.hasPerformanceProfile
                             onWifiPageRequested: {
                                 root.audioOutputPopupOpen = false;
                                 root.wifiPageOpen = true;
@@ -523,38 +535,6 @@ FocusScope {
             blurMax: 48
         }
 
-    }
-
-    Timer {
-        interval: Theme.slowPollInterval
-        running: root.visible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: powerProfilePoll.running = true
-    }
-
-    Process {
-        id: powerProfilePoll
-
-        command: ["powerprofilesctl", "get"]
-
-        stdout: StdioCollector {
-            id: powerProfileOut
-
-            onStreamFinished: {
-                const nextMode = powerProfileOut.text.trim();
-                if (nextMode === "power-saver" || nextMode === "balanced" || nextMode === "performance")
-                    root.powerMode = nextMode;
-
-            }
-        }
-
-    }
-
-    Process {
-        id: setPowerProfile
-
-        command: ["echo"]
     }
 
     Services.WifiConnectionService {

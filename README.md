@@ -39,6 +39,8 @@ The previous Hyprlock theme remains in the repository as an inactive configurati
 
 ## Dependencies
 
+The package commands below target CachyOS/Arch. Shared configuration also supports Fedora; package names and availability differ.
+
 ```sh
 sudo pacman -S git stow \
                hyprland hyprpaper hyprpicker hypridle \
@@ -61,7 +63,7 @@ sudo pacman -S git stow \
 ```
 
 > Some of these may already be installed or available under slightly different names depending on your repos/AUR helper.
-> Region screenshots use `grim` + `slurp`. `hyprpicker` is only used by the color-picker bind, `flatpak` is only needed if you keep the Zen Browser bind or want Flatpak apps in the launcher, and `power-profiles-daemon` is only needed for the Quick Settings power mode switcher.
+> Region screenshots use `grim` + `slurp`. `hyprpicker` is only used by the color-picker bind, `flatpak` is only needed if you keep the Zen Browser bind or want Flatpak apps in the launcher, and the Quick Settings power mode switcher uses `power-profiles-daemon` through QuickShell’s PowerProfiles interface.
 
 Optional / personal extras:
 
@@ -96,6 +98,8 @@ sudo systemctl enable --now NetworkManager
 sudo systemctl enable --now bluetooth
 sudo systemctl enable --now power-profiles-daemon
 ```
+
+On Fedora, keep `tuned-ppd` if it already provides power profiles. QuickShell uses the same PowerProfiles interface with either backend; it does not require `powerprofilesctl`.
 
 ### Privileged desktop apps
 

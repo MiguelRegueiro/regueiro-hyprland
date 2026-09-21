@@ -14,6 +14,7 @@ Item {
     required property var networkService
     required property var wifiPage
     required property var bluetoothPage
+    required property bool hasPerformanceProfile
     required property string powerMode
     required property real viewportHeight
     property bool audioOutputPopupOpen: false
@@ -58,7 +59,7 @@ Item {
 
     function nextPowerMode() {
         if (powerMode === "balanced")
-            return "performance";
+            return hasPerformanceProfile ? "performance" : "power-saver";
 
         if (powerMode === "performance")
             return "power-saver";
