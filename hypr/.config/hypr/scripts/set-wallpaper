@@ -22,6 +22,8 @@ case "${wallpaper##*.}" in
 esac
 
 mkdir -p -- "$state_dir"
+exec 9>"$state_dir/wallpaper.lock"
+flock 9
 printf '%s\n' "$wallpaper" > "$state"
 cat > "$config" <<EOF
 preload = $config_wallpaper
@@ -33,16 +35,15 @@ wallpaper {
 splash = false
 EOF
 
-if ! hyprctl hyprpaper listloaded >/dev/null 2>&1; then
-    hyprpaper >/dev/null 2>&1 &
+if ! hyprctl hyprpaper listactive >/dev/null 2>&1; then
+    hyprpaper 9>&- >/dev/null 2>&1 &
     for _ in 1 2 3 4 5 6 7 8 9 10; do
-        if hyprctl hyprpaper listloaded >/dev/null 2>&1; then
+        if hyprctl hyprpaper listactive >/dev/null 2>&1; then
             break
         fi
         sleep 0.1
     done
 fi
 
-hyprctl hyprpaper preload "$wallpaper" >/dev/null 2>&1 || true
-hyprctl hyprpaper wallpaper ",$wallpaper" >/dev/null 2>&1 || true
-hyprctl hyprpaper unload unused >/dev/null 2>&1 || true
+# Hyprpaper 0.8+ loads the image as part of the wallpaper request.
+hyprctl hyprpaper wallpaper ",$wallpaper"
