@@ -9,6 +9,7 @@ FocusScope {
     id: root
 
     property bool busy: false
+    property var status: null
     property string message: ""
     property string passwordText: ""
     property bool passwordVisible: false
@@ -39,6 +40,12 @@ FocusScope {
             return;
         submitRequested(passwordText);
         clearInput();
+    }
+
+    LockIndicators {
+        anchors.fill: parent
+        z: 10
+        status: root.status
     }
 
     clip: true

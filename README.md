@@ -17,6 +17,8 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 
 **Super+L**, the power menu, the 20-minute idle timeout, and suspend use the standalone Quickshell locker. Type immediately to reveal the password field; Enter or the arrow submits your Linux password. Escape clears the field and returns to the clock without unlocking. The session unlocks only after successful authentication.
 
+The lock screen includes read-only battery/charging and volume indicators, plus a brief OSD when brightness, volume, or mute changes. These are rendered inside the lock surfaces; they do not expose the bar or desktop controls.
+
 The entry point is `quickshell/.config/quickshell/lock.qml`. It uses Wayland's `ext-session-lock-v1` on every display and `/etc/pam.d/login`, retaining the system's password and failed-attempt policy. It runs separately from the bar, with file watching disabled. The launcher disables core dumps and external input-method integration for password entry. Passwords are not written to files or logs; QML strings cannot provide a guarantee of zeroing every in-memory copy.
 
 `hypr/.config/hypr/scripts/quickshell-lock` supervises the process and retries up to three times after an unexpected exit. Hyprland's `allow_session_lock_restore` lets Quickshell recover while the compositor keeps the session locked. Hypridle uses `inhibit_sleep = 3` to wait for the compositor's lock notification. The power menu refuses to suspend unless Quickshell confirms its lock.

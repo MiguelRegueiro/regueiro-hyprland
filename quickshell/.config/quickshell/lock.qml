@@ -14,6 +14,8 @@ ShellRoot {
     property bool passwordVisible: false
     property bool revealed: false
 
+    LockStatus { id: lockStatus }
+
     Component.onCompleted: {
         // A running locker must not reload when the bar/theme is edited.
         Quickshell.watchFiles = false;
@@ -69,6 +71,7 @@ ShellRoot {
                 passwordVisible: root.passwordVisible
                 prompt: auth.prompt
                 revealed: root.revealed
+                status: lockStatus
 
                 onPasswordEdited: text => root.passwordText = text
                 onPasswordVisibilityRequested: visible => root.passwordVisible = visible
