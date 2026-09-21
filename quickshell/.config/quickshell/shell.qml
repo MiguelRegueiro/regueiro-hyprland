@@ -517,7 +517,7 @@ ShellRoot {
     Process {
         id: logoutProc
 
-        command: ["hyprctl", "dispatch", "exit"]
+        command: ["sh", "-c", "exec \"$HOME/.config/hypr/scripts/session-logout.sh\""]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("logout");

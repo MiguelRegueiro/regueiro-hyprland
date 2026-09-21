@@ -8,6 +8,9 @@ hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("QT_QPA_PLATFORMTHEME", "gtk3")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
 hl.env("SDL_VIDEODRIVER", "wayland,x11")
+-- Input-method selection belongs to this session, never shared GTK settings.
+-- Use the Fcitx GTK module for both Wayland and legacy XWayland apps.
+hl.env("GTK_IM_MODULE", "fcitx")
 hl.env("SDL_IM_MODULE", "fcitx")
 hl.env("GLFW_IM_MODULE", "fcitx")
 hl.env("CLUTTER_BACKEND", "wayland")

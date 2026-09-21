@@ -30,7 +30,7 @@ To lock manually:
 If automatic recovery fails, sign in on a TTY and relaunch Quickshell in the correct Hyprland instance (find its ID with `hyprctl instances`):
 
 ```bash
-hyprctl -i INSTANCE dispatch exec ~/.config/hypr/scripts/quickshell-lock
+hyprctl -i INSTANCE dispatch 'hl.dsp.exec_cmd("~/.config/hypr/scripts/quickshell-lock")'
 ```
 
 Do not kill or forcibly clear a live lock to unlock it. Compositor crash behavior, suspend/resume, and graphics-driver failures are outside the QML authentication tests; keep those limits in mind when changing this security-sensitive code.
@@ -107,6 +107,20 @@ sudo systemctl enable --now power-profiles-daemon
 `hypr/.config/hypr/conf/monitors.lua` has a hardcoded monitor layout for my machine. Edit it to match yours before starting.
 `hypr/.config/hypr/scripts/startup-monitor-focus.sh` also prefers `DP-1` at session start when it is connected; change that script if your external monitor has a different name.
 
+### Portals and Elio file chooser
+
+Install `xdg-desktop-portal-hyprland` and `xdg-desktop-portal-gtk`, then Stow
+`xdg-portals`. Startup handles both plain and UWSM-managed Hyprland sessions.
+The desktop-specific `hyprland-portals.conf` leaves GNOME's portal selection alone.
+When upgrading, remove the old `~/.config/xdg-desktop-portal/portals.conf` **only
+if it is a symlink into this repo**, then restow `xdg-portals`.
+
+Elio integration requires `xdg-desktop-portal-termfilechooser`, `kitty`, and an
+`elio` build supporting `--chooser-file`. GTK is the fallback when termfilechooser
+is unavailable; it is not automatic recovery from a running backend that fails.
+To select GTK explicitly, set `org.freedesktop.impl.portal.FileChooser=gtk` in the
+Hyprland portal preference file and rerun `~/.config/hypr/scripts/start-portals.sh`.
+
 ### Wi-Fi handling
 
 Wi-Fi is handled directly inside the QuickShell quick settings panel through `nmcli`.
@@ -122,31 +136,24 @@ It currently lists paired devices and lets you connect/disconnect them inline fr
 ### Clipboard history
 
 Clipboard history is handled by [`mimeclip`](https://github.com/MiguelRegueiro/mimeclip), not `cliphist`.
-Install `mimeclip` / `mimeclipd` separately, then enable its user service:
-
-```sh
-systemctl --user enable --now mimeclipd
-```
+Install `mimeclip` / `mimeclipd` and its user service separately. Hyprland starts
+the service through its autostart config; do not enable it globally for GNOME.
+If previously enabled, run `systemctl --user disable mimeclipd` (without `--now`
+to leave a running Hyprland instance alone). The service should use
+`PartOf=graphical-session.target` so it stops with the graphical session.
 
 ### Input method
 
 The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5` + `fcitx5-mozc`).
 For broad app coverage on Hyprland/Wayland, keep the GTK and Qt integration packages installed too: `fcitx5-gtk` and `fcitx5-qt`.
-The session exports `XMODIFIERS=@im=fcitx`, `QT_IM_MODULE=fcitx`, and `GLFW_IM_MODULE=fcitx` so GLFW apps such as Kitty use the same input-method backend.
-GTK uses the native Wayland frontend for modern apps, while the repo's GTK settings files keep `fcitx` configured for GTK apps that still run through X11/XWayland.
-The top-bar language indicator is backed by a QuickShell input service that tracks the real Fcitx method ID and the configured method order from the current Fcitx group.
-`Super+Space` cycles through the configured group order through QuickShell first so the OSD and shell state stay in sync, and falls back to the direct Fcitx backend if QuickShell is unavailable.
-The Hyprland keyboard config uses `kb_options = lv3:switch`, so Right Ctrl acts like an additional AltGr/level-3 key for symbols such as `@` on the Spanish layout.
-After the first install or after changing the IM env vars, log out and back in once so the session picks up the new input-method setup.
-If `stow gtk` conflicts with existing `~/.config/gtk-3.0/settings.ini` or `~/.config/gtk-4.0/settings.ini`, back them up and retry:
+Fcitx runs only in Hyprland; GNOME retains its own IBus input sources. The session sets `GTK_IM_MODULE=fcitx`, `QT_IM_MODULE=fcitx`, `XMODIFIERS=@im=fcitx`, `SDL_IM_MODULE=fcitx`, and `GLFW_IM_MODULE=fcitx`. GTK uses the Fcitx module in this session.
 
-```sh
-mv ~/.config/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini.bak
-mv ~/.config/gtk-4.0/settings.ini ~/.config/gtk-4.0/settings.ini.bak
-stow gtk
-```
+`fcitx-session.sh` starts Fcitx, selects Spanish, and stops its process when Hyprland exits. The `fcitx5` Stow package disables the standard global autostart entry.
+`Super+Space` cycles the configured Spanish/Mozc group. The keyboard config uses `kb_options = lv3:switch`, so Right Ctrl acts as an additional AltGr key.
 
-If you want to keep existing GTK settings instead, merge `gtk-im-module=fcitx` into those files manually.
+When upgrading, back up conflicting files before Stowing `gtk` and `fcitx5`. Remove old global Fcitx environment exports, separate Fcitx autostart services, and `gtk-im-module=fcitx` entries in non-stowed GTK files. Keep input-method variables scoped to Hyprland, outside shell profiles and the shared systemd/D-Bus environment.
+
+Log out and back in after applying these changes. Simultaneous graphical sessions for the same user share input-method D-Bus services and are not supported by this setup.
 
 ### Optional keybind-only apps
 
@@ -167,8 +174,10 @@ Power actions are handled by QuickShell through `qs ipc call powermenu`, so the 
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk
+stow --no-folding hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk xdg-portals
 ```
+
+Restow the affected packages after pulling changes that add or rename files. Existing Stow symlinks already point at updated files; machine-local overrides remain outside the checkout.
 
 ## Formatting
 
