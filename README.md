@@ -113,7 +113,7 @@ The launcher caches icons as PNGs. For SVG conversion, install `rsvg-convert`
 
 ### Local overrides
 
-The shared monitor layout and brightness stops remain the defaults. Optional
+The shared monitor layout, brightness stops, and Fish greeting remain the defaults. Optional
 machine-local files under `$XDG_CONFIG_HOME` (normally `~/.config`) can override them:
 
 - `hypr-local/monitors.lua`: replaces monitor configuration. `HYPR_PREFERRED_MONITOR`
@@ -122,6 +122,8 @@ machine-local files under `$XDG_CONFIG_HOME` (normally `~/.config`) can override
 - `quickshell-local/brightness.json`: an integer `step` (1–100) enables linear
   percentage-point adjustments; `minimum` (0–99, default 2) sets the lower bound.
   Without a valid step, the original stops apply. Edits reload automatically.
+- `fish-local/config.fish`: sourced after the shared Fish configuration. To skip
+  Fastfetch on terminal startup, define an empty `function fish_greeting; end` here.
 
 Keep these files outside Stow and version control.
 

@@ -90,3 +90,8 @@ end
 if test -x /home/linuxbrew/.linuxbrew/bin/brew
     /home/linuxbrew/.linuxbrew/bin/brew shellenv fish | source
 end
+
+# Apply machine-local overrides after the shared configuration.
+if test -f "$__fish_config_dir/../fish-local/config.fish"
+    source "$__fish_config_dir/../fish-local/config.fish"
+end

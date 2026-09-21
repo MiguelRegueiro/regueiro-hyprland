@@ -83,7 +83,7 @@ Row {
                 color: active ? "#ffffff" : Theme.textDim
                 font.family: Theme.fontUi
                 font.pixelSize: 15
-                font.weight: active ? Font.Bold : Font.Normal
+                font.weight: Font.Bold
             }
 
             HoverHandler {
