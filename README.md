@@ -161,9 +161,21 @@ Log out and back in after applying these changes. Simultaneous graphical session
 flatpak install flathub app.zen_browser.zen
 ```
 
-Some personal keybinds also expect `anitrack`, `elio`, `enzo`, `normcap`, and `runin`.
+Homebrew is optional; Fish initializes it only when `/home/linuxbrew/.linuxbrew/bin/brew` is installed.
+
+Some personal keybinds also expect `anitrack`, `elio`, `enzo`, and `runin`. The NormCap keybind prefers native `normcap`, then falls back to Flatpak `com.github.dynobo.normcap`.
 The Fish config selects `ANI_CLI_PLAYER=enzo-mpv` whenever the wrapper is installed, so both normal terminal launches and the `Super+W` anime tracker bind use Enzo. The wrapper is stowed by the `hypr` package to `~/.local/bin/enzo-mpv` and forwards the media URL to `enzo`.
 If you do not use those apps, either skip them or change the matching binds in `hypr/.config/hypr/conf/binds.lua`.
+
+### Screenshots
+
+Both Print Screen and F9 use the same screenshot actions:
+
+| Action | Shortcuts |
+| --- | --- |
+| Current display | `Print` or `F9` |
+| Selected area | `Shift+Print` or `Shift+F9` |
+| Active window | `Alt+Print` or `Alt+F9` |
 
 ### Power menu
 

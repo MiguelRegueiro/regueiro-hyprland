@@ -5,7 +5,6 @@ return {
     terminal = "kitty",
     file_manager = "nautilus --new-window",
     menu = "~/.config/hypr/scripts/launcher-toggle.sh",
-    run_menu = "rofi -show run",
     clipboard_menu = "qs ipc call clipboard toggle",
     wallpaper_menu = "qs ipc call wallpaper toggle",
     power_menu = "~/.config/hypr/scripts/power-menu",

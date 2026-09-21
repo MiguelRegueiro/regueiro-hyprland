@@ -6,7 +6,6 @@ local main_mod = vars.main_mod
 local terminal = vars.terminal
 local file_manager = vars.file_manager
 local menu = vars.menu
-local run_menu = vars.run_menu
 local clipboard_menu = vars.clipboard_menu
 local wallpaper_menu = vars.wallpaper_menu
 local power_menu = vars.power_menu
@@ -16,7 +15,6 @@ local snap = vars.snap
 hl.bind(main_mod .. " + Super_L", hl.dsp.exec_cmd(menu), { release = true })
 hl.bind(main_mod .. " + Super_R", hl.dsp.exec_cmd(menu), { release = true })
 hl.bind(main_mod .. " + A", hl.dsp.exec_cmd(menu))
-hl.bind("ALT + F2", hl.dsp.exec_cmd(run_menu))
 
 hl.bind(main_mod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(main_mod .. " + SHIFT + Return", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'runin; exec fish'"))
@@ -26,7 +24,7 @@ hl.bind(main_mod .. " + R", hl.dsp.exec_cmd(terminal .. " -e btop"))
 hl.bind(main_mod .. " + D", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'elio; exec fish'"))
 hl.bind(main_mod .. " + W", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'env ANI_CLI_PLAYER=enzo-mpv ANI_CLI_NO_DETACH=1 anitrack; exec fish'"))
 hl.bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaper_menu))
-hl.bind(main_mod .. " + F9", hl.dsp.exec_cmd("normcap"))
+hl.bind(main_mod .. " + F9", hl.dsp.exec_cmd("~/.config/hypr/scripts/normcap-launch.sh"))
 
 -- Window management.
 hl.bind(main_mod .. " + Q", hl.dsp.window.close())
@@ -135,9 +133,9 @@ hl.bind(main_mod .. " + Space", hl.dsp.exec_cmd("~/.config/hypr/scripts/input-to
 hl.bind("F9", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh full"), { locked = true })
 hl.bind("SHIFT + F9", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh freeze-area"))
 hl.bind("ALT + F9", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh window 0.15"))
-hl.bind("code:107", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh full"), { locked = true })
-hl.bind("SHIFT + code:107", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh freeze-area"))
-hl.bind("ALT + code:107", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh window 0.15"))
+hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh full"), { locked = true })
+hl.bind("SHIFT + Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh freeze-area"))
+hl.bind("ALT + Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh window 0.15"))
 hl.bind(main_mod .. " + P", hl.dsp.exec_cmd("hyprpicker -a"))
 hl.bind(main_mod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 hl.bind("F11", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
