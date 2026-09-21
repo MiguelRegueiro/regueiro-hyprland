@@ -200,7 +200,7 @@ rasterize_icon() {
     esac
 
     if [ ! -s "$tmp_path" ] && command -v magick >/dev/null 2>&1; then
-        magick -background none "$source_path" -resize 256x256 -gravity center -extent 256x256 "$tmp_path" >/dev/null 2>&1 || true
+        magick -background none "$source_path" -resize 256x256 -gravity center -extent 256x256 "png:$tmp_path" >/dev/null 2>&1 || true
     fi
 
     if [ -s "$tmp_path" ]; then

@@ -106,6 +106,11 @@ On Fedora, keep `tuned-ppd` if it already provides power profiles. QuickShell us
 `hyprpolkitagent` provides the polkit authentication prompt under Hyprland, so apps that need admin privileges, like Btrfs Assistant, can ask for your password.
 `xorg-xhost` provides the `xhost` helper some older/root X11 apps still expect under Wayland/XWayland, such as GParted.
 
+### Launcher icons
+
+The launcher caches icons as PNGs. For SVG conversion, install `rsvg-convert`
+(`librsvg` on CachyOS/Arch, `librsvg2-tools` on Fedora) or ImageMagick as a fallback.
+
 ### Monitor layout
 
 `hypr/.config/hypr/conf/monitors.lua` has a hardcoded monitor layout for my machine. Edit it to match yours before starting.

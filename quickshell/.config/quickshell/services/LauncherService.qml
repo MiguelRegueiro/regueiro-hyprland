@@ -33,7 +33,7 @@ Item {
     property bool iconRasterApplyBlocked: false
     readonly property string genericIconFallback: "application-x-executable"
     readonly property string iconRasterCachePath: Quickshell.statePath("launcher-icon-cache")
-    readonly property url launcherIconCacheLocation: Qt.resolvedUrl(Quickshell.statePath("launcher-icon-cache.ini"))
+    readonly property url launcherIconCacheLocation: Qt.resolvedUrl(Quickshell.statePath("launcher-icon-cache-v2.ini"))
     readonly property string fallbackIconSourcePath: {
         const resolved = Quickshell.iconPath("", root.genericIconFallback);
         return typeof resolved === "string" && resolved.length > 0 ? resolved : root.genericIconFallback;
