@@ -19,6 +19,41 @@ PanelWindow {
     property bool carouselVisible: false
     property bool carouselMotionEnabled: false
     readonly property string wallpaperDir: Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers"
+    property var previewSources: ({})
+
+    // Warm the disk cache while hidden. Periodic metadata checks also catch
+    // replacements that do not change FolderListModel's file count.
+    Timer {
+        interval: 30000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: { if (!thumbnailProcess.running) thumbnailProcess.running = true; }
+    }
+
+    Process {
+        id: thumbnailProcess
+        command: ["python3", (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/quickshell/scripts/wallpaper-thumbnails.py", root.wallpaperDir]
+        onExited: function(exitCode) {
+            if (exitCode !== 0) {
+                const fallback = {};
+                for (let i = 0; i < wallpaperFiles.count; i++)
+                    fallback[root.pathForIndex(i)] = wallpaperFiles.get(i, "fileUrl").toString();
+                root.previewSources = fallback;
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const next = JSON.parse(text);
+                    if (JSON.stringify(next) !== JSON.stringify(root.previewSources))
+                        root.previewSources = next;
+                } catch (error) {
+                    console.warn("Could not load wallpaper previews: " + error);
+                }
+            }
+        }
+    }
 
     signal requestClose()
 
@@ -144,6 +179,13 @@ PanelWindow {
 
         MouseArea { anchors.fill: parent; onClicked: {} }
 
+        Text {
+            anchors.centerIn: parent
+            visible: wallpaperFiles.count > 0 && Object.keys(root.previewSources).length === 0
+            text: "Preparing wallpaper previews…"
+            color: "white"
+        }
+
         Item {
             id: carousel
 
@@ -240,9 +282,12 @@ PanelWindow {
 
                         Image {
                             anchors.fill: parent
-                            source: wallpaperSlice.fileUrl
+                            readonly property string originalPath: root.pathForIndex(wallpaperSlice.index)
+                            source: root.previewSources[originalPath] || ""
                             fillMode: Image.PreserveAspectCrop
-                            asynchronous: false
+                            // Cached previews are cheap to decode. If conversion
+                            // failed, never synchronously decode the original.
+                            asynchronous: source.toString() === wallpaperSlice.fileUrl.toString()
                             cache: true
                             smooth: true
                         }
@@ -289,6 +334,8 @@ PanelWindow {
         showDotAndDotDot: false
         sortField: FolderListModel.Name
         onCountChanged: {
+            if (!thumbnailProcess.running)
+                thumbnailProcess.running = true;
             if (count > 0) {
                 root.selectedIndex = root.indexForPath(root.currentWallpaper);
                 carouselSettleTimer.restart();

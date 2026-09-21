@@ -111,6 +111,10 @@ On Fedora, keep `tuned-ppd` if it already provides power profiles. QuickShell us
 The launcher caches icons as PNGs. For SVG conversion, install `rsvg-convert`
 (`librsvg` on CachyOS/Arch, `librsvg2-tools` on Fedora) or ImageMagick as a fallback.
 
+### Wallpaper previews
+
+The picker prepares reusable JPEG previews in `$XDG_CACHE_HOME/quickshell/wallpaper-thumbnails-v1` (normally `~/.cache`). Install Python 3 and ImageMagick for preview generation. New or modified wallpapers are processed in the background; the first preparation can take a moment. Applying a wallpaper always uses the original image.
+
 ### Local overrides
 
 The shared monitor layout, brightness stops, and Fish greeting remain the defaults. Optional
