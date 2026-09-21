@@ -6,6 +6,8 @@ Icon=elio
 TryExec=kitty
 Exec=kitty -e elio %f
 Terminal=false
+# Keep the Kitty folder handler available without duplicating the packaged launcher.
+NoDisplay=true
 MimeType=inode/directory;
 Categories=System;FileManager;FileTools;
 Keywords=Files;Folders;Directory;Manager;Explorer;Terminal;TUI;Preview;
