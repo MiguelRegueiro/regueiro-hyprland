@@ -114,7 +114,7 @@ Item {
                     anchors.verticalCenterOffset: 1
                     text: "󰅖"
                     font.family: Theme.fontIcons
-                    font.pixelSize: root.minimalChrome ? 11 : (root.compact ? 9 : 10)
+                    font.pixelSize: root.minimalChrome ? 11 : (root.compact ? 9 : 14)
                     color: closeHover.hovered ? root.contentPrimaryColor : root.contentSecondaryColor
                 }
 
