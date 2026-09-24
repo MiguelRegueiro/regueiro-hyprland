@@ -66,7 +66,10 @@ Item {
             text: "󱐋"
             font.family: Theme.fontIcons
             font.pixelSize: 8
-            color: Qt.rgba(0, 0, 0, 0.9)
+            // At low charge the bolt sits over the unfilled, dark interior.
+            color: root.percent < 65 ? Theme.textPrimary : Qt.rgba(0, 0, 0, 0.9)
+            style: Text.Outline
+            styleColor: root.percent < 65 ? Qt.rgba(0, 0, 0, 0.8) : "transparent"
         }
 
     }

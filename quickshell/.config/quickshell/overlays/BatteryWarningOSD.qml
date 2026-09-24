@@ -16,7 +16,24 @@ PanelWindow {
     readonly property bool hasBattery: battery && battery.percentage >= 0
     readonly property int percent: hasBattery ? Math.min(100, Math.round(battery.percentage * 100)) : -1
     readonly property bool discharging: hasBattery && battery.state === UPowerDeviceState.Discharging
-    readonly property bool warningVisible: active && discharging && percent <= Theme.batteryCriticalThreshold
+    readonly property bool warningRequested: active && UPower.onBattery && discharging && percent <= Theme.batteryCriticalThreshold
+    property bool warningConfirmed: false
+    readonly property bool warningVisible: warningRequested && warningConfirmed
+
+    onWarningRequestedChanged: {
+        warningConfirmed = false;
+        if (warningRequested)
+            warningDelay.restart();
+        else
+            warningDelay.stop();
+    }
+    Component.onCompleted: { if (warningRequested) warningDelay.restart(); }
+
+    Timer {
+        id: warningDelay
+        interval: 3000
+        onTriggered: root.warningConfirmed = root.warningRequested
+    }
 
     screen: targetScreen
     exclusiveZone: 0
