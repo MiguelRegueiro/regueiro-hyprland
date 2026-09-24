@@ -57,6 +57,7 @@ Row {
 
             required property var modelData
             readonly property bool hovered: hover.hovered
+            readonly property bool occupied: modelData.toplevels.values.length > 0
             readonly property bool active: Number(modelData.id) === wsRow.activeWorkspaceId
 
             visible: wsRow.belongsToScreen(modelData)
@@ -80,7 +81,7 @@ Row {
 
                 anchors.centerIn: parent
                 text: wsRow.workspaceLabel(modelData)
-                color: active ? "#ffffff" : Theme.textDim
+                color: active || wsBtn.occupied ? "#ffffff" : Qt.rgba(0.965, 0.961, 0.957, 0.5)
                 font.family: Theme.fontUi
                 font.pixelSize: 15
                 font.weight: Font.Bold
