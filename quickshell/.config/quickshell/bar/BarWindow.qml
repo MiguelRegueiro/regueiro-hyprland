@@ -117,6 +117,15 @@ PanelWindow {
 
         anchors.fill: parent
 
+        // Handle unused right-clicks before Qt synthesizes a context-menu event.
+        // Its context-menu delivery can crash on an unfocused layer-shell window.
+        // Stay behind the controls so their own right-click actions take priority.
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            onWheel: (wheel) => { wheel.accepted = false; }
+        }
+
         Rectangle {
             x: Math.round(bar.routedHoverPosition.x)
             y: Math.round(bar.routedHoverPosition.y)
