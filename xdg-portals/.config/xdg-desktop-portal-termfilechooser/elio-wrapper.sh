@@ -55,6 +55,7 @@ watch_and_place_chooser() {
 
 run_chooser() {
     local start="$1"
+    shift
     local workspace title watcher_pid status
 
     workspace="$(active_workspace)"
@@ -64,7 +65,8 @@ run_chooser() {
     watch_and_place_chooser "$title" "$workspace" &
     watcher_pid="$!"
 
-    kitty --class=file_chooser --title "$title" -e "$chooser_cmd" --chooser-file "$tmp" "$start" || status="$?"
+    kitty --class=file_chooser --title "$title" -e \
+        "$chooser_cmd" --chooser-file "$tmp" "$@" "$start" || status="$?"
 
     kill "$watcher_pid" 2>/dev/null || true
     wait "$watcher_pid" 2>/dev/null || true
@@ -89,21 +91,19 @@ if [[ -n "$path" ]]; then
 fi
 
 if [[ "$save" == "1" ]]; then
-    run_chooser "$start"
+    if [[ "$start" == "/" ]]; then
+        save_target="/$suggested_name"
+    else
+        save_target="${start%/}/$suggested_name"
+    fi
+
+    run_chooser "$save_target" --save-as
 
     choice=""
     IFS= read -r choice < "$tmp" || true
     [[ -n "$choice" ]] || exit 1
 
-    if [[ -d "$choice" ]]; then
-        if [[ "$choice" == "/" ]]; then
-            printf '/%s\n' "$suggested_name" > "$out"
-        else
-            printf '%s/%s\n' "${choice%/}" "$suggested_name" > "$out"
-        fi
-    else
-        printf '%s\n' "$choice" > "$out"
-    fi
+    printf '%s\n' "$choice" > "$out"
 
     exit 0
 fi
