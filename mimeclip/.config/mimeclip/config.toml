@@ -1,2 +1,2 @@
-max_entries = 500
+max_entries = 200
 max_history_size = "256 MiB"
