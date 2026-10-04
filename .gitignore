@@ -9,3 +9,7 @@ quickshell/.config/quickshell/notification-times.ini
 
 # editor/AI session dirs
 .codex
+
+# EasyTTS machine-local environment and Python bytecode
+easytts/.venv/
+easytts/__pycache__/

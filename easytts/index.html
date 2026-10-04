@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+>
+
+<title>EasyTTS</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    color-scheme: dark;
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+
+    background: #111113;
+    color: #eeeeef;
+}
+
+main {
+    width: min(900px, calc(100% - 32px));
+    margin: 55px auto;
+}
+
+h1 {
+    margin: 0;
+
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.subtitle {
+    margin: 5px 0 26px;
+
+    color: #888891;
+    font-size: 14px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 340px;
+
+    resize: vertical;
+
+    padding: 18px;
+
+    background: #18181b;
+    color: #eeeeef;
+
+    border: 1px solid #2c2c31;
+    border-radius: 12px;
+
+    outline: none;
+
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+textarea:focus {
+    border-color: #57575f;
+}
+
+.controls {
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        auto
+        auto;
+
+    gap: 10px;
+
+    margin-top: 14px;
+}
+
+select,
+button {
+    padding: 10px 13px;
+
+    background: #1c1c20;
+    color: #eeeeef;
+
+    border: 1px solid #303036;
+    border-radius: 9px;
+
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:hover {
+    background: #27272c;
+}
+
+button.primary {
+    padding-inline: 23px;
+
+    background: #eeeeef;
+    color: #111113;
+
+    border-color: #eeeeef;
+
+    font-weight: 650;
+}
+
+button.primary:hover {
+    background: #d8d8dc;
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.player {
+    margin-top: 24px;
+    padding: 17px;
+
+    background: #18181b;
+
+    border: 1px solid #29292e;
+    border-radius: 12px;
+}
+
+.seek-row {
+    display: grid;
+
+    grid-template-columns:
+        50px
+        1fr
+        50px;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.time {
+    color: #898990;
+
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+#duration {
+    text-align: right;
+}
+
+input[type="range"] {
+    width: 100%;
+
+    cursor: pointer;
+    accent-color: #dddde1;
+}
+
+.playback {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 13px;
+}
+
+.playback button {
+    min-width: 66px;
+}
+
+#play {
+    min-width: 100px;
+}
+
+#status {
+    min-height: 20px;
+    margin-top: 10px;
+
+    color: #85858d;
+
+    font-size: 13px;
+}
+
+kbd {
+    padding: 2px 5px;
+
+    background: #202024;
+    color: #aaaab0;
+
+    border: 1px solid #333338;
+    border-radius: 4px;
+
+    font-size: 11px;
+}
+
+@media (max-width: 650px) {
+    main {
+        margin-top: 28px;
+    }
+
+    .controls {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<h1>EasyTTS</h1>
+
+<div class="subtitle">
+    Paste text, hit Speak, listen.
+    <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+</div>
+
+<textarea
+    id="text"
+    autofocus
+    placeholder="Paste something here..."
+></textarea>
+
+
+<div class="controls">
+
+<select id="voice">
+
+<optgroup label="English · US">
+
+<option
+    value="en-US-AndrewMultilingualNeural"
+    selected
+>
+    Andrew · multilingual
+</option>
+
+<option value="en-US-EmmaMultilingualNeural">
+    Emma · multilingual
+</option>
+
+<option value="en-US-BrianMultilingualNeural">
+    Brian · multilingual
+</option>
+
+<option value="en-US-AvaMultilingualNeural">
+    Ava · multilingual
+</option>
+
+<option value="en-US-AriaNeural">
+    Aria
+</option>
+
+<option value="en-US-JennyNeural">
+    Jenny
+</option>
+
+<option value="en-US-GuyNeural">
+    Guy
+</option>
+
+<option value="en-US-RogerNeural">
+    Roger
+</option>
+
+</optgroup>
+
+
+<optgroup label="English · UK">
+
+<option value="en-GB-RyanNeural">
+    Ryan
+</option>
+
+<option value="en-GB-SoniaNeural">
+    Sonia
+</option>
+
+<option value="en-GB-LibbyNeural">
+    Libby
+</option>
+
+</optgroup>
+
+
+<optgroup label="Spanish · Spain">
+
+<option value="es-ES-AlvaroNeural">
+    Álvaro
+</option>
+
+<option value="es-ES-ElviraNeural">
+    Elvira
+</option>
+
+</optgroup>
+
+
+<optgroup label="Portuguese · Brazil">
+
+<option value="pt-BR-AntonioNeural">
+    Antônio
+</option>
+
+<option value="pt-BR-FranciscaNeural">
+    Francisca
+</option>
+
+</optgroup>
+
+
+<optgroup label="Japanese">
+
+<option value="ja-JP-KeitaNeural">
+    Keita
+</option>
+
+<option value="ja-JP-NanamiNeural">
+    Nanami
+</option>
+
+</optgroup>
+
+</select>
+
+
+<select id="speed">
+<option value="0.75">0.75×</option>
+<option value="1">1×</option>
+<option value="1.25">1.25×</option>
+<option value="1.5" selected>1.5×</option>
+<option value="1.75">1.75×</option>
+<option value="2">2×</option>
+</select>
+
+
+<button
+    id="speak"
+    class="primary"
+>
+    Speak
+</button>
+
+</div>
+
+
+<div class="player">
+
+<div class="seek-row">
+
+<span
+    id="current"
+    class="time"
+>
+    0:00
+</span>
+
+<input
+    id="seek"
+    type="range"
+    min="0"
+    max="1"
+    step="0.05"
+    value="0"
+>
+
+<span
+    id="duration"
+    class="time"
+>
+    0:00
+</span>
+
+</div>
+
+
+<div class="playback">
+
+<button id="back">
+    −10s
+</button>
+
+<button id="play">
+    ▶ Play
+</button>
+
+<button id="forward">
+    +10s
+</button>
+
+</div>
+
+</div>
+
+
+<div id="status"></div>
+
+</main>
+
+
+<script>
+const textBox =
+    document.querySelector("#text");
+
+const voice =
+    document.querySelector("#voice");
+
+const speed =
+    document.querySelector("#speed");
+
+const speak =
+    document.querySelector("#speak");
+
+const play =
+    document.querySelector("#play");
+
+const back =
+    document.querySelector("#back");
+
+const forward =
+    document.querySelector("#forward");
+
+const seek =
+    document.querySelector("#seek");
+
+const current =
+    document.querySelector("#current");
+
+const duration =
+    document.querySelector("#duration");
+
+const status =
+    document.querySelector("#status");
+
+
+const audio = new Audio();
+
+audio.preload = "auto";
+audio.preservesPitch = true;
+
+
+let session = 0;
+
+let chunks = [];
+
+let currentIndex = 0;
+
+let baseSpeed = 1;
+
+let wantsPlayback = false;
+
+let waitingFor = null;
+
+let dragging = false;
+
+let generationFinished = false;
+
+
+function formatTime(seconds) {
+    if (!Number.isFinite(seconds))
+        return "0:00";
+
+    seconds = Math.max(
+        0,
+        Math.floor(seconds)
+    );
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const secs =
+        seconds % 60;
+
+    return (
+        minutes +
+        ":" +
+        secs
+            .toString()
+            .padStart(2, "0")
+    );
+}
+
+
+function speechRate(value) {
+    const percent =
+        Math.round(
+            (value - 1) * 100
+        );
+
+    return (
+        percent >= 0
+            ? "+"
+            : ""
+    ) + percent + "%";
+}
+
+
+function splitText(text, limit = 380) {
+    text = text
+        .replace(/\r/g, "")
+        .trim();
+
+    const pieces =
+        text.match(
+            /[^.!?。！？\n]+[.!?。！？]?|\n+/g
+        ) || [text];
+
+    const result = [];
+
+    let current = "";
+
+
+    function flush() {
+        const value = current.trim();
+
+        if (value)
+            result.push(value);
+
+        current = "";
+    }
+
+
+    function addPiece(piece) {
+        piece = piece.trim();
+
+        if (!piece)
+            return;
+
+        if (piece.length <= limit) {
+            if (
+                current &&
+                current.length +
+                piece.length +
+                1 >
+                limit
+            ) {
+                flush();
+            }
+
+            current +=
+                (current ? " " : "") +
+                piece;
+
+            return;
+        }
+
+
+        const words =
+            piece.split(/\s+/);
+
+        for (const word of words) {
+            if (
+                current &&
+                current.length +
+                word.length +
+                1 >
+                limit
+            ) {
+                flush();
+            }
+
+            current +=
+                (current ? " " : "") +
+                word;
+        }
+    }
+
+
+    for (const piece of pieces)
+        addPiece(piece);
+
+    flush();
+
+    return result;
+}
+
+
+function revokeOldChunks() {
+    for (const chunk of chunks) {
+        if (chunk?.url)
+            URL.revokeObjectURL(
+                chunk.url
+            );
+    }
+}
+
+
+function readyCount() {
+    return chunks.filter(
+        chunk => chunk?.ready
+    ).length;
+}
+
+
+function contiguousReadyCount() {
+    let count = 0;
+
+    while (
+        count < chunks.length &&
+        chunks[count]?.ready
+    ) {
+        count++;
+    }
+
+    return count;
+}
+
+
+function bufferedDuration() {
+    let total = 0;
+
+    const count =
+        contiguousReadyCount();
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+        total +=
+            chunks[i].duration;
+    }
+
+    return total;
+}
+
+
+function totalDuration() {
+    if (
+        !generationFinished ||
+        chunks.some(
+            chunk => !chunk?.ready
+        )
+    ) {
+        return null;
+    }
+
+    return chunks.reduce(
+        (sum, chunk) =>
+            sum + chunk.duration,
+        0
+    );
+}
+
+
+function chunkStart(index) {
+    let result = 0;
+
+    for (
+        let i = 0;
+        i < index;
+        i++
+    ) {
+        result +=
+            chunks[i]?.duration || 0;
+    }
+
+    return result;
+}
+
+
+function currentGlobalTime() {
+    return (
+        chunkStart(currentIndex) +
+        (audio.currentTime || 0)
+    );
+}
+
+
+function applySpeed() {
+    const requested =
+        Number(speed.value);
+
+    /*
+     * The clips were generated at baseSpeed.
+     * This ratio lets speed changes remain
+     * instant after generation.
+     */
+    audio.playbackRate =
+        requested / baseSpeed;
+}
+
+
+function updatePlayButton() {
+    play.textContent =
+        wantsPlayback
+            ? "⏸ Pause"
+            : "▶ Play";
+}
+
+
+function updateStatus() {
+    if (!chunks.length)
+        return;
+
+    const ready =
+        readyCount();
+
+    if (
+        waitingFor !== null
+    ) {
+        status.textContent =
+            `Buffering… · ${ready}/${chunks.length} ready`;
+
+        return;
+    }
+
+    if (generationFinished) {
+        status.textContent =
+            `${chunks.length}/${chunks.length} ready`;
+
+        return;
+    }
+
+    status.textContent =
+        `${ready}/${chunks.length} ready`;
+}
+
+
+function updateTimeline() {
+    if (!chunks.length)
+        return;
+
+    const buffered =
+        bufferedDuration();
+
+    const total =
+        totalDuration();
+
+    const end =
+        total ?? buffered;
+
+    seek.max =
+        Math.max(end, 0.01);
+
+    if (!dragging) {
+        seek.value =
+            Math.min(
+                currentGlobalTime(),
+                end
+            );
+    }
+
+    current.textContent =
+        formatTime(
+            currentGlobalTime()
+        );
+
+    duration.textContent =
+        total !== null
+            ? formatTime(total)
+            : formatTime(buffered) + "+";
+}
+
+
+function readDuration(url) {
+    return new Promise(
+        (resolve, reject) => {
+            const probe =
+                new Audio();
+
+            probe.preload =
+                "metadata";
+
+            probe.src = url;
+
+            probe.addEventListener(
+                "loadedmetadata",
+                () => {
+                    const value =
+                        probe.duration;
+
+                    probe.src = "";
+
+                    resolve(value);
+                },
+                {
+                    once: true
+                }
+            );
+
+            probe.addEventListener(
+                "error",
+                () => {
+                    reject(
+                        new Error(
+                            "Could not decode generated audio"
+                        )
+                    );
+                },
+                {
+                    once: true
+                }
+            );
+        }
+    );
+}
+
+
+async function generateChunk(
+    index,
+    chunkText,
+    mySession,
+    selectedVoice,
+    selectedRate
+) {
+    const response =
+        await fetch(
+            "/api/tts",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    text: chunkText,
+                    voice: selectedVoice,
+                    rate: selectedRate
+                })
+            }
+        );
+
+    if (!response.ok) {
+        let message =
+            "TTS request failed";
+
+        try {
+            const result =
+                await response.json();
+
+            message =
+                result.error ||
+                message;
+        } catch {}
+
+        throw new Error(message);
+    }
+
+
+    const blob =
+        await response.blob();
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const audioDuration =
+        await readDuration(url);
+
+
+    if (mySession !== session) {
+        URL.revokeObjectURL(url);
+        return;
+    }
+
+
+    chunks[index] = {
+        ready: true,
+        url,
+        duration: audioDuration
+    };
+
+
+    /*
+     * Start immediately as soon as
+     * chunk zero exists.
+     */
+    if (
+        index === 0 &&
+        !audio.src
+    ) {
+        startChunk(
+            0,
+            0,
+            true
+        );
+    }
+
+
+    if (
+        waitingFor === index
+    ) {
+        waitingFor = null;
+
+        startChunk(
+            index,
+            0,
+            true
+        );
+    }
+
+
+    updateStatus();
+    updateTimeline();
+}
+
+
+async function startChunk(
+    index,
+    localTime = 0,
+    autoplay = true
+) {
+    const chunk =
+        chunks[index];
+
+    if (!chunk?.ready) {
+        waitingFor = index;
+
+        updateStatus();
+
+        return;
+    }
+
+
+    waitingFor = null;
+
+    currentIndex = index;
+
+    audio.src = chunk.url;
+
+    audio.load();
+
+    applySpeed();
+
+
+    await new Promise(resolve => {
+        if (
+            audio.readyState >= 1
+        ) {
+            resolve();
+            return;
+        }
+
+        audio.addEventListener(
+            "loadedmetadata",
+            resolve,
+            {
+                once: true
+            }
+        );
+    });
+
+
+    audio.currentTime =
+        Math.min(
+            localTime,
+            Math.max(
+                0,
+                audio.duration - 0.01
+            )
+        );
+
+
+    if (
+        autoplay &&
+        wantsPlayback
+    ) {
+        try {
+            await audio.play();
+        } catch {}
+    }
+
+
+    updateTimeline();
+    updateStatus();
+}
+
+
+async function generate() {
+    const value =
+        textBox.value.trim();
+
+    if (!value) {
+        textBox.focus();
+        return;
+    }
+
+
+    session++;
+
+    const mySession =
+        session;
+
+
+    audio.pause();
+
+    audio.removeAttribute("src");
+    audio.load();
+
+
+    revokeOldChunks();
+
+
+    const texts =
+        splitText(value);
+
+
+    chunks =
+        new Array(
+            texts.length
+        );
+
+
+    currentIndex = 0;
+
+    waitingFor = null;
+
+    generationFinished = false;
+
+    wantsPlayback = true;
+
+
+    baseSpeed =
+        Number(speed.value);
+
+
+    const selectedRate =
+        speechRate(baseSpeed);
+
+    const selectedVoice =
+        voice.value;
+
+
+    speak.disabled = true;
+
+    status.textContent =
+        `Preparing ${texts.length} sections…`;
+
+    updatePlayButton();
+
+
+    /*
+     * Three workers means three small
+     * TTS requests are prepared at once.
+     *
+     * This keeps us comfortably ahead
+     * of playback without hammering
+     * Microsoft's service.
+     */
+    let next = 0;
+
+    const worker = async () => {
+        while (
+            mySession === session
+        ) {
+            const index = next++;
+
+            if (
+                index >= texts.length
+            ) {
+                return;
+            }
+
+            try {
+                await generateChunk(
+                    index,
+                    texts[index],
+                    mySession,
+                    selectedVoice,
+                    selectedRate
+                );
+            } catch (error) {
+                console.error(error);
+
+                if (
+                    mySession === session
+                ) {
+                    status.textContent =
+                        "TTS failed: " +
+                        error.message;
+                }
+
+                return;
+            }
+        }
+    };
+
+
+    const workerCount =
+        Math.min(
+            3,
+            texts.length
+        );
+
+
+    await Promise.all(
+        Array.from(
+            {
+                length:
+                    workerCount
+            },
+            () => worker()
+        )
+    );
+
+
+    if (
+        mySession === session
+    ) {
+        generationFinished = true;
+
+        speak.disabled = false;
+
+        updateStatus();
+        updateTimeline();
+    }
+}
+
+
+async function seekGlobal(target) {
+    const max =
+        bufferedDuration();
+
+    target =
+        Math.max(
+            0,
+            Math.min(
+                target,
+                max
+            )
+        );
+
+
+    let offset = 0;
+
+    const count =
+        contiguousReadyCount();
+
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+        const end =
+            offset +
+            chunks[i].duration;
+
+        if (
+            target <= end ||
+            i === count - 1
+        ) {
+            await startChunk(
+                i,
+                target - offset,
+                wantsPlayback
+            );
+
+            return;
+        }
+
+        offset = end;
+    }
+}
+
+
+speak.addEventListener(
+    "click",
+    generate
+);
+
+
+textBox.addEventListener(
+    "keydown",
+    event => {
+        if (
+            event.ctrlKey &&
+            event.key === "Enter"
+        ) {
+            generate();
+        }
+    }
+);
+
+
+play.addEventListener(
+    "click",
+    async () => {
+        if (!chunks.length) {
+            await generate();
+            return;
+        }
+
+
+        wantsPlayback =
+            !wantsPlayback;
+
+
+        if (wantsPlayback) {
+            if (
+                chunks[
+                    currentIndex
+                ]?.ready
+            ) {
+                applySpeed();
+
+                try {
+                    await audio.play();
+                } catch {}
+            }
+        } else {
+            audio.pause();
+        }
+
+
+        updatePlayButton();
+    }
+);
+
+
+back.addEventListener(
+    "click",
+    () => {
+        seekGlobal(
+            currentGlobalTime() -
+            10
+        );
+    }
+);
+
+
+forward.addEventListener(
+    "click",
+    () => {
+        seekGlobal(
+            currentGlobalTime() +
+            10
+        );
+    }
+);
+
+
+speed.addEventListener(
+    "change",
+    applySpeed
+);
+
+
+seek.addEventListener(
+    "pointerdown",
+    () => {
+        dragging = true;
+    }
+);
+
+
+seek.addEventListener(
+    "pointerup",
+    async () => {
+        dragging = false;
+
+        await seekGlobal(
+            Number(seek.value)
+        );
+    }
+);
+
+
+seek.addEventListener(
+    "input",
+    () => {
+        current.textContent =
+            formatTime(
+                Number(seek.value)
+            );
+    }
+);
+
+
+audio.addEventListener(
+    "timeupdate",
+    updateTimeline
+);
+
+
+audio.addEventListener(
+    "play",
+    () => {
+        wantsPlayback = true;
+
+        updatePlayButton();
+    }
+);
+
+
+audio.addEventListener(
+    "pause",
+    () => {
+        /*
+         * Do not change wantsPlayback
+         * here. A chunk transition also
+         * briefly pauses the element.
+         */
+        updatePlayButton();
+    }
+);
+
+
+audio.addEventListener(
+    "ended",
+    async () => {
+        const nextIndex =
+            currentIndex + 1;
+
+
+        if (
+            nextIndex >=
+            chunks.length
+        ) {
+            wantsPlayback = false;
+
+            updatePlayButton();
+
+            return;
+        }
+
+
+        if (
+            chunks[
+                nextIndex
+            ]?.ready
+        ) {
+            await startChunk(
+                nextIndex,
+                0,
+                true
+            );
+        } else {
+            waitingFor =
+                nextIndex;
+
+            updateStatus();
+        }
+    }
+);
+
+
+setInterval(
+    () => {
+        updateTimeline();
+        updateStatus();
+    },
+    500
+);
+</script>
+
+</body>
+</html>
