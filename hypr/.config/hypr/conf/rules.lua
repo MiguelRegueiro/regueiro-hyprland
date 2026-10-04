@@ -108,8 +108,20 @@ hl.window_rule({
 })
 
 hl.window_rule({
-    name = "elio-file-chooser",
-    match = { class = "^(file_chooser)$" },
+    name = "elio-file-chooser-class",
+    match = {
+        class = "^io\\.github\\.elio_fm\\.elio\\.filechooser$",
+    },
+    float = true,
+    center = true,
+    size = { 1000, 650 },
+})
+
+hl.window_rule({
+    name = "elio-file-chooser-title",
+    match = {
+        title = "^elio File Chooser$",
+    },
     float = true,
     center = true,
     size = { 1000, 650 },
