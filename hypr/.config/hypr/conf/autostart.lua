@@ -1,6 +1,9 @@
 -- Session autostart.
 
 hl.on("hyprland.start", function()
+    -- Claim browser "show in folder" requests before another file manager can.
+    hl.exec_cmd("~/.local/bin/elio-filemanager1")
+
     -- Import the session environment before restarting portal services.
     hl.exec_cmd("~/.config/hypr/scripts/start-portals.sh")
 

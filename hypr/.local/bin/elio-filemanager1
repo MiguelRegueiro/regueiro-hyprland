@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+"""Temporary FileManager1 adapter until elio provides it natively.
+
+Browsers use this D-Bus interface for "Show in folder".  elio's normal CLI
+already focuses a path, so this adapter only converts the D-Bus URI into the
+equivalent Kitty command.
+"""
+
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+
+
+BUS_NAME = "org.freedesktop.FileManager1"
+OBJECT_PATH = "/org/freedesktop/FileManager1"
+INTERFACE_XML = """<node>
+  <interface name="org.freedesktop.FileManager1">
+    <method name="ShowFolders">
+      <arg name="uris" type="as" direction="in"/>
+      <arg name="startup_id" type="s" direction="in"/>
+    </method>
+    <method name="ShowItems">
+      <arg name="uris" type="as" direction="in"/>
+      <arg name="startup_id" type="s" direction="in"/>
+    </method>
+    <method name="ShowItemProperties">
+      <arg name="uris" type="as" direction="in"/>
+      <arg name="startup_id" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>"""
+
+
+def launch(uri):
+    file = Gio.File.new_for_uri(uri)
+    path = file.get_path()
+    if path is None:
+        return
+    subprocess.Popen(
+        ["kitty", "-e", "elio", path],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+
+def on_method_call(connection, sender, object_path, interface_name, method_name,
+                   parameters, invocation):
+    uris, _startup_id = parameters.unpack()
+    for uri in uris:
+        launch(uri)
+    invocation.return_value(None)
+
+
+def main():
+    bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+    interface = Gio.DBusNodeInfo.new_for_xml(INTERFACE_XML).interfaces[0]
+    bus.register_object(OBJECT_PATH, interface, on_method_call)
+    loop = GLib.MainLoop()
+
+    def name_lost(connection, name):
+        print(f"elio-filemanager1: could not own {name}", file=sys.stderr)
+        loop.quit()
+
+    Gio.bus_own_name_on_connection(
+        bus, BUS_NAME, Gio.BusNameOwnerFlags.NONE, None, name_lost
+    )
+    loop.run()
+
+
+if __name__ == "__main__":
+    main()
