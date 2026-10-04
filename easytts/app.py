@@ -101,9 +101,11 @@ class Handler(BaseHTTPRequestHandler):
             )
             return
 
-        if self.path == "/favicon.ico":
-            self.send_response(204)
-            self.end_headers()
+        if self.path in ("/favicon.ico", "/favicon.png"):
+            self.send_bytes(
+                (ROOT / "favicon.png").read_bytes(),
+                "image/png",
+            )
             return
 
         self.send_error(404)
