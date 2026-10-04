@@ -21,7 +21,6 @@ hl.bind(main_mod .. " + SHIFT + Return", hl.dsp.exec_cmd(terminal .. " -e fish -
 hl.bind(main_mod .. " + E", hl.dsp.exec_cmd(file_manager))
 hl.bind(main_mod .. " + B", hl.dsp.exec_cmd("flatpak run app.zen_browser.zen"))
 hl.bind(main_mod .. " + R", hl.dsp.exec_cmd(terminal .. " -e btop"))
-hl.bind(main_mod .. " + D", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'elio; exec fish'"))
 hl.bind(main_mod .. " + W", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'env ANI_CLI_PLAYER=enzo-mpv ANI_CLI_NO_DETACH=1 anitrack; exec fish'"))
 hl.bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaper_menu))
 hl.bind(main_mod .. " + F9", hl.dsp.exec_cmd("~/.config/hypr/scripts/normcap-launch.sh"))
