@@ -84,7 +84,7 @@ textarea:focus {
     display: grid;
 
     grid-template-columns:
-        auto
+        minmax(0, 320px)
         auto
         auto
         auto;
@@ -95,7 +95,7 @@ textarea:focus {
 }
 
 #voice {
-    width: 320px;
+    width: 100%;
 }
 
 select,
@@ -251,11 +251,16 @@ kbd {
     }
 
     .controls {
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto
+            auto
+            auto;
     }
 
     #voice {
         width: 100%;
+        grid-column: 1 / -1;
     }
 }
 </style>
