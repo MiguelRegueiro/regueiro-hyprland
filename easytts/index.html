@@ -41,11 +41,20 @@ body {
 
 main {
     width: min(900px, calc(100% - 32px));
-    margin: 55px auto;
+    margin: 35px auto 22px;
+
+    /*
+     * Keep the controls on screen, then let the paste area claim all of
+     * the remaining viewport height.  Long text still scrolls inside it.
+     */
+    min-height: calc(100vh - 57px);
+
+    display: flex;
+    flex-direction: column;
 }
 
 h1 {
-    margin: 0;
+    margin: 0 0 20px;
 
     font-size: 30px;
     font-weight: 700;
@@ -62,6 +71,8 @@ h1 {
 textarea {
     width: 100%;
     min-height: 340px;
+
+    flex: 1 1 auto;
 
     resize: vertical;
 
@@ -88,13 +99,18 @@ textarea:focus {
     display: grid;
 
     grid-template-columns:
-        1fr
+        auto
+        auto
         auto
         auto;
 
     gap: 10px;
 
     margin-top: 14px;
+}
+
+#voice {
+    width: 320px;
 }
 
 select,
@@ -119,6 +135,7 @@ button:hover {
 }
 
 button.primary {
+    width: 122px;
     padding-inline: 23px;
 
     background: #eeeeef;
@@ -190,6 +207,10 @@ input[type="range"] {
     margin-top: 13px;
 }
 
+.controls .playback {
+    margin-top: 0;
+}
+
 .playback button {
     min-width: 66px;
 }
@@ -198,13 +219,32 @@ input[type="range"] {
     min-width: 100px;
 }
 
+#reset {
+    min-width: 100px;
+}
+
+#play-icon {
+    display: inline-block;
+    transform: scale(1.1);
+    font-weight: 700;
+    line-height: 1;
+}
+
+#play-icon.is-pause {
+    transform: scale(1.65);
+}
+
 #status {
-    min-height: 20px;
-    margin-top: 10px;
+    min-height: 28px;
+    margin-top: 12px;
+    padding: 3px 0;
 
-    color: #85858d;
+    color: #b1b1b9;
 
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    letter-spacing: .01em;
 }
 
 kbd {
@@ -221,11 +261,16 @@ kbd {
 
 @media (max-width: 650px) {
     main {
-        margin-top: 28px;
+        margin: 28px auto 18px;
+        min-height: calc(100vh - 46px);
     }
 
     .controls {
         grid-template-columns: 1fr;
+    }
+
+    #voice {
+        width: 100%;
     }
 }
 </style>
@@ -236,11 +281,6 @@ kbd {
 <main>
 
 <h1>EasyTTS</h1>
-
-<div class="subtitle">
-    Paste text, hit Speak, listen.
-    <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
-</div>
 
 <textarea
     id="text"
@@ -368,6 +408,27 @@ kbd {
     Speak
 </button>
 
+
+<div class="playback">
+
+<button
+    id="play"
+    title="Play"
+    aria-label="Play"
+>
+    <span id="play-icon">▶</span>
+</button>
+
+<button
+    id="reset"
+    title="Stop and return to the beginning"
+    aria-label="Stop and return to the beginning"
+>
+    ■
+</button>
+
+</div>
+
 </div>
 
 
@@ -400,23 +461,6 @@ kbd {
 
 </div>
 
-
-<div class="playback">
-
-<button id="back">
-    −10s
-</button>
-
-<button id="play">
-    ▶ Play
-</button>
-
-<button id="forward">
-    +10s
-</button>
-
-</div>
-
 </div>
 
 
@@ -441,11 +485,11 @@ const speak =
 const play =
     document.querySelector("#play");
 
-const back =
-    document.querySelector("#back");
+const playIcon =
+    document.querySelector("#play-icon");
 
-const forward =
-    document.querySelector("#forward");
+const reset =
+    document.querySelector("#reset");
 
 const seek =
     document.querySelector("#seek");
@@ -481,6 +525,12 @@ let waitingFor = null;
 let dragging = false;
 
 let generationFinished = false;
+
+let generationStopped = false;
+
+let generationAbortController = null;
+
+let playbackFinished = false;
 
 
 function formatTime(seconds) {
@@ -709,10 +759,28 @@ function applySpeed() {
 
 
 function updatePlayButton() {
-    play.textContent =
-        wantsPlayback
-            ? "⏸ Pause"
-            : "▶ Play";
+    const isPlaying =
+        wantsPlayback;
+
+    playIcon.textContent =
+        isPlaying
+            ? "⏸"
+            : "▶";
+
+    playIcon.classList.toggle(
+        "is-pause",
+        isPlaying
+    );
+
+    play.title =
+        isPlaying
+            ? "Pause"
+            : "Play";
+
+    play.setAttribute(
+        "aria-label",
+        play.title
+    );
 }
 
 
@@ -723,24 +791,44 @@ function updateStatus() {
     const ready =
         readyCount();
 
+    const isPlaying =
+        Boolean(audio.src) &&
+        !audio.paused;
+
+    const playingLabel =
+        isPlaying
+            ? " · playing"
+            : "";
+
     if (
         waitingFor !== null
     ) {
         status.textContent =
-            `Buffering… · ${ready}/${chunks.length} ready`;
+            `Buffering… · ${ready}/${chunks.length} ready` +
+            playingLabel;
+
+        return;
+    }
+
+    if (generationStopped) {
+        status.textContent =
+            `Generation stopped · ${ready}/${chunks.length} ready` +
+            playingLabel;
 
         return;
     }
 
     if (generationFinished) {
         status.textContent =
-            `${chunks.length}/${chunks.length} ready`;
+            `Ready · ${chunks.length} sections` +
+            playingLabel;
 
         return;
     }
 
     status.textContent =
-        `${ready}/${chunks.length} ready`;
+        `Generating · ${ready}/${chunks.length} ready` +
+        playingLabel;
 }
 
 
@@ -829,7 +917,8 @@ async function generateChunk(
     chunkText,
     mySession,
     selectedVoice,
-    selectedRate
+    selectedRate,
+    signal
 ) {
     const response =
         await fetch(
@@ -846,7 +935,9 @@ async function generateChunk(
                     text: chunkText,
                     voice: selectedVoice,
                     rate: selectedRate
-                })
+                }),
+
+                signal
             }
         );
 
@@ -945,6 +1036,8 @@ async function startChunk(
 
     currentIndex = index;
 
+    playbackFinished = false;
+
     audio.src = chunk.url;
 
     audio.load();
@@ -996,6 +1089,9 @@ async function startChunk(
 
 
 async function generate() {
+    if (generationAbortController)
+        return;
+
     const value =
         textBox.value.trim();
 
@@ -1009,6 +1105,9 @@ async function generate() {
 
     const mySession =
         session;
+
+    generationAbortController =
+        new AbortController();
 
 
     audio.pause();
@@ -1036,6 +1135,10 @@ async function generate() {
 
     generationFinished = false;
 
+    generationStopped = false;
+
+    playbackFinished = false;
+
     wantsPlayback = true;
 
 
@@ -1050,7 +1153,7 @@ async function generate() {
         voice.value;
 
 
-    speak.disabled = true;
+    speak.textContent = "Cancel";
 
     status.textContent =
         `Preparing ${texts.length} sections…`;
@@ -1086,10 +1189,18 @@ async function generate() {
                     texts[index],
                     mySession,
                     selectedVoice,
-                    selectedRate
+                    selectedRate,
+                    generationAbortController.signal
                 );
             } catch (error) {
                 console.error(error);
+
+                if (
+                    error.name === "AbortError" ||
+                    mySession !== session
+                ) {
+                    return;
+                }
 
                 if (
                     mySession === session
@@ -1128,11 +1239,30 @@ async function generate() {
     ) {
         generationFinished = true;
 
-        speak.disabled = false;
+        generationAbortController = null;
+
+        speak.textContent = "Speak";
 
         updateStatus();
         updateTimeline();
     }
+}
+
+
+function stopGeneration() {
+    if (!generationAbortController)
+        return;
+
+    session++;
+
+    generationAbortController.abort();
+    generationAbortController = null;
+
+    generationStopped = true;
+
+    speak.textContent = "Speak";
+
+    updateStatus();
 }
 
 
@@ -1185,7 +1315,12 @@ async function seekGlobal(target) {
 
 speak.addEventListener(
     "click",
-    generate
+    () => {
+        if (generationAbortController)
+            stopGeneration();
+        else
+            generate();
+    }
 );
 
 
@@ -1207,6 +1342,20 @@ play.addEventListener(
     async () => {
         if (!chunks.length) {
             await generate();
+            return;
+        }
+
+
+        if (playbackFinished) {
+            wantsPlayback = true;
+
+            await startChunk(
+                0,
+                0,
+                true
+            );
+
+            updatePlayButton();
             return;
         }
 
@@ -1237,24 +1386,23 @@ play.addEventListener(
 );
 
 
-back.addEventListener(
+reset.addEventListener(
     "click",
-    () => {
-        seekGlobal(
-            currentGlobalTime() -
-            10
-        );
-    }
-);
+    async () => {
+        if (!chunks.length)
+            return;
 
+        wantsPlayback = false;
 
-forward.addEventListener(
-    "click",
-    () => {
-        seekGlobal(
-            currentGlobalTime() +
-            10
+        audio.pause();
+
+        await startChunk(
+            0,
+            0,
+            false
         );
+
+        updatePlayButton();
     }
 );
 
@@ -1338,7 +1486,10 @@ audio.addEventListener(
         ) {
             wantsPlayback = false;
 
+            playbackFinished = true;
+
             updatePlayButton();
+            updateStatus();
 
             return;
         }

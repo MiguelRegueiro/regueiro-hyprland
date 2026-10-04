@@ -74,12 +74,16 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def send_bytes(self, data, content_type, status=200):
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError):
+            # The browser canceled a still-generating request.
+            pass
 
     def send_json(self, obj, status=200):
         data = json.dumps(obj).encode()
