@@ -168,6 +168,10 @@ If previously enabled, run `systemctl --user disable mimeclipd` (without `--now`
 to leave a running Hyprland instance alone). The service should use
 `PartOf=graphical-session.target` so it stops with the graphical session.
 
+The `mimeclip` Stow package keeps history at 500 entries and 256 MiB of stored
+payload data. Apply it with `stow --no-folding mimeclip`; afterwards run
+`mimeclip config` whenever you want to change those limits interactively.
+
 ### Input method
 
 The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5` + `fcitx5-mozc`).
