@@ -48,7 +48,7 @@ hl.layer_rule({
 
 hl.layer_rule({
     name = "qs-osd-blur",
-    match = { namespace = "^qs-(volume|im|power|battery-warning)-osd$" },
+    match = { namespace = "^qs-(volume|im|power|battery-warning|dictation)-osd$" },
     blur = true,
     ignore_alpha = 0.5,
 })

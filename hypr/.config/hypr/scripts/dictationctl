@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+script_path="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$0")"
+repo_root="$(cd -- "$(dirname -- "$script_path")/../../../.." && pwd)"
+worker="$repo_root/dictation/worker.py"
+runtime_root="${XDG_RUNTIME_DIR:-/tmp/regueiro-$(id -u)}/regueiro-dictation"
+state_file="$runtime_root/state.json"
+pid_file="$runtime_root/worker.pid"
+
+status() {
+    if [[ -f "$state_file" ]]; then
+        cat "$state_file"
+    else
+        printf '%s\n' '{"state":"idle","text":"","detail":""}'
+    fi
+}
+
+active() {
+    [[ -r "$pid_file" ]] && kill -0 "$(cat "$pid_file")" 2>/dev/null
+}
+
+start() {
+    if active; then
+        return
+    fi
+    mkdir -p "$runtime_root"
+    nohup python3 "$worker" >/dev/null 2>&1 &
+}
+
+stop() {
+    if active; then
+        kill -INT "$(cat "$pid_file")"
+    fi
+}
+
+case "${1:-status}" in
+    status) status ;;
+    start) start ;;
+    stop) stop ;;
+    toggle) if active; then stop; else start; fi ;;
+    *)
+        echo "usage: dictationctl {status|start|stop|toggle}" >&2
+        exit 2
+        ;;
+esac

@@ -121,6 +121,8 @@ hl.bind(main_mod .. " + CTRL + SHIFT + Down", hl.dsp.window.move({ direction = "
 
 -- Clipboard, shell panels, power, input, screenshots, and utilities.
 hl.bind(main_mod .. " + V", hl.dsp.exec_cmd(clipboard_menu))
+hl.bind(main_mod .. " + T", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl toggle"), { release = true })
+hl.bind("F10", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl toggle"), { release = true })
 hl.bind(main_mod .. " + CTRL + S", hl.dsp.exec_cmd("qs ipc call quicksettings toggle"))
 hl.bind(main_mod .. " + S", hl.dsp.exec_cmd(power_menu))
 

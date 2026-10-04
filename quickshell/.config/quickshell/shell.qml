@@ -583,6 +583,10 @@ ShellRoot {
         id: brightnessServiceState
     }
 
+    Services.DictationService {
+        id: dictationServiceState
+    }
+
     Services.NetworkService {
         id: networkServiceState
     }
@@ -677,6 +681,22 @@ ShellRoot {
                 fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
                 onCloseRequested: root.closeCpuStatsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
+            }
+
+        }
+
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Overlays.DictationOSD {
+                required property var modelData
+
+                targetScreen: modelData
+                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                dictationService: dictationServiceState
             }
 
         }
