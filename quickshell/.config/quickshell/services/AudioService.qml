@@ -273,7 +273,10 @@ Item {
         }
         const resolved = next.length > 0 ? next : all;
         sortSinks(resolved);
-        root.sinks = resolved;
+        // Keep the ListView model intact during unchanged metadata polls so
+        // an in-progress scroll is not reset every polling interval.
+        if (resolved.length !== root.sinks.length || resolved.some((node, index) => node !== root.sinks[index]))
+            root.sinks = resolved;
     }
 
     function refresh() {

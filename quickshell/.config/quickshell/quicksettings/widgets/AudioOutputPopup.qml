@@ -14,7 +14,7 @@ Item {
     readonly property real listSpacing: 8
     readonly property real listFooterHeight: 8
     readonly property real cardHeight: headerContent.height + resolvedListHeight + 40
-    readonly property real availableListHeight: Math.max(44, maxPopupHeight - headerContent.height - 32)
+    readonly property real availableListHeight: Math.max(44, maxPopupHeight - headerContent.height - 40)
     readonly property real maxListHeight: Math.min(550, availableListHeight)
     readonly property real idealListHeight: {
         if (!audioService || !audioService.sinks || audioService.sinks.length === 0)
@@ -93,12 +93,29 @@ Item {
             width: parent.width - 24
             spacing: 8
 
-            Text {
-                text: "Sound output"
-                color: Theme.textPrimary
-                font.family: Theme.fontUi
-                font.pixelSize: 13
-                font.weight: Font.DemiBold
+            Item {
+                width: parent.width
+                height: titleText.implicitHeight
+
+                Text {
+                    id: titleText
+
+                    text: "Sound output"
+                    color: Theme.textPrimary
+                    font.family: Theme.fontUi
+                    font.pixelSize: 13
+                    font.weight: Font.DemiBold
+                }
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: sinkList.count
+                    color: Theme.textDim
+                    font.family: Theme.fontUi
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
+                }
             }
 
             Rectangle {
@@ -113,10 +130,24 @@ Item {
             id: sinkList
 
             height: popupRoot.resolvedListHeight
+            contentHeight: popupRoot.idealListHeight
             model: popupRoot.audioService.sinks
             spacing: popupRoot.listSpacing
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: event => {
+                    // Match the launcher's immediate scrolling, scaled to these rows.
+                    const delta = event.pixelDelta.y !== 0 ? -event.pixelDelta.y * 3.2 : -event.angleDelta.y / 120 * 64 * 0.9;
+                    sinkList.cancelFlick();
+                    const minY = sinkList.originY;
+                    const maxY = minY + Math.max(0, sinkList.contentHeight - sinkList.height);
+                    sinkList.contentY = Math.max(minY, Math.min(maxY, sinkList.contentY + delta));
+                    event.accepted = true;
+                }
+            }
 
             anchors {
                 top: headerContent.bottom
@@ -229,6 +260,8 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.ArrowCursor
+                    scrollGestureEnabled: false
+                    onWheel: wheel => { wheel.accepted = false; }
                     onClicked: {
                         popupRoot.audioService.setAudioSink(modelData);
                         popupRoot.sinkChosen();

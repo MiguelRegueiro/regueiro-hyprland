@@ -401,6 +401,7 @@ FocusScope {
 
                             width: parent.width
                             viewportHeight: root.parent ? root.parent.height : root.height
+                            popupParent: motionFrame
                             audioOutputPopupOpen: root.audioOutputPopupOpen
                             onAudioOutputPopupRequest: (open) => {
                                 return root.audioOutputPopupOpen = open;

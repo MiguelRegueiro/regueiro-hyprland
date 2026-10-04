@@ -17,6 +17,7 @@ Item {
     required property bool hasPerformanceProfile
     required property string powerMode
     required property real viewportHeight
+    property Item popupParent: root
     property bool audioOutputPopupOpen: false
     property bool powerMenuOpen: false
     readonly property bool popupLayerOpen: root.powerMenuOpen || root.audioOutputPopupOpen
@@ -608,8 +609,11 @@ Item {
 
     Item {
         visible: root.audioOutputPopupOpen || audioOutputPopup.visible
-        x: 0
-        y: 0
+        // The popup can extend below the dashboard. Keep it outside the
+        // dashboard's stacked pages so its entire surface receives input.
+        parent: root.popupParent
+        x: root.mapToItem(parent, 0, 0).x
+        y: root.mapToItem(parent, 0, 0).y
         width: root.width
         height: Math.max(root.implicitHeight, audioOutputPopupBottom + 12)
         z: 180
