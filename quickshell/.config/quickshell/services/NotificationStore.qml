@@ -116,6 +116,11 @@ Item {
 
         dnd = next
         notificationPrefs.setValue("dnd", next)
+
+        // Do Not Disturb affects visible banners as well as incoming ones.
+        // Keep the notification history intact for the notification center.
+        if (next)
+            popups = []
     }
 
     function toggleDnd() {
