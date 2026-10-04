@@ -6,6 +6,7 @@ hl.on("hyprland.start", function()
 
     hl.exec_cmd("wl-clip-persist --clipboard regular --ignore-event-on-error")
     hl.exec_cmd("systemctl --user start mimeclipd")
+    hl.exec_cmd("~/.config/hypr/scripts/start-easytts.sh")
     hl.exec_cmd("qs -n -d")
     hl.exec_cmd("~/.config/hypr/scripts/startup-monitor-focus.sh")
     hl.exec_cmd("hypridle")

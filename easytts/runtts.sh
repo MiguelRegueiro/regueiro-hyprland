@@ -26,16 +26,18 @@ if [[ -z "$HOST" ]] && command -v tailscale >/dev/null 2>&1; then
     HOST="$(tailscale ip -4 2>/dev/null | head -n 1 || true)"
 fi
 
-URL="http://${HOST:-127.0.0.1}:${PORT}"
+if [[ "${EASYTTS_OPEN_BROWSER:-1}" == "1" ]]; then
+    URL="http://${HOST:-127.0.0.1}:${PORT}"
 
-(
-    sleep 0.7
+    (
+        sleep 0.7
 
-    if command -v xdg-open >/dev/null 2>&1; then
-        xdg-open "$URL" >/dev/null 2>&1
-    elif command -v gio >/dev/null 2>&1; then
-        gio open "$URL" >/dev/null 2>&1
-    fi
-) &
+        if command -v xdg-open >/dev/null 2>&1; then
+            xdg-open "$URL" >/dev/null 2>&1
+        elif command -v gio >/dev/null 2>&1; then
+            gio open "$URL" >/dev/null 2>&1
+        fi
+    ) &
+fi
 
 exec .venv/bin/python app.py
