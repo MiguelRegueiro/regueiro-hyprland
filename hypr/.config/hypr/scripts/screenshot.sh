@@ -31,7 +31,21 @@ if [[ "$launch_delay" != "0" ]]; then
 fi
 
 copy_image() {
-    wl-copy --type image/png <"$1"
+    local mimeclip_bin="$HOME/.cargo/bin/mimeclip"
+
+    if [[ ! -x "$mimeclip_bin" ]]; then
+        if [[ -x /usr/local/bin/mimeclip ]]; then
+            mimeclip_bin=/usr/local/bin/mimeclip
+        else
+            mimeclip_bin="$(command -v mimeclip 2>/dev/null || true)"
+        fi
+    fi
+
+    if [[ -z "$mimeclip_bin" || ! -x "$mimeclip_bin" ]]; then
+        fail "mimeclip is not installed"
+    fi
+
+    "$mimeclip_bin" screenshot "$1"
 }
 
 notify_saved() {

@@ -187,6 +187,21 @@ Log out and back in after applying these changes. Simultaneous graphical session
 flatpak install flathub app.zen_browser.zen
 ```
 
+#### Zen Browser and MimeClip screenshots
+
+The `flatpak` Stow package grants Zen **read-only** access to `~/Pictures`:
+
+```sh
+stow --no-folding flatpak
+```
+
+This is needed because MimeClip intentionally preserves a screenshot as a
+multi-MIME clipboard entry: an image, a plain filesystem path, and a file URI.
+Zen resolves the file URI when an image is pasted, and Flatpak otherwise blocks
+access to screenshots saved under `~/Pictures`. The override lets a paste attach
+the image in Zen while text-only targets such as a terminal still receive the
+path. Fully quit and reopen Zen after applying or changing the override.
+
 Homebrew is optional; Fish initializes it only when `/home/linuxbrew/.linuxbrew/bin/brew` is installed.
 
 Some personal keybinds also expect `anitrack`, `elio`, `enzo`, and `runin`. The NormCap keybind prefers native `normcap`, then falls back to Flatpak `com.github.dynobo.normcap`.
@@ -212,7 +227,7 @@ Power actions are handled by QuickShell through `qs ipc call powermenu`, so the 
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow --no-folding hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk xdg-portals
+stow --no-folding hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk xdg-portals flatpak
 ```
 
 Restow the affected packages after pulling changes that add or rename files. Existing Stow symlinks already point at updated files; machine-local overrides remain outside the checkout.

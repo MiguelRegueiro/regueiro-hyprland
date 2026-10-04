@@ -1,0 +1,4 @@
+[Context]
+# MimeClip screenshot entries include a file URI.  Zen needs read-only access to
+# the screenshot directory in order to resolve that URI into an image on paste.
+filesystems=xdg-pictures:ro;
