@@ -62,7 +62,10 @@ def deliver(text: str) -> str:
     copied = False
     if shutil.which("wl-copy"):
         try:
-            subprocess.run(["wl-copy"], input=text, text=True,
+            # Do not let wl-copy infer the MIME type from spoken text.  For
+            # example, a sentence beginning with "From " is valid plain text
+            # but MIME sniffing classifies it as application/mbox.
+            subprocess.run(["wl-copy", "--type", "text/plain;charset=utf-8"], input=text, text=True,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
                            timeout=2)
             copied = True
