@@ -122,6 +122,7 @@ hl.bind(main_mod .. " + CTRL + SHIFT + Down", hl.dsp.window.move({ direction = "
 hl.bind(main_mod .. " + V", hl.dsp.exec_cmd(clipboard_menu))
 hl.bind(main_mod .. " + T", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl toggle"), { release = true })
 hl.bind("F10", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl toggle"), { release = true })
+hl.bind("F7", hl.dsp.exec_cmd("~/.config/hypr/scripts/ttsctl speak-clipboard"), { release = true })
 hl.bind(main_mod .. " + CTRL + S", hl.dsp.exec_cmd("qs ipc call quicksettings toggle"))
 hl.bind(main_mod .. " + S", hl.dsp.exec_cmd(power_menu))
 
@@ -142,7 +143,7 @@ hl.bind(main_mod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 hl.bind("F11", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 
 -- Hardware media keys.
-hl.bind("F8", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+hl.bind("F8", hl.dsp.exec_cmd("~/.config/hypr/scripts/ttsctl toggle || playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/vol-up.sh"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/vol-down.sh"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })

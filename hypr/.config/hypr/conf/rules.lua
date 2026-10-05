@@ -48,7 +48,7 @@ hl.layer_rule({
 
 hl.layer_rule({
     name = "qs-osd-blur",
-    match = { namespace = "^qs-(volume|im|power|battery-warning|dictation)-osd$" },
+    match = { namespace = "^qs-(volume|im|power|battery-warning|dictation|tts)-osd$" },
     blur = true,
     ignore_alpha = 0.5,
 })
@@ -77,6 +77,13 @@ hl.layer_rule({
 hl.layer_rule({
     name = "qs-ssh-sessions-blur",
     match = { namespace = "qs-ssh-sessions" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
+    name = "qs-tts-menu-blur",
+    match = { namespace = "qs-tts-menu" },
     blur = true,
     ignore_alpha = 0.5,
 })

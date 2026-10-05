@@ -29,7 +29,8 @@ ShellRoot {
     property bool cpuStatsMenuVisible: false
     property bool ramStatsMenuVisible: false
     property bool sshSessionsMenuVisible: false
-    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || cpuStatsMenuVisible || ramStatsMenuVisible || sshSessionsMenuVisible
+    property bool ttsMenuVisible: false
+    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || cpuStatsMenuVisible || ramStatsMenuVisible || sshSessionsMenuVisible || ttsMenuVisible
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -61,33 +62,33 @@ ShellRoot {
 
     function requestPowerAction(actionId) {
         if (powerBusyAction !== "")
-            return ;
+            return;
 
         if (actionId === "toggle") {
             togglePowerMenu();
-            return ;
+            return;
         }
         if (actionId === "open" || actionId === "menu") {
             openPowerMenu();
-            return ;
+            return;
         }
         if (actionId === "close") {
             closePowerMenu();
-            return ;
+            return;
         }
         if (powerActionNeedsConfirmation(actionId)) {
             closeAllPanels();
             powerMenuMode = "confirm";
             powerMenuAction = actionId;
             powerMenuVisible = true;
-            return ;
+            return;
         }
         runPowerAction(actionId);
     }
 
     function confirmPowerAction() {
         if (!powerActionNeedsConfirmation(powerMenuAction))
-            return ;
+            return;
 
         runPowerAction(powerMenuAction);
     }
@@ -95,12 +96,11 @@ ShellRoot {
     function clearPowerBusy(actionId) {
         if (powerBusyAction === actionId)
             powerBusyAction = "";
-
     }
 
     function runPowerAction(actionId) {
         if (powerBusyAction !== "")
-            return ;
+            return;
 
         closeAllPanels();
         powerBusyAction = actionId;
@@ -153,12 +153,13 @@ ShellRoot {
 
     function openClipboard() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closeLauncher();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -170,7 +171,7 @@ ShellRoot {
 
     function toggleClipboard() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         if (clipboardVisible || clipboardOpening)
             closeClipboard();
@@ -180,12 +181,13 @@ ShellRoot {
 
     function openLauncher() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closeClipboard();
         qsController.pinned = false;
         ncController.pinned = false;
@@ -196,7 +198,7 @@ ShellRoot {
 
     function toggleLauncher() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         if (launcherVisible)
             closeLauncher();
@@ -220,17 +222,40 @@ ShellRoot {
         sshSessionsMenuVisible = false;
     }
 
+    function closeTtsMenu() {
+        ttsMenuVisible = false;
+    }
+
+    function toggleTtsMenu() {
+        if (ttsMenuVisible) {
+            closeTtsMenu();
+            return;
+        }
+        closeExternalDrivesMenu();
+        closeCpuStatsMenu();
+        closeRamStatsMenu();
+        closeSshSessionsMenu();
+        closeClipboard();
+        closeLauncher();
+        qsController.pinned = false;
+        ncController.pinned = false;
+        qsController.closeImmediately();
+        ncController.closeImmediately();
+        ttsMenuVisible = true;
+    }
+
     function toggleExternalDrivesMenu() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         if (externalDrivesMenuVisible) {
             closeExternalDrivesMenu();
-            return ;
+            return;
         }
         closeCpuStatsMenu();
         closeRamStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closeClipboard();
         closeLauncher();
         closeWallpaperPicker();
@@ -244,15 +269,16 @@ ShellRoot {
 
     function toggleCpuStatsMenu() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         if (cpuStatsMenuVisible) {
             closeCpuStatsMenu();
-            return ;
+            return;
         }
         closeExternalDrivesMenu();
         closeRamStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closeClipboard();
         closeLauncher();
         qsController.pinned = false;
@@ -265,15 +291,16 @@ ShellRoot {
 
     function toggleRamStatsMenu() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         if (ramStatsMenuVisible) {
             closeRamStatsMenu();
-            return ;
+            return;
         }
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closeClipboard();
         closeLauncher();
         qsController.pinned = false;
@@ -286,15 +313,16 @@ ShellRoot {
 
     function toggleSshSessionsMenu() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         if (sshSessionsMenuVisible) {
             closeSshSessionsMenu();
-            return ;
+            return;
         }
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
+        closeTtsMenu();
         closeClipboard();
         closeLauncher();
         qsController.pinned = false;
@@ -307,13 +335,14 @@ ShellRoot {
 
     function toggleQuickSettings() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         const shouldClose = qsController.open;
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closeLauncher();
         closeClipboard();
         ncController.closeImmediately();
@@ -327,13 +356,14 @@ ShellRoot {
 
     function toggleNotificationCenter() {
         if (powerMenuVisible)
-            return ;
+            return;
 
         const shouldClose = ncController.open;
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closeLauncher();
         closeClipboard();
         qsController.closeImmediately();
@@ -356,6 +386,7 @@ ShellRoot {
         closeCpuStatsMenu();
         closeRamStatsMenu();
         closeSshSessionsMenu();
+        closeTtsMenu();
         closePowerMenu();
     }
 
@@ -499,7 +530,6 @@ ShellRoot {
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("lock");
-
         }
     }
 
@@ -510,7 +540,6 @@ ShellRoot {
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("suspend");
-
         }
     }
 
@@ -521,7 +550,6 @@ ShellRoot {
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("logout");
-
         }
     }
 
@@ -532,7 +560,6 @@ ShellRoot {
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("reboot");
-
         }
     }
 
@@ -543,8 +570,13 @@ ShellRoot {
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("shutdown");
-
         }
+    }
+
+    Process {
+        id: ttsClipboardProc
+
+        command: [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "speak-clipboard"]
     }
 
     Services.HoverOverlayController {
@@ -585,6 +617,10 @@ ShellRoot {
 
     Services.DictationService {
         id: dictationServiceState
+    }
+
+    Services.TtsService {
+        id: ttsServiceState
     }
 
     Services.NetworkService {
@@ -639,6 +675,7 @@ ShellRoot {
                 cpuStatsOpen: root.cpuStatsMenuVisible
                 ramStatsOpen: root.ramStatsMenuVisible
                 sshSessionsOpen: root.sshSessionsMenuVisible
+                ttsOpen: root.ttsMenuVisible
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
@@ -653,16 +690,15 @@ ShellRoot {
                 onCpuStatsClicked: root.toggleCpuStatsMenu()
                 onRamStatsClicked: root.toggleRamStatsMenu()
                 onSshSessionsClicked: root.toggleSshSessionsMenu()
-                onQuickSettingsHoveredChanged: (hovered) => {
+                onTtsClicked: root.toggleTtsMenu()
+                onQuickSettingsHoveredChanged: hovered => {
                     qsController.triggerHovered = false;
                 }
-                onNotificationCenterHoveredChanged: (hovered) => {
+                onNotificationCenterHoveredChanged: hovered => {
                     ncController.triggerHovered = false;
                 }
             }
-
         }
-
     }
 
     Variants {
@@ -682,9 +718,40 @@ ShellRoot {
                 onCloseRequested: root.closeCpuStatsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
-
         }
+    }
 
+    Variants {
+        model: Quickshell.screens
+        delegate: Component {
+            Bar.TtsMenu {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
+                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+
+                targetScreen: modelData
+                ttsService: ttsServiceState
+                open: root.ttsMenuVisible && activeScreen
+                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
+                onCloseRequested: root.closeTtsMenu()
+                onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
+            }
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Overlays.TtsOSD {
+                required property var modelData
+
+                targetScreen: modelData
+                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                ttsService: ttsServiceState
+            }
+        }
     }
 
     Variants {
@@ -698,9 +765,7 @@ ShellRoot {
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 dictationService: dictationServiceState
             }
-
         }
-
     }
 
     Variants {
@@ -720,9 +785,7 @@ ShellRoot {
                 onCloseRequested: root.closeRamStatsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
-
         }
-
     }
 
     Variants {
@@ -742,9 +805,7 @@ ShellRoot {
                 onCloseRequested: root.closeSshSessionsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
-
         }
-
     }
 
     Variants {
@@ -764,9 +825,7 @@ ShellRoot {
                 onCloseRequested: root.closeExternalDrivesMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
-
         }
-
     }
 
     Variants {
@@ -790,18 +849,15 @@ ShellRoot {
                 networkService: networkServiceState
                 onOutsidePressed: root.closeAllPanels()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
-                onPowerActionRequested: (actionId) => {
+                onPowerActionRequested: actionId => {
                     return root.requestPowerAction(actionId);
                 }
                 onQuickSettingsHoveredChanged: {
                     if (activeScreen)
                         qsController.panelHovered = quickSettingsHovered;
-
                 }
             }
-
         }
-
     }
 
     Variants {
@@ -815,9 +871,7 @@ ShellRoot {
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
             }
-
         }
-
     }
 
     Variants {
@@ -830,9 +884,7 @@ ShellRoot {
                 targetScreen: modelData
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
             }
-
         }
-
     }
 
     Variants {
@@ -846,9 +898,7 @@ ShellRoot {
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 inputService: inputServiceState
             }
-
         }
-
     }
 
     Variants {
@@ -865,15 +915,13 @@ ShellRoot {
                 mode: root.powerMenuMode
                 actionId: root.powerMenuAction
                 busyAction: root.powerBusyAction
-                onActionRequested: (actionId) => {
+                onActionRequested: actionId => {
                     return root.requestPowerAction(actionId);
                 }
                 onConfirmRequested: root.confirmPowerAction()
                 onCancelRequested: root.closePowerMenu()
             }
-
         }
-
     }
 
     Variants {
@@ -898,12 +946,9 @@ ShellRoot {
                 onNotificationCenterHoveredChanged: {
                     if (activeScreen)
                         ncController.panelHovered = notificationCenterHovered;
-
                 }
             }
-
         }
-
     }
 
     Variants {
@@ -942,9 +987,7 @@ ShellRoot {
                 onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
                 onBarHoverCleared: root.clearBarMenuHover(modelData)
             }
-
         }
-
     }
 
     Variants {
@@ -968,9 +1011,6 @@ ShellRoot {
                 onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
                 onBarHoverCleared: root.clearBarMenuHover(modelData)
             }
-
         }
-
     }
-
 }

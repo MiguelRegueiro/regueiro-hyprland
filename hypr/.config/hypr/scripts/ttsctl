@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+# Submit the current Wayland clipboard to the always-running EasyTTS server.
+# The server owns generation/playback; this command only starts a job and exits.
+set -euo pipefail
+
+state_root="${XDG_RUNTIME_DIR:-/tmp/regueiro-$(id -u)}/regueiro-easytts"
+state_file="$state_root/state.json"
+
+server_host() {
+    if [[ -n "${EASYTTS_HOST:-}" ]]; then
+        printf '%s\n' "$EASYTTS_HOST"
+    elif command -v tailscale >/dev/null 2>&1; then
+        tailscale ip -4 2>/dev/null | head -n 1 || true
+    else
+        printf '%s\n' "127.0.0.1"
+    fi
+}
+
+status() {
+    local host port
+    host="$(server_host)"
+    port="${EASYTTS_PORT:-8765}"
+    [[ -n "$host" ]] || host="127.0.0.1"
+    curl --fail --silent --max-time 2 "http://${host}:${port}/api/status" \
+        || { [[ -f "$state_file" ]] && cat "$state_file" || printf '%s\n' '{"state":"idle","text":"","detail":"","position":0,"duration":0}'; }
+}
+
+speak_clipboard() {
+    local copied host port voice rate
+    # With no explicit arguments (the F7 binding), let the service use its
+    # saved selection instead of silently forcing its old command defaults.
+    voice="${1:-}"
+    rate="${2:-}"
+    if [[ -f "$state_file" ]]; then
+        local current_state
+        current_state="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("state", ""))' "$state_file" 2>/dev/null || true)"
+        if [[ "$current_state" == "generating" ]]; then
+            control cancel
+            return
+        fi
+        if [[ "$current_state" == "playing" ]]; then
+            control reset
+            return
+        fi
+    fi
+    copied="$(wl-paste --no-newline 2>/dev/null || true)"
+    if [[ -z "$copied" ]]; then
+        mkdir -p "$state_root"
+        printf '%s\n' '{"state":"error","text":"","detail":"Clipboard is empty"}' > "$state_file"
+        exit 1
+    fi
+    host="$(server_host)"
+    port="${EASYTTS_PORT:-8765}"
+    if [[ -z "$host" ]]; then
+        host="127.0.0.1"
+    fi
+    if ! printf '%s' "$copied" | python3 -c 'import json, sys; payload = {"text": sys.stdin.read()}; payload.update({key: value for key, value in (("voice", sys.argv[1]), ("rate", sys.argv[2])) if value}); print(json.dumps(payload))' "$voice" "$rate" \
+        | curl --fail --silent --show-error --max-time 5 \
+            -H 'Content-Type: application/json' \
+            --data-binary @- "http://${host}:${port}/api/speak" >/dev/null; then
+        mkdir -p "$state_root"
+        printf '%s\n' '{"state":"error","text":"","detail":"EasyTTS is not reachable"}' > "$state_file"
+        exit 1
+    fi
+}
+
+toggle() {
+    local host port
+    host="$(server_host)"
+    port="${EASYTTS_PORT:-8765}"
+    [[ -n "$host" ]] || host="127.0.0.1"
+    curl --fail --silent --max-time 2 -H 'Content-Type: application/json' \
+        --data '{"action":"toggle"}' "http://${host}:${port}/api/control" >/dev/null
+}
+
+settings() {
+    local voice="${1:-}" rate="${2:-}" host port
+    host="$(server_host)"
+    port="${EASYTTS_PORT:-8765}"
+    [[ -n "$host" ]] || host="127.0.0.1"
+    python3 -c 'import json, sys; print(json.dumps({"action": "settings", "voice": sys.argv[1], "rate": sys.argv[2]}))' "$voice" "$rate" \
+        | curl --fail --silent --max-time 2 -H 'Content-Type: application/json' --data-binary @- "http://${host}:${port}/api/control" >/dev/null
+}
+
+control() {
+    local action="$1" value="${2:-}" host port
+    host="$(server_host)"
+    port="${EASYTTS_PORT:-8765}"
+    [[ -n "$host" ]] || host="127.0.0.1"
+    python3 -c 'import json, sys; print(json.dumps({"action": sys.argv[1], **({"position": float(sys.argv[2])} if sys.argv[2] else {})}))' "$action" "$value" \
+        | curl --fail --silent --max-time 2 -H 'Content-Type: application/json' --data-binary @- "http://${host}:${port}/api/control" >/dev/null
+}
+
+case "${1:-speak-clipboard}" in
+    status) status ;;
+    speak-clipboard) speak_clipboard "${2:-}" "${3:-}" ;;
+    settings) settings "${2:-}" "${3:-}" ;;
+    toggle) toggle ;;
+    reset) control reset ;;
+    seek) control seek "${2:-0}" ;;
+    *) echo "usage: ttsctl {status|speak-clipboard [voice rate]|settings voice rate|toggle|reset|seek seconds}" >&2; exit 2 ;;
+esac

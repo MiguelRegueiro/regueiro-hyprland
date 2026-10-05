@@ -26,16 +26,18 @@ PanelWindow {
     property bool cpuStatsOpen: false
     property bool ramStatsOpen: false
     property bool sshSessionsOpen: false
+    property bool ttsOpen: false
     property var routedHoverItem: null
     readonly property point routedHoverPosition: routedHoverItem ? routedHoverItem.mapToItem(barContent, 0, 0) : Qt.point(0, 0)
 
-    signal quickSettingsClicked()
-    signal notificationCenterClicked()
-    signal clipboardClicked()
-    signal externalDrivesClicked()
-    signal cpuStatsClicked()
-    signal ramStatsClicked()
-    signal sshSessionsClicked()
+    signal quickSettingsClicked
+    signal notificationCenterClicked
+    signal clipboardClicked
+    signal externalDrivesClicked
+    signal cpuStatsClicked
+    signal ramStatsClicked
+    signal sshSessionsClicked
+    signal ttsClicked
     signal quickSettingsHoveredChanged(bool hovered)
     signal notificationCenterHoveredChanged(bool hovered)
 
@@ -55,6 +57,10 @@ PanelWindow {
         }
         if (containsBarPoint(clipboardTrigger, pointX, pointY)) {
             clipboardClicked();
+            return true;
+        }
+        if (containsBarPoint(ttsTrigger, pointX, pointY)) {
+            ttsClicked();
             return true;
         }
         if (containsBarPoint(sshSessionsTrigger, pointX, pointY)) {
@@ -81,6 +87,8 @@ PanelWindow {
             target = quickSettingsTrigger;
         else if (containsBarPoint(clipboardTrigger, pointX, pointY))
             target = clipboardTrigger;
+        else if (containsBarPoint(ttsTrigger, pointX, pointY))
+            target = ttsTrigger;
         else if (containsBarPoint(sshSessionsTrigger, pointX, pointY))
             target = sshSessionsTrigger;
         else if (containsBarPoint(externalDrivesTrigger, pointX, pointY))
@@ -123,7 +131,9 @@ PanelWindow {
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.RightButton
-            onWheel: (wheel) => { wheel.accepted = false; }
+            onWheel: wheel => {
+                wheel.accepted = false;
+            }
         }
 
         Rectangle {
@@ -162,7 +172,6 @@ PanelWindow {
                 onCpuClicked: bar.cpuStatsClicked()
                 onRamClicked: bar.ramStatsClicked()
             }
-
         }
 
         DateTimeNotificationTrigger {
@@ -190,6 +199,17 @@ PanelWindow {
                 top: parent.top
             }
 
+            BarIconButton {
+                id: ttsTrigger
+
+                Layout.alignment: Qt.AlignVCenter
+                barHeight: Theme.barHeight
+                iconText: "󰔊"
+                iconSize: 15
+                menuOpen: bar.ttsOpen
+                onClicked: bar.ttsClicked()
+            }
+
             ExternalDriveButton {
                 id: externalDrivesTrigger
 
@@ -200,7 +220,6 @@ PanelWindow {
                 onRightClicked: {
                     if (bar.externalDrivesService)
                         bar.externalDrivesService.refresh();
-
                 }
             }
 
@@ -215,7 +234,6 @@ PanelWindow {
                 onRightClicked: {
                     if (bar.sshSessionsService)
                         bar.sshSessionsService.refresh();
-
                 }
             }
 
@@ -250,9 +268,6 @@ PanelWindow {
                 networkService: bar.networkService
                 onClicked: bar.quickSettingsClicked()
             }
-
         }
-
     }
-
 }
