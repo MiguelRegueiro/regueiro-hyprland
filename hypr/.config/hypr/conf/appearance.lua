@@ -62,7 +62,11 @@ hl.config({
         nvidia_anti_flicker = false,
     },
     cursor = {
-        no_hardware_cursors = true,
+        -- Hyprland itself warps to this monitor as soon as it is ready.
+        default_monitor = "DP-1",
+        -- Auto mode selected software cursors on the docked Intel setup. That
+        -- path can leave a duplicate, stale cursor on the other output.
+        no_hardware_cursors = false,
     },
 })
 

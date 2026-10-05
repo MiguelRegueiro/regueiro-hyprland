@@ -122,9 +122,10 @@ The picker prepares reusable JPEG previews in `$XDG_CACHE_HOME/quickshell/wallpa
 The shared monitor layout, brightness stops, and Fish greeting remain the defaults. Optional
 machine-local files under `$XDG_CONFIG_HOME` (normally `~/.config`) can override them:
 
-- `hypr-local/monitors.lua`: replaces monitor configuration. `HYPR_PREFERRED_MONITOR`
-  selects startup focus, defaulting to `DP-1`. Workspace assignments remain in
-  `conf/workspaces.lua` unless also overridden.
+- `hypr-local/monitors.lua`: replaces monitor configuration. Workspace
+  assignments remain in `conf/workspaces.lua` unless also overridden. The
+  cursor's startup display is configured natively by `cursor.default_monitor`
+  in `conf/appearance.lua`.
 - `quickshell-local/brightness.json`: an integer `step` (1–100) enables linear
   percentage-point adjustments; `minimum` (0–99, default 2) sets the lower bound.
   Without a valid step, the original stops apply. Edits reload automatically.
