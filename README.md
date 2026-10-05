@@ -91,7 +91,7 @@ cp -r fonts/. ~/.local/share/fonts/
 fc-cache -fv
 ```
 
-QuickShell uses **Adwaita Sans** and **Cantarell**. On Arch, install them explicitly with `adwaita-fonts` and `cantarell-fonts`.
+QuickShell uses **Adwaita Sans**, **Cantarell**, and the bundled **Symbols Nerd Font Mono**. On Arch, install the first two explicitly with `adwaita-fonts` and `cantarell-fonts`.
 
 ### Services
 
