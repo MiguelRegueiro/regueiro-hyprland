@@ -112,7 +112,7 @@ Item {
             y: Math.round(popupSurface.popupY)
             width: popupRoot.width
             height: popupRoot.cardHeight
-            radius: Theme.qsRadius + 5
+            radius: 24
             color: popupRoot.surfaceBg
             border.color: popupRoot.outline
             border.width: 1

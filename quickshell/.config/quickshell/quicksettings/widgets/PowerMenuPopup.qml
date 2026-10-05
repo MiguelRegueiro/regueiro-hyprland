@@ -130,7 +130,7 @@ Item {
             y: Math.round(root.surfaceY)
             width: root.width
             height: root.height
-            radius: Theme.qsRadius + 5
+            radius: 24
             color: root.surfaceBg
             border.color: root.outline
             border.width: 1

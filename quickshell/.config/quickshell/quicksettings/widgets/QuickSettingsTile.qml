@@ -78,7 +78,7 @@ Rectangle {
 
                 return tile.hovered ? QS.chipBgHover : QS.chipBg;
             }
-            border.width: tile.showIconChip ? 1 : 0
+            border.width: tile.showIconChip && !tile.toggled ? 1 : 0
             border.color: {
                 if (!tile.showIconChip)
                     return "transparent";
