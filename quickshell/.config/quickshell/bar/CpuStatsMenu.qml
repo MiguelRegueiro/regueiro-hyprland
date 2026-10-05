@@ -20,6 +20,9 @@ PanelWindow {
     readonly property real attachTop: Theme.qsContentPadding
     readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceHeight: Math.max(180, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
+    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
+    readonly property color outline: Qt.rgba(0.56, 0.58, 0.62, 0.42)
+    readonly property color meterTrack: Qt.rgba(1, 1, 1, 0.10)
 
     signal closeRequested()
     signal barPressed(real x, real y)
@@ -147,9 +150,9 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: Theme.ncSurfaceBottomLeftRadius
-                        color: Theme.qsSurfaceBg
-                        border.width: 2
-                        border.color: Theme.bottomPanelOutline
+                        color: root.surfaceBg
+                        border.width: 1
+                        border.color: root.outline
                     }
 
                     MouseArea {
@@ -218,7 +221,7 @@ PanelWindow {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 1
-                            color: Theme.qsEdgeSoft
+                            color: Qt.rgba(0.56, 0.58, 0.62, 0.18)
                         }
 
                         ColumnLayout {
@@ -257,7 +260,7 @@ PanelWindow {
                                             Layout.fillWidth: true
                                             Layout.preferredHeight: 6
                                             radius: 3
-                                            color: Theme.qsCardChipBg
+                                            color: root.meterTrack
 
                                             Rectangle {
                                                 width: parent.width * Math.max(0, Math.min(100, modelData)) / 100
