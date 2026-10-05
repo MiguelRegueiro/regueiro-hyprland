@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell.Io
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 Rectangle {
     id: row
@@ -35,9 +36,9 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: 92
     radius: 18
-    color: Theme.qsCardBg
+    color: QS.cardBg
     border.width: 1
-    border.color: Theme.qsCardBorder
+    border.color: QS.cardBorder
     layer.enabled: true
     layer.effect: MultiEffect {
         shadowEnabled: true
@@ -56,7 +57,6 @@ Rectangle {
         onTriggered: {
             if (!pollProc.running)
                 pollProc.running = true;
-
         }
     }
 
@@ -68,7 +68,6 @@ Rectangle {
         onTriggered: {
             if (!pollProc.running)
                 pollProc.running = true;
-
         }
     }
 
@@ -90,7 +89,6 @@ Rectangle {
                 row.playerName = parts.length > 5 ? parts[5] : "";
             }
         }
-
     }
 
     Process {
@@ -129,9 +127,9 @@ Rectangle {
             width: 36
             height: 36
             radius: 14
-            color: row.hasPlayer ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+            color: row.hasPlayer ? QS.chipBgHover : QS.chipBg
             border.width: 1
-            border.color: row.hasPlayer ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+            border.color: row.hasPlayer ? QS.chipBorderHover : QS.chipBorder
 
             Text {
                 anchors.centerIn: parent
@@ -140,7 +138,6 @@ Rectangle {
                 font.pixelSize: 17
                 color: row.hasPlayer ? Theme.textPrimary : Theme.textDim
             }
-
         }
 
         ColumnLayout {
@@ -169,7 +166,6 @@ Rectangle {
                     font.pixelSize: 11
                     elide: Text.ElideRight
                 }
-
             }
 
             Item {
@@ -212,11 +208,8 @@ Rectangle {
                             actionRefresh.restart();
                         }
                     }
-
                 }
-
             }
-
         }
 
         Item {
@@ -224,7 +217,6 @@ Rectangle {
             Layout.preferredWidth: mediaBadge.width
             Layout.preferredHeight: mediaBadge.height
         }
-
     }
 
     component ControlButton: Rectangle {
@@ -234,14 +226,14 @@ Rectangle {
         property real glyphOffsetX: 0
         readonly property bool hovered: mouse.containsMouse
 
-        signal clicked()
+        signal clicked
 
         width: 38
         height: 38
         radius: 19
-        color: btn.hovered && btn.enabled ? Theme.qsMediaControlBgHover : Theme.qsMediaControlBg
+        color: btn.hovered && btn.enabled ? QS.mediaControlBgHover : QS.mediaControlBg
         border.width: 1
-        border.color: btn.hovered && btn.enabled ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+        border.color: btn.hovered && btn.enabled ? QS.chipBorderHover : QS.chipBorder
         opacity: btn.enabled ? 1 : 0.45
 
         Text {
@@ -265,7 +257,5 @@ Rectangle {
             cursorShape: Qt.ArrowCursor
             onClicked: btn.clicked()
         }
-
     }
-
 }

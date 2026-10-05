@@ -4,14 +4,18 @@ import Quickshell.Services.UPower
 import "widgets" as Widgets
 import "../components" as Components
 import "../theme/Theme.js" as Theme
+import "QuickSettingsStyle.js" as QS
 
 Item {
     id: root
 
     required property var notificationStore
+    required property real popupSurfaceOriginX
+    required property real popupSurfaceOriginY
     required property var audioService
     required property var brightnessService
     required property var networkService
+    required property var targetScreen
     required property var wifiPage
     required property var bluetoothPage
     required property bool hasPerformanceProfile
@@ -26,11 +30,15 @@ Item {
     readonly property real audioOutputPopupTopInViewport: mapToItem(null, 0, volumeRow.y + volumeRow.height + audioOutputPopupGap).y
     readonly property real audioOutputPopupMaxHeight: Math.max(180, viewportHeight - audioOutputPopupTopInViewport - Theme.borderSize - 12)
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? Math.max(0, audioOutputPopupBottom - root.implicitHeight + 12) : 0
+    readonly property real audioOutputPopupSurfaceX: root.popupSurfaceOriginX + root.mapToItem(root.popupParent, audioOutputPopup.x, audioOutputPopup.y).x
+    readonly property real audioOutputPopupSurfaceY: root.popupSurfaceOriginY + root.mapToItem(root.popupParent, audioOutputPopup.x, audioOutputPopup.y).y
+    readonly property real powerMenuSurfaceX: root.popupSurfaceOriginX + root.mapToItem(root.popupParent, powerMenu.x, powerMenu.y).x
+    readonly property real powerMenuSurfaceY: root.popupSurfaceOriginY + root.mapToItem(root.popupParent, powerMenu.x, powerMenu.y).y
     readonly property real appVolumeListTopInViewport: mapToItem(null, 0, controlsColumn.y + applicationVolumeList.y).y
     readonly property real appVolumeListMaxHeight: Math.min(Theme.qsApplicationVolumeMaxHeight, Math.max(56, viewportHeight - appVolumeListTopInViewport - Theme.qsContentPadding * 2 - Theme.barCornerRadius))
 
-    signal wifiPageRequested()
-    signal bluetoothPageRequested()
+    signal wifiPageRequested
+    signal bluetoothPageRequested
     signal powerModeChangeRequested(string mode)
     signal audioOutputPopupRequest(bool open)
     signal powerActionRequested(string actionId)
@@ -157,11 +165,8 @@ Item {
                             color: Theme.textDim
                             elide: Text.ElideRight
                         }
-
                     }
-
                 }
-
             }
 
             Item {
@@ -176,16 +181,16 @@ Item {
                     radius: 19
                     color: {
                         if (root.networkService.ethernetConnected)
-                            return ethernetHover.hovered ? Theme.tileActiveBgHover : Theme.tileActiveBg;
+                            return ethernetHover.hovered ? QS.tileActiveBgHover : QS.tileActiveBg;
 
-                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? Theme.qsCardBgHover : Theme.qsCardBg;
+                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? QS.cardBgHover : QS.cardBg;
                     }
                     border.width: 1
                     border.color: {
                         if (root.networkService.ethernetConnected)
-                            return ethernetHover.hovered ? Theme.tileActiveBorderHover : Theme.tileActiveBorder;
+                            return ethernetHover.hovered ? QS.tileActiveBorderHover : QS.tileActiveBorder;
 
-                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? Theme.qsCardBorderHover : Theme.qsCardBorder;
+                        return ethernetHover.hovered && root.networkService.ethernetCanToggle ? QS.cardBorderHover : QS.cardBorder;
                     }
 
                     Text {
@@ -215,18 +220,14 @@ Item {
                         ColorAnimation {
                             duration: Theme.hoverAnimDuration
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: Theme.hoverAnimDuration
                         }
-
                     }
-
                 }
-
             }
 
             Item {
@@ -238,9 +239,9 @@ Item {
 
                     anchors.fill: parent
                     radius: 19
-                    color: logoutButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+                    color: logoutButtonHover.hovered ? QS.cardBgHover : QS.cardBg
                     border.width: 1
-                    border.color: logoutButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+                    border.color: logoutButtonHover.hovered ? QS.cardBorderHover : QS.cardBorder
 
                     Text {
                         anchors.centerIn: parent
@@ -254,16 +255,13 @@ Item {
                         ColorAnimation {
                             duration: Theme.qsPageFadeDuration
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: Theme.qsPageFadeDuration
                         }
-
                     }
-
                 }
 
                 HoverHandler {
@@ -282,7 +280,6 @@ Item {
                         root.powerActionRequested("logout");
                     }
                 }
-
             }
 
             Item {
@@ -294,9 +291,9 @@ Item {
 
                     anchors.fill: parent
                     radius: 19
-                    color: lockButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+                    color: lockButtonHover.hovered ? QS.cardBgHover : QS.cardBg
                     border.width: 1
-                    border.color: lockButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+                    border.color: lockButtonHover.hovered ? QS.cardBorderHover : QS.cardBorder
 
                     Text {
                         anchors.centerIn: parent
@@ -310,16 +307,13 @@ Item {
                         ColorAnimation {
                             duration: Theme.qsPageFadeDuration
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: Theme.qsPageFadeDuration
                         }
-
                     }
-
                 }
 
                 HoverHandler {
@@ -338,7 +332,6 @@ Item {
                         root.powerActionRequested("lock");
                     }
                 }
-
             }
 
             Item {
@@ -352,9 +345,9 @@ Item {
 
                     anchors.fill: parent
                     radius: 19
-                    color: root.powerMenuOpen ? Theme.qsCardBgHover : (powerButtonHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                    color: root.powerMenuOpen ? QS.cardBgHover : (powerButtonHover.hovered ? QS.cardBgHover : QS.cardBg)
                     border.width: 1
-                    border.color: root.powerMenuOpen ? Theme.qsCardBorderHover : (powerButtonHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+                    border.color: root.powerMenuOpen ? QS.cardBorderHover : (powerButtonHover.hovered ? QS.cardBorderHover : QS.cardBorder)
 
                     Text {
                         anchors.centerIn: parent
@@ -369,16 +362,13 @@ Item {
                         ColorAnimation {
                             duration: Theme.qsPageFadeDuration
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: Theme.qsPageFadeDuration
                         }
-
                     }
-
                 }
 
                 HoverHandler {
@@ -398,9 +388,7 @@ Item {
                         root.powerMenuOpen = !root.powerMenuOpen;
                     }
                 }
-
             }
-
         }
 
         GridLayout {
@@ -476,7 +464,6 @@ Item {
                     root.notificationStore.toggleDnd();
                 }
             }
-
         }
 
         ColumnLayout {
@@ -496,13 +483,12 @@ Item {
                 value: root.brightnessService.percent / 100
                 muted: false
                 showMute: false
-                onSliderMoved: (value) => {
+                onSliderMoved: value => {
                     return root.brightnessService.setPercent(Math.round(value * 100));
                 }
                 onDraggingChanged: {
                     if (!dragging)
                         root.brightnessService.refresh();
-
                 }
 
                 iconOverride: Component {
@@ -510,9 +496,7 @@ Item {
                         iconColor: Theme.textDim
                         height: 16
                     }
-
                 }
-
             }
 
             Widgets.QuickSettingsSliderRow {
@@ -533,13 +517,12 @@ Item {
                 stepSize: root.audioService.volumeStepPercent / 100
                 emitInterval: 0
                 onMuteClicked: root.audioService.toggleMute()
-                onSliderMoved: (value) => {
+                onSliderMoved: value => {
                     return root.audioService.setVolumePercent(value * 100);
                 }
                 onDraggingChanged: {
                     if (!dragging)
                         root.audioService.refresh();
-
                 }
                 onActionClicked: {
                     root.powerMenuOpen = false;
@@ -557,16 +540,13 @@ Item {
                 Layout.fillWidth: true
                 maximumHeight: root.appVolumeListMaxHeight
             }
-
         }
 
         Behavior on opacity {
             NumberAnimation {
                 duration: Theme.qsPageFadeDuration
             }
-
         }
-
     }
 
     Component {
@@ -578,7 +558,6 @@ Item {
             iconColor: root.audioService.muted ? Theme.textDisabled : Theme.textDim
             height: 16
         }
-
     }
 
     Item {
@@ -597,14 +576,15 @@ Item {
 
             x: Math.max(12, Math.min(root.width - width - 6, powerAnchor.x + powerAnchor.width - width))
             y: headerRow.y + powerAnchor.height + 10
+            surfaceX: root.powerMenuSurfaceX
+            surfaceY: root.powerMenuSurfaceY
+            targetScreen: root.targetScreen
             open: root.powerMenuOpen
             onActionTriggered: root.powerMenuOpen = false
-            onActionRequested: (actionId) => {
+            onActionRequested: actionId => {
                 return root.powerActionRequested(actionId);
             }
-
         }
-
     }
 
     Item {
@@ -658,13 +638,14 @@ Item {
             id: audioOutputPopup
 
             audioService: root.audioService
+            surfaceX: root.audioOutputPopupSurfaceX
+            surfaceY: root.audioOutputPopupSurfaceY
+            targetScreen: root.targetScreen
             maxPopupHeight: root.audioOutputPopupMaxHeight
             x: Math.max(0, Math.round((root.width - width) / 2))
             y: volumeRow.y + volumeRow.height + root.audioOutputPopupGap
             open: root.audioOutputPopupOpen
             onSinkChosen: root.audioOutputPopupRequest(false)
         }
-
     }
-
 }

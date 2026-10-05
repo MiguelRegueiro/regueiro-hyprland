@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic
 import "../../components" as Components
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 // Slider row: [icon]  [label]  [slider]  [mute button]
 Item {
@@ -31,8 +32,8 @@ Item {
     property real _lastEmittedValue: -1
 
     signal sliderMoved(real val)
-    signal muteClicked()
-    signal actionClicked()
+    signal muteClicked
+    signal actionClicked
 
     function clampValue(val) {
         return Math.max(0, Math.min(Math.max(0.01, row.maxValue), val));
@@ -48,7 +49,7 @@ Item {
 
     function emitPendingValue() {
         if (Math.abs(row._pendingValue - row._lastEmittedValue) < 0.000001)
-            return ;
+            return;
 
         row._lastEmittedValue = row._pendingValue;
         row.sliderMoved(row._pendingValue);
@@ -59,7 +60,7 @@ Item {
         if (row.emitInterval <= 0) {
             emitTimer.stop();
             row.emitPendingValue();
-            return ;
+            return;
         }
 
         emitTimer.restart();
@@ -68,7 +69,6 @@ Item {
     function syncFromSource() {
         if (!slider.pressed)
             row._displayValue = row.muted ? 0 : row.snapValue(row.value);
-
     }
 
     Layout.fillWidth: true
@@ -91,24 +91,21 @@ Item {
         anchors.fill: parent
         visible: row.surfaceVisible
         radius: row.backgroundRadius
-        color: row.dragging || row.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+        color: row.dragging || row.hovered ? QS.cardBgHover : QS.cardBg
         border.width: 1
-        border.color: row.dragging || row.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+        border.color: row.dragging || row.hovered ? QS.cardBorderHover : QS.cardBorder
 
         Behavior on color {
             ColorAnimation {
                 duration: Theme.hoverAnimDuration
             }
-
         }
 
         Behavior on border.color {
             ColorAnimation {
                 duration: Theme.hoverAnimDuration
             }
-
         }
-
     }
 
     HoverHandler {
@@ -132,9 +129,9 @@ Item {
             width: 32
             height: 32
             radius: 16
-            color: muteBtnMouse.containsMouse && row.showMute ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+            color: muteBtnMouse.containsMouse && row.showMute ? QS.chipBgHover : QS.chipBg
             border.width: 1
-            border.color: muteBtnMouse.containsMouse && row.showMute ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+            border.color: muteBtnMouse.containsMouse && row.showMute ? QS.chipBorderHover : QS.chipBorder
 
             Loader {
                 anchors.centerIn: parent
@@ -150,7 +147,6 @@ Item {
                     font.pixelSize: 16
                     color: row.muted ? Theme.textDisabled : Theme.textPrimary
                 }
-
             }
 
             MouseArea {
@@ -167,16 +163,13 @@ Item {
                 ColorAnimation {
                     duration: Theme.hoverAnimDuration
                 }
-
             }
 
             Behavior on border.color {
                 ColorAnimation {
                     duration: Theme.hoverAnimDuration
                 }
-
             }
-
         }
 
         // Label + slider
@@ -223,14 +216,14 @@ Item {
                     }
                     onValueChanged: {
                         if (!slider.pressed)
-                            return ;
+                            return;
 
                         row._displayValue = row.snapValue(value);
                         row.queueSliderValue(row._displayValue);
                     }
                     onPressedChanged: {
                         if (slider.pressed)
-                            return ;
+                            return;
 
                         emitTimer.stop();
                         row._pendingValue = row._displayValue;
@@ -255,7 +248,6 @@ Item {
                                 ColorAnimation {
                                     duration: Theme.sliderColorDuration
                                 }
-
                             }
 
                             Behavior on width {
@@ -265,11 +257,8 @@ Item {
                                     curve: Components.Anim.FastEffects
                                     duration: Theme.animDurFastEffects
                                 }
-
                             }
-
                         }
-
                     }
 
                     handle: Rectangle {
@@ -288,14 +277,10 @@ Item {
                                 curve: Components.Anim.FastEffects
                                 duration: Theme.animDurFastEffects
                             }
-
                         }
                     }
-
                 }
-
             }
-
         }
 
         Rectangle {
@@ -304,9 +289,9 @@ Item {
             Layout.preferredHeight: 30
             Layout.alignment: Qt.AlignVCenter
             radius: height / 2
-            color: row.actionButtonActive ? Theme.qsCardChipBgHover : (actionHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+            color: row.actionButtonActive ? QS.chipBgHover : (actionHover.hovered ? QS.chipBgHover : QS.chipBg)
             border.width: 1
-            border.color: row.actionButtonActive ? Theme.qsCardChipBorderHover : (actionHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
+            border.color: row.actionButtonActive ? QS.chipBorderHover : (actionHover.hovered ? QS.chipBorderHover : QS.chipBorder)
 
             Text {
                 anchors.centerIn: parent
@@ -334,18 +319,14 @@ Item {
                 ColorAnimation {
                     duration: Theme.hoverAnimDuration
                 }
-
             }
 
             Behavior on border.color {
                 ColorAnimation {
                     duration: Theme.hoverAnimDuration
                 }
-
             }
-
         }
-
     }
 
     Behavior on scale {
@@ -353,6 +334,5 @@ Item {
             curve: Components.Anim.FastEffects
             duration: Theme.animDurFastEffects
         }
-
     }
 }

@@ -4,6 +4,7 @@ import QtQuick.Controls.Basic
 import Quickshell
 import Quickshell.Io
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 Item {
     id: root
@@ -17,7 +18,7 @@ Item {
     property string _resultMac: "" // MAC that just got a result
     property bool _resultOk: false
 
-    signal backClicked()
+    signal backClicked
 
     function toggle() {
         btOn = !btOn;
@@ -31,7 +32,6 @@ Item {
     onMenuOpenChanged: {
         if (menuOpen)
             pollProc.running = true;
-
     }
 
     // ── Layout ────────────────────────────────────────────────────
@@ -46,9 +46,9 @@ Item {
             Layout.fillWidth: true
             height: 52
             radius: 18
-            color: Theme.qsCardBg
+            color: QS.cardBg
             border.width: 1
-            border.color: Theme.qsCardBorder
+            border.color: QS.cardBorder
 
             RowLayout {
                 spacing: 0
@@ -66,9 +66,9 @@ Item {
                     width: 44
                     height: 44
                     radius: 22
-                    color: hovered ? Theme.qsCardChipBgHover : "transparent"
+                    color: hovered ? QS.chipBgHover : "transparent"
                     border.width: hovered ? 1 : 0
-                    border.color: Theme.qsCardChipBorderHover
+                    border.color: QS.chipBorderHover
 
                     Text {
                         anchors.centerIn: parent
@@ -95,16 +95,13 @@ Item {
                         ColorAnimation {
                             duration: 110
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: 110
                         }
-
                     }
-
                 }
 
                 Item {
@@ -138,9 +135,9 @@ Item {
                     width: 48
                     height: 26
                     radius: 13
-                    color: root.btOn ? Theme.tileActiveBg : Theme.qsCardChipBg
+                    color: root.btOn ? QS.tileActiveBg : QS.chipBg
                     border.width: 1
-                    border.color: root.btOn ? Theme.tileActiveBorder : Theme.qsCardChipBorder
+                    border.color: root.btOn ? QS.tileActiveBorder : QS.chipBorder
 
                     Rectangle {
                         width: 20
@@ -155,9 +152,7 @@ Item {
                                 duration: 80
                                 easing.type: Easing.OutCubic
                             }
-
                         }
-
                     }
 
                     MouseArea {
@@ -171,20 +166,15 @@ Item {
                         ColorAnimation {
                             duration: 80
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: 80
                         }
-
                     }
-
                 }
-
             }
-
         }
 
         Item {
@@ -218,9 +208,9 @@ Item {
                         Layout.fillWidth: true
                         height: 52
                         radius: 18
-                        color: devRow.modelData.connected ? Theme.qsCardActiveBg : (btHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
+                        color: devRow.modelData.connected ? QS.cardActiveBg : (btHover.hovered ? QS.cardBgHover : QS.cardBg)
                         border.width: 1
-                        border.color: devRow.modelData.connected ? Theme.qsCardActiveBorder : (btHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+                        border.color: devRow.modelData.connected ? QS.cardActiveBorder : (btHover.hovered ? QS.cardBorderHover : QS.cardBorder)
 
                         RowLayout {
                             spacing: 10
@@ -235,9 +225,9 @@ Item {
                                 Layout.preferredWidth: 28
                                 Layout.preferredHeight: 28
                                 radius: 14
-                                color: devRow.modelData.connected ? Qt.rgba(1, 1, 1, 0.12) : (btHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+                                color: devRow.modelData.connected ? Qt.rgba(1, 1, 1, 0.12) : (btHover.hovered ? QS.chipBgHover : QS.chipBg)
                                 border.width: 1
-                                border.color: devRow.modelData.connected ? Qt.rgba(1, 1, 1, 0.12) : (btHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
+                                border.color: devRow.modelData.connected ? Qt.rgba(1, 1, 1, 0.12) : (btHover.hovered ? QS.chipBorderHover : QS.chipBorder)
 
                                 Text {
                                     anchors.centerIn: parent
@@ -247,7 +237,6 @@ Item {
                                     font.pixelSize: 15
                                     color: devRow.modelData.connected ? Theme.textPrimary : Theme.textDim
                                 }
-
                             }
 
                             ColumnLayout {
@@ -272,7 +261,6 @@ Item {
                                     color: Theme.textDim
                                     elide: Text.ElideRight
                                 }
-
                             }
 
                             Rectangle {
@@ -288,15 +276,15 @@ Item {
                                 radius: 15
                                 color: {
                                     if (hasResult)
-                                        return ok ? Theme.qsCardChipBgHover : Qt.rgba(1, 0.35, 0.35, 0.14);
+                                        return ok ? QS.chipBgHover : Qt.rgba(1, 0.35, 0.35, 0.14);
 
                                     if (busy)
-                                        return Theme.qsCardChipBg;
+                                        return QS.chipBg;
 
-                                    return connected ? Theme.qsCardChipBgHover : (btnMouse.containsMouse ? Theme.qsCardChipBgHover : Theme.qsCardChipBg);
+                                    return connected ? QS.chipBgHover : (btnMouse.containsMouse ? QS.chipBgHover : QS.chipBg);
                                 }
                                 border.width: 1
-                                border.color: btnMouse.containsMouse ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+                                border.color: btnMouse.containsMouse ? QS.chipBorderHover : QS.chipBorder
 
                                 Text {
                                     id: btnLabel
@@ -330,9 +318,7 @@ Item {
                                         ColorAnimation {
                                             duration: 120
                                         }
-
                                     }
-
                                 }
 
                                 MouseArea {
@@ -357,9 +343,7 @@ Item {
                                         actionTimeout.restart();
                                     }
                                 }
-
                             }
-
                         }
 
                         HoverHandler {
@@ -368,9 +352,7 @@ Item {
                             blocking: false
                             cursorShape: Qt.ArrowCursor
                         }
-
                     }
-
                 }
 
                 // Empty state
@@ -379,9 +361,9 @@ Item {
                     visible: root.btOn && root._devices.length === 0
                     height: 48
                     radius: 18
-                    color: Theme.qsCardBg
+                    color: QS.cardBg
                     border.width: 1
-                    border.color: Theme.qsCardBorder
+                    border.color: QS.cardBorder
 
                     Text {
                         anchors.centerIn: parent
@@ -390,9 +372,7 @@ Item {
                         font.pixelSize: 12
                         color: Theme.textDisabled
                     }
-
                 }
-
             }
 
             ScrollBar.vertical: ScrollBar {
@@ -405,9 +385,7 @@ Item {
                     radius: 2
                     color: Qt.rgba(1, 1, 1, 0.2)
                 }
-
             }
-
         }
 
         Item {
@@ -421,9 +399,9 @@ Item {
             Layout.fillWidth: true
             height: 48
             radius: 18
-            color: searchMouse.containsMouse ? Theme.qsCardBgHover : Theme.qsCardBg
+            color: searchMouse.containsMouse ? QS.cardBgHover : QS.cardBg
             border.width: 1
-            border.color: searchMouse.containsMouse ? Theme.qsCardBorderHover : Theme.qsCardBorder
+            border.color: searchMouse.containsMouse ? QS.cardBorderHover : QS.cardBorder
 
             RowLayout {
                 anchors.centerIn: parent
@@ -442,7 +420,6 @@ Item {
                     font.pixelSize: 13
                     color: Theme.textPrimary
                 }
-
             }
 
             MouseArea {
@@ -461,18 +438,14 @@ Item {
                 ColorAnimation {
                     duration: 110
                 }
-
             }
 
             Behavior on border.color {
                 ColorAnimation {
                     duration: 110
                 }
-
             }
-
         }
-
     }
 
     // ── Timers ────────────────────────────────────────────────────
@@ -540,7 +513,6 @@ Item {
                             devs.push(dev);
                             if (dev.connected && !connName)
                                 connName = dev.name;
-
                         }
                     }
                 }
@@ -548,7 +520,6 @@ Item {
                 root.connectedDevice = connName;
             }
         }
-
     }
 
     Process {
@@ -569,7 +540,7 @@ Item {
         command: ["echo"]
 
         stdout: SplitParser {
-            onRead: (line) => {
+            onRead: line => {
                 var l = line.toLowerCase();
                 if (l.indexOf("successful") >= 0 || l.indexOf("already connected") >= 0) {
                     actionTimeout.stop();
@@ -584,7 +555,6 @@ Item {
                 }
             }
         }
-
     }
 
     Process {
@@ -593,7 +563,7 @@ Item {
         command: ["echo"]
 
         stdout: SplitParser {
-            onRead: (line) => {
+            onRead: line => {
                 var l = line.toLowerCase();
                 if (l.indexOf("successful") >= 0 || l.indexOf("not connected") >= 0) {
                     actionTimeout.stop();
@@ -608,7 +578,5 @@ Item {
                 }
             }
         }
-
     }
-
 }

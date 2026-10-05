@@ -123,6 +123,7 @@ PanelWindow {
         audioService: root.audioService
         brightnessService: root.brightnessService
         networkService: root.networkService
+        targetScreen: root.targetScreen
         onPowerActionRequested: (actionId) => {
             return root.powerActionRequested(actionId);
         }

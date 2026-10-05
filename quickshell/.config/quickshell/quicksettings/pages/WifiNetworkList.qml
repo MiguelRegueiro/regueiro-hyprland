@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 Flickable {
     id: root
@@ -42,9 +43,9 @@ Flickable {
                 Layout.fillWidth: true
                 height: root.rowHeight
                 radius: 18
-                color: modelData.active ? Theme.qsCardActiveBg : (selectedForPrompt ? Theme.qsCardBgHover : (wifiHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg))
+                color: modelData.active ? QS.cardActiveBg : (selectedForPrompt ? QS.cardBgHover : (wifiHover.hovered ? QS.cardBgHover : QS.cardBg))
                 border.width: 1
-                border.color: modelData.active ? Theme.qsCardActiveBorder : (selectedForPrompt ? Theme.tileActiveBorder : (wifiHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder))
+                border.color: modelData.active ? QS.cardActiveBorder : (selectedForPrompt ? QS.tileActiveBorder : (wifiHover.hovered ? QS.cardBorderHover : QS.cardBorder))
 
                 MouseArea {
                     anchors.fill: parent
@@ -53,10 +54,10 @@ Flickable {
                     onClicked: {
                         root.controller.forgetConfirmSsid = "";
                         if (root.controller.connecting)
-                            return ;
+                            return;
 
                         if (modelData.active)
-                            return ;
+                            return;
 
                         if ((modelData.security || "") !== "") {
                             if (root.controller.hasSavedProfile(modelData.ssid))
@@ -82,9 +83,9 @@ Flickable {
                         Layout.preferredWidth: 28
                         Layout.preferredHeight: 28
                         radius: 14
-                        color: modelData.active ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+                        color: modelData.active ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? QS.chipBgHover : QS.chipBg)
                         border.width: 1
-                        border.color: modelData.active ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
+                        border.color: modelData.active ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? QS.chipBorderHover : QS.chipBorder)
 
                         Text {
                             anchors.centerIn: parent
@@ -95,7 +96,6 @@ Flickable {
                             font.pixelSize: 15
                             color: modelData.active ? Theme.textPrimary : Theme.textDim
                         }
-
                     }
 
                     ColumnLayout {
@@ -120,7 +120,6 @@ Flickable {
                             color: Theme.textDim
                             elide: Text.ElideRight
                         }
-
                     }
 
                     Item {
@@ -141,9 +140,9 @@ Flickable {
                                 implicitWidth: 60
                                 implicitHeight: 30
                                 radius: 15
-                                color: Theme.qsCardChipBg
+                                color: QS.chipBg
                                 border.width: 1
-                                border.color: Theme.qsCardChipBorder
+                                border.color: QS.chipBorder
 
                                 Text {
                                     anchors.centerIn: parent
@@ -160,7 +159,6 @@ Flickable {
                                     cursorShape: Qt.ArrowCursor
                                     onClicked: root.controller.cancelForget(wifiRow.modelData.ssid)
                                 }
-
                             }
 
                             Rectangle {
@@ -169,18 +167,18 @@ Flickable {
                                 radius: 15
                                 color: {
                                     if (wifiRow.forgetHasResult)
-                                        return wifiRow.forgetOk ? Theme.qsCardChipBgHover : Qt.rgba(1, 0.35, 0.35, 0.14);
+                                        return wifiRow.forgetOk ? QS.chipBgHover : Qt.rgba(1, 0.35, 0.35, 0.14);
 
                                     if (wifiRow.forgetPending)
                                         return Qt.rgba(1, 0.35, 0.35, 0.16);
 
                                     if (wifiRow.forgetBusy)
-                                        return Theme.qsCardChipBg;
+                                        return QS.chipBg;
 
-                                    return wifiHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg;
+                                    return wifiHover.hovered ? QS.chipBgHover : QS.chipBg;
                                 }
                                 border.width: 1
-                                border.color: wifiRow.forgetPending ? Qt.rgba(1, 0.45, 0.45, 0.22) : (wifiHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
+                                border.color: wifiRow.forgetPending ? Qt.rgba(1, 0.45, 0.45, 0.22) : (wifiHover.hovered ? QS.chipBorderHover : QS.chipBorder)
 
                                 Text {
                                     anchors.centerIn: parent
@@ -222,9 +220,7 @@ Flickable {
                                             root.controller.confirmForget(wifiRow.modelData.ssid);
                                     }
                                 }
-
                             }
-
                         }
 
                         Rectangle {
@@ -235,9 +231,9 @@ Flickable {
                             implicitWidth: savedLabel.implicitWidth + 14
                             implicitHeight: 22
                             radius: 11
-                            color: Theme.qsCardChipBg
+                            color: QS.chipBg
                             border.width: 1
-                            border.color: Theme.qsCardChipBorderHover
+                            border.color: QS.chipBorderHover
 
                             Text {
                                 id: savedLabel
@@ -249,9 +245,7 @@ Flickable {
                                 font.weight: Font.Medium
                                 color: Theme.textPrimary
                             }
-
                         }
-
                     }
 
                     Item {
@@ -267,7 +261,6 @@ Flickable {
                             font.pixelSize: 12
                             color: Theme.textDim
                         }
-
                     }
 
                     Text {
@@ -277,7 +270,6 @@ Flickable {
                         font.pixelSize: 14
                         color: Theme.green
                     }
-
                 }
 
                 HoverHandler {
@@ -286,11 +278,8 @@ Flickable {
                     blocking: false
                     cursorShape: Qt.ArrowCursor
                 }
-
             }
-
         }
-
     }
 
     ScrollBar.vertical: ScrollBar {
@@ -303,7 +292,5 @@ Flickable {
             radius: 2
             color: Qt.rgba(1, 1, 1, 0.2)
         }
-
     }
-
 }

@@ -8,6 +8,7 @@ import "pages" as Pages
 import "../services" as Services
 import "../components" as Components
 import "../theme/Theme.js" as Theme
+import "QuickSettingsStyle.js" as QS
 
 FocusScope {
     id: root
@@ -16,15 +17,20 @@ FocusScope {
     required property var audioService
     required property var brightnessService
     required property var networkService
+    required property var targetScreen
     property bool open: false
     property real topOffset: 0
     property bool hovered: panelHover.hovered || boundsHover.hovered
     readonly property string powerMode: {
         switch (PowerProfiles.profile) {
-        case PowerProfile.PowerSaver: return "power-saver";
-        case PowerProfile.Balanced: return "balanced";
-        case PowerProfile.Performance: return "performance";
-        default: return "";
+        case PowerProfile.PowerSaver:
+            return "power-saver";
+        case PowerProfile.Balanced:
+            return "balanced";
+        case PowerProfile.Performance:
+            return "performance";
+        default:
+            return "";
         }
     }
     property bool wifiPageOpen: false
@@ -41,6 +47,8 @@ FocusScope {
     readonly property real attachRight: 0
     readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
+    readonly property real popupSurfaceOriginX: root.x + motionFrame.x
+    readonly property real popupSurfaceOriginY: root.y + motionFrame.y
     readonly property real revealProgress: reveal
     readonly property real bodyWidth: Theme.qsWidth
     readonly property real bodyHeight: contentLayout.implicitHeight + (root.wifiPageOpen ? 0 : Theme.qsContentPadding * 2) + root.attachTop
@@ -96,7 +104,6 @@ FocusScope {
                 curve: Components.Anim.StandardDecel
                 duration: Theme.topBarMenuOpenDuration
             }
-
         },
         Transition {
             from: "open"
@@ -108,7 +115,6 @@ FocusScope {
                 curve: Components.Anim.StandardAccel
                 duration: Theme.topBarMenuCloseDuration
             }
-
         }
     ]
 
@@ -138,40 +144,40 @@ FocusScope {
         opacity: root.reveal
         layer.enabled: true
 
+        HoverHandler {
+            id: boundsHover
+
+            blocking: false
+        }
+
+        Item {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            width: Math.max(1, root.clipSurfaceWidth)
+            height: Math.max(1, root.bodyHeight + root.fuseBottomOverhang)
+            clip: !root.audioOutputPopupOpen
+
             HoverHandler {
-                id: boundsHover
+                id: panelHover
 
                 blocking: false
             }
 
             Item {
+                id: frame
+
                 anchors.top: parent.top
                 anchors.right: parent.right
-                width: Math.max(1, root.clipSurfaceWidth)
-                height: Math.max(1, root.bodyHeight + root.fuseBottomOverhang)
-                clip: !root.audioOutputPopupOpen
+                width: root.bodyWidth
+                height: root.bodyHeight
 
-                HoverHandler {
-                    id: panelHover
-
-                    blocking: false
-                }
-
-                Item {
-                    id: frame
-
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    width: root.bodyWidth
-                    height: root.bodyHeight
-
-                    Shape {
-                        visible: false
-                        anchors.fill: parent
-                        preferredRendererType: Shape.CurveRenderer
+                Shape {
+                    visible: false
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        fillColor: Theme.qsSurfaceBg
+                        fillColor: QS.surfaceBg
                         strokeColor: "transparent"
                         strokeWidth: -1
 
@@ -197,11 +203,10 @@ FocusScope {
                             x: 0
                             y: root.fuseTopInset
                         }
-
                     }
 
                     ShapePath {
-                        fillColor: Theme.qsSurfaceBg
+                        fillColor: QS.surfaceBg
                         strokeColor: "transparent"
                         strokeWidth: -1
 
@@ -261,12 +266,11 @@ FocusScope {
                             radiusY: root.mergedTopLeftRadius
                             direction: PathArc.Clockwise
                         }
-
                     }
 
                     ShapePath {
                         fillColor: "transparent"
-                        strokeColor: Theme.qsEdge
+                        strokeColor: QS.edge
                         strokeWidth: 1.1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
@@ -293,11 +297,10 @@ FocusScope {
                             x: 0
                             y: root.topFuseJoinY
                         }
-
                     }
 
                     ShapePath {
-                        fillColor: Theme.qsSurfaceBg
+                        fillColor: QS.surfaceBg
                         strokeColor: "transparent"
                         strokeWidth: -1
 
@@ -318,12 +321,11 @@ FocusScope {
                             radiusY: root.surfaceTopRightRadius
                             direction: PathArc.Counterclockwise
                         }
-
                     }
 
                     ShapePath {
                         fillColor: "transparent"
-                        strokeColor: Theme.qsEdge
+                        strokeColor: QS.edge
                         strokeWidth: 1.1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
@@ -340,9 +342,7 @@ FocusScope {
                             radiusY: Theme.barCornerRadius
                             direction: PathArc.Clockwise
                         }
-
                     }
-
                 }
 
                 Rectangle {
@@ -351,15 +351,14 @@ FocusScope {
                     width: frame.width
                     height: root.visibleBodyHeight
                     radius: Theme.qsSurfaceBottomLeftRadius
-                    color: Theme.qsSurfaceBg
+                    color: QS.surfaceBg
                     border.width: 2
-                    border.color: Theme.bottomPanelOutline
+                    border.color: QS.edge
                 }
 
                 MouseArea {
                     anchors.fill: parent
-                    onPressed: {
-                    }
+                    onPressed: {}
                 }
 
                 ColumnLayout {
@@ -403,15 +402,18 @@ FocusScope {
                             viewportHeight: root.parent ? root.parent.height : root.height
                             popupParent: motionFrame
                             audioOutputPopupOpen: root.audioOutputPopupOpen
-                            onAudioOutputPopupRequest: (open) => {
+                            onAudioOutputPopupRequest: open => {
                                 return root.audioOutputPopupOpen = open;
                             }
                             x: root.submenuOpen ? -parent.width - 15 : 0
                             opacity: root.submenuOpen ? 0 : 1
                             notificationStore: root.notificationStore
+                            popupSurfaceOriginX: root.popupSurfaceOriginX
+                            popupSurfaceOriginY: root.popupSurfaceOriginY
                             audioService: root.audioService
                             brightnessService: root.brightnessService
                             networkService: root.networkService
+                            targetScreen: root.targetScreen
                             wifiPage: wifiPageView
                             bluetoothPage: bluetoothPageView
                             powerMode: root.powerMode
@@ -426,10 +428,10 @@ FocusScope {
                                 root.bluetoothPageOpen = true;
                                 root.wifiPageOpen = false;
                             }
-                            onPowerModeChangeRequested: (mode) => {
+                            onPowerModeChangeRequested: mode => {
                                 return root.applyPowerMode(mode);
                             }
-                            onPowerActionRequested: (actionId) => {
+                            onPowerActionRequested: actionId => {
                                 return root.powerActionRequested(actionId);
                             }
 
@@ -438,7 +440,6 @@ FocusScope {
                                     duration: Theme.qsPageSlideDuration
                                     curve: Components.Anim.DefaultSpatial
                                 }
-
                             }
 
                             Behavior on opacity {
@@ -446,9 +447,7 @@ FocusScope {
                                     duration: Theme.qsPageFadeDuration
                                     curve: Components.Anim.DefaultEffects
                                 }
-
                             }
-
                         }
 
                         Pages.WifiPage {
@@ -467,7 +466,6 @@ FocusScope {
                                     duration: Theme.qsPageSlideDuration
                                     curve: Components.Anim.DefaultSpatial
                                 }
-
                             }
 
                             Behavior on opacity {
@@ -475,9 +473,7 @@ FocusScope {
                                     duration: Theme.qsPageFadeDuration
                                     curve: Components.Anim.DefaultEffects
                                 }
-
                             }
-
                         }
 
                         Pages.BluetoothPage {
@@ -494,7 +490,6 @@ FocusScope {
                                     duration: Theme.qsPageSlideDuration
                                     curve: Components.Anim.DefaultSpatial
                                 }
-
                             }
 
                             Behavior on opacity {
@@ -502,9 +497,7 @@ FocusScope {
                                     duration: Theme.qsPageFadeDuration
                                     curve: Components.Anim.DefaultEffects
                                 }
-
                             }
-
                         }
 
                         Behavior on implicitHeight {
@@ -512,19 +505,14 @@ FocusScope {
                                 duration: Theme.qsHeightDuration
                                 curve: Components.Anim.DefaultEffects
                             }
-
                         }
-
                     }
 
                     Item {
                         height: 0
                     }
-
                 }
-
             }
-
         }
 
         layer.effect: MultiEffect {
@@ -535,7 +523,6 @@ FocusScope {
             shadowHorizontalOffset: 0
             blurMax: 48
         }
-
     }
 
     Services.WifiConnectionService {
@@ -548,7 +535,5 @@ FocusScope {
         PropertyChanges {
             root.reveal: 1
         }
-
     }
-
 }

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 FocusScope {
     id: root
@@ -12,7 +13,7 @@ FocusScope {
     property bool menuOpen: false
     property real bottomViewportInset: 0
 
-    signal backClicked()
+    signal backClicked
 
     Layout.fillWidth: true
     implicitHeight: 460 + bottomViewportInset
@@ -36,9 +37,9 @@ FocusScope {
             Layout.fillWidth: true
             height: 52
             radius: 18
-            color: Theme.qsCardBg
+            color: QS.cardBg
             border.width: 1
-            border.color: Theme.qsCardBorder
+            border.color: QS.cardBorder
             z: 3
 
             RowLayout {
@@ -56,9 +57,9 @@ FocusScope {
                     width: 44
                     height: 44
                     radius: 22
-                    color: hovered ? Theme.qsCardChipBgHover : "transparent"
+                    color: hovered ? QS.chipBgHover : "transparent"
                     border.width: hovered ? 1 : 0
-                    border.color: Theme.qsCardChipBorderHover
+                    border.color: QS.chipBorderHover
 
                     Text {
                         anchors.centerIn: parent
@@ -85,16 +86,13 @@ FocusScope {
                         ColorAnimation {
                             duration: 110
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: 110
                         }
-
                     }
-
                 }
 
                 Item {
@@ -127,9 +125,9 @@ FocusScope {
                     width: 48
                     height: 26
                     radius: 13
-                    color: wifiCtrl.wifiOn ? Theme.tileActiveBg : Theme.qsCardChipBg
+                    color: wifiCtrl.wifiOn ? QS.tileActiveBg : QS.chipBg
                     border.width: 1
-                    border.color: wifiCtrl.wifiOn ? Theme.tileActiveBorder : Theme.qsCardChipBorder
+                    border.color: wifiCtrl.wifiOn ? QS.tileActiveBorder : QS.chipBorder
 
                     Rectangle {
                         width: 20
@@ -144,9 +142,7 @@ FocusScope {
                                 duration: 80
                                 easing.type: Easing.OutCubic
                             }
-
                         }
-
                     }
 
                     MouseArea {
@@ -161,20 +157,15 @@ FocusScope {
                         ColorAnimation {
                             duration: 80
                         }
-
                     }
 
                     Behavior on border.color {
                         ColorAnimation {
                             duration: 80
                         }
-
                     }
-
                 }
-
             }
-
         }
 
         Item {
@@ -224,7 +215,5 @@ FocusScope {
                 z: 1
             }
         }
-
     }
-
 }

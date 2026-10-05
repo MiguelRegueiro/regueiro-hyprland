@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../components" as Components
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 // GNOME 43+ style horizontal tile
 Rectangle {
@@ -21,8 +22,8 @@ Rectangle {
     property bool pressed: false
     readonly property bool hovered: tileHover.hovered
 
-    signal clicked()
-    signal menuClicked()
+    signal clicked
+    signal menuClicked
 
     Layout.fillWidth: true
     Layout.minimumWidth: 0
@@ -33,16 +34,16 @@ Rectangle {
     radius: pillShape ? height / 2 : Theme.qsRadius
     color: {
         if (tile.toggled)
-            return tile.hovered ? Theme.tileActiveBgHover : Theme.tileActiveBg;
+            return tile.hovered ? QS.tileActiveBgHover : QS.tileActiveBg;
 
-        return tile.hovered ? Theme.qsCardBgHover : Theme.qsCardBg;
+        return tile.hovered ? QS.cardBgHover : QS.cardBg;
     }
     border.width: 1
     border.color: {
         if (tile.toggled)
-            return tile.hovered ? Theme.tileActiveBorderHover : Theme.tileActiveBorder;
+            return tile.hovered ? QS.tileActiveBorderHover : QS.tileActiveBorder;
 
-        return tile.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder;
+        return tile.hovered ? QS.cardBorderHover : QS.cardBorder;
     }
 
     HoverHandler {
@@ -75,7 +76,7 @@ Rectangle {
                 if (tile.toggled)
                     return Qt.rgba(1, 1, 1, tile.hovered ? 0.13 : 0.1);
 
-                return tile.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg;
+                return tile.hovered ? QS.chipBgHover : QS.chipBg;
             }
             border.width: tile.showIconChip ? 1 : 0
             border.color: {
@@ -85,7 +86,7 @@ Rectangle {
                 if (tile.toggled)
                     return Qt.rgba(1, 1, 1, tile.hovered ? 0.13 : 0.1);
 
-                return tile.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder;
+                return tile.hovered ? QS.chipBorderHover : QS.chipBorder;
             }
 
             Text {
@@ -101,14 +102,12 @@ Rectangle {
                 ColorAnimation {
                     duration: Theme.hoverAnimDuration
                 }
-
             }
 
             Behavior on border.color {
                 ColorAnimation {
                     duration: Theme.hoverAnimDuration
                 }
-
             }
 
             Behavior on scale {
@@ -116,9 +115,7 @@ Rectangle {
                     curve: Components.Anim.FastEffects
                     duration: Theme.animDurFastEffects
                 }
-
             }
-
         }
 
         // Labels (Clicking here opens menu if hasMenu, otherwise toggles)
@@ -145,7 +142,6 @@ Rectangle {
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
-
         }
 
         // Arrow Icon
@@ -161,9 +157,7 @@ Rectangle {
                 font.pixelSize: 16
                 color: tile.toggled ? "white" : Theme.textDim
             }
-
         }
-
     }
 
     MouseArea {
@@ -193,21 +187,18 @@ Rectangle {
             top: parent.top
             bottom: parent.bottom
         }
-
     }
 
     Behavior on color {
         ColorAnimation {
             duration: Theme.hoverAnimDuration
         }
-
     }
 
     Behavior on border.color {
         ColorAnimation {
             duration: Theme.hoverAnimDuration
         }
-
     }
 
     Behavior on scale {
@@ -215,7 +206,5 @@ Rectangle {
             curve: Components.Anim.FastEffects
             duration: Theme.animDurFastEffects
         }
-
     }
-
 }

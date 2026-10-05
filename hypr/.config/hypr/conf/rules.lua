@@ -88,6 +88,20 @@ hl.layer_rule({
     ignore_alpha = 0.5,
 })
 
+hl.layer_rule({
+    name = "qs-audio-output-blur",
+    match = { namespace = "qs-audio-output" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
+    name = "qs-power-actions-blur",
+    match = { namespace = "qs-power-actions" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
 -- Quickshell surfaces animate their own fused panel geometry.
 hl.layer_rule({
     name = "quickshell-self-animated",

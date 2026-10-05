@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
+import Quickshell
+import Quickshell.Wayland
 import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 
@@ -8,13 +10,23 @@ Item {
     id: popupRoot
 
     required property var audioService
+    required property real surfaceX
+    required property real surfaceY
+    required property var targetScreen
     property bool open: false
     property real reveal: 0
     property real maxPopupHeight: 560
+    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
+    readonly property color outline: Qt.rgba(0.56, 0.58, 0.62, 0.42)
+    readonly property color rowBg: Qt.rgba(1, 1, 1, 0.065)
+    readonly property color rowBgHover: Qt.rgba(1, 1, 1, 0.10)
+    readonly property color rowBgActive: Qt.rgba(1, 1, 1, 0.12)
+    readonly property color rowBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
+    readonly property color rowBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
     readonly property real listSpacing: 8
     readonly property real listFooterHeight: 8
-    readonly property real cardHeight: headerContent.height + resolvedListHeight + 40
-    readonly property real availableListHeight: Math.max(44, maxPopupHeight - headerContent.height - 40)
+    readonly property real cardHeight: resolvedListHeight + 24
+    readonly property real availableListHeight: Math.max(44, maxPopupHeight - 24)
     readonly property real maxListHeight: Math.min(550, availableListHeight)
     readonly property real idealListHeight: {
         if (!audioService || !audioService.sinks || audioService.sinks.length === 0)
@@ -71,62 +83,43 @@ Item {
         }
     ]
 
-    Rectangle {
-        id: popup
+    PanelWindow {
+        id: popupSurface
 
-        x: 0
-        y: 0
-        width: parent.width
-        height: popupRoot.cardHeight
-        radius: Theme.qsRadius + 5
-        color: Theme.popupBg
-        border.color: Qt.rgba(1, 1, 1, 0.11)
-        border.width: 1
-        clip: true
-        layer.enabled: true
+        readonly property real popupX: popupRoot.surfaceX
+        readonly property real popupY: popupRoot.surfaceY
 
-        Column {
-            id: headerContent
+        screen: popupRoot.targetScreen
+        visible: popupRoot.visible
+        exclusiveZone: 0
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "qs-audio-output"
+        color: "transparent"
+        anchors { top: true; left: true; right: true; bottom: true }
 
-            x: 12
-            y: 12
-            width: parent.width - 24
-            spacing: 8
-
-            Item {
-                width: parent.width
-                height: titleText.implicitHeight
-
-                Text {
-                    id: titleText
-
-                    text: "Sound output"
-                    color: Theme.textPrimary
-                    font.family: Theme.fontUi
-                    font.pixelSize: 13
-                    font.weight: Font.DemiBold
-                }
-
-                Text {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: sinkList.count
-                    color: Theme.textDim
-                    font.family: Theme.fontUi
-                    font.pixelSize: 12
-                    font.weight: Font.Medium
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: Theme.qsEdgeSoft
-            }
-
+        mask: Region {
+            x: Math.round(popupSurface.popupX)
+            y: Math.round(popupSurface.popupY)
+            width: Math.round(popupRoot.width)
+            height: Math.round(popupRoot.cardHeight)
         }
 
-        ListView {
+        Rectangle {
+            id: popup
+
+            x: Math.round(popupSurface.popupX)
+            y: Math.round(popupSurface.popupY)
+            width: popupRoot.width
+            height: popupRoot.cardHeight
+            radius: Theme.qsRadius + 5
+            color: popupRoot.surfaceBg
+            border.color: popupRoot.outline
+            border.width: 1
+            clip: true
+            layer.enabled: true
+
+            ListView {
             id: sinkList
 
             height: popupRoot.resolvedListHeight
@@ -149,9 +142,9 @@ Item {
                 }
             }
 
-            anchors {
-                top: headerContent.bottom
-                topMargin: 10
+                anchors {
+                    top: parent.top
+                    topMargin: 12
                 left: parent.left
                 right: parent.right
                 leftMargin: 14
@@ -166,7 +159,7 @@ Item {
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: Qt.rgba(1, 1, 1, 0.2)
+                    color: Qt.rgba(0.62, 0.64, 0.68, 0.48)
                 }
 
             }
@@ -181,8 +174,8 @@ Item {
                 width: sinkList.width
                 height: secondaryText.length > 0 ? 56 : 48
                 radius: height / 2
-                color: active ? Theme.qsCardActiveBg : (rowHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg)
-                border.color: active ? Theme.qsCardActiveBorder : (rowHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder)
+                color: active ? popupRoot.rowBgActive : (rowHover.hovered ? popupRoot.rowBgHover : popupRoot.rowBg)
+                border.color: active ? popupRoot.rowBorderHover : (rowHover.hovered ? popupRoot.rowBorderHover : popupRoot.rowBorder)
                 border.width: 1
 
                 Row {
@@ -199,9 +192,9 @@ Item {
                         height: 28
                         radius: 14
                         anchors.verticalCenter: parent.verticalCenter
-                        color: active ? Qt.rgba(1, 1, 1, 0.12) : (rowHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg)
+                        color: active ? popupRoot.rowBgActive : (rowHover.hovered ? popupRoot.rowBgHover : popupRoot.rowBg)
                         border.width: 1
-                        border.color: active ? Qt.rgba(1, 1, 1, 0.12) : (rowHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder)
+                        border.color: active ? popupRoot.rowBorderHover : (rowHover.hovered ? popupRoot.rowBorderHover : popupRoot.rowBorder)
 
                         Text {
                             anchors.centerIn: parent
@@ -315,6 +308,8 @@ Item {
             shadowHorizontalOffset: 0
             blurMax: 48
         }
+
+    }
 
     }
 

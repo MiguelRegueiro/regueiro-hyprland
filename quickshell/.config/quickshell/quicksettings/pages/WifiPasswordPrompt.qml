@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 Rectangle {
     id: root
@@ -62,15 +63,14 @@ Rectangle {
                 color: Theme.textDim
                 elide: Text.ElideRight
             }
-
         }
 
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 40
             radius: 14
-            color: Theme.qsCardBg
-            border.color: passField.activeFocus ? Theme.tileActiveBorderHover : Theme.qsCardBorder
+            color: QS.cardBg
+            border.color: passField.activeFocus ? QS.tileActiveBorderHover : QS.cardBorder
             border.width: 1
 
             TextInput {
@@ -90,7 +90,6 @@ Rectangle {
                 onTextEdited: {
                     if (!root.controller.connecting)
                         root.controller.connectError = "";
-
                 }
                 Keys.onReturnPressed: {
                     event.accepted = true;
@@ -112,7 +111,6 @@ Rectangle {
                     rightMargin: 10
                     verticalCenter: parent.verticalCenter
                 }
-
             }
 
             Text {
@@ -126,7 +124,6 @@ Rectangle {
                     left: passField.left
                     verticalCenter: parent.verticalCenter
                 }
-
             }
 
             Rectangle {
@@ -137,7 +134,7 @@ Rectangle {
                 radius: 14
                 color: eyeHover.hovered ? Theme.hoverBgStrong : "transparent"
                 border.width: eyeHover.hovered ? 1 : 0
-                border.color: Theme.qsCardChipBorderHover
+                border.color: QS.chipBorderHover
 
                 anchors {
                     right: parent.right
@@ -168,9 +165,7 @@ Rectangle {
                         passField.forceActiveFocus();
                     }
                 }
-
             }
-
         }
 
         WifiStatusPill {
@@ -189,9 +184,9 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 34
                 radius: 17
-                color: cancelHover.hovered ? Theme.qsCardBgHover : Theme.qsCardBg
+                color: cancelHover.hovered ? QS.cardBgHover : QS.cardBg
                 border.width: 1
-                border.color: cancelHover.hovered ? Theme.qsCardBorderHover : Theme.qsCardBorder
+                border.color: cancelHover.hovered ? QS.cardBorderHover : QS.cardBorder
 
                 Text {
                     anchors.centerIn: parent
@@ -213,7 +208,6 @@ Rectangle {
                     gesturePolicy: TapHandler.ReleaseWithinBounds
                     onTapped: root.controller.cancel()
                 }
-
             }
 
             Rectangle {
@@ -221,9 +215,9 @@ Rectangle {
                 Layout.preferredHeight: 34
                 radius: 17
                 opacity: root.controller.connecting ? 0.5 : 1
-                color: connectHover.hovered && !root.controller.connecting ? Theme.tileActiveBgHover : Theme.tileActiveBg
+                color: connectHover.hovered && !root.controller.connecting ? QS.tileActiveBgHover : QS.tileActiveBg
                 border.width: 1
-                border.color: connectHover.hovered && !root.controller.connecting ? Theme.tileActiveBorderHover : Theme.tileActiveBorder
+                border.color: connectHover.hovered && !root.controller.connecting ? QS.tileActiveBorderHover : QS.tileActiveBorder
 
                 Text {
                     anchors.centerIn: parent
@@ -246,11 +240,8 @@ Rectangle {
                     gesturePolicy: TapHandler.ReleaseWithinBounds
                     onTapped: root.controller.doConnect(passField.text)
                 }
-
             }
-
         }
-
     }
 
     Behavior on height {
@@ -258,7 +249,5 @@ Rectangle {
             duration: 200
             easing.type: Easing.OutCubic
         }
-
     }
-
 }

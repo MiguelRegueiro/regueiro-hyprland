@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 Rectangle {
     id: pill
@@ -9,7 +10,7 @@ Rectangle {
     required property bool connecting
     required property string message
     property color fillColor: connecting ? Theme.qsRowBgHover : Theme.qsRowBg
-    property color strokeColor: connecting ? Theme.qsEdge : Theme.qsEdgeSoft
+    property color strokeColor: connecting ? QS.edge : QS.edgeSoft
     property color labelColor: connecting ? Theme.textPrimary : Theme.red
 
     implicitWidth: statusRow.implicitWidth + 24
@@ -56,9 +57,7 @@ Rectangle {
                     duration: 650
                     easing.type: Easing.InOutQuad
                 }
-
             }
-
         }
 
         Text {
@@ -71,28 +70,23 @@ Rectangle {
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }
-
     }
 
     Behavior on opacity {
         NumberAnimation {
             duration: 90
         }
-
     }
 
     Behavior on fillColor {
         ColorAnimation {
             duration: 110
         }
-
     }
 
     Behavior on strokeColor {
         ColorAnimation {
             duration: 110
         }
-
     }
-
 }
