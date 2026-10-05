@@ -183,24 +183,28 @@ PanelWindow {
                         Layout.preferredHeight: root.drives.length === 0 ? 64 : drivesColumn.implicitHeight + 24
                         clip: true
 
-                        ColumnLayout {
+                        Row {
                             id: emptyState
 
                             visible: root.drives.length === 0
                             anchors.centerIn: parent
-                            width: parent.width - 28
-                            spacing: 6
+                            spacing: 10
 
                             Text {
-                                Layout.alignment: Qt.AlignHCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ""
+                                font.family: Theme.fontIcons
+                                font.pixelSize: 18 + Theme.fontSizeDelta
+                                color: Theme.textDim
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
                                 text: root.lastError.length > 0 ? root.lastError : "No external drives"
                                 font.family: Theme.fontUi
                                 font.pixelSize: 13
                                 font.weight: Font.DemiBold
                                 color: root.lastError.length > 0 ? Theme.red : Theme.textDim
-                                horizontalAlignment: Text.AlignHCenter
-                                wrapMode: Text.WordWrap
-                                width: parent.width
                             }
 
                         }

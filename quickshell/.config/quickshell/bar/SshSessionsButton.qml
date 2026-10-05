@@ -29,7 +29,7 @@ Item {
             font.family: Theme.fontIcons
             font.pixelSize: 14 + Theme.fontSizeDelta
             font.weight: Font.DemiBold
-            color: root.sessionCount > 0 ? Theme.textPrimary : Theme.textDim
+            color: Theme.textPrimary
         }
 
         Rectangle {
