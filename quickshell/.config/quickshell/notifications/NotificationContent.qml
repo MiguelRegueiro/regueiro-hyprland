@@ -18,7 +18,7 @@ Item {
     readonly property bool hasImage: imageSource.length > 0
     readonly property int imageSize: !hasImage ? 0 : (root.minimalChrome ? Theme.notificationImageMinimalSize : (root.compact ? Theme.notificationImageCompactSize : Theme.notificationImageSize))
     readonly property int iconSize: root.minimalChrome ? 26 : (root.compact ? 28 : 34)
-    readonly property int closeSize: root.minimalChrome ? 22 : (root.compact ? 24 : 28)
+    readonly property int closeSize: 28
 
     signal dismissRequested()
 
@@ -55,9 +55,9 @@ Item {
                 Layout.preferredHeight: Layout.preferredWidth
                 Layout.alignment: Qt.AlignTop
                 radius: root.minimalChrome ? 8 : (root.compact ? 10 : 12)
-                color: root.minimalChrome ? "transparent" : (root.isCritical ? Theme.urgentBg : Theme.hoverBg)
-                border.width: root.minimalChrome ? 0 : 1
-                border.color: root.isCritical ? Theme.urgentBorder : Theme.qsEdgeSoft
+                color: root.isCritical ? Theme.urgentBg : "transparent"
+                border.width: root.isCritical ? 1 : 0
+                border.color: Theme.urgentBorder
 
                 Text {
                     anchors.centerIn: parent
@@ -114,7 +114,7 @@ Item {
                     anchors.verticalCenterOffset: 1
                     text: "󰅖"
                     font.family: Theme.fontIcons
-                    font.pixelSize: root.minimalChrome ? 11 : (root.compact ? 9 : 14)
+                    font.pixelSize: 13
                     color: closeHover.hovered ? root.contentPrimaryColor : root.contentSecondaryColor
                 }
 
