@@ -25,6 +25,15 @@ PanelWindow {
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property int openDuration: Theme.topBarMenuOpenDuration
     readonly property int closeDuration: Theme.topBarMenuCloseDuration
+    // Keep this menu on the same neutral glass material as TTS and drives.
+    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
+    readonly property color outline: Qt.rgba(0.56, 0.58, 0.62, 0.42)
+    readonly property color cardBg: Qt.rgba(1, 1, 1, 0.065)
+    readonly property color cardBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
+    readonly property color controlBg: Qt.rgba(1, 1, 1, 0.10)
+    readonly property color controlBgHover: Qt.rgba(1, 1, 1, 0.16)
+    readonly property color controlBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
+    readonly property color controlBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
 
     signal closeRequested()
     signal barPressed(real x, real y)
@@ -167,9 +176,9 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: Theme.ncSurfaceBottomLeftRadius
-                        color: Theme.qsSurfaceBg
-                        border.width: 2
-                        border.color: Theme.bottomPanelOutline
+                        color: root.surfaceBg
+                        border.width: 1
+                        border.color: root.outline
                     }
 
                     MouseArea {
@@ -189,68 +198,6 @@ PanelWindow {
                             topMargin: root.attachTop
                             leftMargin: 14
                             rightMargin: 14
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                            visible: root.sessions.length > 0
-                            Layout.preferredHeight: visible ? 48 : 0
-
-                            RowLayout {
-                                spacing: 10
-
-                                anchors {
-                                    left: parent.left
-                                    right: parent.right
-                                    verticalCenter: parent.verticalCenter
-                                }
-
-                                Text {
-                                    text: ""
-                                    font.family: Theme.fontIcons
-                                    font.pixelSize: 16 + Theme.fontSizeDelta
-                                    color: Theme.textPrimary
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: root.sessions.length === 1 ? "SSH session" : "SSH sessions"
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 14 + Theme.fontSizeDelta
-                                    font.weight: Font.DemiBold
-                                    color: Theme.textPrimary
-                                    elide: Text.ElideRight
-                                }
-
-                                Rectangle {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    width: Math.max(24, countText.implicitWidth + 14)
-                                    height: 24
-                                    radius: 12
-                                    color: Theme.qsRowBg
-
-                                    Text {
-                                        id: countText
-
-                                        anchors.fill: parent
-                                        text: String(root.sessions.length)
-                                        color: Theme.textPrimary
-                                        font.family: Theme.fontUi
-                                        font.pixelSize: 12 + Theme.fontSizeDelta
-                                        font.weight: Font.DemiBold
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            visible: root.sessions.length > 0
-                            Layout.preferredHeight: visible ? 1 : 0
-                            color: Theme.qsEdgeSoft
                         }
 
                         Item {
@@ -312,9 +259,9 @@ PanelWindow {
                                         Layout.fillWidth: true
                                         implicitHeight: 82
                                         radius: Theme.qsRadius + 1
-                                        color: Theme.qsCardBg
+                                        color: root.cardBg
                                         border.width: 1
-                                        border.color: Theme.qsCardBorder
+                                        border.color: root.cardBorder
 
                                         RowLayout {
                                             anchors.fill: parent
@@ -325,9 +272,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 36
                                                 Layout.preferredHeight: 36
                                                 radius: 18
-                                                color: Qt.rgba(1, 1, 1, 0.10)
+                                                color: root.controlBg
                                                 border.width: 1
-                                                border.color: Qt.rgba(1, 1, 1, 0.12)
+                                                border.color: root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -368,9 +315,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 30
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: Theme.qsCardChipBg
+                                                color: root.controlBg
                                                 border.width: 1
-                                                border.color: Theme.qsCardChipBorder
+                                                border.color: root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -386,9 +333,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 72
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: Theme.qsCardChipBg
+                                                color: root.controlBg
                                                 border.width: 1
-                                                border.color: Theme.qsCardChipBorder
+                                                border.color: root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -405,9 +352,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 70
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: confirmHover.hovered ? Qt.rgba(1, 0.36, 0.32, 0.18) : Theme.qsCardChipBg
+                                                color: confirmHover.hovered ? root.controlBgHover : root.controlBg
                                                 border.width: 1
-                                                border.color: confirmHover.hovered ? Qt.rgba(1, 0.48, 0.39, 0.20) : Theme.qsCardChipBorder
+                                                border.color: confirmHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -415,7 +362,7 @@ PanelWindow {
                                                     font.family: Theme.fontUi
                                                     font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
-                                                    color: confirmHover.hovered ? Theme.red : Theme.textPrimary
+                                                    color: Theme.textPrimary
                                                 }
 
                                                 HoverHandler {
@@ -438,9 +385,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 30
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: cancelHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+                                                color: cancelHover.hovered ? root.controlBgHover : root.controlBg
                                                 border.width: 1
-                                                border.color: cancelHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+                                                border.color: cancelHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -470,9 +417,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 52
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: endHover.hovered ? Qt.rgba(1, 0.36, 0.32, 0.18) : Theme.qsCardChipBg
+                                                color: endHover.hovered ? root.controlBgHover : root.controlBg
                                                 border.width: 1
-                                                border.color: endHover.hovered ? Qt.rgba(1, 0.48, 0.39, 0.20) : Theme.qsCardChipBorder
+                                                border.color: endHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -480,7 +427,7 @@ PanelWindow {
                                                     font.family: Theme.fontUi
                                                     font.pixelSize: 11 + Theme.fontSizeDelta
                                                     font.weight: Font.DemiBold
-                                                    color: endHover.hovered ? Theme.red : Theme.textPrimary
+                                                    color: Theme.textPrimary
                                                 }
 
                                                 HoverHandler {
