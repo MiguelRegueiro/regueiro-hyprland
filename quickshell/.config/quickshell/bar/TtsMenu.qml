@@ -99,7 +99,7 @@ PanelWindow {
     }
     Rectangle {
         id: ttsPanel
-        width: 520; height: 204
+        width: 520; height: 176
         x: Math.max(8, parent.width - width - 108)
         y: Theme.barHeight + 24
         radius: Theme.ncSurfaceBottomLeftRadius
@@ -188,13 +188,13 @@ PanelWindow {
                 }
             }
             Row {
-                x: Math.round((parent.width - width) / 2); y: 61; spacing: 10
+                x: Math.round((parent.width - width) / 2); y: 54; spacing: 10
                 ButtonControl { text: ttsService.status === "generating" ? "Cancel" : "Speak"; primary: true; onClicked: ttsService.speakClipboard(root.voice, root.rate) }
                 ButtonControl { text: ttsService.status === "playing" ? "󰏤" : "󰐊"; icon: true; onClicked: ttsService.toggle() }
                 ButtonControl { text: "■"; compact: true; onClicked: ttsService.reset() }
             }
             RowLayout {
-                x: 0; y: 122; width: parent.width; height: 28; spacing: 10
+                x: 0; y: 96; width: parent.width; height: 28; spacing: 10
                 readonly property bool playbackActive: ttsService.status === "playing" || ttsService.status === "paused"
                 Text { text: root.formatTime(parent.playbackActive ? ttsService.position : 0); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
                 Slider {
@@ -241,7 +241,7 @@ PanelWindow {
                 }
                 Text { text: root.formatTime(parent.playbackActive ? ttsService.duration : 0); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
             }
-            Text { anchors.horizontalCenter: parent.horizontalCenter; y: 158; text: ttsService.status === "idle" ? "Ready" : (ttsService.detail || "Preparing speech"); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
+            Text { anchors.horizontalCenter: parent.horizontalCenter; y: 127; text: ttsService.status === "idle" ? "Ready" : (ttsService.detail || "Preparing speech"); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
         }
     }
     PanelWindow {
