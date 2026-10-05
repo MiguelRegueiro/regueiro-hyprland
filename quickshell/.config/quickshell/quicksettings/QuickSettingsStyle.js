@@ -3,7 +3,7 @@
 // Local Quick Settings palette. This deliberately does not reuse the shared
 // qs tokens, because notification surfaces consume those too.
 var surfaceBg = Qt.rgba(0.115, 0.12, 0.135, 0.84);
-var edge = Qt.rgba(0.56, 0.58, 0.62, 0.42);
+var edge = Qt.rgba(1, 1, 1, 0.12);
 var edgeSoft = Qt.rgba(0.56, 0.58, 0.62, 0.22);
 
 var cardBg = Qt.rgba(1, 1, 1, 0.065);

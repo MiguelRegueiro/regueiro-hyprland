@@ -138,7 +138,7 @@ Rectangle {
                 text: tile.sublabel
                 font.family: Theme.fontUi
                 font.pixelSize: 11
-                color: tile.interactive ? (tile.toggled ? Qt.rgba(1, 1, 1, 0.76) : Theme.textDim) : Theme.textDisabled
+                color: tile.interactive ? (tile.toggled ? "#d5d4d1" : Theme.textDim) : Theme.textDisabled
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }

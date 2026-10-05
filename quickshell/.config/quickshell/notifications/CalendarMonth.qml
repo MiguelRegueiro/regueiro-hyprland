@@ -28,6 +28,7 @@ Item {
     readonly property real calendarSpacing: 4
     readonly property real calendarCellWidth: Math.max(1, Math.floor((root.width - root.calendarSpacing * (root.calendarColumns - 1)) / root.calendarColumns))
     readonly property real calendarGridWidth: root.calendarCellWidth * root.calendarColumns + root.calendarSpacing * (root.calendarColumns - 1)
+    readonly property color selectionBg: "#3266bd"
 
     function cellDate(index) {
         return new Date(root.visibleYear, root.visibleMonthIndex, index - root.firstWeekday + 1);
@@ -86,8 +87,8 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    readonly property color secondaryTextColor: Qt.rgba(1, 1, 1, 0.88)
-    readonly property color mutedTextColor: Qt.rgba(1, 1, 1, 0.68)
+    readonly property color secondaryTextColor: "#e0dfdc"
+    readonly property color mutedTextColor: "#aaa9a6"
 
     Component.onCompleted: {
         root.selectDate(root.today);
@@ -130,7 +131,7 @@ Item {
                 Rectangle {
                     width: 30
                     height: 30
-                    radius: 8
+                    radius: 12
                     color: "transparent"
                     border.width: 0
 
@@ -172,7 +173,7 @@ Item {
                 Rectangle {
                     width: 30
                     height: 30
-                    radius: 8
+                    radius: 12
                     color: "transparent"
                     border.width: 0
 
@@ -291,7 +292,7 @@ Item {
                             width: Math.min(parent.width, parent.height)
                             height: width
                             radius: width / 2
-                            color: parent.selected ? Theme.tileActiveBg : (dayHover.hovered && parent.inVisibleMonth ? Theme.qsRowBg : "transparent")
+                            color: parent.selected ? root.selectionBg : (dayHover.hovered && parent.inVisibleMonth ? Theme.qsRowBg : "transparent")
                             border.width: parent.isToday && !parent.selected ? 1 : 0
                             border.color: Theme.tileActiveBorderHover
                             anchors.centerIn: parent
@@ -328,7 +329,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 36
-            radius: 8
+            radius: 12
             color: todayHover.hovered && root.todayButtonEnabled ? Theme.qsRowBgHover : Theme.qsRowBg
             border.width: 1
             border.color: todayHover.hovered && root.todayButtonEnabled ? Theme.qsCardBorderHover : Theme.qsCardBorder

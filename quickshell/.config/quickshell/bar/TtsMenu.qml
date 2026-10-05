@@ -110,7 +110,7 @@ PanelWindow {
         // Same neutral grey used by a hovered selector row: it stays glassy
         // instead of reading as a separate bluish button material.
         readonly property color controlBg: Qt.rgba(1, 1, 1, 0.10)
-        readonly property color outline: Qt.rgba(0.56, 0.58, 0.62, 0.42)
+        readonly property color outline: Theme.menuSurfaceOutline
         readonly property color controlBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
         readonly property color controlBorderActive: Qt.rgba(0.62, 0.64, 0.68, 0.35)
         layer.enabled: true

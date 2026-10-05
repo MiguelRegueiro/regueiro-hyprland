@@ -516,7 +516,7 @@ FocusScope {
         }
 
         layer.effect: MultiEffect {
-            shadowEnabled: false
+            shadowEnabled: true
             shadowColor: Qt.rgba(0, 0, 0, 0.7)
             shadowBlur: 0.88
             shadowVerticalOffset: 4

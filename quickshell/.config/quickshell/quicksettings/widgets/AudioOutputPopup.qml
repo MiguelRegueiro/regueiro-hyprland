@@ -17,7 +17,7 @@ Item {
     property real reveal: 0
     property real maxPopupHeight: 560
     readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
-    readonly property color outline: Qt.rgba(0.56, 0.58, 0.62, 0.42)
+    readonly property color outline: Theme.menuSurfaceOutline
     readonly property color rowBg: Qt.rgba(1, 1, 1, 0.065)
     readonly property color rowBgHover: Qt.rgba(1, 1, 1, 0.10)
     readonly property color rowBgActive: Qt.rgba(1, 1, 1, 0.12)

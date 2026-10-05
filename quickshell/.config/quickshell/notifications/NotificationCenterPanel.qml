@@ -38,6 +38,8 @@ Item {
     readonly property real revealFrontLeftRadius: Math.min(root.bottomLeftRadius, root.visibleBodyHeight / 2)
     readonly property real revealFrontRightRadius: Math.min(root.bottomRightRadius, root.visibleBodyHeight / 2)
     readonly property real contentRevealProgress: root.reveal
+    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
+    readonly property color surfaceOutline: Theme.menuSurfaceOutline
 
     implicitWidth: root.bodyWidth
     implicitHeight: contentColumn.implicitHeight + root.attachTop + 10
@@ -216,7 +218,7 @@ Item {
                     // Uses integer stroke width to reduce subpixel protrusion.
                     ShapePath {
                         fillColor: "transparent"
-                        strokeColor: Theme.qsEdge
+                        strokeColor: Theme.menuSurfaceOutline
                         strokeWidth: 1
                         capStyle: ShapePath.FlatCap
                         joinStyle: ShapePath.RoundJoin
@@ -354,9 +356,9 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         radius: Theme.ncSurfaceBottomLeftRadius
-                        color: Theme.notificationPanelBg
-                        border.width: 2
-                        border.color: Theme.bottomPanelOutline
+                        color: root.surfaceBg
+                        border.width: 1
+                        border.color: root.surfaceOutline
                     }
 
                 MouseArea {
@@ -566,12 +568,12 @@ Item {
         }
 
         layer.effect: MultiEffect {
-            shadowEnabled: false
-            shadowColor: Qt.rgba(0, 0, 0, 0.96)
-            shadowBlur: 0.72
-            shadowVerticalOffset: 2
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.7)
+            shadowBlur: 0.88
+            shadowVerticalOffset: 4
             shadowHorizontalOffset: 0
-            blurMax: 28
+            blurMax: 48
         }
 
     }
