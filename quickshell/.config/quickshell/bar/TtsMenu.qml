@@ -105,7 +105,7 @@ PanelWindow {
         radius: Theme.ncSurfaceBottomLeftRadius
         // Match the selector's neutral frosted material rather than the
         // cooler quick-settings surface.
-        color: Qt.rgba(0.115, 0.12, 0.135, 0.88)
+        color: Qt.rgba(0.115, 0.12, 0.135, 0.84)
         border.width: 1; border.color: ttsPanel.outline
         // Same neutral grey used by a hovered selector row: it stays glassy
         // instead of reading as a separate bluish button material.
@@ -418,8 +418,8 @@ PanelWindow {
         property bool primary: false
         signal clicked
         implicitWidth: icon || compact ? 46 : label.implicitWidth + 30; implicitHeight: 40; radius: 12
-        color: primary ? Theme.textPrimary : ttsPanel.controlBg; border.width: 1; border.color: primary ? Theme.textPrimary : ttsPanel.controlBorder
-        Text { id: label; anchors.centerIn: parent; text: parent.text; font.family: parent.icon ? Theme.fontIcons : Theme.fontUi; font.pixelSize: 13; font.weight: Font.DemiBold; color: parent.primary ? Theme.qsSurfaceBg : Theme.textPrimary }
+        color: ttsPanel.controlBg; border.width: 1; border.color: ttsPanel.controlBorder
+        Text { id: label; anchors.centerIn: parent; text: parent.text; font.family: parent.icon ? Theme.fontIcons : Theme.fontUi; font.pixelSize: 13; font.weight: Font.DemiBold; color: Theme.textPrimary }
         MouseArea { anchors.fill: parent; onClicked: parent.clicked() }
     }
     Connections {

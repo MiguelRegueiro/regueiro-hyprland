@@ -26,6 +26,16 @@ PanelWindow {
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))
     readonly property int openDuration: Theme.topBarMenuOpenDuration
     readonly property int closeDuration: Theme.topBarMenuCloseDuration
+    // Shared with the TTS menu: neutral glass instead of the older cool-blue
+    // quick-settings material.
+    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
+    readonly property color outline: Qt.rgba(0.56, 0.58, 0.62, 0.42)
+    readonly property color cardBg: Qt.rgba(1, 1, 1, 0.065)
+    readonly property color cardBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
+    readonly property color controlBg: Qt.rgba(1, 1, 1, 0.10)
+    readonly property color controlBgHover: Qt.rgba(1, 1, 1, 0.16)
+    readonly property color controlBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
+    readonly property color controlBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
 
     signal closeRequested()
     signal barPressed(real x, real y)
@@ -144,9 +154,9 @@ PanelWindow {
                 Rectangle {
                     anchors.fill: parent
                     radius: Theme.ncSurfaceBottomLeftRadius
-                    color: Theme.qsSurfaceBg
-                    border.width: 2
-                    border.color: Theme.bottomPanelOutline
+                    color: root.surfaceBg
+                    border.width: 1
+                    border.color: root.outline
                 }
 
                 MouseArea {
@@ -218,9 +228,9 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     implicitHeight: 110
                                     radius: Theme.qsRadius + 1
-                                    color: Theme.qsCardBg
+                                    color: root.cardBg
                                     border.width: 1
-                                    border.color: Theme.qsCardBorder
+                                    border.color: root.cardBorder
 
                                     ColumnLayout {
                                         anchors.fill: parent
@@ -235,9 +245,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 36
                                                 Layout.preferredHeight: 36
                                                 radius: 18
-                                                color: modelData.mounted ? Qt.rgba(1, 1, 1, 0.10) : Theme.qsCardChipBg
+                                                color: modelData.mounted ? root.controlBg : root.cardBg
                                                 border.width: 1
-                                                border.color: modelData.mounted ? Qt.rgba(1, 1, 1, 0.12) : Theme.qsCardChipBorder
+                                                border.color: modelData.mounted ? root.controlBorder : root.cardBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -293,9 +303,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 64
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: openHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+                                                color: openHover.hovered ? root.controlBgHover : root.controlBg
                                                 border.width: 1
-                                                border.color: openHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+                                                border.color: openHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -329,9 +339,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 64
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: mountHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+                                                color: mountHover.hovered ? root.controlBgHover : root.controlBg
                                                 border.width: 1
-                                                border.color: mountHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+                                                border.color: mountHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -362,9 +372,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 80
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: unmountHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+                                                color: unmountHover.hovered ? root.controlBgHover : root.controlBg
                                                 border.width: 1
-                                                border.color: unmountHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+                                                border.color: unmountHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -394,9 +404,9 @@ PanelWindow {
                                                 Layout.preferredWidth: 58
                                                 Layout.preferredHeight: 30
                                                 radius: 10
-                                                color: ejectHover.hovered ? Qt.rgba(1, 0.36, 0.32, 0.18) : Theme.qsCardChipBg
+                                                color: ejectHover.hovered ? root.controlBgHover : root.controlBg
                                                 border.width: 1
-                                                border.color: ejectHover.hovered ? Qt.rgba(1, 0.48, 0.39, 0.20) : Theme.qsCardChipBorder
+                                                border.color: ejectHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                                 Text {
                                                     anchors.centerIn: parent
@@ -404,7 +414,7 @@ PanelWindow {
                                                     font.family: Theme.fontUi
                                                     font.pixelSize: 12
                                                     font.weight: Font.DemiBold
-                                                    color: ejectHover.hovered ? Theme.red : Theme.textPrimary
+                                                    color: Theme.textPrimary
                                                 }
 
                                                 HoverHandler {
