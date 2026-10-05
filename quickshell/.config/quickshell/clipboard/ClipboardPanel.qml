@@ -30,6 +30,20 @@ FocusScope {
     readonly property int verticalHoldDelayMs: 360
     readonly property int verticalKeyRepeatMs: 120
     readonly property int verticalReleaseQuietMs: 8
+    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
+    readonly property color surfaceOutline: Theme.menuSurfaceOutline
+    readonly property color controlBg: Qt.rgba(1, 1, 1, 0.065)
+    readonly property color controlBgHover: Qt.rgba(1, 1, 1, 0.10)
+    readonly property color controlBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
+    readonly property color controlBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
+    readonly property color cardBg: Qt.rgba(1, 1, 1, 0.045)
+    readonly property color cardBgHover: Qt.rgba(1, 1, 1, 0.075)
+    readonly property color cardBgSelected: Qt.rgba(1, 1, 1, 0.11)
+    readonly property color cardBorder: Qt.rgba(1, 1, 1, 0.10)
+    readonly property color cardBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
+    readonly property color textPrimary: "#f1f0ed"
+    readonly property color textSecondary: "#c4c3c0"
+    readonly property color textMuted: "#a3a29f"
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: {
         const query = root.searchQuery;
@@ -394,9 +408,9 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 16
-                        color: Theme.bottomPanelSearchBg
-                        border.width: 2
-                        border.color: Theme.bottomPanelCardBorder
+                        color: root.controlBg
+                        border.width: 1
+                        border.color: root.controlBorder
 
                         Text {
                             id: searchIcon
@@ -410,13 +424,13 @@ FocusScope {
                             text: "󰍉"
                             font.family: Theme.fontIcons
                             font.pixelSize: 14
-                            color: root.searchVisuallyActive ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
+                            color: root.searchVisuallyActive ? root.textPrimary : root.textSecondary
                         }
 
                         TextInput {
                             id: searchInput
 
-                            color: Theme.bottomPanelTextPrimary
+                            color: root.textPrimary
                             font.family: Theme.fontUi
                             font.pixelSize: 13
                             selectionColor: Theme.accent
@@ -449,7 +463,7 @@ FocusScope {
                         Text {
                             visible: searchInput.text.length === 0
                             text: "Search"
-                            color: Theme.bottomPanelTextMuted
+                            color: root.textMuted
                             font.family: Theme.fontUi
                             font.pixelSize: 13
 
@@ -463,7 +477,7 @@ FocusScope {
                             id: countLabel
 
                             text: root.visibleEntryCountText()
-                            color: Theme.bottomPanelTextSecondary
+                            color: root.textSecondary
                             font.family: Theme.fontUi
                             font.pixelSize: 12
                             verticalAlignment: Text.AlignVCenter
@@ -478,17 +492,18 @@ FocusScope {
                         Rectangle {
                             id: clearAllButton
 
-                            width: clearAllLabel.implicitWidth + 28
-                            height: parent.height - 4
-                            radius: 13
-                            color: clearAllHover.hovered && clearAllEnabled ? Theme.hoverBgStrong : "transparent"
-                            border.width: 0
+                            width: clearAllLabel.implicitWidth + 20
+                            height: 28
+                            radius: height / 2
+                            color: clearAllHover.hovered && clearAllEnabled ? root.controlBgHover : root.controlBg
+                            border.width: 1
+                            border.color: clearAllHover.hovered && clearAllEnabled ? root.controlBorderHover : root.controlBorder
                             opacity: clearAllEnabled ? 1 : 0.5
                             readonly property bool clearAllEnabled: root.clipboardService.entries.length > 0 && !root.clipboardService.mutating
 
                             anchors {
                                 right: clearSearch.visible ? clearSearch.left : parent.right
-                                rightMargin: 2
+                                rightMargin: clearSearch.visible ? 6 : 10
                                 verticalCenter: parent.verticalCenter
                             }
 
@@ -499,7 +514,8 @@ FocusScope {
                                 text: "Clear all"
                                 font.family: Theme.fontUi
                                 font.pixelSize: 12
-                                color: Theme.bottomPanelTextPrimary
+                                font.weight: Font.DemiBold
+                                color: "#ffffff"
                             }
 
                             HoverHandler {
@@ -524,7 +540,9 @@ FocusScope {
                             width: 28
                             height: 28
                             radius: 14
-                            color: clearSearchHover.hovered ? Theme.hoverBgStrong : "transparent"
+                            color: clearSearchHover.hovered ? root.controlBgHover : "transparent"
+                            border.width: clearSearchHover.hovered ? 1 : 0
+                            border.color: root.controlBorderHover
 
                             anchors {
                                 right: parent.right
@@ -537,7 +555,7 @@ FocusScope {
                                 text: "󰅖"
                                 font.family: Theme.fontIcons
                                 font.pixelSize: 13
-                                color: Theme.bottomPanelTextSecondary
+                                color: root.textSecondary
                             }
 
                             HoverHandler {
@@ -582,7 +600,7 @@ FocusScope {
                                     text: "󰑐"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.bottomPanelTextMuted
+                                    color: root.textMuted
                                 }
 
                                 Text {
@@ -590,7 +608,7 @@ FocusScope {
                                     text: "Refreshing clipboard..."
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.bottomPanelTextSecondary
+                                    color: root.textSecondary
                                 }
                             }
 
@@ -606,7 +624,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "󰅍" : "󰍉"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.bottomPanelTextMuted
+                                    color: root.textMuted
                                 }
 
                                 Text {
@@ -614,7 +632,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "Clipboard is empty" : "No matches for this search"
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.bottomPanelTextSecondary
+                                    color: root.textSecondary
                                 }
                             }
 
@@ -644,9 +662,10 @@ FocusScope {
                                     width: listView.width
                                     implicitHeight: Math.max(imageEntry ? 82 : 58, previewLabel.implicitHeight + 22)
                                     radius: 14
-                                    color: selected ? Theme.bottomPanelCardActiveBg : hovered ? Qt.rgba(0.15, 0.16, 0.19, 0.44) : Theme.bottomPanelCardBg
-                                    border.width: selected ? 2 : 1
-                                    border.color: selected ? Theme.bottomPanelCardActiveBorder : hovered ? Qt.rgba(0.851, 0.867, 0.902, 0.24) : Theme.bottomPanelCardBorder
+                                    color: selected ? root.cardBgSelected : hovered ? root.cardBgHover : root.cardBg
+                                    border.width: 1
+                                    border.color: selected || hovered ? root.cardBorderHover : root.cardBorder
+                                    layer.enabled: true
 
                                     HoverHandler {
                                         id: rowHover
@@ -677,7 +696,7 @@ FocusScope {
                                                 text: root.iconForKind(modelData.kind)
                                                 font.family: Theme.fontIcons
                                                 font.pixelSize: 14
-                                                color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
+                                                color: selected ? root.textPrimary : root.textSecondary
                                             }
 
                                             Image {
@@ -703,7 +722,7 @@ FocusScope {
                                             wrapMode: Text.Wrap
                                             maximumLineCount: 2
                                             elide: Text.ElideRight
-                                            color: Theme.bottomPanelTextPrimary
+                                            color: root.textPrimary
                                             font.family: Theme.fontUi
                                             font.pixelSize: 13
                                         }
@@ -726,6 +745,15 @@ FocusScope {
 
                                     onModelDataChanged: root.clipboardService.requestImagePreview(modelData)
 
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: Qt.rgba(0, 0, 0, hovered || selected ? 0.92 : 0.82)
+                                        shadowBlur: 0.72
+                                        shadowVerticalOffset: 2
+                                        shadowHorizontalOffset: 0
+                                        blurMax: 26
+                                    }
+
                                     Row {
                                         id: actionRow
                                         z: 2
@@ -746,9 +774,9 @@ FocusScope {
                                             width: 28
                                             height: 28
                                             radius: 14
-                                            color: deleteHover.hovered ? Theme.qsCardChipBgHover : Theme.qsCardChipBg
+                                            color: deleteHover.hovered ? root.controlBgHover : root.controlBg
                                             border.width: 1
-                                            border.color: deleteHover.hovered ? Theme.qsCardChipBorderHover : Theme.qsCardChipBorder
+                                            border.color: deleteHover.hovered ? root.controlBorderHover : root.controlBorder
 
                                             Text {
                                                 anchors.centerIn: parent
@@ -756,7 +784,7 @@ FocusScope {
                                                 text: "󰆴"
                                                 font.family: Theme.fontIcons
                                                 font.pixelSize: 13
-                                                color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
+                                                color: selected ? root.textPrimary : root.textSecondary
                                             }
 
                                             HoverHandler {

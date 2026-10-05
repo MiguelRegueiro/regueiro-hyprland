@@ -68,10 +68,10 @@ Scope {
             anchors.fill: parent
             anchors.margins: backdrop.shadowMargin
             radius: Theme.clipboardSurfaceTopLeftRadius
-            color: Theme.bottomPanelBg
+            color: Qt.rgba(0.115, 0.12, 0.135, 0.84)
             opacity: clipboardPanel.surfaceOpacity
-            border.width: 2
-            border.color: Theme.bottomPanelOutline
+            border.width: 1
+            border.color: Theme.menuSurfaceOutline
         }
     }
 
