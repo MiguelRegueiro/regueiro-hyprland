@@ -68,7 +68,7 @@ Scope {
             anchors.fill: parent
             anchors.margins: backdrop.shadowMargin
             radius: Theme.clipboardSurfaceTopLeftRadius
-            color: Qt.rgba(0.115, 0.12, 0.135, 0.84)
+            color: Qt.rgba(0.09, 0.095, 0.11, 0.84)
             opacity: clipboardPanel.surfaceOpacity
             border.width: 1
             border.color: Theme.menuSurfaceOutline
