@@ -202,33 +202,29 @@ PanelWindow {
 
                         Item {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: root.sessions.length === 0 ? 96 : sessionsColumn.implicitHeight + 24
+                            Layout.preferredHeight: root.sessions.length === 0 ? 64 : sessionsColumn.implicitHeight + 24
                             clip: true
 
-                            ColumnLayout {
+                            Row {
                                 visible: root.sessions.length === 0
                                 anchors.centerIn: parent
-                                width: parent.width - 28
-                                spacing: 8
+                                spacing: 10
 
                                 Text {
-                                    Layout.alignment: Qt.AlignHCenter
+                                    anchors.verticalCenter: parent.verticalCenter
                                     text: ""
                                     font.family: Theme.fontIcons
-                                    font.pixelSize: 22 + Theme.fontSizeDelta
+                                    font.pixelSize: 18 + Theme.fontSizeDelta
                                     color: Theme.textDim
                                 }
 
                                 Text {
-                                    Layout.alignment: Qt.AlignHCenter
+                                    anchors.verticalCenter: parent.verticalCenter
                                     text: root.lastError.length > 0 ? root.lastError : "No active SSH sessions"
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13 + Theme.fontSizeDelta
                                     font.weight: Font.DemiBold
                                     color: root.lastError.length > 0 ? Theme.red : Theme.textDim
-                                    horizontalAlignment: Text.AlignHCenter
-                                    wrapMode: Text.WordWrap
-                                    width: parent.width
                                 }
                             }
 

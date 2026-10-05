@@ -191,9 +191,9 @@ PanelWindow {
                                     color: Theme.textPrimary
                                 }
 
-                                ColumnLayout {
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 1
+                                    spacing: 8
 
                                     Text {
                                         Layout.fillWidth: true
@@ -206,7 +206,7 @@ PanelWindow {
                                     }
 
                                     Text {
-                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
                                         visible: root.detailsService.cpuTemp.length > 0
                                         text: root.detailsService.cpuTemp
                                         font.family: Theme.fontUi

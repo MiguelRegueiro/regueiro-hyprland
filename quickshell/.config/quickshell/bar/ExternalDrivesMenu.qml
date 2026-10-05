@@ -195,7 +195,7 @@ PanelWindow {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: root.lastError.length > 0 ? root.lastError : "No external drives"
                                 font.family: Theme.fontUi
-                                font.pixelSize: 12
+                                font.pixelSize: 13
                                 font.weight: Font.DemiBold
                                 color: root.lastError.length > 0 ? Theme.red : Theme.textDim
                                 horizontalAlignment: Text.AlignHCenter
