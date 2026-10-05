@@ -438,9 +438,9 @@ Item {
                                     width: clearText.implicitWidth + 20
                                     height: 28
                                     radius: height / 2
-                                    color: clearHover.hovered ? Theme.bottomPanelCardBgHover : Theme.bottomPanelCardBg
+                                    color: clearHover.hovered ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.065)
                                     border.width: 1
-                                    border.color: clearHover.hovered ? Theme.bottomPanelOutline : Theme.bottomPanelCardBorder
+                                    border.color: clearHover.hovered ? Qt.rgba(0.62, 0.64, 0.68, 0.35) : Qt.rgba(0.56, 0.58, 0.62, 0.22)
 
                                     anchors {
                                         right: parent.right

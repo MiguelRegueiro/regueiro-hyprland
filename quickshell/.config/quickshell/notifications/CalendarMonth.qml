@@ -330,10 +330,10 @@ Item {
             width: parent.width
             height: 36
             radius: 12
-            color: todayHover.hovered && root.todayButtonEnabled ? Theme.qsRowBgHover : Theme.qsRowBg
+            color: todayHover.hovered && root.todayButtonEnabled ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.065)
             border.width: 1
-            border.color: todayHover.hovered && root.todayButtonEnabled ? Theme.qsCardBorderHover : Theme.qsCardBorder
-            opacity: root.todayButtonEnabled ? 1 : 0.45
+            border.color: todayHover.hovered && root.todayButtonEnabled ? Qt.rgba(0.62, 0.64, 0.68, 0.35) : Qt.rgba(0.56, 0.58, 0.62, 0.22)
+            opacity: root.todayButtonEnabled ? 1 : 0.68
 
             Text {
                 anchors.centerIn: parent
