@@ -121,7 +121,13 @@ PanelWindow {
             shadowVerticalOffset: 2
             blurMax: 28
         }
-        MouseArea { anchors.fill: parent }
+        MouseArea {
+            anchors.fill: parent
+            onPressed: {
+                if (root.selectorOpen !== 0)
+                    root.selectorOpen = 0;
+            }
+        }
         Item {
             anchors.fill: parent; anchors.margins: 16
             RowLayout {
@@ -154,7 +160,7 @@ PanelWindow {
                     valueRole: "value"
                     onActivated: root.voice = currentValue
                     contentItem: Text { leftPadding: 16; rightPadding: 34; text: voiceBox.displayText; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 15; font.weight: Font.Medium; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight }
-                    indicator: Text { x: voiceBox.width - width - 14; anchors.verticalCenter: parent.verticalCenter; text: "󰅂"; color: Theme.textPrimary; font.family: Theme.fontIcons; font.pixelSize: 16 }
+                    indicator: Text { x: voiceBox.width - width - 14; anchors.verticalCenter: parent.verticalCenter; text: "󰅀"; color: Theme.textPrimary; font.family: Theme.fontIcons; font.pixelSize: 14 }
                     background: Rectangle { radius: 12; color: ttsPanel.controlBg; border.width: 1; border.color: voiceBox.activeFocus ? ttsPanel.controlBorderActive : ttsPanel.controlBorder }
                     MouseArea {
                         anchors.fill: parent
@@ -172,7 +178,7 @@ PanelWindow {
                     valueRole: "value"
                     onActivated: root.rate = currentValue
                     contentItem: Text { leftPadding: 16; rightPadding: 28; text: speedBox.displayText; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 15; font.weight: Font.Medium; verticalAlignment: Text.AlignVCenter }
-                    indicator: Text { x: speedBox.width - width - 14; anchors.verticalCenter: parent.verticalCenter; text: "󰅂"; color: Theme.textPrimary; font.family: Theme.fontIcons; font.pixelSize: 16 }
+                    indicator: Text { x: speedBox.width - width - 14; anchors.verticalCenter: parent.verticalCenter; text: "󰅀"; color: Theme.textPrimary; font.family: Theme.fontIcons; font.pixelSize: 14 }
                     background: Rectangle { radius: 12; color: ttsPanel.controlBg; border.width: 1; border.color: speedBox.activeFocus ? ttsPanel.controlBorderActive : ttsPanel.controlBorder }
                     MouseArea {
                         anchors.fill: parent
@@ -189,15 +195,16 @@ PanelWindow {
             }
             RowLayout {
                 x: 0; y: 122; width: parent.width; height: 28; spacing: 10
-                Text { text: root.formatTime(ttsService.position); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
+                readonly property bool playbackActive: ttsService.status === "playing" || ttsService.status === "paused"
+                Text { text: root.formatTime(parent.playbackActive ? ttsService.position : 0); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
                 Slider {
                     id: progress
                     Layout.fillWidth: true
                     property bool dragging: false
                     property bool awaitingSeek: false
                     property real draggedValue: 0
-                    from: 0; to: Math.max(0.01, ttsService.duration); value: dragging ? draggedValue : ttsService.position
-                    enabled: ttsService.duration > 0
+                    from: 0; to: Math.max(0.01, ttsService.duration); value: dragging ? draggedValue : (parent.playbackActive ? ttsService.position : 0)
+                    enabled: parent.playbackActive
                     onMoved: draggedValue = value
                     onPressedChanged: {
                         if (pressed) {
@@ -232,7 +239,7 @@ PanelWindow {
                     }
                     HoverHandler { id: progressHover; cursorShape: Qt.ArrowCursor }
                 }
-                Text { text: root.formatTime(ttsService.duration); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
+                Text { text: root.formatTime(parent.playbackActive ? ttsService.duration : 0); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
             }
             Text { anchors.horizontalCenter: parent.horizontalCenter; y: 158; text: ttsService.status === "idle" ? "Ready" : (ttsService.detail || "Preparing speech"); color: Theme.textDim; font.family: Theme.fontUi; font.pixelSize: 12 }
         }
@@ -241,7 +248,7 @@ PanelWindow {
         id: selectorWindow
         readonly property real panelX: Math.max(8, root.width - 520 - 108)
         readonly property real voiceWidth: 520 - 32 - 12 - 102
-        readonly property real speedWidth: 86
+        readonly property real speedWidth: 102
         // Keep the narrow speed list aligned to the speed control's right edge.
         readonly property real selectorX: root.selectorOpen === 1 ? panelX + 16 : panelX + 16 + voiceWidth + 12 + 102 - speedWidth
         readonly property real selectorY: Theme.barHeight + 24 + 16 + 42 + 3
