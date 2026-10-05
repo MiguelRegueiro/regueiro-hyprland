@@ -10,6 +10,7 @@ Item {
     property string detail: ""
     property real position: 0
     property real duration: 0
+    property bool replayReady: false
     property string voice: "en-US-AndrewMultilingualNeural"
     property string rate: "+50%"
     property bool preferencesPending: false
@@ -41,11 +42,14 @@ Item {
                         root.errorDismissed = false;
                     else if (root.status !== "error")
                         errorTimer.restart();
-                    root.status = next.state || "idle";
                     root.text = next.text || "";
                     root.detail = next.detail || "";
                     root.position = Number(next.position) || 0;
                     root.duration = Number(next.duration) || 0;
+                    // Set this before status so the OSD never mistakes a
+                    // completed reading for a manual pause.
+                    root.replayReady = Boolean(next.replayReady);
+                    root.status = next.state || "idle";
                     const nextVoice = next.voice || root.voice;
                     const nextRate = next.rate || root.rate;
                     if (root.preferencesPending && nextVoice === root.pendingVoice && nextRate === root.pendingRate) {
@@ -58,6 +62,7 @@ Item {
                     }
                 } catch (error) {
                     root.status = "error";
+                    root.replayReady = false;
                     root.text = "";
                     root.detail = "EasyTTS status could not be read";
                 }
@@ -81,15 +86,28 @@ Item {
         settingsProcess.running = true;
     }
 
-    function toggle() { controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "toggle"]; controlProcess.running = true; }
-    function reset() { controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "reset"]; controlProcess.running = true; }
-    function seek(seconds) { controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "seek", String(seconds)]; controlProcess.running = true; }
+    function toggle() {
+        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "toggle"];
+        controlProcess.running = true;
+    }
+    function reset() {
+        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "reset"];
+        controlProcess.running = true;
+    }
+    function seek(seconds) {
+        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "seek", String(seconds)];
+        controlProcess.running = true;
+    }
 
-    Process { id: speakProcess }
-    Process { id: controlProcess }
+    Process {
+        id: speakProcess
+    }
+    Process {
+        id: controlProcess
+    }
     Process {
         id: settingsProcess
-        onExited: (exitCode) => {
+        onExited: exitCode => {
             if (exitCode !== 0) {
                 root.preferencesPending = false;
                 preferenceTimer.stop();

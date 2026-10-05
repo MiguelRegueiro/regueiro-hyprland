@@ -14,6 +14,7 @@ PanelWindow {
     property bool osdVisible: false
     readonly property bool generating: ttsService.status === "generating"
     readonly property bool paused: ttsService.status === "paused"
+    readonly property bool replayReady: ttsService.replayReady
     readonly property bool error: ttsService.status === "error"
     readonly property string message: error ? "Text-to-speech unavailable" : (generating ? "Preparing speech" : (paused ? "Paused" : "Reading"))
 
@@ -37,18 +38,25 @@ PanelWindow {
         hideTimer.restart();
     }
 
+    function syncVisibility() {
+        if (ttsService.status === "idle" || replayReady) {
+            osdVisible = false;
+            hideTimer.stop();
+        } else if (generating) {
+            osdVisible = true;
+            hideTimer.stop();
+        } else {
+            showBriefly();
+        }
+    }
+
     Connections {
         target: root.ttsService
         function onStatusChanged() {
-            if (root.ttsService.status === "idle") {
-                root.osdVisible = false;
-                hideTimer.stop();
-            } else if (root.generating) {
-                root.osdVisible = true;
-                hideTimer.stop();
-            } else {
-                root.showBriefly();
-            }
+            root.syncVisibility();
+        }
+        function onDetailChanged() {
+            root.syncVisibility();
         }
     }
 

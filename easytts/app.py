@@ -105,6 +105,7 @@ class SpeechController:
         self.duration = 0.0
         self.position = 0.0
         self.playback_started = None
+        self.replay_ready = False
         self.state = "idle"
         self.detail = ""
         preferences = load_preferences()
@@ -123,6 +124,7 @@ class SpeechController:
         self.detail = detail
         payload = json.dumps({"state": state, "text": self.text, "detail": detail,
                               "position": self.current_position(), "duration": self.duration,
+                              "replayReady": self.replay_ready,
                               "voice": self.voice, "rate": self.rate})
         temporary = STATE.with_suffix(".tmp")
         temporary.write_text(payload, encoding="utf-8")
@@ -133,6 +135,7 @@ class SpeechController:
             return {"state": self.state, "text": self.text,
                     "detail": self.detail,
                     "position": self.current_position(), "duration": self.duration,
+                    "replayReady": self.replay_ready,
                     "voice": self.voice, "rate": self.rate}
 
     def set_preferences(self, voice=None, rate=None):
@@ -170,11 +173,16 @@ class SpeechController:
         with self.lock:
             if job != self.job or player != self.player:
                 return
+            # EOF is not the same thing as clearing the current reading. Keep
+            # its file and duration available, rewound and paused, so Play can
+            # immediately replay it without synthesizing the clipboard again.
             self.player = None
             self.paused = False
-            self.position = self.duration
+            self.position = 0.0
             self.playback_started = None
-            self.write_state("idle")
+            self.replay_ready = True
+            self._start_player(job, 0.0, paused=True)
+            self.write_state("paused", "Ready to replay")
 
     def speak(self, text, voice=None, rate=None):
         with self.lock:
@@ -183,6 +191,7 @@ class SpeechController:
             save_preferences(self.voice, self.rate)
             self.job += 1
             job = self.job
+            self.replay_ready = False
             self._terminate_player()
             if self.audio_file:
                 self.audio_file.unlink(missing_ok=True)
@@ -201,6 +210,7 @@ class SpeechController:
             if self.paused:
                 self.player.send_signal(signal.SIGCONT)
                 self.paused = False
+                self.replay_ready = False
                 self.playback_started = time.monotonic() - self.position
                 self.write_state("playing", "Reading")
             else:
@@ -215,6 +225,7 @@ class SpeechController:
         """Cancel synthesis or stop a current reading."""
         with self.lock:
             self.job += 1
+            self.replay_ready = False
             self._terminate_player()
             if self.audio_file:
                 self.audio_file.unlink(missing_ok=True)
@@ -230,6 +241,7 @@ class SpeechController:
             if not self.audio_file or not self.audio_file.is_file():
                 return False
             self.job += 1
+            self.replay_ready = False
             self._terminate_player()
             self._start_player(self.job, 0.0, paused=True)
             self.write_state("paused", "Paused")
@@ -240,6 +252,7 @@ class SpeechController:
             if not self.audio_file or not self.audio_file.is_file():
                 return False
             self.job += 1
+            self.replay_ready = False
             paused = self.paused
             self._terminate_player()
             position = min(self.duration, max(0.0, float(position)))
