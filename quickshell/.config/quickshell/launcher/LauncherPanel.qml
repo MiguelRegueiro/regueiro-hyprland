@@ -38,6 +38,17 @@ FocusScope {
     readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceOpacity: root.reveal
     readonly property bool searchVisuallyActive: root.open || root.reveal > 0.001
+    readonly property color controlBg: Qt.rgba(1, 1, 1, 0.065)
+    readonly property color controlBgHover: Qt.rgba(1, 1, 1, 0.10)
+    readonly property color controlBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
+    readonly property color controlBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
+    readonly property color cardBg: Qt.rgba(1, 1, 1, 0.045)
+    readonly property color cardBgHover: Qt.rgba(1, 1, 1, 0.075)
+    readonly property color cardBgSelected: Qt.rgba(1, 1, 1, 0.11)
+    readonly property color cardBorder: Qt.rgba(1, 1, 1, 0.10)
+    readonly property color textPrimary: "#f1f0ed"
+    readonly property color textSecondary: "#c4c3c0"
+    readonly property color textMuted: "#a3a29f"
     readonly property string searchQuery: searchInput.text.trim().toLowerCase()
     readonly property var filteredEntries: root.launcherService.searchEntries(root.searchQuery)
     readonly property var allEntries: {
@@ -469,9 +480,9 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 16
-                        color: Theme.bottomPanelSearchBg
-                        border.width: 2
-                        border.color: Theme.bottomPanelCardBorder
+                        color: root.controlBg
+                        border.width: 1
+                        border.color: root.controlBorder
 
                         Text {
                             id: searchIcon
@@ -485,13 +496,13 @@ FocusScope {
                             text: "󰍉"
                             font.family: Theme.fontIcons
                             font.pixelSize: 14
-                            color: root.searchVisuallyActive ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
+                            color: root.searchVisuallyActive ? root.textPrimary : root.textSecondary
                         }
 
                         TextInput {
                             id: searchInput
 
-                            color: Theme.bottomPanelTextPrimary
+                            color: root.textPrimary
                             font.family: Theme.fontUi
                             font.pixelSize: 13
                             selectionColor: Theme.accent
@@ -525,7 +536,7 @@ FocusScope {
                         Text {
                             visible: searchInput.text.length === 0
                             text: "Search"
-                            color: Theme.bottomPanelTextMuted
+                            color: root.textMuted
                             font.family: Theme.fontUi
                             font.pixelSize: 13
 
@@ -539,7 +550,7 @@ FocusScope {
                             id: appCountLabel
 
                             text: root.appCountText(root.allEntries.length)
-                            color: Theme.bottomPanelTextSecondary
+                            color: root.textSecondary
                             font.family: Theme.fontUi
                             font.pixelSize: 12
                             verticalAlignment: Text.AlignVCenter
@@ -558,7 +569,9 @@ FocusScope {
                             width: 28
                             height: 28
                             radius: 14
-                            color: clearSearchHover.hovered ? Theme.hoverBgStrong : "transparent"
+                            color: clearSearchHover.hovered ? root.controlBgHover : "transparent"
+                            border.width: clearSearchHover.hovered ? 1 : 0
+                            border.color: root.controlBorderHover
 
                             anchors {
                                 right: parent.right
@@ -571,7 +584,7 @@ FocusScope {
                                 text: "󰅖"
                                 font.family: Theme.fontIcons
                                 font.pixelSize: 13
-                                color: Theme.bottomPanelTextSecondary
+                                color: root.textSecondary
                             }
 
                             HoverHandler {
@@ -615,7 +628,7 @@ FocusScope {
                                     text: "󰑐"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.bottomPanelTextMuted
+                                    color: root.textMuted
                                 }
 
                                 Text {
@@ -623,7 +636,7 @@ FocusScope {
                                     text: "Loading applications..."
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.bottomPanelTextSecondary
+                                    color: root.textSecondary
                                 }
                             }
 
@@ -639,7 +652,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "󰀻" : "󰍉"
                                     font.family: Theme.fontIcons
                                     font.pixelSize: 24
-                                    color: Theme.bottomPanelTextMuted
+                                    color: root.textMuted
                                 }
 
                                 Text {
@@ -647,7 +660,7 @@ FocusScope {
                                     text: root.searchQuery.length === 0 ? "No applications found" : "No matches for this search"
                                     font.family: Theme.fontUi
                                     font.pixelSize: 13
-                                    color: Theme.bottomPanelTextSecondary
+                                    color: root.textSecondary
                                 }
                             }
 
@@ -716,9 +729,9 @@ FocusScope {
                                                 width: Math.min(126, parent.width - 10)
                                                 height: 118
                                                 radius: 15
-                                                color: selected ? Theme.bottomPanelCardActiveBg : hovered ? Theme.bottomPanelCardBgHover : "transparent"
-                                                border.width: selected ? 2 : hovered ? 1 : 0
-                                                border.color: selected ? Theme.bottomPanelCardActiveBorder : hovered ? Theme.bottomPanelCardBorderHover : "transparent"
+                                                color: selected ? root.cardBgSelected : hovered ? root.cardBgHover : "transparent"
+                                                border.width: selected || hovered ? 1 : 0
+                                                border.color: selected || hovered ? root.controlBorderHover : root.cardBorder
                                                 scale: selected ? 1.012 : 1
 
                                                 anchors.centerIn: parent
@@ -758,9 +771,9 @@ FocusScope {
                                                             width: 22
                                                             height: 18
                                                             radius: 9
-                                                            color: Theme.bottomPanelCardBg
+                                                            color: root.controlBg
                                                             border.width: 1
-                                                            border.color: Theme.bottomPanelCardBorder
+                                                            border.color: root.controlBorder
 
                                                             anchors {
                                                                 top: parent.top
@@ -772,7 +785,7 @@ FocusScope {
                                                             Text {
                                                                 anchors.centerIn: parent
                                                                 text: ""
-                                                                color: Theme.bottomPanelTextSecondary
+                                                                color: root.textSecondary
                                                                 font.family: Theme.fontIcons
                                                                 font.pixelSize: 10
                                                             }
@@ -788,7 +801,7 @@ FocusScope {
                                                         wrapMode: Text.WordWrap
                                                         maximumLineCount: 2
                                                         elide: Text.ElideRight
-                                                        color: selected ? Theme.bottomPanelTextPrimary : Theme.bottomPanelTextSecondary
+                                                        color: selected ? root.textPrimary : root.textSecondary
                                                         font.family: Theme.fontUi
                                                         font.pixelSize: 12
                                                         lineHeight: 0.94

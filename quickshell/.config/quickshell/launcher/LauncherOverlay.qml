@@ -100,10 +100,10 @@ Scope {
             anchors.fill: parent
             anchors.margins: backdrop.shadowMargin
             radius: Theme.launcherSurfaceTopLeftRadius
-            color: Theme.bottomPanelBg
+            color: Qt.rgba(0.09, 0.095, 0.11, 0.84)
             opacity: launcherPanel.surfaceOpacity
-            border.width: 2
-            border.color: Theme.bottomPanelOutline
+            border.width: 1
+            border.color: Theme.menuSurfaceOutline
         }
     }
 
