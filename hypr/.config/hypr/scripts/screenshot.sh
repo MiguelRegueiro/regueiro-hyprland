@@ -49,12 +49,19 @@ copy_image() {
 }
 
 notify_saved() {
+    local action
+
     if command -v notify-send >/dev/null 2>&1; then
-        notify-send \
+        action="$(notify-send \
             -a "Screenshot" \
             -i "image-x-generic" \
             -h "string:image-path:$1" \
-            "Screenshot saved" "$1"
+            -A "default=Open" \
+            "Screenshot saved" "$1" || true)"
+
+        if [[ "$action" == "default" ]]; then
+            xdg-open "$1" >/dev/null 2>&1 &
+        fi
     fi
 }
 
