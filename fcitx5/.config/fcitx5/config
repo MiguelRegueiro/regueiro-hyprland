@@ -12,4 +12,7 @@ EnumerateGroupBackwardKeys=
 
 [Behavior]
 ActiveByDefault=True
+# Keep the chosen input method when focus moves between apps, windows, and
+# fields. The shell indicator is only a view of this global Fcitx state.
+ResetStateWhenFocusIn=No
 ShareInputState=All

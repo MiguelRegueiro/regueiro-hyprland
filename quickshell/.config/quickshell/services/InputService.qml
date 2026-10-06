@@ -15,6 +15,8 @@ Item {
     property int configuredMethodCount: -1
     property bool ready: false
     property string lastError: ""
+    property var pendingCommand: null
+    readonly property int statusPollInterval: 1000
     readonly property bool busy: statusProc.running || switchProc.running
     readonly property bool hasMethods: methods.length > 0
     readonly property bool hasConfiguredMethods: configuredMethodCount > 0
@@ -82,13 +84,31 @@ Item {
     }
 
     function _runCommand(commandArgs) {
-        if (busy) {
-            lastError = "Another input method request is still running";
+        // A status refresh must never make Super+Space or a bar click appear
+        // to do nothing. Queue the latest requested change and run it as soon
+        // as the in-flight query completes. User input always takes priority
+        // over polling.
+        if (statusProc.running || switchProc.running) {
+            pendingCommand = commandArgs;
             return ;
         }
+
+        _startCommand(commandArgs);
+    }
+
+    function _startCommand(commandArgs) {
         lastError = "";
         switchProc.command = [backendScript].concat(commandArgs);
         switchProc.running = true;
+    }
+
+    function _runPendingCommand() {
+        if (pendingCommand === null || statusProc.running || switchProc.running)
+            return ;
+
+        const command = pendingCommand;
+        pendingCommand = null;
+        _startCommand(command);
     }
 
     function _parseBackendOutput(rawText) {
@@ -273,6 +293,8 @@ Item {
         command: [root.backendScript, "describe"]
         onExited: (code) => {
             root._applyBackendOutput(statusStdout.text, statusStderr.text, code, true);
+            // Process.running becomes false after this signal returns.
+            Qt.callLater(root._runPendingCommand);
         }
 
         stdout: StdioCollector {
@@ -286,7 +308,11 @@ Item {
     }
 
     Timer {
-        interval: Theme.inputPollInterval
+        // Switching through either the bar or Super+Space returns a fresh
+        // state immediately. This is only a recovery path for Fcitx restarts
+        // and outside changes, so it does not need four full shell queries per
+        // second.
+        interval: root.statusPollInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -299,7 +325,11 @@ Item {
         command: ["echo"]
         onExited: (code) => {
             root._applyBackendOutput(switchStdout.text, switchStderr.text, code, true);
-            root.refresh();
+            Qt.callLater(function() {
+                root._runPendingCommand();
+                if (root.pendingCommand === null)
+                    root.refresh();
+            });
         }
 
         stdout: StdioCollector {
