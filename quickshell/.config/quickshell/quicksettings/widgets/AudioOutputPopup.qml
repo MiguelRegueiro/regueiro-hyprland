@@ -29,13 +29,13 @@ Item {
     readonly property real availableListHeight: Math.max(44, maxPopupHeight - 24)
     readonly property real maxListHeight: Math.min(550, availableListHeight)
     readonly property real idealListHeight: {
-        if (!audioService || !audioService.sinks || audioService.sinks.length === 0)
+        if (!audioService || !audioService.outputChoices || audioService.outputChoices.length === 0)
             return 44;
 
         let total = listFooterHeight;
-        for (let i = 0; i < audioService.sinks.length; ++i) {
-            const sink = audioService.sinks[i];
-            total += audioService.sinkSecondaryName(sink).length > 0 ? 56 : 48;
+        for (let i = 0; i < audioService.outputChoices.length; ++i) {
+            const choice = audioService.outputChoices[i];
+            total += audioService.outputSecondaryName(choice).length > 0 ? 56 : 48;
             if (i > 0)
                 total += listSpacing;
 
@@ -124,7 +124,7 @@ Item {
 
             height: popupRoot.resolvedListHeight
             contentHeight: popupRoot.idealListHeight
-            model: popupRoot.audioService.sinks
+            model: popupRoot.audioService.outputChoices
             spacing: popupRoot.listSpacing
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -168,8 +168,9 @@ Item {
                 id: sinkRow
 
                 required property var modelData
-                readonly property bool active: popupRoot.audioService.currentSink && popupRoot.audioService.currentSink.id === modelData.id
-                readonly property string secondaryText: popupRoot.audioService.sinkSecondaryName(modelData)
+                readonly property bool active: popupRoot.audioService.outputIsActive(modelData)
+                readonly property bool selectable: popupRoot.audioService.outputSelectable(modelData)
+                readonly property string secondaryText: popupRoot.audioService.outputSecondaryName(modelData)
 
                 width: sinkList.width
                 height: secondaryText.length > 0 ? 56 : 48
@@ -177,6 +178,7 @@ Item {
                 color: active ? popupRoot.rowBgActive : (rowHover.hovered ? popupRoot.rowBgHover : popupRoot.rowBg)
                 border.color: active ? popupRoot.rowBorderHover : (rowHover.hovered ? popupRoot.rowBorderHover : popupRoot.rowBorder)
                 border.width: 1
+                opacity: selectable || active ? 1 : 0.48
 
                 Row {
                     spacing: 10
@@ -198,7 +200,7 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            text: popupRoot.audioService.sinkIconText(modelData)
+                            text: popupRoot.audioService.outputIconText(modelData)
                             font.family: Theme.fontIcons
                             font.pixelSize: 15
                             color: active ? Theme.textPrimary : Theme.textDim
@@ -213,7 +215,7 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: popupRoot.audioService.sinkDisplayName(modelData)
+                            text: popupRoot.audioService.outputDisplayName(modelData)
                             color: active ? Theme.textPrimary : Theme.textPrimary
                             font.family: Theme.fontUi
                             font.pixelSize: 12
@@ -252,11 +254,12 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
-                    cursorShape: Qt.ArrowCursor
+                    enabled: sinkRow.selectable
+                    cursorShape: sinkRow.selectable ? Qt.PointingHandCursor : Qt.ArrowCursor
                     scrollGestureEnabled: false
                     onWheel: wheel => { wheel.accepted = false; }
                     onClicked: {
-                        popupRoot.audioService.setAudioSink(modelData);
+                        popupRoot.audioService.setAudioOutput(modelData);
                         popupRoot.sinkChosen();
                     }
                 }
@@ -292,7 +295,7 @@ Item {
         }
 
         Text {
-            visible: popupRoot.audioService.sinks.length === 0
+            visible: popupRoot.audioService.outputChoices.length === 0
             anchors.centerIn: sinkList
             text: "No output devices found"
             color: Theme.textDim

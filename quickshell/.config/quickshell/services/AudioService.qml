@@ -11,6 +11,8 @@ Item {
     property var sinkMetadata: ({
     })
     property var sinks: []
+    property var outputChoices: []
+    property string outputChoicesKey: ""
     property string pendingSinkName: ""
     property var pendingSinkInputIds: []
     property int pipewireVolume: sinkAudio ? Math.min(100, Math.round(sinkAudio.volume * 100)) : -1
@@ -157,19 +159,6 @@ Item {
         return sinkMetadata[node.name] || null;
     }
 
-    function sinkAvailabilityFor(node) {
-        const metadata = sinkMetadataFor(node);
-        return metadata ? metadata.availability : "";
-    }
-
-    function sinkVisible(node) {
-        if (!node)
-            return false;
-
-        const availability = sinkAvailabilityFor(node);
-        return node === root.defaultSink || availability !== "not available";
-    }
-
     function sinkSortRank(node) {
         if (!node)
             return -1;
@@ -236,7 +225,7 @@ Item {
 
                 const alsaName = typeof properties["alsa.name"] === "string" ? properties["alsa.name"].trim() : "";
                 const portDescription = activePort && activePort.description ? activePort.description : "";
-                const displayName = alsaName || properties["node.nick"] || portDescription || properties["device.profile.description"] || entry.description || entry.name;
+                const displayName = portDescription || properties["node.nick"] || alsaName || properties["device.profile.description"] || entry.description || entry.name;
                 const secondaryName = portDescription && portDescription !== displayName ? portDescription : "";
                 next[entry.name] = {
                     "availability": activePort && activePort.availability ? activePort.availability : "availability unknown",
@@ -244,6 +233,12 @@ Item {
                     "secondaryName": secondaryName,
                     "portName": activePort && activePort.name ? activePort.name : "",
                     "portType": activePort && activePort.type ? activePort.type : "",
+                    "ports": ports.map(port => ({
+                        "name": port && port.name ? port.name : "",
+                        "description": port && port.description ? port.description : "",
+                        "availability": port && port.availability ? port.availability : "availability unknown",
+                        "type": port && port.type ? port.type : ""
+                    })).filter(port => port.name.length > 0),
                     "formFactor": properties["device.form_factor"] || properties["device.form-factor"] || "",
                     "deviceBus": properties["device.bus"] || "",
                     "priority": Number(properties["priority.session"] || 0)
@@ -255,10 +250,11 @@ Item {
     }
 
     function updateSinks() {
-        const next = [];
         const all = [];
         if (!Pipewire.nodes || !Pipewire.nodes.values) {
-            root.sinks = next;
+            root.sinks = [];
+            root.outputChoices = [];
+            root.outputChoicesKey = "";
             return ;
         }
         for (const node of Pipewire.nodes.values) {
@@ -266,17 +262,121 @@ Item {
                 continue;
 
             all.push(node);
-            if (!sinkVisible(node))
-                continue;
-
-            next.push(node);
         }
-        const resolved = next.length > 0 ? next : all;
-        sortSinks(resolved);
+        sortSinks(all);
         // Keep the ListView model intact during unchanged metadata polls so
         // an in-progress scroll is not reset every polling interval.
-        if (resolved.length !== root.sinks.length || resolved.some((node, index) => node !== root.sinks[index]))
-            root.sinks = resolved;
+        if (all.length !== root.sinks.length || all.some((node, index) => node !== root.sinks[index]))
+            root.sinks = all;
+
+        root.updateOutputChoices();
+    }
+
+    function outputDeviceName(node) {
+        if (!node)
+            return "";
+
+        const properties = node.properties || {
+        };
+        return properties["node.nick"] || properties["device.profile.description"] || node.description || properties["device.nick"] || node.name || "";
+    }
+
+    function outputDisplayName(choice) {
+        if (!choice)
+            return "";
+
+        return choice.portDescription || sinkDisplayName(choice.node);
+    }
+
+    function outputSecondaryName(choice) {
+        if (!choice)
+            return "";
+
+        if (choice.portName) {
+            const deviceName = outputDeviceName(choice.node);
+            const detail = deviceName !== outputDisplayName(choice) ? deviceName : "";
+            return choice.availability === "not available" ? (detail ? "Unavailable · " + detail : "Unavailable") : detail;
+        }
+        return sinkSecondaryName(choice.node);
+    }
+
+    function outputSelectable(choice) {
+        return !!choice && choice.availability !== "not available";
+    }
+
+    function outputIconText(choice) {
+        const portType = String(choice && choice.portType || "").toLowerCase();
+        if (portType === "headphones")
+            return "󰋋";
+
+        if (portType === "speaker")
+            return "󰓃";
+
+        if (portType === "hdmi")
+            return "󰍹";
+
+        return choice ? sinkIconText(choice.node) : "󰓃";
+    }
+
+    function outputIsActive(choice) {
+        if (!choice || !choice.node || !root.defaultSink || choice.node.id !== root.defaultSink.id)
+            return false;
+
+        if (!choice.portName)
+            return true;
+
+        const metadata = sinkMetadataFor(choice.node);
+        return metadata && metadata.portName === choice.portName;
+    }
+
+    function updateOutputChoices() {
+        const next = [];
+        for (const node of root.sinks) {
+            const metadata = sinkMetadataFor(node);
+            const ports = metadata && Array.isArray(metadata.ports) ? metadata.ports : [];
+            if (!ports.length) {
+                next.push({
+                    "node": node,
+                    "portName": "",
+                    "portDescription": "",
+                    "portType": "",
+                    "availability": "availability unknown"
+                });
+                continue;
+            }
+
+            for (const port of ports) {
+                next.push({
+                    "node": node,
+                    "portName": port.name,
+                    "portDescription": port.description,
+                    "portType": port.type,
+                    "availability": port.availability
+                });
+            }
+        }
+
+        next.sort((left, right) => {
+            const activeDiff = Number(root.outputIsActive(right)) - Number(root.outputIsActive(left));
+            if (activeDiff !== 0)
+                return activeDiff;
+
+            const sinkDiff = sinkSortRank(right.node) - sinkSortRank(left.node);
+            if (sinkDiff !== 0)
+                return sinkDiff;
+
+            const availableDiff = Number(right.availability === "available") - Number(left.availability === "available");
+            if (availableDiff !== 0)
+                return availableDiff;
+
+            return outputDisplayName(left).localeCompare(outputDisplayName(right));
+        });
+
+        const key = next.map(choice => [choice.node.id, choice.portName, choice.portDescription, choice.portType, choice.availability, root.outputIsActive(choice)].join("\u0000")).join("\u0001");
+        if (key !== root.outputChoicesKey) {
+            root.outputChoices = next;
+            root.outputChoicesKey = key;
+        }
     }
 
     function refresh() {
@@ -286,6 +386,11 @@ Item {
         if (!volumePoll.running)
             volumePoll.running = true;
 
+    }
+
+    function refreshSinks() {
+        if (!sinkPoll.running)
+            sinkPoll.running = true;
     }
 
     function setOptimisticState(nextPercent, nextMuted) {
@@ -400,6 +505,21 @@ Item {
         setDefaultSink.running = true;
         listSinkInputs.running = true;
         refreshSoon.restart();
+        refreshSinksSoon.restart();
+    }
+
+    function setAudioOutput(choice) {
+        if (!choice || !choice.node)
+            return ;
+
+        if (!root.currentSink || root.currentSink.id !== choice.node.id)
+            root.setAudioSink(choice.node);
+
+        if (choice.portName) {
+            setSinkPort.command = ["pactl", "set-sink-port", choice.node.name, choice.portName];
+            setSinkPort.running = true;
+        }
+        refreshSinksSoon.restart();
     }
 
     function updateSinkInputsToMove(text) {
@@ -453,11 +573,7 @@ Item {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: {
-            if (!sinkPoll.running)
-                sinkPoll.running = true;
-
-        }
+        onTriggered: root.refreshSinks()
     }
 
     Timer {
@@ -466,6 +582,14 @@ Item {
         interval: Theme.audioRefreshDelay
         repeat: false
         onTriggered: root.refresh()
+    }
+
+    Timer {
+        id: refreshSinksSoon
+
+        interval: Theme.audioRefreshDelay
+        repeat: false
+        onTriggered: root.refreshSinks()
     }
 
     Timer {
@@ -586,6 +710,12 @@ Item {
 
     Process {
         id: setDefaultSink
+
+        command: ["echo"]
+    }
+
+    Process {
+        id: setSinkPort
 
         command: ["echo"]
     }
