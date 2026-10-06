@@ -3,19 +3,19 @@
 hl.config({
     general = {
         gaps_workspaces = 24,
-        gaps_in = 2,
-        gaps_out = 8,
+        gaps_in = 1,
+        gaps_out = 6,
         border_size = 2,
         col = {
-            active_border = "rgba(d9dde670)",
-            inactive_border = "rgba(bfc4ce26)",
+            active_border = "rgba(aebbd672)",
+            inactive_border = "rgba(bfc4ce1c)",
         },
         resize_on_border = true,
         allow_tearing = false,
         layout = "dwindle",
     },
     decoration = {
-        rounding = 16,
+        rounding = 10,
         rounding_power = 2,
         active_opacity = 1.0,
         inactive_opacity = 1.0,
