@@ -10,11 +10,17 @@ state_file="$state_root/state.json"
 server_host() {
     if [[ -n "${EASYTTS_HOST:-}" ]]; then
         printf '%s\n' "$EASYTTS_HOST"
-    elif command -v tailscale >/dev/null 2>&1; then
-        tailscale ip -4 2>/dev/null | head -n 1 || true
     else
+        # The server starts locally with this Hyprland session. Remote servers
+        # remain supported through EASYTTS_HOST, without spawning tailscale for
+        # every status refresh.
         printf '%s\n' "127.0.0.1"
     fi
+}
+
+notify_shell() {
+    command -v qs >/dev/null 2>&1 || return 0
+    qs ipc call tts refresh >/dev/null 2>&1 &
 }
 
 status() {
@@ -30,6 +36,7 @@ speak_clipboard() {
     local copied host port voice rate
     # With no explicit arguments (the F7 binding), let the service use its
     # saved selection instead of silently forcing its old command defaults.
+    notify_shell
     voice="${1:-}"
     rate="${2:-}"
     if [[ -f "$state_file" ]]; then
@@ -67,6 +74,7 @@ speak_clipboard() {
 
 toggle() {
     local host port
+    notify_shell
     host="$(server_host)"
     port="${EASYTTS_PORT:-8765}"
     [[ -n "$host" ]] || host="127.0.0.1"
@@ -76,6 +84,7 @@ toggle() {
 
 settings() {
     local voice="${1:-}" rate="${2:-}" host port
+    notify_shell
     host="$(server_host)"
     port="${EASYTTS_PORT:-8765}"
     [[ -n "$host" ]] || host="127.0.0.1"
@@ -85,6 +94,7 @@ settings() {
 
 control() {
     local action="$1" value="${2:-}" host port
+    notify_shell
     host="$(server_host)"
     port="${EASYTTS_PORT:-8765}"
     [[ -n "$host" ]] || host="127.0.0.1"

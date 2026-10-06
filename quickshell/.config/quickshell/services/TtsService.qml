@@ -17,16 +17,34 @@ Item {
     property string pendingVoice: ""
     property string pendingRate: ""
     property bool errorDismissed: false
+    property int fastRefreshesRemaining: 0
     readonly property bool hasStatus: status !== "idle" && !errorDismissed
+    readonly property bool busy: status === "generating" || status === "playing"
+
+    function refresh() {
+        if (!statusProcess.running)
+            statusProcess.running = true;
+    }
+
+    function startFastRefresh() {
+        fastRefreshesRemaining = Math.max(fastRefreshesRemaining, 34);
+        refresh();
+        statusTimer.restart();
+    }
 
     Timer {
-        interval: 180
+        id: statusTimer
+
+        // Playback/progress stays as responsive as before. The long idle
+        // period is deliberately cheaper: status invokes an external client.
+        interval: root.busy || root.fastRefreshesRemaining > 0 ? 180 : 1500
         running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            if (!statusProcess.running)
-                statusProcess.running = true;
+            if (root.fastRefreshesRemaining > 0)
+                root.fastRefreshesRemaining--;
+            root.refresh();
         }
     }
 
@@ -71,11 +89,13 @@ Item {
     }
 
     function speakClipboard(voice, rate) {
+        startFastRefresh();
         speakProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "speak-clipboard", voice, rate];
         speakProcess.running = true;
     }
 
     function setPreferences(voice, rate) {
+        startFastRefresh();
         root.voice = voice;
         root.rate = rate;
         root.pendingVoice = voice;
@@ -87,16 +107,27 @@ Item {
     }
 
     function toggle() {
+        startFastRefresh();
         controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "toggle"];
         controlProcess.running = true;
     }
     function reset() {
+        startFastRefresh();
         controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "reset"];
         controlProcess.running = true;
     }
     function seek(seconds) {
+        startFastRefresh();
         controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "seek", String(seconds)];
         controlProcess.running = true;
+    }
+
+    IpcHandler {
+        target: "tts"
+
+        function refresh() {
+            root.startFastRefresh();
+        }
     }
 
     Process {

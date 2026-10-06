@@ -41,6 +41,8 @@ PID = RUNTIME / "worker.pid"
 RECORDING = RUNTIME / "recording.wav"
 stopping = False
 recording: subprocess.Popen[str] | None = None
+transcriber: subprocess.Popen[str] | None = None
+cancel_transcription = False
 
 
 def write_state(state: str, text: str = "", detail: str = "") -> None:
@@ -51,10 +53,16 @@ def write_state(state: str, text: str = "", detail: str = "") -> None:
 
 
 def stop_requested(_signum: int, _frame: object) -> None:
-    global stopping
+    global stopping, cancel_transcription
     stopping = True
     if recording and recording.poll() is None:
         recording.send_signal(signal.SIGINT)
+    elif transcriber and transcriber.poll() is None:
+        # A second toggle while Whisper is running means cancel, not "wait for
+        # the model forever". Forward the signal to the child so wait() can
+        # complete and the worker can clear its transcribing state.
+        cancel_transcription = True
+        transcriber.send_signal(signal.SIGINT)
 
 
 def deliver(text: str) -> str:
@@ -95,7 +103,7 @@ def deliver(text: str) -> str:
 
 
 def run() -> int:
-    global recording
+    global recording, transcriber
     if not ENGINE.is_file() or not MODEL.is_file():
         write_state("error", "", "Dictation is not installed. Run ./dictation/install.sh from the dotfiles repository.")
         return 1
@@ -131,11 +139,18 @@ def run() -> int:
 
     write_state("transcribing", "", "Transcribing")
     threads = str(min(os.cpu_count() or 4, 8))
-    completed = subprocess.run(
+    transcriber = subprocess.Popen(
         [str(ENGINE), "-m", str(MODEL), "-l", "auto", "-t", threads, "-nt", "-sns", "-f", str(RECORDING)],
-        text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
     )
-    result = " ".join(line.strip() for line in completed.stdout.splitlines() if line.strip())
+    output, _ = transcriber.communicate()
+    transcriber = None
+    if cancel_transcription:
+        write_state("ready", "", "Transcription cancelled")
+        PID.unlink(missing_ok=True)
+        return 0
+
+    result = " ".join(line.strip() for line in output.splitlines() if line.strip())
     # Whisper occasionally invents ambient captions such as "[Clock ticking]".
     # They are never useful as dictation, so keep only the spoken text.
     result = re.sub(r"\[[^\]]+\]", "", result).strip()

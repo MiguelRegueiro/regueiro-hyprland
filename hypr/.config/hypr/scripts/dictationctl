@@ -2,12 +2,16 @@
 
 set -euo pipefail
 
-script_path="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$0")"
-repo_root="$(cd -- "$(dirname -- "$script_path")/../../../.." && pwd)"
-worker="$repo_root/dictation/worker.py"
 runtime_root="${XDG_RUNTIME_DIR:-/tmp/regueiro-$(id -u)}/regueiro-dictation"
 state_file="$runtime_root/state.json"
 pid_file="$runtime_root/worker.pid"
+
+notify_shell() {
+    # Wake Quickshell immediately after a keybinding action. Failure is benign:
+    # dictation remains fully usable without a running shell.
+    command -v qs >/dev/null 2>&1 || return 0
+    qs ipc call dictation refresh >/dev/null 2>&1 &
+}
 
 status() {
     if [[ -f "$state_file" ]]; then
@@ -26,6 +30,10 @@ start() {
         return
     fi
     mkdir -p "$runtime_root"
+    local script_path repo_root worker
+    script_path="$(readlink -f -- "$0")"
+    repo_root="$(cd -- "$(dirname -- "$script_path")/../../../.." && pwd)"
+    worker="$repo_root/dictation/worker.py"
     nohup python3 "$worker" >/dev/null 2>&1 &
 }
 
@@ -37,9 +45,9 @@ stop() {
 
 case "${1:-status}" in
     status) status ;;
-    start) start ;;
-    stop) stop ;;
-    toggle) if active; then stop; else start; fi ;;
+    start) notify_shell; start ;;
+    stop) notify_shell; stop ;;
+    toggle) notify_shell; if active; then stop; else start; fi ;;
     *)
         echo "usage: dictationctl {status|start|stop|toggle}" >&2
         exit 2
