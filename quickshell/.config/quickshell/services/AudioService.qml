@@ -346,6 +346,11 @@ Item {
             }
 
             for (const port of ports) {
+                // Match GNOME's output picker: retain the active port, but
+                // do not offer disconnected/inactive hardware ports.
+                if (port.availability === "not available" && port.name !== metadata.portName)
+                    continue;
+
                 next.push({
                     "node": node,
                     "portName": port.name,
