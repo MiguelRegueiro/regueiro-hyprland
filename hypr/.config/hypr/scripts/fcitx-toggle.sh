@@ -7,7 +7,7 @@ config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 profile_path="${FCITX5_PROFILE_PATH:-$config_home/fcitx5/profile}"
 fcitx_remote="${FCITX5_REMOTE_BIN:-}"
 spanish_method="${INPUT_METHOD_SPANISH_ID:-keyboard-es}"
-japanese_method="${INPUT_METHOD_JAPANESE_ID:-mozc}"
+japanese_method="${INPUT_METHOD_JAPANESE_ID:-anthy}"
 
 if [ -z "$fcitx_remote" ]; then
     fcitx_remote="$(command -v fcitx5-remote 2>/dev/null || true)"

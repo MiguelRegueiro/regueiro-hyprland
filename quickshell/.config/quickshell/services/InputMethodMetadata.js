@@ -2,7 +2,7 @@
 
 var knownMethods = {
     "keyboard-es": { label: "es", name: "Español" },
-    "mozc": { label: "あ", name: "日本語" }
+    "anthy": { label: "あ", name: "日本語" }
 };
 
 function _titleCase(text) {

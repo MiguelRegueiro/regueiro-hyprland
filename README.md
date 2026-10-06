@@ -49,7 +49,7 @@ sudo pacman -S git stow \
                hyprpolkitagent \
                quickshell \
                kitty fish starship fastfetch btop \
-               fcitx5 fcitx5-mozc fcitx5-gtk fcitx5-qt fcitx5-configtool \
+               fcitx5 fcitx5-anthy fcitx5-gtk fcitx5-qt fcitx5-configtool \
                nautilus \
                networkmanager \
                bluez bluez-utils blueman \
@@ -175,12 +175,12 @@ payload data. Apply it with `stow --no-folding mimeclip`; afterwards run
 
 ### Input method
 
-The current setup uses **Fcitx 5** with Spanish and Mozc Japanese input (`fcitx5` + `fcitx5-mozc`).
+The current setup uses **Fcitx 5** with Spanish and Anthy Japanese input (`fcitx5` + `fcitx5-anthy`).
 For broad app coverage on Hyprland/Wayland, keep the GTK and Qt integration packages installed too: `fcitx5-gtk` and `fcitx5-qt`.
 Fcitx runs only in Hyprland; GNOME retains its own IBus input sources. The session sets `QT_IM_MODULE=fcitx`, `XMODIFIERS=@im=fcitx`, `SDL_IM_MODULE=fcitx`, and `GLFW_IM_MODULE=fcitx`. Leave `GTK_IM_MODULE` unset so GTK uses native Wayland input and avoids Fcitx’s startup warning. For a legacy GTK/XWayland app that needs the module, launch only that app with `env GTK_IM_MODULE=fcitx app-command`.
 
 `fcitx-session.sh` starts Fcitx, selects Spanish, and stops its process when Hyprland exits. The `fcitx5` Stow package disables the standard global autostart entry.
-`Super+Space` cycles the configured Spanish/Mozc group. The keyboard config uses `kb_options = lv3:switch`, so Right Ctrl acts as an additional AltGr key.
+`Super+Space` cycles the configured Spanish/Anthy group. The keyboard config uses `kb_options = lv3:switch`, so Right Ctrl acts as an additional AltGr key.
 
 When upgrading, back up conflicting files before Stowing `gtk` and `fcitx5`. Remove old global Fcitx environment exports, separate Fcitx autostart services, and `gtk-im-module=fcitx` entries in non-stowed GTK files. Keep input-method variables scoped to Hyprland, outside shell profiles and the shared systemd/D-Bus environment.
 
