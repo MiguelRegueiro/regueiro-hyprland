@@ -7,7 +7,8 @@ hl.on("hyprland.start", function()
     -- Import the session environment before restarting portal services.
     hl.exec_cmd("~/.config/hypr/scripts/start-portals.sh")
 
-    hl.exec_cmd("wl-clip-persist --clipboard regular --ignore-event-on-error")
+    -- Hyprland's PATH may exclude Cargo; prefer a system install, then Cargo.
+    hl.exec_cmd("sh -c 'persist=$(command -v wl-clip-persist || true); persist=${persist:-\"$HOME/.cargo/bin/wl-clip-persist\"}; [ -x \"$persist\" ] && exec \"$persist\" --clipboard regular --ignore-event-on-error'")
     hl.exec_cmd("systemctl --user start mimeclipd")
     hl.exec_cmd("~/.config/hypr/scripts/start-easytts.sh")
     hl.exec_cmd("qs -n -d")
