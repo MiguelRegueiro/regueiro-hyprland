@@ -6,6 +6,16 @@ var surfaceBg = Qt.rgba(0.115, 0.12, 0.135, 0.84);
 var edge = Qt.rgba(1, 1, 1, 0.12);
 var edgeSoft = Qt.rgba(0.56, 0.58, 0.62, 0.22);
 
+// Layer-shell popup surfaces: audio outputs, power actions, and Wi-Fi credentials.
+var popupSurfaceBg = surfaceBg;
+var popupSurfaceOutline = edge;
+var popupSurfaceRadius = 24;
+var popupSurfaceRevealOffset = 18;
+var popupSurfaceShadow = Qt.rgba(0, 0, 0, 0.46);
+var popupSurfaceShadowBlur = 1.04;
+var popupSurfaceShadowOffsetY = 1;
+var popupSurfaceBlurMax = 48;
+
 var cardBg = Qt.rgba(1, 1, 1, 0.065);
 var cardBgHover = Qt.rgba(1, 1, 1, 0.10);
 var cardActiveBg = Qt.rgba(1, 1, 1, 0.12);

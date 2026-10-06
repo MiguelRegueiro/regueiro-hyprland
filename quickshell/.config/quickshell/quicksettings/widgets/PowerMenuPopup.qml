@@ -1,25 +1,19 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
-import Quickshell
-import Quickshell.Wayland
-import "../../components" as Components
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 Item {
     id: root
 
     property bool open: false
-    property real reveal: 0
     required property real surfaceX
     required property real surfaceY
     required property var targetScreen
-    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
-    readonly property color outline: Theme.menuSurfaceOutline
-    readonly property color rowBg: Qt.rgba(1, 1, 1, 0.065)
-    readonly property color rowBgHover: Qt.rgba(1, 1, 1, 0.10)
-    readonly property color rowBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
-    readonly property color rowBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
+    readonly property color rowBg: QS.cardBg
+    readonly property color rowBgHover: QS.cardBgHover
+    readonly property color rowBorder: QS.cardBorder
+    readonly property color rowBorderHover: QS.cardBorderHover
     readonly property var actions: [
         {
             "actionId": "suspend",
@@ -68,85 +62,18 @@ Item {
     implicitHeight: popupColumn.implicitHeight + 20
     width: implicitWidth
     height: implicitHeight
-    visible: reveal > 0.001
-    opacity: 1
-    transform: Translate {
-        y: -(1 - root.reveal) * 18
-    }
-    state: open ? "open" : ""
-    transitions: [
-        Transition {
-            from: ""
-            to: "open"
-
-            Components.Anim {
-                target: root
-                property: "reveal"
-                curve: Components.Anim.EmphasizedDecel
-                duration: Theme.panelOpenDuration
-            }
-        },
-        Transition {
-            from: "open"
-            to: ""
-
-            Components.Anim {
-                target: root
-                property: "reveal"
-                curve: Components.Anim.EmphasizedAccel
-                duration: Theme.panelCloseDuration
-            }
-        }
-    ]
-
-    PanelWindow {
+    QuickSettingsPopupSurface {
         id: popupSurface
 
-        screen: root.targetScreen
-        visible: root.visible
-        exclusiveZone: 0
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "qs-power-actions"
-        color: "transparent"
-        anchors {
-            top: true
-            left: true
-            right: true
-            bottom: true
-        }
+        surfaceX: root.surfaceX
+        surfaceY: root.surfaceY
+        targetScreen: root.targetScreen
+        surfaceNamespace: "qs-power-actions"
+        open: root.open
+        width: root.width
+        height: root.height
 
-        mask: Region {
-            x: Math.round(root.surfaceX)
-            y: Math.round(root.surfaceY)
-            width: Math.round(root.width)
-            height: Math.round(root.height)
-        }
-
-        Rectangle {
-            id: popup
-
-            x: Math.round(root.surfaceX)
-            y: Math.round(root.surfaceY)
-            width: root.width
-            height: root.height
-            radius: 24
-            color: root.surfaceBg
-            border.color: root.outline
-            border.width: 1
-            clip: true
-            layer.enabled: true
-
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: Qt.rgba(0, 0, 0, 0.46)
-                shadowBlur: 1.04
-                shadowVerticalOffset: 1
-                shadowHorizontalOffset: 0
-                blurMax: 48
-            }
-
-            ColumnLayout {
+        ColumnLayout {
                 id: popupColumn
 
                 spacing: 8
@@ -243,15 +170,6 @@ Item {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    states: State {
-        name: "open"
-
-        PropertyChanges {
-            root.reveal: 1
         }
     }
 }

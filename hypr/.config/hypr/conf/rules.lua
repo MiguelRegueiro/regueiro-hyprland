@@ -102,6 +102,13 @@ hl.layer_rule({
     ignore_alpha = 0.5,
 })
 
+hl.layer_rule({
+    name = "qs-wifi-password-blur",
+    match = { namespace = "qs-wifi-password" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
 -- Quickshell surfaces animate their own fused panel geometry.
 hl.layer_rule({
     name = "quickshell-self-animated",

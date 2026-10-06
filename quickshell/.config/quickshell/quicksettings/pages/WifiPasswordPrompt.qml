@@ -7,13 +7,15 @@ Rectangle {
     id: root
 
     required property var controller
+    property bool embeddedInPopup: false
+    property bool popupOpen: false
 
     Layout.fillWidth: true
     height: visible ? passContent.implicitHeight + 24 : 0
     radius: 18
-    color: Theme.popupBg
-    border.color: Qt.rgba(1, 1, 1, 0.11)
-    border.width: 1
+    color: embeddedInPopup ? "transparent" : QS.popupSurfaceBg
+    border.color: QS.popupSurfaceOutline
+    border.width: embeddedInPopup ? 0 : 1
     clip: true
 
     Connections {
@@ -26,6 +28,19 @@ Rectangle {
         }
 
         target: root.controller
+    }
+
+    onPopupOpenChanged: {
+        if (popupOpen)
+            popupFocusDelay.restart();
+    }
+
+    Timer {
+        id: popupFocusDelay
+
+        interval: 40
+        repeat: false
+        onTriggered: passField.forceActiveFocus()
     }
 
     ColumnLayout {
@@ -244,10 +259,4 @@ Rectangle {
         }
     }
 
-    Behavior on height {
-        NumberAnimation {
-            duration: 200
-            easing.type: Easing.OutCubic
-        }
-    }
 }

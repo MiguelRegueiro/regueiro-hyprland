@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../theme/Theme.js" as Theme
 import "../QuickSettingsStyle.js" as QS
+import "../widgets" as Widgets
 
 FocusScope {
     id: root
@@ -10,19 +11,39 @@ FocusScope {
     property string connectedSsid: wifiCtrl.connectedSsid
     property bool needsFocus: wifiCtrl.needsFocus
     required property var wifiService
+    required property real popupSurfaceOriginX
+    required property real popupSurfaceOriginY
+    required property var targetScreen
     property bool menuOpen: false
     property real bottomViewportInset: 0
+    property bool passwordPopupReady: false
 
     signal backClicked
 
     Layout.fillWidth: true
     implicitHeight: 460 + bottomViewportInset
-    onMenuOpenChanged: wifiCtrl.onMenuOpen(menuOpen)
+    onMenuOpenChanged: {
+        wifiCtrl.onMenuOpen(menuOpen);
+        if (menuOpen)
+            passwordPopupDelay.restart();
+        else {
+            passwordPopupDelay.stop();
+            passwordPopupReady = false;
+        }
+    }
 
     WifiController {
         id: wifiCtrl
 
         wifiService: root.wifiService
+    }
+
+    Timer {
+        id: passwordPopupDelay
+
+        interval: Theme.qsPageSlideDuration + 30
+        repeat: false
+        onTriggered: root.passwordPopupReady = true
     }
 
     ColumnLayout {
@@ -190,17 +211,6 @@ FocusScope {
             z: 3
         }
 
-        WifiPasswordPrompt {
-            visible: wifiCtrl.connectSsid !== "" && wifiCtrl.connectSecure
-            controller: wifiCtrl
-            z: 5
-        }
-
-        Item {
-            height: wifiCtrl.connectSsid !== "" && wifiCtrl.connectSecure ? 12 : 0
-            z: 3
-        }
-
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -214,6 +224,29 @@ FocusScope {
                 controller: wifiCtrl
                 z: 1
             }
+        }
+    }
+
+    Widgets.QuickSettingsPopupSurface {
+        id: passwordSurface
+
+        readonly property bool promptOpen: wifiCtrl.connectSsid !== "" && wifiCtrl.connectSecure
+        surfaceX: root.popupSurfaceOriginX + 26
+        surfaceY: root.popupSurfaceOriginY + 72
+        targetScreen: root.targetScreen
+        surfaceNamespace: "qs-wifi-password"
+        open: root.menuOpen && root.passwordPopupReady && promptOpen
+        keyboardFocus: open
+        width: 348
+        height: passwordPrompt.height
+
+        WifiPasswordPrompt {
+            id: passwordPrompt
+
+            width: parent.width
+            controller: wifiCtrl
+            embeddedInPopup: true
+            popupOpen: passwordSurface.open
         }
     }
 }

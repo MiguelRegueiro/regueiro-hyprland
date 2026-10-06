@@ -1,10 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Effects
-import Quickshell
-import Quickshell.Wayland
-import "../../components" as Components
 import "../../theme/Theme.js" as Theme
+import "../QuickSettingsStyle.js" as QS
 
 Item {
     id: popupRoot
@@ -14,15 +11,12 @@ Item {
     required property real surfaceY
     required property var targetScreen
     property bool open: false
-    property real reveal: 0
     property real maxPopupHeight: 560
-    readonly property color surfaceBg: Qt.rgba(0.115, 0.12, 0.135, 0.84)
-    readonly property color outline: Theme.menuSurfaceOutline
-    readonly property color rowBg: Qt.rgba(1, 1, 1, 0.065)
-    readonly property color rowBgHover: Qt.rgba(1, 1, 1, 0.10)
-    readonly property color rowBgActive: Qt.rgba(1, 1, 1, 0.12)
-    readonly property color rowBorder: Qt.rgba(0.56, 0.58, 0.62, 0.22)
-    readonly property color rowBorderHover: Qt.rgba(0.62, 0.64, 0.68, 0.35)
+    readonly property color rowBg: QS.cardBg
+    readonly property color rowBgHover: QS.cardBgHover
+    readonly property color rowBgActive: QS.cardActiveBg
+    readonly property color rowBorder: QS.cardBorder
+    readonly property color rowBorderHover: QS.cardBorderHover
     readonly property real listSpacing: 8
     readonly property real listFooterHeight: 8
     readonly property real cardHeight: resolvedListHeight + 24
@@ -50,76 +44,17 @@ Item {
     implicitHeight: cardHeight
     width: implicitWidth
     height: implicitHeight
-    visible: reveal > 0.001
-    opacity: 1
-    transform: Translate {
-        y: -(1 - popupRoot.reveal) * 18
-    }
-    state: open ? "open" : ""
-    transitions: [
-        Transition {
-            from: ""
-            to: "open"
-
-            Components.Anim {
-                target: popupRoot
-                property: "reveal"
-                curve: Components.Anim.EmphasizedDecel
-                duration: Theme.panelOpenDuration
-            }
-
-        },
-        Transition {
-            from: "open"
-            to: ""
-
-            Components.Anim {
-                target: popupRoot
-                property: "reveal"
-                curve: Components.Anim.EmphasizedAccel
-                duration: Theme.panelCloseDuration
-            }
-
-        }
-    ]
-
-    PanelWindow {
+    QuickSettingsPopupSurface {
         id: popupSurface
+        surfaceX: popupRoot.surfaceX
+        surfaceY: popupRoot.surfaceY
+        targetScreen: popupRoot.targetScreen
+        surfaceNamespace: "qs-audio-output"
+        open: popupRoot.open
+        width: popupRoot.width
+        height: popupRoot.cardHeight
 
-        readonly property real popupX: popupRoot.surfaceX
-        readonly property real popupY: popupRoot.surfaceY
-
-        screen: popupRoot.targetScreen
-        visible: popupRoot.visible
-        exclusiveZone: 0
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "qs-audio-output"
-        color: "transparent"
-        anchors { top: true; left: true; right: true; bottom: true }
-
-        mask: Region {
-            x: Math.round(popupSurface.popupX)
-            y: Math.round(popupSurface.popupY)
-            width: Math.round(popupRoot.width)
-            height: Math.round(popupRoot.cardHeight)
-        }
-
-        Rectangle {
-            id: popup
-
-            x: Math.round(popupSurface.popupX)
-            y: Math.round(popupSurface.popupY)
-            width: popupRoot.width
-            height: popupRoot.cardHeight
-            radius: 24
-            color: popupRoot.surfaceBg
-            border.color: popupRoot.outline
-            border.width: 1
-            clip: true
-            layer.enabled: true
-
-            ListView {
+        ListView {
             id: sinkList
 
             height: popupRoot.resolvedListHeight
@@ -303,26 +238,5 @@ Item {
             font.pixelSize: 11
         }
 
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.46)
-            shadowBlur: 1.04
-            shadowVerticalOffset: 1
-            shadowHorizontalOffset: 0
-            blurMax: 48
-        }
-
     }
-
-    }
-
-    states: State {
-        name: "open"
-
-        PropertyChanges {
-            popupRoot.reveal: 1
-        }
-
-    }
-
 }

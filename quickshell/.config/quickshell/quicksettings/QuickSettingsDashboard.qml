@@ -561,7 +561,7 @@ Item {
     }
 
     Item {
-        visible: root.powerMenuOpen || powerMenu.visible
+        visible: root.powerMenuOpen
         anchors.fill: parent
         z: 200
 
@@ -588,7 +588,7 @@ Item {
     }
 
     Item {
-        visible: root.audioOutputPopupOpen || audioOutputPopup.visible
+        visible: root.audioOutputPopupOpen
         // The popup can extend below the dashboard. Keep it outside the
         // dashboard's stacked pages so its entire surface receives input.
         parent: root.popupParent

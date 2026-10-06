@@ -99,7 +99,7 @@ Item {
         y: root.height + 8
         width: 220
         radius: 10
-        color: Theme.popupBg
+        color: Theme.qsSurfaceBg
         border.width: 1
         border.color: root.backendError ? Qt.rgba(1, 0.48, 0.39, 0.24) : (root.configWarning ? Qt.rgba(0.97, 0.89, 0.36, 0.22) : Theme.barBorder)
         anchors.right: trigger.right

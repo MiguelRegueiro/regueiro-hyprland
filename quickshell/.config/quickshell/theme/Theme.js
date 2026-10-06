@@ -4,7 +4,6 @@
 var barBg = Qt.rgba(0.015, 0.02, 0.035, 0.68);
 var screenFrameBg = "#000000";
 var menuBg = screenFrameBg;
-var popupBg = "#131313";
 var menuSurfaceOutline = Qt.rgba(1, 1, 1, 0.12);
 var barBorder = Qt.rgba(0.88, 0.92, 1, 0.11);
 var barHeight = 28;
@@ -173,7 +172,7 @@ var panelOpenSpatialDuration = 210;
 var panelSnappyOpenDuration = 180;
 var topBarMenuOpenDuration = 135;
 var topBarMenuCloseDuration = 90;
-var qsPageSlideDuration = 210;
+var qsPageSlideDuration = 170;
 var qsPageFadeDuration = 145;
 var qsHeightDuration = 180;
 var batteryFillDuration = 200;
