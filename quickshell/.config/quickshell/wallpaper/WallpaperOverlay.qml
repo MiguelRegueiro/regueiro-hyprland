@@ -89,7 +89,23 @@ PanelWindow {
 
     function focusCarousel() {
         if (open && wallpaperFiles.count > 0)
-            Qt.callLater(function() { carousel.forceActiveFocus(); });
+            Qt.callLater(function() { inputContext.forceActiveFocus(); });
+    }
+
+    function handleNavigationKey(event) {
+        if (event.key === Qt.Key_Escape) {
+            requestClose();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            applySelected();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Up) {
+            selectAdjacent(-1);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_Tab) {
+            selectAdjacent(1);
+            event.accepted = true;
+        }
     }
 
     FileView {
@@ -157,6 +173,25 @@ PanelWindow {
 
     anchors { top: true; bottom: true; left: true; right: true }
 
+    // The overlay owns keyboard focus while open. Keep a real text-input
+    // context focused so Fcitx does not replace the globally selected method
+    // when moving through this non-textual surface.
+    TextInput {
+        id: inputContext
+
+        width: 1
+        height: 1
+        opacity: 0
+        focus: root.open
+        cursorVisible: false
+        color: "transparent"
+        selectionColor: "transparent"
+        inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+        Keys.priority: Keys.BeforeItem
+        Keys.onPressed: root.handleNavigationKey(event)
+        onTextChanged: clear()
+    }
+
     Shortcut {
         sequence: "Escape"
         context: Qt.WindowShortcut
@@ -193,7 +228,6 @@ PanelWindow {
             anchors.top: parent.top
             width: parent.width
             height: Math.min(475, parent.height - 74)
-            focus: true
 
             readonly property real expandedWidth: Math.min(768, width * 0.58)
             readonly property real expandedHeight: height
@@ -203,23 +237,6 @@ PanelWindow {
             readonly property real sliceGap: -30
             readonly property real skewOffset: 28
             readonly property real previewX: (width - expandedWidth) / 2
-
-            Keys.priority: Keys.BeforeItem
-            Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Escape) {
-                    root.requestClose();
-                    event.accepted = true;
-                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                    root.applySelected();
-                    event.accepted = true;
-                } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Up) {
-                    root.selectAdjacent(-1);
-                    event.accepted = true;
-                } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_Tab) {
-                    root.selectAdjacent(1);
-                    event.accepted = true;
-                }
-            }
 
             Repeater {
                 model: wallpaperFiles
