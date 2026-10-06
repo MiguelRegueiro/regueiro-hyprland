@@ -66,6 +66,7 @@ ShellRoot {
 
                 anchors.fill: parent
                 busy: auth.busy || !sessionLock.secure
+                lockSecure: sessionLock.secure
                 message: auth.message
                 passwordText: root.passwordText
                 passwordVisible: root.passwordVisible

@@ -9,6 +9,7 @@ FocusScope {
     id: root
 
     property bool busy: false
+    property bool lockSecure: false
     property var status: null
     property string message: ""
     property string passwordText: ""
@@ -59,12 +60,27 @@ FocusScope {
         }
     }
 
-    Component.onCompleted: password.forceActiveFocus()
+    function focusPassword() {
+        if (lockSecure)
+            password.forceActiveFocus();
+    }
+
+    Component.onCompleted: Qt.callLater(focusPassword)
     Keys.onEscapePressed: goBack()
+    onLockSecureChanged: focusPassword()
     onRevealedChanged: {
         if (!revealed)
             clearInput();
-        password.forceActiveFocus();
+        focusPassword();
+    }
+
+    // A lid-resume can restore the session-lock surface without notifying the
+    // QML focus chain. Reassert the only intended keyboard target while locked.
+    Timer {
+        interval: 100
+        running: root.lockSecure
+        repeat: true
+        onTriggered: root.focusPassword()
     }
 
     SystemClock {
