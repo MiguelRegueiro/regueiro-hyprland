@@ -10,6 +10,7 @@ local clipboard_menu = vars.clipboard_menu
 local wallpaper_menu = vars.wallpaper_menu
 local power_menu = vars.power_menu
 local snap = vars.snap
+local tts_or_media_toggle = "~/.config/hypr/scripts/ttsctl toggle || playerctl play-pause"
 
 -- Overview, app search, and launchers.
 hl.bind(main_mod .. " + Super_L", hl.dsp.exec_cmd(menu), { release = true })
@@ -143,7 +144,7 @@ hl.bind(main_mod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 hl.bind("F11", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 
 -- Hardware media keys.
-hl.bind("F8", hl.dsp.exec_cmd("~/.config/hypr/scripts/ttsctl toggle || playerctl play-pause"), { locked = true })
+hl.bind("F8", hl.dsp.exec_cmd(tts_or_media_toggle), { locked = true })
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/vol-up.sh"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/vol-down.sh"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
@@ -151,8 +152,8 @@ hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURC
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("~/.config/hypr/scripts/brightness-up.sh"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("~/.config/hypr/scripts/brightness-down.sh"), { locked = true, repeating = true })
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd(tts_or_media_toggle), { locked = true })
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd(tts_or_media_toggle), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
 
 -- Mouse window management and workspace scrolling.
