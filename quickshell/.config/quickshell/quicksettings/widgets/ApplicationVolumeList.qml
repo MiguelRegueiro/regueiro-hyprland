@@ -9,8 +9,14 @@ ListView {
 
     required property real maximumHeight
     property var streams: []
+    property var streamState: ({})
     property string streamsKey: ""
     property int activeDragCount: 0
+
+    function displayText(value) {
+        var text = String(value || "").trim();
+        return text === "(null)" || text.toLowerCase() === "null" ? "" : text;
+    }
 
     function streamLabel(stream) {
         if (!stream)
@@ -55,6 +61,7 @@ ListView {
             var parsed = JSON.parse(text);
             if (!Array.isArray(parsed)) {
                 root.streams = [];
+                root.streamState = ({});
                 root.streamsKey = "";
                 return ;
             }
@@ -62,11 +69,17 @@ ListView {
                 var entry = parsed[i];
                 var props = entry.properties || {
                 };
+                var mediaName = root.displayText(props["media.name"]);
+                // Manager/control streams without a media label are not
+                // user-adjustable playback streams.
+                if (String(props["media.category"] || "").toLowerCase() === "manager" && !mediaName)
+                    continue;
+
                 next.push({
                     "id": entry.index,
-                    "appName": props["application.name"] || props["application.process.binary"] || props["node.nick"] || "",
-                    "mediaName": props["media.name"] || "",
-                    "nodeName": props["node.name"] || "",
+                    "appName": root.displayText(props["application.name"] || props["application.process.binary"] || props["node.nick"]),
+                    "mediaName": mediaName,
+                    "nodeName": root.displayText(props["node.name"]),
                     "volume": root.firstPercent(entry.volume),
                     "muted": entry.mute === true
                 });
@@ -74,12 +87,25 @@ ListView {
         } catch (e) {
             next = [];
         }
-        var nextKey = JSON.stringify(next);
-        if (nextKey === root.streamsKey)
-            return ;
+        var nextState = ({ });
+        var topology = [];
+        for (var j = 0; j < next.length; ++j) {
+            var stream = next[j];
+            nextState[String(stream.id)] = stream;
+            topology.push({
+                "id": stream.id,
+                "appName": stream.appName,
+                "mediaName": stream.mediaName,
+                "nodeName": stream.nodeName
+            });
+        }
+        root.streamState = nextState;
 
-        root.streams = next;
-        root.streamsKey = nextKey;
+        var nextKey = JSON.stringify(topology);
+        if (nextKey !== root.streamsKey) {
+            root.streams = next;
+            root.streamsKey = nextKey;
+        }
     }
 
     Layout.fillWidth: true
@@ -157,16 +183,17 @@ ListView {
     delegate: QuickSettingsSliderRow {
         required property var modelData
         property bool _countedDrag: false
+        property var stream: root.streamState[String(modelData.id)] || modelData
 
         width: ListView.view.width
         backgroundRadius: 16
         surfaceVisible: false
         iconText: "󰎇"
-        label: root.streamLabel(modelData)
-        value: modelData.volume
-        maxValue: Math.max(1, modelData.volume)
+        label: root.streamLabel(stream)
+        value: stream.volume
+        maxValue: Math.max(1, stream.volume)
         stepSize: 0.02
-        muted: modelData.muted
+        muted: stream.muted
         onDraggingChanged: {
             if (dragging && !_countedDrag) {
                 root.activeDragCount += 1;
@@ -180,11 +207,11 @@ ListView {
             }
         }
         onSliderMoved: function(val) {
-            setAppVolProc.command = ["pactl", "set-sink-input-volume", String(modelData.id), Math.round(val * 100) + "%"];
+            setAppVolProc.command = ["pactl", "set-sink-input-volume", String(stream.id), Math.round(val * 100) + "%"];
             setAppVolProc.running = true;
         }
         onMuteClicked: {
-            setAppMuteProc.command = ["pactl", "set-sink-input-mute", String(modelData.id), "toggle"];
+            setAppMuteProc.command = ["pactl", "set-sink-input-mute", String(stream.id), "toggle"];
             setAppMuteProc.running = true;
         }
         Component.onDestruction: {
