@@ -9,7 +9,7 @@ hl.on("hyprland.start", function()
 
     -- Hyprland's PATH may exclude Cargo; prefer a system install, then Cargo.
     hl.exec_cmd("sh -c 'persist=$(command -v wl-clip-persist || true); persist=${persist:-\"$HOME/.cargo/bin/wl-clip-persist\"}; [ -x \"$persist\" ] && exec \"$persist\" --clipboard regular --ignore-event-on-error'")
-    hl.exec_cmd("systemctl --user start mimeclipd")
+    hl.exec_cmd("~/.config/hypr/scripts/start-mimeclip")
     hl.exec_cmd("~/.config/hypr/scripts/start-easytts.sh")
     hl.exec_cmd("qs -n -d")
     hl.exec_cmd("hypridle")

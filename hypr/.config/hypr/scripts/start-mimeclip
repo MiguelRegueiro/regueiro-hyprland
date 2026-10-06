@@ -1,0 +1,20 @@
+#!/bin/sh
+# MimeClip is session-owned; systemd is optional, not required.
+
+daemon=$(command -v mimeclipd 2>/dev/null || true)
+if [ -z "$daemon" ] || [ ! -x "$daemon" ]; then
+    daemon="$HOME/.cargo/bin/mimeclipd"
+fi
+
+[ -x "$daemon" ] || exit 0
+
+client="$(dirname "$daemon")/mimeclip"
+if [ ! -x "$client" ]; then
+    client=$(command -v mimeclip 2>/dev/null || true)
+fi
+
+if [ -n "$client" ] && [ -x "$client" ] && "$client" ping >/dev/null 2>&1; then
+    exit 0
+fi
+
+exec "$daemon"
