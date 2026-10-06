@@ -250,14 +250,6 @@ Item {
                                 }
                             }
 
-                            Behavior on width {
-                                enabled: !slider.pressed
-
-                                Components.Anim {
-                                    curve: Components.Anim.FastEffects
-                                    duration: Theme.animDurFastEffects
-                                }
-                            }
                         }
                     }
 
