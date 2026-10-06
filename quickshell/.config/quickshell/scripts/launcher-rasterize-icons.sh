@@ -33,6 +33,18 @@ theme_roots() {
     for base in "$HOME/.local/share/icons/$theme" "$HOME/.icons/$theme" "/usr/local/share/icons/$theme" "/usr/share/icons/$theme"; do
         [ -d "$base" ] && printf '%s\n' "$base"
     done
+
+    # Flatpak apps commonly export their icon only within their own deployment
+    # tree. Qt can display those through image://icon, but that bypasses the
+    # launcher raster cache and makes the icon pop in on every drawer open.
+    for root in \
+        "$HOME/.local/share/flatpak/exports/share/icons" \
+        "/var/lib/flatpak/exports/share/icons" \
+        "$HOME"/.local/share/flatpak/app/*/*/*/*/export/share/icons \
+        /var/lib/flatpak/app/*/*/*/*/export/share/icons; do
+        base="$root/$theme"
+        [ -d "$base" ] && printf '%s\n' "$base"
+    done
 }
 
 theme_inherits() {
@@ -146,6 +158,16 @@ find_icon_in_theme() {
     done
 }
 
+find_icon_in_pixmaps() {
+    name="$1"
+    [ -n "$name" ] || return
+
+    for base in "$HOME/.local/share/pixmaps" "$HOME/.local/share/icons" "/usr/local/share/pixmaps" "/usr/share/pixmaps"; do
+        [ -d "$base" ] || continue
+        print_readable_icon "$base" "." "$name" && return
+    done
+}
+
 resolve_icon() {
     icon_name="$1"
     source_path="$2"
@@ -163,6 +185,12 @@ resolve_icon() {
                 return
             fi
         done
+
+        resolved_icon="$(find_icon_in_pixmaps "$icon_name")"
+        if [ -n "$resolved_icon" ]; then
+            printf '%s\n' "$resolved_icon"
+            return
+        fi
     fi
 
     if [ -n "$source_path" ] && [ -r "$source_path" ]; then

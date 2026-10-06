@@ -314,6 +314,13 @@ Item {
         });
         for (const cacheKey in parsed) {
             const source = parsed[cacheKey];
+            // Old entries that only point back to Qt's named-icon provider do
+            // not warm anything: they load asynchronously every time the
+            // drawer opens. Drop them once so the rasterizer can retry with
+            // its expanded direct-path lookup.
+            if (typeof source === "string" && source.startsWith("image://icon/"))
+                continue;
+
             if (typeof cacheKey === "string" && cacheKey.length > 0 && typeof source === "string" && source.length > 0)
                 loaded[cacheKey] = source;
 
