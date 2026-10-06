@@ -146,7 +146,10 @@ Item {
         if (isSpeaker)
             return isInternal && !isBluetooth && !isUsb ? "" : "Speakers";
 
-        if (isBluetooth || isUsb)
+        if (isUsb)
+            return "USB Audio";
+
+        if (isBluetooth)
             return sinkDisplayName(node);
 
         return "";
@@ -285,7 +288,19 @@ Item {
         if (!choice)
             return "";
 
-        return choice.portDescription || sinkDisplayName(choice.node);
+        const portDescription = String(choice.portDescription || "").trim();
+        const genericAnalogPort = portDescription.toLowerCase() === "analog output";
+        if (genericAnalogPort) {
+            const metadata = sinkMetadataFor(choice.node);
+            const deviceBus = String(metadata && metadata.deviceBus || "").toLowerCase();
+            if (deviceBus === "usb")
+                return "USB Audio";
+
+            if (deviceBus === "bluetooth")
+                return "Bluetooth";
+        }
+
+        return portDescription || sinkDisplayName(choice.node);
     }
 
     function outputSecondaryName(choice) {
@@ -346,9 +361,10 @@ Item {
             }
 
             for (const port of ports) {
-                // Match GNOME's output picker: retain the active port, but
-                // do not offer disconnected/inactive hardware ports.
-                if (port.availability === "not available" && port.name !== metadata.portName)
+                // Do not expose disconnected hardware ports. PipeWire can
+                // retain one as the active port after a device is unplugged,
+                // but it is still not a usable output choice.
+                if (port.availability === "not available")
                     continue;
 
                 next.push({
