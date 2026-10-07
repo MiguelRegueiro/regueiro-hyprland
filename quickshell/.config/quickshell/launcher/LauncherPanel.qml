@@ -534,7 +534,9 @@ FocusScope {
                         }
 
                         Text {
-                            visible: searchInput.text.length === 0
+                            // Anthy keeps unconfirmed kana in preeditText, not
+                            // text, until a candidate is committed.
+                            visible: searchInput.text.length === 0 && searchInput.preeditText.length === 0
                             text: "Search"
                             color: root.textMuted
                             font.family: Theme.fontUi

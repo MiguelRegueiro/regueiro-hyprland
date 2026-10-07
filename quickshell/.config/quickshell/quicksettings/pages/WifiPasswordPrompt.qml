@@ -129,7 +129,9 @@ Rectangle {
             }
 
             Text {
-                visible: passField.text.length === 0
+                // Keep the placeholder out of the way while an IME has
+                // unconfirmed preedit text (for example, Anthy kana).
+                visible: passField.text.length === 0 && passField.preeditText.length === 0
                 text: "Enter Wi-Fi password"
                 font.family: Theme.fontUi
                 font.pixelSize: 13
