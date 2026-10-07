@@ -31,8 +31,6 @@ Item {
         height: root.height
         radius: height * 0.32
         color: root.remainderColor
-        border.width: 1.5
-        border.color: Qt.rgba(0.55, 0.57, 0.61, 0.72)
         clip: true
 
         Rectangle {
@@ -47,10 +45,17 @@ Item {
         }
 
         Text {
+            // Use the battery body's fixed width as the alignment box. This
+            // keeps 1-, 2-, and 3-digit values centered despite their glyphs
+            // having different advances and side bearings.
+            width: parent.width
+            height: parent.height
             anchors.centerIn: parent
             // Numeric glyphs sit a little high inside their line box; nudge
             // them down for visual, rather than purely geometric, centering.
             anchors.verticalCenterOffset: 1
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
             text: root.clampedPercent
             font.family: Theme.fontUi
             font.pixelSize: 10
