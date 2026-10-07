@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
+import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 import "../QuickSettingsStyle.js" as QS
 
@@ -87,14 +88,15 @@ Flickable {
                         border.width: 1
                         border.color: modelData.active ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? QS.chipBorderHover : QS.chipBorder)
 
-                        Text {
+                        Components.WifiIcon {
                             anchors.centerIn: parent
-                            anchors.horizontalCenterOffset: 0.5
-                            anchors.verticalCenterOffset: 1
-                            text: root.controller.sigIcon(modelData.signal || 0)
-                            font.family: Theme.fontIcons
-                            font.pixelSize: 15
-                            color: modelData.active ? Theme.textPrimary : Theme.textDim
+                            height: 16
+                            // A listed network is available; row emphasis is
+                            // conveyed by its colour, while the common icon
+                            // keeps this page visually consistent with the bar.
+                            connected: true
+                            signal: modelData.signal || 0
+                            iconColor: "#ffffff"
                         }
                     }
 

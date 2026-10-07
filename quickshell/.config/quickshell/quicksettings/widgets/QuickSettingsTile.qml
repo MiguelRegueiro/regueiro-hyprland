@@ -12,6 +12,7 @@ Rectangle {
     property string sublabel: ""
     property string iconOn: ""
     property string iconOff: ""
+    property bool useWifiIcon: false
     property bool toggled: false
     property bool interactive: true
     property bool hasMenu: false
@@ -89,9 +90,19 @@ Rectangle {
                 return tile.hovered ? QS.chipBorderHover : QS.chipBorder;
             }
 
+            Components.WifiIcon {
+                anchors.centerIn: parent
+                visible: tile.useWifiIcon
+                height: 19
+                connected: tile.toggled
+                iconColor: tile.toggled ? "white" : Theme.textPrimary
+                inactiveColor: Theme.textDim
+            }
+
             Text {
                 anchors.centerIn: parent
                 anchors.horizontalCenterOffset: tile.iconCenterOffsetX
+                visible: !tile.useWifiIcon
                 text: tile.toggled ? tile.iconOn : tile.iconOff
                 font.family: Theme.fontIcons
                 font.pixelSize: 18

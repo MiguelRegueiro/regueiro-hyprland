@@ -16,6 +16,7 @@ Item {
     property bool showPassword: false
     property bool connecting: false
     property bool awaitingActivation: false
+    property bool menuOpen: false
     property string connectMode: ""
     property int activationChecks: 0
     property string connectError: ""
@@ -87,10 +88,27 @@ Item {
     }
 
     function onMenuOpen(isOpen) {
+        menuOpen = isOpen;
         if (isOpen) {
             pollProc.running = true;
             wifiService.refreshSavedProfiles();
         }
+    }
+
+    function scanMatches(nextNetworks) {
+        if (networks.length !== nextNetworks.length)
+            return false;
+
+        for (var i = 0; i < networks.length; i++) {
+            var current = networks[i];
+            var next = nextNetworks[i];
+            // Ignore the tiny RSSI fluctuations that would otherwise rebuild
+            // the entire list and make its icons visibly blink.
+            if (current.ssid !== next.ssid || current.security !== next.security || current.active !== next.active || Math.abs((current.signal || 0) - (next.signal || 0)) >= 10)
+                return false;
+        }
+
+        return true;
     }
 
     function connectOpenNetwork(ssid) {
@@ -373,11 +391,41 @@ Item {
     }
 
     Timer {
-        interval: 6000
-        running: true
+        interval: 15000
+        running: controller.menuOpen || controller.awaitingActivation
         repeat: true
         triggeredOnStart: true
         onTriggered: pollProc.running = true
+    }
+
+    // Keep the dashboard state accurate after a shell restart without doing a
+    // full access-point scan (which rebuilds the visible network list).
+    Timer {
+        interval: 30000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (!wifiStateProc.running)
+                wifiStateProc.running = true;
+        }
+    }
+
+    Process {
+        id: wifiStateProc
+
+        command: ["bash", "-c", "nmcli radio wifi 2>/dev/null; nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2 | head -1"]
+        environment: ({
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8"
+        })
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var lines = text.split("\n");
+                controller.wifiOn = (lines[0] || "").trim() === "enabled";
+                controller.connectedSsid = (lines[1] || "").trim();
+            }
+        }
     }
 
     Process {
@@ -444,7 +492,7 @@ Item {
                         seen[n.ssid] = n;
 
                 });
-                controller.networks = Object.values(seen).sort((a, b) => {
+                var nextNetworks = Object.values(seen).sort((a, b) => {
                     if (a.active && !b.active)
                         return -1;
 
@@ -453,6 +501,8 @@ Item {
 
                     return (b.signal || 0) - (a.signal || 0);
                 });
+                if (!controller.scanMatches(nextNetworks))
+                    controller.networks = nextNetworks;
                 if (controller.awaitingActivation && _ssidMatches(controller.connectedSsid, controller.connectSsid))
                     _finishConnectSuccess();
 

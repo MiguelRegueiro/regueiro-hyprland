@@ -399,10 +399,13 @@ Item {
 
             Widgets.QuickSettingsTile {
                 label: "Wi-Fi"
-                sublabel: root.wifiPage.connectedSsid.length > 0 ? root.wifiPage.connectedSsid : (root.wifiPage.wifiOn ? "On" : "Off")
+                // Networking already knows a live connection while the Wi-Fi
+                // page's nmcli status check is still starting after a reload.
+                sublabel: root.wifiPage.connectedSsid.length > 0 ? root.wifiPage.connectedSsid : ((root.wifiPage.wifiOn || root.networkService.wifiConnected) ? "On" : "Off")
                 iconOn: "󰤨"
                 iconOff: "󰤭"
-                toggled: root.wifiPage.wifiOn
+                useWifiIcon: true
+                toggled: root.wifiPage.wifiOn || root.networkService.wifiConnected
                 hasMenu: true
                 pillShape: true
                 showMenuIndicator: false

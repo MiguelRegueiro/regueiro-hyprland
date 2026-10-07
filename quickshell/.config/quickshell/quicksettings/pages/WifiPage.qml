@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 import "../QuickSettingsStyle.js" as QS
 import "../widgets" as Widgets
@@ -120,13 +121,13 @@ FocusScope {
                     width: 8
                 }
 
-                Text {
-                    text: wifiCtrl.wifiOn ? "󰤨" : "󰤭"
-                    font.family: Theme.fontIcons
-                    font.pixelSize: 18
-                    color: wifiCtrl.wifiOn ? Theme.accent : Theme.textDim
+                Components.WifiIcon {
+                    height: 18
+                    connected: wifiCtrl.wifiOn
+                    iconColor: Theme.accent
+                    inactiveColor: Theme.textDim
                     Layout.preferredWidth: 24
-                    horizontalAlignment: Text.AlignHCenter
+                    Layout.preferredHeight: 18
                 }
 
                 Item {

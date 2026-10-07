@@ -15,7 +15,6 @@ Rectangle {
     property int batteryPercent: batteryDevice ? Math.min(100, Math.round(batteryDevice.percentage * 100)) : -1
     property bool batteryCharging: batteryDevice && (batteryDevice.state === UPowerDeviceState.Charging || batteryDevice.state === UPowerDeviceState.FullyCharged)
     property bool batteryFull: batteryDevice && batteryDevice.state === UPowerDeviceState.FullyCharged
-    readonly property string networkIcon: networkService.networkIcon
 
     signal clicked()
 
@@ -44,8 +43,20 @@ Rectangle {
         }
         spacing: 6
 
+        Components.WifiIcon {
+            visible: !root.networkService.ethernetConnected
+            connected: root.networkService.wifiConnected
+            iconColor: Theme.textPrimary
+            inactiveColor: Theme.textDisabled
+            height: 14.5
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
         Text {
-            text: root.networkIcon
+            // Keep the dedicated wired mark when Ethernet is active; the
+            // custom wave icon is only for Wi-Fi and its disconnected state.
+            visible: root.networkService.ethernetConnected
+            text: "󰌗"
             font.family: Theme.fontIcons
             font.pixelSize: 14
             font.weight: Font.DemiBold
