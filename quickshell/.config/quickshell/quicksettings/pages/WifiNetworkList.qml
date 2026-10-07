@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
+import Quickshell
 import "../../components" as Components
 import "../../theme/Theme.js" as Theme
 import "../QuickSettingsStyle.js" as QS
@@ -12,6 +13,33 @@ Flickable {
     readonly property real rowHeight: 50
     readonly property real rowSpacing: 3
     readonly property real bottomInset: 12
+    // Signal is deliberately bucketed: a network must cross a 10% boundary
+    // before its row moves, avoiding churn from normal RSSI fluctuations.
+    readonly property int signalOrderStep: 10
+
+    readonly property var orderedNetworks: {
+        const source = root.controller.networks;
+        if (!source)
+            return [];
+
+        const networks = source.values.slice();
+        networks.sort((left, right) => {
+            // Match the old presentation rule: the active network first,
+            // then every other network from strongest to weakest.
+            const leftGroup = left.connected ? 0 : 1;
+            const rightGroup = right.connected ? 0 : 1;
+            if (leftGroup !== rightGroup)
+                return leftGroup - rightGroup;
+
+            const leftSignal = Math.floor(root.controller.signalPercent(left) / root.signalOrderStep);
+            const rightSignal = Math.floor(root.controller.signalPercent(right) / root.signalOrderStep);
+            if (leftSignal !== rightSignal)
+                return rightSignal - leftSignal;
+
+            return left.name.localeCompare(right.name);
+        });
+        return networks;
+    }
 
     contentHeight: listCol.implicitHeight + bottomInset
     clip: true
@@ -24,29 +52,34 @@ Flickable {
         spacing: root.rowSpacing
 
         Repeater {
-            model: root.controller.wifiOn ? root.controller.networks : []
+            // Identity comparison retains each native WifiNetwork delegate
+            // when order changes, instead of rebuilding the visible list.
+            model: ScriptModel {
+                values: root.controller.wifiOn ? root.orderedNetworks : []
+                comparisonMode: ObjectComparison.Identity
+            }
 
             delegate: Rectangle {
                 id: wifiRow
 
                 required property var modelData
-                readonly property bool secureNetwork: (modelData.security || "") !== ""
-                readonly property bool selectedForPrompt: root.controller.connectSsid === modelData.ssid && root.controller.connectSecure
-                readonly property bool rememberedProfile: root.controller.hasSavedProfile(modelData.ssid)
-                readonly property bool savedProfile: !modelData.active && rememberedProfile
-                readonly property bool showSecurityIcon: secureNetwork && !rememberedProfile && !modelData.active
-                readonly property bool forgetPending: root.controller.forgetConfirmSsid === modelData.ssid
-                readonly property bool forgetBusy: root.controller.forgetBusySsid === modelData.ssid
-                readonly property bool forgetHasResult: root.controller.forgetResultSsid === modelData.ssid
+                readonly property bool secureNetwork: root.controller.isSecureNetwork(modelData)
+                readonly property bool selectedForPrompt: root.controller.connectSsid === modelData.name && root.controller.connectSecure
+                readonly property bool rememberedProfile: root.controller.hasSavedProfile(modelData)
+                readonly property bool savedProfile: !modelData.connected && rememberedProfile
+                readonly property bool showSecurityIcon: secureNetwork && !rememberedProfile && !modelData.connected
+                readonly property bool forgetPending: root.controller.forgetConfirmSsid === modelData.name
+                readonly property bool forgetBusy: root.controller.forgetBusySsid === modelData.name
+                readonly property bool forgetHasResult: root.controller.forgetResultSsid === modelData.name
                 readonly property bool forgetOk: forgetHasResult && root.controller.forgetResultOk
                 readonly property bool forgetActionVisible: rememberedProfile && (wifiHover.hovered || forgetPending || forgetBusy || forgetHasResult)
 
                 Layout.fillWidth: true
                 height: root.rowHeight
                 radius: 18
-                color: modelData.active ? QS.cardActiveBg : (selectedForPrompt ? QS.cardBgHover : (wifiHover.hovered ? QS.cardBgHover : QS.cardBg))
+                color: modelData.connected ? QS.cardActiveBg : (selectedForPrompt ? QS.cardBgHover : (wifiHover.hovered ? QS.cardBgHover : QS.cardBg))
                 border.width: 1
-                border.color: modelData.active ? QS.cardActiveBorder : (selectedForPrompt ? QS.tileActiveBorder : (wifiHover.hovered ? QS.cardBorderHover : QS.cardBorder))
+                border.color: modelData.connected ? QS.cardActiveBorder : (selectedForPrompt ? QS.tileActiveBorder : (wifiHover.hovered ? QS.cardBorderHover : QS.cardBorder))
 
                 MouseArea {
                     anchors.fill: parent
@@ -57,16 +90,16 @@ Flickable {
                         if (root.controller.connecting)
                             return;
 
-                        if (modelData.active)
+                        if (modelData.connected)
                             return;
 
-                        if ((modelData.security || "") !== "") {
-                            if (root.controller.hasSavedProfile(modelData.ssid))
+                        if (root.controller.isSecureNetwork(modelData)) {
+                            if (root.controller.hasSavedProfile(modelData))
                                 root.controller.connectSavedSecureNetwork(modelData);
                             else
-                                root.controller.openPasswordPrompt(modelData.ssid, modelData.security);
+                                root.controller.openPasswordPrompt(modelData);
                         } else {
-                            root.controller.connectOpenNetwork(modelData.ssid);
+                            root.controller.connectOpenNetwork(modelData);
                         }
                     }
                 }
@@ -84,9 +117,9 @@ Flickable {
                         Layout.preferredWidth: 28
                         Layout.preferredHeight: 28
                         radius: 14
-                        color: modelData.active ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? QS.chipBgHover : QS.chipBg)
+                        color: modelData.connected ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? QS.chipBgHover : QS.chipBg)
                         border.width: 1
-                        border.color: modelData.active ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? QS.chipBorderHover : QS.chipBorder)
+                        border.color: modelData.connected ? Qt.rgba(1, 1, 1, 0.12) : (wifiHover.hovered ? QS.chipBorderHover : QS.chipBorder)
 
                         Components.WifiIcon {
                             anchors.centerIn: parent
@@ -95,7 +128,7 @@ Flickable {
                             // conveyed by its colour, while the common icon
                             // keeps this page visually consistent with the bar.
                             connected: true
-                            signal: modelData.signal || 0
+                            signal: root.controller.signalPercent(modelData)
                             iconColor: "#ffffff"
                         }
                     }
@@ -106,10 +139,10 @@ Flickable {
 
                         Text {
                             Layout.fillWidth: true
-                            text: modelData.ssid || ""
+                            text: modelData.name || ""
                             font.family: Theme.fontUi
                             font.pixelSize: 12
-                            font.weight: modelData.active ? Font.DemiBold : Font.Medium
+                            font.weight: modelData.connected ? Font.DemiBold : Font.Medium
                             color: Theme.textPrimary
                             elide: Text.ElideRight
                         }
@@ -159,7 +192,7 @@ Flickable {
                                     anchors.fill: parent
                                     preventStealing: true
                                     cursorShape: Qt.ArrowCursor
-                                    onClicked: root.controller.cancelForget(wifiRow.modelData.ssid)
+                                    onClicked: root.controller.cancelForget(wifiRow.modelData)
                                 }
                             }
 
@@ -217,9 +250,9 @@ Flickable {
                                     enabled: root.controller.forgetBusySsid === "" && !wifiRow.forgetHasResult
                                     onClicked: {
                                         if (wifiRow.forgetPending)
-                                            root.controller.forgetNetwork(wifiRow.modelData.ssid);
+                                            root.controller.forgetNetwork(wifiRow.modelData);
                                         else
-                                            root.controller.confirmForget(wifiRow.modelData.ssid);
+                                            root.controller.confirmForget(wifiRow.modelData);
                                     }
                                 }
                             }
@@ -266,7 +299,7 @@ Flickable {
                     }
 
                     Text {
-                        visible: !!modelData.active
+                        visible: !!modelData.connected
                         text: "󰄬"
                         font.family: Theme.fontIcons
                         font.pixelSize: 14

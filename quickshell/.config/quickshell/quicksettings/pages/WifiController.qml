@@ -1,25 +1,29 @@
 import QtQuick
-import Quickshell
-import Quickshell.Io
+import Quickshell.Networking
 
 Item {
     id: controller
 
+    // Kept as part of the page boundary while the controller moves to the
+    // native Networking model. The dashboard still supplies this service.
     required property var wifiService
-    property bool wifiOn: false
-    property string connectedSsid: ""
+    readonly property var wifiDevice: findWifiDevice()
+    readonly property bool wifiOn: Networking.wifiEnabled
+    readonly property var networks: wifiDevice ? wifiDevice.networks : null
+    readonly property var connectedNetwork: findConnectedNetwork()
+    readonly property string connectedSsid: connectedNetwork ? connectedNetwork.name : ""
+
     property bool needsFocus: false
-    property var networks: []
     property string connectSsid: ""
     property string connectSecurity: ""
     property bool connectSecure: false
     property bool showPassword: false
     property bool connecting: false
-    property bool awaitingActivation: false
     property bool menuOpen: false
     property string connectMode: ""
-    property int activationChecks: 0
     property string connectError: ""
+    property var targetNetwork: null
+    property var forgetTarget: null
     property string forgetConfirmSsid: ""
     property string forgetBusySsid: ""
     property string forgetResultSsid: ""
@@ -29,6 +33,48 @@ Item {
     signal passwordClearRequested()
     signal passwordFocusRequested()
 
+    onMenuOpenChanged: syncScanner()
+    onWifiDeviceChanged: syncScanner()
+
+    function findWifiDevice() {
+        const devices = Networking.devices.values;
+        for (let i = 0; i < devices.length; ++i) {
+            if (devices[i].type === DeviceType.Wifi)
+                return devices[i];
+        }
+        return null;
+    }
+
+    function findConnectedNetwork() {
+        const device = wifiDevice;
+        if (!device)
+            return null;
+
+        const available = device.networks.values;
+        for (let i = 0; i < available.length; ++i) {
+            if (available[i].connected)
+                return available[i];
+        }
+        return null;
+    }
+
+    function networkFor(networkOrSsid) {
+        if (networkOrSsid && typeof networkOrSsid !== "string")
+            return networkOrSsid;
+
+        const wanted = (networkOrSsid || "").trim();
+        const device = wifiDevice;
+        if (!device || wanted === "")
+            return null;
+
+        const available = device.networks.values;
+        for (let i = 0; i < available.length; ++i) {
+            if (available[i].name === wanted)
+                return available[i];
+        }
+        return null;
+    }
+
     function promptOpen() {
         return connectSsid !== "" && connectSecure;
     }
@@ -36,21 +82,61 @@ Item {
     function statusText() {
         if (connecting)
             return connectSsid !== "" ? "Connecting to " + connectSsid + "…" : "Connecting…";
-
         return connectError;
     }
 
     function toggle() {
-        wifiOn = !wifiOn;
-        wifiToggleProc.running = true;
-        afterToggle.start();
+        Networking.wifiEnabled = !Networking.wifiEnabled;
     }
 
-    function openPasswordPrompt(ssid, security) {
-        _stopActivationCheck();
+    function onMenuOpen(isOpen) {
+        menuOpen = isOpen;
+    }
+
+    function securityText(networkOrSecurity) {
+        const security = networkOrSecurity && typeof networkOrSecurity !== "number" && typeof networkOrSecurity !== "string"
+            ? networkOrSecurity.security : networkOrSecurity;
+        return typeof security === "string" ? security : WifiSecurityType.toString(security);
+    }
+
+    function isSecureNetwork(networkOrSecurity) {
+        const security = networkOrSecurity && typeof networkOrSecurity !== "number" && typeof networkOrSecurity !== "string"
+            ? networkOrSecurity.security : networkOrSecurity;
+        return security !== WifiSecurityType.Open;
+    }
+
+    function isPskNetwork(network) {
+        return network && (network.security === WifiSecurityType.WpaPsk
+            || network.security === WifiSecurityType.Wpa2Psk
+            || network.security === WifiSecurityType.Sae);
+    }
+
+    function hasSavedProfile(networkOrSsid) {
+        const network = networkFor(networkOrSsid);
+        return !!(network && network.known);
+    }
+
+    function networkStatusText(network) {
+        if (network.connected)
+            return "Connected";
+        if (network.known)
+            return "Saved network";
+        return isSecureNetwork(network) ? "Secured network" : "Open network";
+    }
+
+    function signalPercent(network) {
+        return network ? Math.round(network.signalStrength * 100) : 0;
+    }
+
+    function openPasswordPrompt(networkOrSsid, security) {
+        const network = networkFor(networkOrSsid);
+        if (!network)
+            return;
+
         _clearForgetState();
-        connectSsid = ssid;
-        connectSecurity = security || "";
+        targetNetwork = network;
+        connectSsid = network.name;
+        connectSecurity = security || securityText(network);
         connectSecure = true;
         showPassword = false;
         connecting = false;
@@ -60,128 +146,47 @@ Item {
         focusTimer.restart();
     }
 
-    function sigIcon(pct) {
-        if (pct < 25)
-            return "󰤟";
+    function connectOpenNetwork(networkOrSsid) {
+        const network = networkFor(networkOrSsid);
+        if (!network)
+            return;
 
-        if (pct < 50)
-            return "󰤢";
-
-        if (pct < 75)
-            return "󰤥";
-
-        return "󰤨";
+        _beginConnect(network, "open");
+        network.connect();
     }
 
-    function hasSavedProfile(ssid) {
-        return wifiService.findSavedProfileName(ssid) !== "";
-    }
+    function connectSavedSecureNetwork(networkOrSsid) {
+        const network = networkFor(networkOrSsid);
+        if (!network)
+            return;
 
-    function networkStatusText(network) {
-        if (network.active)
-            return "Connected";
-
-        if (hasSavedProfile(network.ssid))
-            return "Saved network";
-
-        return ((network.security || "") !== "") ? "Secured network" : "Open network";
-    }
-
-    function onMenuOpen(isOpen) {
-        menuOpen = isOpen;
-        if (isOpen) {
-            pollProc.running = true;
-            wifiService.refreshSavedProfiles();
-        }
-    }
-
-    function scanMatches(nextNetworks) {
-        if (networks.length !== nextNetworks.length)
-            return false;
-
-        for (var i = 0; i < networks.length; i++) {
-            var current = networks[i];
-            var next = nextNetworks[i];
-            // Ignore the tiny RSSI fluctuations that would otherwise rebuild
-            // the entire list and make its icons visibly blink.
-            if (current.ssid !== next.ssid || current.security !== next.security || current.active !== next.active || Math.abs((current.signal || 0) - (next.signal || 0)) >= 10)
-                return false;
-        }
-
-        return true;
-    }
-
-    function connectOpenNetwork(ssid) {
-        _beginInlineConnect(ssid, "");
-        connectMode = "open";
-        if (!wifiService.connect(ssid, "", function(result) {
-            if (result && result.success) {
-                _startActivationCheck("open");
-                return ;
-            }
-            _stopActivationCheck();
-            connecting = false;
-            connectError = wifiService.describeFailure(result, false);
-        })) {
-            connecting = false;
-            connectError = "Another Wi-Fi request is still running";
-        }
-    }
-
-    function connectSavedSecureNetwork(network) {
-        _beginInlineConnect(network.ssid, network.security || "");
-        connectMode = "saved";
-        if (!wifiService.connect(network.ssid, "", function(result) {
-            if (result && result.success) {
-                _startActivationCheck("saved");
-                return ;
-            }
-            _stopActivationCheck();
-            connecting = false;
-            if (result && result.needsPassword) {
-                openPasswordPrompt(network.ssid, network.security || "");
-                connectError = "Saved password was rejected. Enter it again.";
-                return ;
-            }
-            connectError = wifiService.describeFailure(result, false);
-        })) {
-            connecting = false;
-            connectError = "Another Wi-Fi request is still running";
-        }
+        _beginConnect(network, "saved");
+        network.connect();
     }
 
     function doConnect(pwd) {
-        if (connecting)
-            return ;
+        if (connecting || !targetNetwork)
+            return;
 
         connectError = _validatePassword(pwd);
         if (connectError !== "") {
             passwordFocusRequested();
-            return ;
+            return;
         }
+        if (!isPskNetwork(targetNetwork)) {
+            connectError = "This network requires a security method that is not supported here";
+            passwordFocusRequested();
+            return;
+        }
+
         connecting = true;
         connectMode = "password";
-        if (!wifiService.connect(connectSsid, pwd, function(result) {
-            if (result && result.success) {
-                _startActivationCheck("password");
-                return ;
-            }
-            _stopActivationCheck();
-            connecting = false;
-            if (result && (result.needsPassword || wifiService.detectAuthenticationError(result.error || "")))
-                passwordClearRequested();
-
-            connectError = wifiService.describeFailure(result, true);
-            passwordFocusRequested();
-        })) {
-            connecting = false;
-            connectError = "Another Wi-Fi request is still running";
-        }
+        targetNetwork.connectWithPsk(pwd);
     }
 
     function cancel() {
-        _stopActivationCheck();
         passwordClearRequested();
+        targetNetwork = null;
         connectSsid = "";
         connectSecurity = "";
         connectSecure = false;
@@ -192,111 +197,58 @@ Item {
         needsFocus = false;
     }
 
-    function confirmForget(ssid) {
-        if (connecting || forgetBusySsid !== "" || ssid === "")
-            return ;
+    function confirmForget(networkOrSsid) {
+        const network = networkFor(networkOrSsid);
+        if (connecting || forgetBusySsid !== "" || !network)
+            return;
 
         forgetResultSsid = "";
         forgetResultOk = false;
-        forgetConfirmSsid = ssid;
+        forgetConfirmSsid = network.name;
     }
 
-    function cancelForget(ssid) {
-        if (forgetConfirmSsid === ssid)
+    function cancelForget(networkOrSsid) {
+        const network = networkFor(networkOrSsid);
+        if (network && forgetConfirmSsid === network.name)
             forgetConfirmSsid = "";
-
     }
 
-    function forgetNetwork(ssid) {
-        const target = (ssid || "").trim();
-        if (target.length === 0 || forgetBusySsid !== "")
-            return ;
+    function forgetNetwork(networkOrSsid) {
+        const network = networkFor(networkOrSsid);
+        if (!network || forgetBusySsid !== "")
+            return;
 
         forgetConfirmSsid = "";
         forgetResultSsid = "";
         forgetResultOk = false;
-        forgetBusySsid = target;
-        if (!wifiService.forgetNetwork(target, function(result) {
-            forgetBusySsid = "";
-            forgetResultSsid = target;
-            forgetResultOk = !!(result && result.success);
-            pollProc.running = true;
-            forgetResultClearTimer.restart();
-        })) {
-            forgetBusySsid = "";
-            forgetResultSsid = target;
-            forgetResultOk = false;
-            forgetResultClearTimer.restart();
-        }
+        forgetTarget = network;
+        forgetBusySsid = network.name;
+        network.forget();
     }
 
-    function _beginInlineConnect(ssid, security) {
-        _stopActivationCheck();
+    function _beginConnect(network, mode) {
         _clearForgetState();
-        connectSsid = ssid || "";
-        connectSecurity = security || "";
+        targetNetwork = network;
+        connectSsid = network.name;
+        connectSecurity = securityText(network);
         connectSecure = false;
         showPassword = false;
         connecting = true;
+        connectMode = mode;
         connectError = "";
     }
 
     function _clearForgetState() {
+        forgetTarget = null;
         forgetConfirmSsid = "";
         forgetBusySsid = "";
         forgetResultSsid = "";
         forgetResultOk = false;
     }
 
-    function _ssidMatches(left, right) {
-        return (left || "").trim().toLowerCase() === (right || "").trim().toLowerCase();
-    }
-
-    function _startActivationCheck(mode) {
-        connectMode = mode || connectMode;
-        awaitingActivation = true;
-        activationChecks = 0;
-        if (!pollProc.running)
-            pollProc.running = true;
-
-        activationTimer.start();
-    }
-
-    function _stopActivationCheck() {
-        awaitingActivation = false;
-        activationChecks = 0;
-        activationTimer.stop();
-    }
-
-    function _forgetFailedTarget() {
-        wifiService.forgetNetwork(connectSsid);
-    }
-
-    function _handleActivationTimeout() {
-        const failedSsid = connectSsid;
-        const failedSecurity = connectSecurity;
-        const failedMode = connectMode;
-        _stopActivationCheck();
-        connecting = false;
-        if (failedMode === "saved") {
-            _forgetFailedTarget();
-            openPasswordPrompt(failedSsid, failedSecurity);
-            connectError = "Saved password was rejected. Enter it again.";
-            return ;
-        }
-        if (failedMode === "password") {
-            _forgetFailedTarget();
-            passwordClearRequested();
-            connectError = "Password rejected. Try again.";
-            passwordFocusRequested();
-            return ;
-        }
-        connectError = "Connection timed out";
-    }
-
     function _finishConnectSuccess() {
-        _stopActivationCheck();
         passwordClearRequested();
+        targetNetwork = null;
         connectSsid = "";
         connectSecurity = "";
         connectSecure = false;
@@ -305,216 +257,100 @@ Item {
         connectMode = "";
         connectError = "";
         needsFocus = false;
-        wifiService.refreshSavedProfiles();
-        afterConnect.start();
     }
 
-    function _isWpaSecurity(security) {
-        var sec = (security || "").toUpperCase();
-        return sec.indexOf("WPA") >= 0 || sec.indexOf("PSK") >= 0 || sec.indexOf("SAE") >= 0;
+    function _handleConnectionFailure(reason) {
+        const network = targetNetwork;
+        const mode = connectMode;
+        connecting = false;
+
+        if (reason === ConnectionFailReason.NoSecrets && mode === "saved") {
+            openPasswordPrompt(network);
+            connectError = "Saved password was rejected. Enter it again.";
+            return;
+        }
+        if (reason === ConnectionFailReason.NoSecrets && mode === "password") {
+            passwordClearRequested();
+            connectError = "Password rejected. Try again.";
+            passwordFocusRequested();
+            return;
+        }
+
+        connectError = _failureText(reason);
+        if (mode === "password")
+            passwordFocusRequested();
+        else
+            targetNetwork = null;
+    }
+
+    function _failureText(reason) {
+        if (reason === ConnectionFailReason.WifiNetworkLost)
+            return "Network is no longer available";
+        if (reason === ConnectionFailReason.WifiAuthTimeout)
+            return "Connection timed out";
+        if (reason === ConnectionFailReason.WifiClientDisconnected)
+            return "Wi-Fi disconnected while connecting";
+        return "Could not connect to this network";
     }
 
     function _validatePassword(pwd) {
         if (pwd.length === 0)
             return "Enter a password";
-
-        if (!_isWpaSecurity(connectSecurity))
-            return "";
-
         if (pwd.length < 8)
             return "WPA password must be at least 8 characters";
-
         if (pwd.length > 64)
             return "WPA password must be 8-63 chars, or 64 hex digits";
-
         if (pwd.length === 64 && !/^[0-9A-Fa-f]{64}$/.test(pwd))
             return "A 64-character WPA key must use only 0-9 and A-F";
-
         return "";
+    }
+
+    function syncScanner() {
+        if (wifiDevice)
+            wifiDevice.scannerEnabled = menuOpen;
     }
 
     Timer {
         id: focusTimer
-
         interval: 80
         onTriggered: passwordFocusRequested()
     }
 
-    Timer {
-        id: afterToggle
-
-        interval: 700
-        onTriggered: pollProc.running = true
-    }
-
-    Timer {
-        id: afterConnect
-
-        interval: 3500
-        onTriggered: pollProc.running = true
-    }
-
+    // This only clears the UI acknowledgement; it never drives network state.
     Timer {
         id: forgetResultClearTimer
-
         interval: 2200
         onTriggered: {
             forgetResultSsid = "";
             forgetResultOk = false;
-            pollProc.running = true;
         }
     }
 
-    Timer {
-        id: activationTimer
+    Connections {
+        target: controller.targetNetwork
 
-        interval: 900
-        repeat: true
-        onTriggered: {
-            if (!awaitingActivation) {
-                stop();
-                return ;
-            }
-            if (_ssidMatches(connectedSsid, connectSsid)) {
-                _finishConnectSuccess();
-                return ;
-            }
-            activationChecks += 1;
-            if (activationChecks >= 8) {
-                _handleActivationTimeout();
-                return ;
-            }
-            if (!pollProc.running)
-                pollProc.running = true;
+        function onConnectedChanged() {
+            if (target.connected && controller.connecting)
+                controller._finishConnectSuccess();
+        }
 
+        function onConnectionFailed(reason) {
+            controller._handleConnectionFailure(reason);
         }
     }
 
-    Timer {
-        interval: 15000
-        running: controller.menuOpen || controller.awaitingActivation
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: pollProc.running = true
-    }
+    Connections {
+        target: controller.forgetTarget
 
-    // Keep the dashboard state accurate after a shell restart without doing a
-    // full access-point scan (which rebuilds the visible network list).
-    Timer {
-        interval: 30000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!wifiStateProc.running)
-                wifiStateProc.running = true;
+        function onKnownChanged() {
+            if (controller.forgetBusySsid === "")
+                return;
+
+            controller.forgetBusySsid = "";
+            controller.forgetResultSsid = target.name;
+            controller.forgetResultOk = !target.known;
+            controller.forgetTarget = null;
+            forgetResultClearTimer.restart();
         }
     }
-
-    Process {
-        id: wifiStateProc
-
-        command: ["bash", "-c", "nmcli radio wifi 2>/dev/null; nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2 | head -1"]
-        environment: ({
-            "LANG": "C.UTF-8",
-            "LC_ALL": "C.UTF-8"
-        })
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var lines = text.split("\n");
-                controller.wifiOn = (lines[0] || "").trim() === "enabled";
-                controller.connectedSsid = (lines[1] || "").trim();
-            }
-        }
-    }
-
-    Process {
-        id: pollProc
-
-        command: ["bash", "-c", "echo \"wifi:$(nmcli radio wifi 2>/dev/null)\";" + "echo \"ssid:$(nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2 | head -1)\";" + "nmcli -t -m multiline -f IN-USE,SSID,SECURITY,SIGNAL dev wifi list 2>/dev/null | sed 's/^/NET:/'"]
-        environment: ({
-            "LANG": "C.UTF-8",
-            "LC_ALL": "C.UTF-8"
-        })
-
-        stdout: StdioCollector {
-            id: pollData
-
-            onStreamFinished: {
-                var lines = pollData.text.split("\n");
-                var list = [], cur = null;
-                for (var i = 0; i < lines.length; i++) {
-                    var raw = lines[i];
-                    if (raw.startsWith("wifi:")) {
-                        controller.wifiOn = raw.slice(5).trim() === "enabled";
-                        continue;
-                    }
-                    if (raw.startsWith("ssid:")) {
-                        controller.connectedSsid = raw.slice(5).trim();
-                        continue;
-                    }
-                    if (!raw.startsWith("NET:"))
-                        continue;
-
-                    var line = raw.slice(4);
-                    var ci = line.indexOf(":");
-                    if (ci < 0)
-                        continue;
-
-                    var key = line.slice(0, ci).replace(/\[\d+\]$/, "");
-                    var val = line.slice(ci + 1).replace(/\\:/g, ":");
-                    if (key === "IN-USE") {
-                        if (cur && cur.ssid !== undefined)
-                            list.push(cur);
-
-                        cur = {
-                            "active": val.trim() === "*"
-                        };
-                    } else if (cur) {
-                        if (key === "SSID")
-                            cur.ssid = val;
-                        else if (key === "SECURITY")
-                            cur.security = val;
-                        else if (key === "SIGNAL")
-                            cur.signal = parseInt(val) || 0;
-                    }
-                }
-                if (cur && cur.ssid !== undefined)
-                    list.push(cur);
-
-                var seen = {
-                };
-                list.forEach((n) => {
-                    if (!n.ssid)
-                        return ;
-
-                    if (!seen[n.ssid] || n.active || n.signal > (seen[n.ssid].signal || 0))
-                        seen[n.ssid] = n;
-
-                });
-                var nextNetworks = Object.values(seen).sort((a, b) => {
-                    if (a.active && !b.active)
-                        return -1;
-
-                    if (!a.active && b.active)
-                        return 1;
-
-                    return (b.signal || 0) - (a.signal || 0);
-                });
-                if (!controller.scanMatches(nextNetworks))
-                    controller.networks = nextNetworks;
-                if (controller.awaitingActivation && _ssidMatches(controller.connectedSsid, controller.connectSsid))
-                    _finishConnectSuccess();
-
-            }
-        }
-
-    }
-
-    Process {
-        id: wifiToggleProc
-
-        command: [Quickshell.env("HOME") + "/.config/hypr/scripts/wifi-toggle.sh"]
-    }
-
 }
