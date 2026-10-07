@@ -101,7 +101,7 @@ PanelWindow {
         id: ttsPanel
         width: 520; height: 176
         x: Math.max(8, parent.width - width - 108)
-        y: Theme.barHeight + 24
+        y: Theme.barHeight + Theme.topBarMenuTopGap
         radius: Theme.ncSurfaceBottomLeftRadius
         // Match the selector's neutral frosted material rather than the
         // cooler quick-settings surface.
@@ -251,7 +251,7 @@ PanelWindow {
         readonly property real speedWidth: 102
         // Keep the narrow speed list aligned to the speed control's right edge.
         readonly property real selectorX: root.selectorOpen === 1 ? panelX + 16 : panelX + 16 + voiceWidth + 12 + 102 - speedWidth
-        readonly property real selectorY: Theme.barHeight + 24 + 16 + 42 + 3
+        readonly property real selectorY: Theme.barHeight + Theme.topBarMenuTopGap + 16 + 42 + 3
         readonly property real selectorWidth: root.selectorOpen === 1 ? voiceWidth : speedWidth
         screen: root.targetScreen
         visible: root.open && root.selectorOpen !== 0

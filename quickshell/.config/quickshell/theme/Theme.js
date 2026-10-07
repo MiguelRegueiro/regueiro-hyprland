@@ -9,6 +9,8 @@ var barBorder = Qt.rgba(0.88, 0.92, 1, 0.11);
 var barHeight = 28;
 var barItemHeight = 26;
 var barCornerRadius = 16; // matches hyprland rounding = 16
+// Vertical gap below the bar for its centered stats and utility menus.
+var topBarMenuTopGap = 16;
 var borderSize = 14; // screen frame thickness -- matches hyprland gaps_out
 var frameTopOverlap = 1; // hide fractional-scale seam below the top bar
 
@@ -54,7 +56,7 @@ var qsWidth = 400;
 var qsRadius = 12;
 var qsBarFuseOverlap = 2;
 var qsAttachTop = borderSize + qsBarFuseOverlap;
-var qsAttachRight = 6;
+var qsAttachRight = 16;
 var qsSurfaceTopLeftRadius = barCornerRadius + 2;
 var qsSurfaceTopRightRadius = barCornerRadius;
 var qsSurfaceBottomLeftRadius = barCornerRadius + 6;

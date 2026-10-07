@@ -100,7 +100,7 @@ PanelWindow {
         id: notificationCenter
 
         x: Math.round((parent.width - implicitWidth) / 2)
-        y: Theme.barHeight + 24
+        y: Theme.barHeight + Theme.topBarMenuTopGap
         open: root.notificationCenterVisible
         notificationStore: root.notificationStore
     }

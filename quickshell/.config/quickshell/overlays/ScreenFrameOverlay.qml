@@ -118,7 +118,7 @@ PanelWindow {
         id: quickSettingsPanel
 
         open: root.quickSettingsVisible
-        topOffset: Theme.barHeight + 22
+        topOffset: Theme.barHeight + Theme.topBarMenuTopGap
         notificationStore: root.notificationStore
         audioService: root.audioService
         brightnessService: root.brightnessService

@@ -20,7 +20,7 @@ PanelWindow {
     readonly property bool mutating: driveService && driveService.mutating
     readonly property real menuWidth: 320
     readonly property real menuRightMargin: 176
-    readonly property real menuY: Theme.barHeight + 24
+    readonly property real menuY: Theme.barHeight + Theme.topBarMenuTopGap
     readonly property real attachTop: Theme.qsContentPadding
     readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))

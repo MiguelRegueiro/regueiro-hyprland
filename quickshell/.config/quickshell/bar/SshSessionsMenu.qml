@@ -19,7 +19,7 @@ PanelWindow {
     readonly property bool mutating: sshService && sshService.mutating
     readonly property real menuWidth: 460
     readonly property real menuRightMargin: 108
-    readonly property real menuY: Theme.barHeight + 24
+    readonly property real menuY: Theme.barHeight + Theme.topBarMenuTopGap
     readonly property real attachTop: Theme.qsContentPadding
     readonly property real surfaceOffsetY: (1 - root.reveal) * 6
     readonly property real surfaceHeight: Math.max(68, Math.min(root.height - root.menuY - 10, menuColumn.implicitHeight + root.attachTop + 14))

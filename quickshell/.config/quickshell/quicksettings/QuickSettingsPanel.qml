@@ -122,7 +122,7 @@ FocusScope {
         top: parent.top
         right: parent.right
         topMargin: root.topOffset
-        rightMargin: 20
+        rightMargin: Theme.qsAttachRight
     }
 
     Item {
