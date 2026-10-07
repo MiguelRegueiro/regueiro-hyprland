@@ -81,7 +81,7 @@ Rectangle {
                 text: root.currentMode === "brightness" ? brightnessService.percent + "%" : (audioService.muted ? "Muted" : audioService.volumePercent + "%")
                 font.family: Theme.fontUi
                 font.pixelSize: 13
-                color: Theme.osdTextSecondary
+                color: Theme.osdTextPrimary
                 Layout.leftMargin: 6
                 horizontalAlignment: Text.AlignRight
             }
