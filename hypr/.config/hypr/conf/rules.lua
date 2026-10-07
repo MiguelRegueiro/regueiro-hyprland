@@ -20,15 +20,15 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
-    name = "qs-launcher-backdrop-blur",
-    match = { namespace = "qs-launcher-backdrop" },
+    name = "qs-launcher-blur",
+    match = { namespace = "qs-launcher" },
     blur = true,
     ignore_alpha = 0.5,
 })
 
 hl.layer_rule({
-    name = "qs-clipboard-backdrop-blur",
-    match = { namespace = "qs-clipboard-backdrop" },
+    name = "qs-clipboard-blur",
+    match = { namespace = "qs-clipboard" },
     blur = true,
     ignore_alpha = 0.5,
 })

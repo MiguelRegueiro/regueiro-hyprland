@@ -68,39 +68,6 @@ Scope {
     }
 
     PanelWindow {
-        id: backdrop
-
-        screen: root.targetScreen
-        visible: root.showLayer && (root.launcherVisible || launcherPanel.reveal > 0.001)
-        exclusiveZone: 0
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "qs-launcher-backdrop"
-        color: "transparent"
-        property int shadowMargin: 24
-        implicitWidth: Theme.launcherWidth + shadowMargin * 2
-        implicitHeight: Theme.launcherHeight + shadowMargin * 2
-
-        anchors {
-            left: true
-            bottom: true
-        }
-
-        margins.left: Math.round((root.targetScreen.width - implicitWidth) / 2)
-        margins.bottom: Theme.borderSize + 70 - shadowMargin - launcherPanel.surfaceOffsetY
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: backdrop.shadowMargin
-            radius: Theme.launcherSurfaceTopLeftRadius
-            color: Qt.rgba(0.09, 0.095, 0.11, 0.84)
-            opacity: launcherPanel.surfaceOpacity
-            border.width: 1
-            border.color: Theme.menuSurfaceOutline
-        }
-    }
-
-    PanelWindow {
         id: overlay
 
     screen: targetScreen
@@ -109,7 +76,10 @@ Scope {
     visible: showLayer && (root.launcherVisible || launcherPanel.reveal > 0.001)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Overlay
+    // Keep interactive panels below transient OSDs. The panel background is a
+    // child of this surface, so it cannot cover the content as a separate
+    // same-layer backdrop did.
+    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-launcher"
     WlrLayershell.keyboardFocus: root.launcherVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
@@ -119,6 +89,19 @@ Scope {
         bottom: true
         left: true
         right: true
+    }
+
+    Rectangle {
+        x: launcherPanel.x
+        y: launcherPanel.y
+        width: launcherPanel.width
+        height: launcherPanel.height
+        radius: Theme.launcherSurfaceTopLeftRadius
+        color: Qt.rgba(0.09, 0.095, 0.11, 0.84)
+        opacity: launcherPanel.surfaceOpacity
+        border.width: 1
+        border.color: Theme.menuSurfaceOutline
+        z: -1
     }
 
     Item {

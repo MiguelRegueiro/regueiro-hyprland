@@ -43,46 +43,16 @@ Scope {
     }
 
     PanelWindow {
-        id: backdrop
-
-        screen: root.targetScreen
-        visible: root.showLayer && (root.clipboardVisible || clipboardPanel.visible)
-        exclusiveZone: 0
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "qs-clipboard-backdrop"
-        color: "transparent"
-        property int shadowMargin: 24
-        implicitWidth: Theme.clipboardWidth + shadowMargin * 2
-        implicitHeight: Theme.clipboardHeight + shadowMargin * 2
-
-        anchors {
-            left: true
-            bottom: true
-        }
-
-        margins.left: Math.round((root.targetScreen.width - implicitWidth) / 2)
-        margins.bottom: Theme.borderSize + 70 - shadowMargin - clipboardPanel.surfaceOffsetY
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: backdrop.shadowMargin
-            radius: Theme.clipboardSurfaceTopLeftRadius
-            color: Qt.rgba(0.09, 0.095, 0.11, 0.84)
-            opacity: clipboardPanel.surfaceOpacity
-            border.width: 1
-            border.color: Theme.menuSurfaceOutline
-        }
-    }
-
-    PanelWindow {
         id: overlay
 
     screen: targetScreen
     visible: showLayer && (root.clipboardVisible || clipboardPanel.visible)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Overlay
+    // Keep interactive panels below transient OSDs. The panel background is a
+    // child of this surface, so it cannot cover the content as a separate
+    // same-layer backdrop did.
+    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-clipboard"
     WlrLayershell.keyboardFocus: root.clipboardVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
@@ -92,6 +62,19 @@ Scope {
         bottom: true
         left: true
         right: true
+    }
+
+    Rectangle {
+        x: clipboardPanel.x
+        y: clipboardPanel.y
+        width: clipboardPanel.width
+        height: clipboardPanel.height
+        radius: Theme.clipboardSurfaceTopLeftRadius
+        color: Qt.rgba(0.09, 0.095, 0.11, 0.84)
+        opacity: clipboardPanel.surfaceOpacity
+        border.width: 1
+        border.color: Theme.menuSurfaceOutline
+        z: -1
     }
 
     Item {
