@@ -13,7 +13,7 @@ Item {
     // Less luminous than the general success green: this is a persistent
     // status mark, not an attention-grabbing confirmation.
     readonly property color fillColor: charging || full ? "#84e89b"
-        : clampedPercent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
+        : clampedPercent <= Theme.batteryLowThreshold ? Theme.red : "#e4e6eb"
     // Opaque enough to remain visible against the dark bar, especially for
     // the small terminal at high charge levels.
     readonly property color remainderColor: "#8e9098"
@@ -36,7 +36,13 @@ Item {
         Rectangle {
             width: parent.width * root.clampedPercent / 100
             height: parent.height
-            radius: parent.radius
+            // A partial charge fills from the rounded left edge with a subtle
+            // softened end. Only a full charge reaches the battery's fully
+            // rounded right end.
+            topLeftRadius: parent.radius
+            bottomLeftRadius: parent.radius
+            topRightRadius: root.clampedPercent >= 100 ? parent.radius : 1.5
+            bottomRightRadius: root.clampedPercent >= 100 ? parent.radius : 1.5
             color: root.fillColor
 
             Behavior on width {
