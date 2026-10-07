@@ -54,7 +54,9 @@ Row {
     }
 
     spacing: 0
-    rightPadding: 4
+    // Match the 10px inner edge of the CPU and RAM status controls so the
+    // workspace-to-CPU gap reads the same as the CPU-to-RAM gap.
+    rightPadding: 10
 
     component WorkspaceButton: Rectangle {
         id: wsBtn

@@ -7,10 +7,20 @@ Row {
     id: trayRow
 
     property int barHeight: 34
+    readonly property bool hasVisibleItems: {
+        for (let index = 0; index < SystemTray.items.length; index++) {
+            const item = SystemTray.items[index];
+            const itemId = (item.id || "").toLowerCase();
+            if (!itemId.includes("blueman") && !itemId.includes("fcitx") && (item.status !== Status.Passive || item.onlyMenu))
+                return true;
+        }
+
+        return false;
+    }
 
     spacing: 2
-    leftPadding: 4
-    rightPadding: 4
+    leftPadding: hasVisibleItems ? 4 : 0
+    rightPadding: hasVisibleItems ? 4 : 0
 
     Repeater {
         model: SystemTray.items
