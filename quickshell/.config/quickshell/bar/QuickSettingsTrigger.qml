@@ -19,7 +19,7 @@ Rectangle {
     signal clicked()
 
     height: barHeight
-    implicitWidth: contentRow.implicitWidth + 28
+    implicitWidth: contentRow.implicitWidth + 12
     radius: Theme.radiusSmall
     color: hovered || menuOpen ? Theme.hoverBg : "transparent"
 
@@ -35,9 +35,8 @@ Rectangle {
 
         anchors {
             verticalCenter: parent.verticalCenter
-            // Keep the right edge of the status cluster close to the bar
-            // edge; the wider left inset still gives the trigger a generous
-            // click target.
+            // The trigger has 12px of total horizontal padding; anchoring the
+            // content with a 6px right inset keeps the hover area balanced.
             right: parent.right
             rightMargin: 6
         }
