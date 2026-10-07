@@ -1,0 +1,7 @@
+[Environment]
+# Anki is a Qt/Wayland Flatpak. It inherits the host's QT_IM_MODULE=fcitx,
+# which selects the Flatpak's direct Fcitx client but cannot contact the host
+# Fcitx D-Bus service under Anki's sandbox permissions. Let Qt use native
+# Wayland text-input instead; Fcitx's Wayland frontend then owns one shared
+# input state with the rest of the desktop.
+QT_IM_MODULE=

@@ -182,6 +182,11 @@ Fcitx runs only in Hyprland; GNOME retains its own IBus input sources. The sessi
 `fcitx-session.sh` starts Fcitx, selects Spanish, and stops its process when Hyprland exits. The `fcitx5` Stow package disables the standard global autostart entry.
 `Super+Space` cycles the configured Spanish/Anthy group. The keyboard config uses `kb_options = lv3:switch`, so Right Ctrl acts as an additional AltGr key.
 
+The Anki Flatpak clears `QT_IM_MODULE` so its sandbox does not use its bundled
+direct Fcitx client; it instead uses native Wayland text input. The override is
+installed by Stowing the `flatpak` package; fully close and reopen Anki after
+applying it.
+
 When upgrading, back up conflicting files before Stowing `gtk` and `fcitx5`. Remove old global Fcitx environment exports, separate Fcitx autostart services, and `gtk-im-module=fcitx` entries in non-stowed GTK files. Keep input-method variables scoped to Hyprland, outside shell profiles and the shared systemd/D-Bus environment.
 
 Log out and back in after applying these changes. Simultaneous graphical sessions for the same user share input-method D-Bus services and are not supported by this setup.

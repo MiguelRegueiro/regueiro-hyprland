@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Wayland
 import "." as Launcher
 import "../theme/Theme.js" as Theme
@@ -53,15 +52,9 @@ Scope {
         if (root.launcherVisible) {
             root.openingGuard = true;
             openingGuardTimer.restart();
-            Qt.callLater(function() {
-                if (root.launcherVisible)
-                    launcherFocusGrab.active = true;
-
-            });
         } else {
             root.openingGuard = false;
             openingGuardTimer.stop();
-            launcherFocusGrab.active = false;
             root.barHoverCleared();
         }
     }
@@ -126,17 +119,6 @@ Scope {
         bottom: true
         left: true
         right: true
-    }
-
-    HyprlandFocusGrab {
-        id: launcherFocusGrab
-
-        windows: [overlay]
-        onCleared: {
-            if (root.launcherVisible)
-                root.closeFromOutside();
-
-        }
     }
 
     Item {
