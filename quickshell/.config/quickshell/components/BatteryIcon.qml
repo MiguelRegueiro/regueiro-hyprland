@@ -60,16 +60,34 @@ Item {
 
         }
 
+        // Build a one-pixel dark contour from the same glyph, avoiding the
+        // uneven shape that comes from scaling a second bolt underneath it.
+        Repeater {
+            model: [
+                { "x": -1, "y": -1 }, { "x": 0, "y": -1 }, { "x": 1, "y": -1 },
+                { "x": -1, "y": 0 },                            { "x": 1, "y": 0 },
+                { "x": -1, "y": 1 },  { "x": 0, "y": 1 },  { "x": 1, "y": 1 }
+            ]
+
+            delegate: Text {
+                anchors.centerIn: parent
+                anchors.horizontalCenterOffset: modelData.x
+                anchors.verticalCenterOffset: modelData.y
+                visible: root.charging
+                text: "󱐋"
+                font.family: Theme.fontIcons
+                font.pixelSize: 8
+                color: Qt.rgba(0, 0, 0, 0.9)
+            }
+        }
+
         Text {
             anchors.centerIn: parent
             visible: root.charging
             text: "󱐋"
             font.family: Theme.fontIcons
             font.pixelSize: 8
-            // At low charge the bolt sits over the unfilled, dark interior.
-            color: root.percent < 65 ? Theme.textPrimary : Qt.rgba(0, 0, 0, 0.9)
-            style: Text.Outline
-            styleColor: root.percent < 65 ? Qt.rgba(0, 0, 0, 0.8) : "transparent"
+            color: Theme.textPrimary
         }
 
     }
