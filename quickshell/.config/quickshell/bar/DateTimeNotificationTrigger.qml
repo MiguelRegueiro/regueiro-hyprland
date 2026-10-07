@@ -51,13 +51,6 @@ Row {
                 font.pixelSize: 14
             }
 
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 1
-                height: parent.height - 4
-                color: Theme.barBorder
-            }
-
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: DateUtils.formatBarTime(clock.date)

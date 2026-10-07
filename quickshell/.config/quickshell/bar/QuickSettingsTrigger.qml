@@ -19,7 +19,7 @@ Rectangle {
     signal clicked()
 
     height: barHeight
-    implicitWidth: contentRow.implicitWidth + 12
+    implicitWidth: contentRow.implicitWidth + 15
     radius: Theme.radiusSmall
     color: hovered || menuOpen ? Theme.hoverBg : "transparent"
 
@@ -35,8 +35,8 @@ Rectangle {
 
         anchors {
             verticalCenter: parent.verticalCenter
-            // The trigger has 12px of total horizontal padding; anchoring the
-            // content with a 6px right inset keeps the hover area balanced.
+            // Keep a 6px right inset; the extra 3px of trigger width gives
+            // the Wi-Fi icon a touch more breathing room on the left.
             right: parent.right
             rightMargin: 6
         }
@@ -63,41 +63,32 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        Rectangle {
-            width: 1
-            height: 14
-            color: Theme.barBorder
+        Row {
+            spacing: 3
             anchors.verticalCenter: parent.verticalCenter
-        }
 
-        Components.VolumeIcon {
-            muted: root.audioService.muted
-            volumePercent: root.audioService.volumePercent
-            iconColor: Theme.textPrimary
-            height: 13
-            anchors.verticalCenter: parent.verticalCenter
-        }
+            Components.VolumeIcon {
+                muted: root.audioService.muted
+                volumePercent: root.audioService.volumePercent
+                iconColor: Theme.textPrimary
+                height: 13
+                anchors.verticalCenter: parent.verticalCenter
+            }
 
-        Text {
-            text: root.audioService.volumePercent + "%"
-            font.family: Theme.fontUi
-            font.pixelSize: 13
-            font.weight: Font.DemiBold
-            color: root.audioService.muted ? Theme.textDisabled : Theme.textPrimary
-            anchors.verticalCenter: parent.verticalCenter
+            Text {
+                text: root.audioService.volumePercent + "%"
+                font.family: Theme.fontUi
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
+                color: root.audioService.muted ? Theme.textDisabled : Theme.textPrimary
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
 
         Row {
             visible: root.batteryPercent >= 0
             spacing: 4
             anchors.verticalCenter: parent.verticalCenter
-
-            Rectangle {
-                width: 1
-                height: 14
-                color: Theme.barBorder
-                anchors.verticalCenter: parent.verticalCenter
-            }
 
             Components.BatteryIcon {
                 anchors.verticalCenter: parent.verticalCenter
