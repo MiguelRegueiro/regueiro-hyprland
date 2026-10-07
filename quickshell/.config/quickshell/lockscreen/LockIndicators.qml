@@ -64,14 +64,6 @@ Item {
                     charging: root.status ? root.status.charging : false
                     full: root.status ? root.status.full : false
                 }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: (root.status ? root.status.batteryPercent : 0) + "%"
-                    font.family: Theme.fontUi
-                    font.pixelSize: 13
-                    font.weight: Font.DemiBold
-                    color: Theme.textPrimary
-                }
             }
         }
     }

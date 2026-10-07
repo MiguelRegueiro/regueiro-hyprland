@@ -109,10 +109,10 @@ Item {
                         return "Charged";
 
                     if (charging)
-                        return percent + "% · Charging";
+                        return "Charging";
 
                     const t = formatTime(secondsLeft);
-                    return percent + "%" + (t ? " · " + t : "");
+                    return t || "Battery";
                 }
 
                 function formatTime(secs) {

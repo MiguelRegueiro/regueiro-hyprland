@@ -1,105 +1,87 @@
 import QtQuick
 import "../theme/Theme.js" as Theme
 
+// Percentage-first battery badge. The charge symbol deliberately lives outside
+// the battery, where it remains legible at the bar's small scale.
 Item {
     id: root
 
     property int percent: 0
     property bool charging: false
     property bool full: false
-    readonly property color outlineColor: Qt.rgba(1, 1, 1, 0.9)
+    readonly property int clampedPercent: Math.max(0, Math.min(100, percent))
+    // Less luminous than the general success green: this is a persistent
+    // status mark, not an attention-grabbing confirmation.
+    readonly property color fillColor: charging || full ? "#84e89b"
+        : clampedPercent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
+    // Opaque enough to remain visible against the dark bar, especially for
+    // the small terminal at high charge levels.
+    readonly property color remainderColor: "#8e9098"
+    readonly property real bodyWidth: 29
 
-    width: 24
-    height: 12
+    // Only reserve the bolt slot while it is visible; otherwise the status
+    // cluster ends snugly at the battery terminal.
+    implicitWidth: charging ? 44 : 33
+    implicitHeight: 14
 
-    // Body outline
     Rectangle {
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        width: 21
-        height: 12
-        radius: 3
-        color: "transparent"
+        id: body
+
+        width: root.bodyWidth
+        height: root.height
+        radius: height * 0.32
+        color: root.remainderColor
         border.width: 1.5
-        border.color: root.outlineColor
+        border.color: Qt.rgba(0.55, 0.57, 0.61, 0.72)
+        clip: true
 
-        Item {
-            clip: true
+        Rectangle {
+            width: parent.width * root.clampedPercent / 100
+            height: parent.height
+            radius: parent.radius
+            color: root.fillColor
 
-            anchors {
-                fill: parent
-                margins: 2.5
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                radius: 1
-                visible: root.charging && !root.full
-                color: Qt.rgba(0.18, 0.72, 0.36, 0.26)
-            }
-
-            Rectangle {
-                width: Math.max(0, parent.width * root.percent / 100)
-                radius: 1
-                color: root.charging || root.full ? Theme.green : root.percent <= Theme.batteryLowThreshold ? Theme.red : Theme.textPrimary
-
-                anchors {
-                    left: parent.left
-                    top: parent.top
-                    bottom: parent.bottom
-                }
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Theme.batteryFillDuration
-                    }
-
-                }
-
-            }
-
-        }
-
-        // Build a one-pixel dark contour from the same glyph, avoiding the
-        // uneven shape that comes from scaling a second bolt underneath it.
-        Repeater {
-            model: [
-                { "x": -1, "y": -1 }, { "x": 0, "y": -1 }, { "x": 1, "y": -1 },
-                { "x": -1, "y": 0 },                            { "x": 1, "y": 0 },
-                { "x": -1, "y": 1 },  { "x": 0, "y": 1 },  { "x": 1, "y": 1 }
-            ]
-
-            delegate: Text {
-                anchors.centerIn: parent
-                anchors.horizontalCenterOffset: modelData.x
-                anchors.verticalCenterOffset: modelData.y
-                visible: root.charging
-                text: "󱐋"
-                font.family: Theme.fontIcons
-                font.pixelSize: 8
-                color: Qt.rgba(0, 0, 0, 0.9)
+            Behavior on width {
+                NumberAnimation { duration: Theme.batteryFillDuration }
             }
         }
 
         Text {
             anchors.centerIn: parent
-            visible: root.charging
-            text: "󱐋"
-            font.family: Theme.fontIcons
-            font.pixelSize: 8
-            color: Theme.textPrimary
+            // Numeric glyphs sit a little high inside their line box; nudge
+            // them down for visual, rather than purely geometric, centering.
+            anchors.verticalCenterOffset: 1
+            text: root.clampedPercent
+            font.family: Theme.fontUi
+            font.pixelSize: 10
+            font.weight: Font.Bold
+            color: root.clampedPercent >= 45 ? "#1d1d20" : Theme.textPrimary
         }
-
     }
 
-    // Terminal nub
+    // Terminal cap stays separate to preserve the chunky silhouette.
     Rectangle {
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        width: 3
-        height: 5
-        radius: 1
-        color: root.outlineColor
+        // Draw behind the body: its rounded edge cleanly masks the join,
+        // making this read as a terminal rather than a second pill on top.
+        z: -1
+        x: body.width - 1
+        anchors.verticalCenter: body.verticalCenter
+        width: 4
+        height: 6
+        radius: 2
+        color: root.remainderColor
     }
 
+    Text {
+        // UPower can briefly report a plugged-in 100% battery as
+        // FullyCharged before switching to Charging. Both states deserve the
+        // bolt, otherwise it visibly arrives after the green fill.
+        visible: root.charging
+        x: body.width + 4
+        anchors.verticalCenter: parent.verticalCenter
+        text: "󱐋"
+        font.family: Theme.fontIcons
+        font.pixelSize: 12
+        color: "#c8cad1"
+    }
 }

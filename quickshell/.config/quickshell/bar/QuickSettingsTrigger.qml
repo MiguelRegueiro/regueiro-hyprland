@@ -34,7 +34,14 @@ Rectangle {
     Row {
         id: contentRow
 
-        anchors.centerIn: parent
+        anchors {
+            verticalCenter: parent.verticalCenter
+            // Keep the right edge of the status cluster close to the bar
+            // edge; the wider left inset still gives the trigger a generous
+            // click target.
+            right: parent.right
+            rightMargin: 6
+        }
         spacing: 6
 
         Text {
@@ -87,15 +94,6 @@ Rectangle {
                 percent: root.batteryPercent
                 charging: root.batteryCharging
                 full: root.batteryFull
-            }
-
-            Text {
-                text: root.batteryPercent + "%"
-                font.family: Theme.fontUi
-                font.pixelSize: 13
-                font.weight: Font.DemiBold
-                color: Theme.textPrimary
-                anchors.verticalCenter: parent.verticalCenter
             }
 
         }
