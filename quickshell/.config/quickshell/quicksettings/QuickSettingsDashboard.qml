@@ -112,7 +112,7 @@ Item {
                         return "Charging";
 
                     const t = formatTime(secondsLeft);
-                    return t || "Battery";
+                    return t;
                 }
 
                 function formatTime(secs) {
