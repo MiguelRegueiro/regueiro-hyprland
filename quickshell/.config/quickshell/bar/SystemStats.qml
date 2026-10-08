@@ -16,6 +16,7 @@ Row {
     // Read /proc/stat twice to compute delta
     property var _prevIdle: 0
     property var _prevTotal: 0
+    property bool _cpuCountersReady: false
 
     spacing: 0
 
@@ -51,14 +52,14 @@ Row {
     Process {
         id: cpuProc
 
-        command: ["bash", "-c", "awk 'NR==1{print $2,$3,$4,$5,$6,$7,$8}' /proc/stat"]
+        command: ["awk", "NR==1{print $2,$3,$4,$5,$6,$7,$8,$9}", "/proc/stat"]
 
         stdout: StdioCollector {
             id: cpuOut
 
             onStreamFinished: {
                 var parts = cpuOut.text.trim().split(/\s+/);
-                if (parts.length < 7)
+                if (parts.length < 8)
                     return ;
 
                 var user = parseInt(parts[0]);
@@ -68,14 +69,17 @@ Row {
                 var iowait = parseInt(parts[4]);
                 var irq = parseInt(parts[5]);
                 var softirq = parseInt(parts[6]);
-                var total = user + nice + sys + idle + iowait + irq + softirq;
+                var steal = parseInt(parts[7]);
+                var total = user + nice + sys + idle + iowait + irq + softirq + steal;
                 var dTotal = total - root._prevTotal;
-                var dIdle = idle - root._prevIdle;
-                if (dTotal > 0)
+                var idleAll = idle + iowait;
+                var dIdle = idleAll - root._prevIdle;
+                if (root._cpuCountersReady && dTotal > 0)
                     root.cpuPct = Math.round(100 * (dTotal - dIdle) / dTotal);
 
                 root._prevTotal = total;
-                root._prevIdle = idle;
+                root._prevIdle = idleAll;
+                root._cpuCountersReady = true;
             }
         }
 
@@ -92,7 +96,7 @@ Row {
     Process {
         id: ramProc
 
-        command: ["bash", "-c", "awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.1f\", (t-a)/1048576}' /proc/meminfo"]
+        command: ["awk", "/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.1f\", (t-a)/1048576}", "/proc/meminfo"]
 
         stdout: StdioCollector {
             id: ramOut
