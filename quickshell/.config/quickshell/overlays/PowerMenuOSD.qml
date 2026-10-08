@@ -139,6 +139,23 @@ PanelWindow {
 
     }
 
+    function handleNavigationKey(event) {
+        if (event.key === Qt.Key_Left || event.key === Qt.Key_Up)
+            moveSelection(-1);
+        else if (event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier)))
+            moveSelection(-1);
+        else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_Tab)
+            moveSelection(1);
+        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)
+            activateSelection();
+        else if (event.key === Qt.Key_Escape)
+            cancelRequested();
+        else
+            return;
+
+        event.accepted = true;
+    }
+
     onOpenChanged: {
         if (open) {
             if (mode === "confirm")
@@ -146,7 +163,7 @@ PanelWindow {
             else
                 selectedIndex = 0;
             Qt.callLater(function() {
-                keyScope.forceActiveFocus();
+                inputContext.forceActiveFocus();
             });
         }
     }
@@ -177,74 +194,23 @@ PanelWindow {
         anchors.fill: parent
         focus: root.open
 
-        Shortcut {
-            sequence: "Left"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.moveSelection(-1)
-        }
+        // Keep a real text-input context active while this exclusive keyboard
+        // surface is open. Fcitx then preserves the selected input method;
+        // navigation is handled here instead of by an unfocused FocusScope.
+        TextInput {
+            id: inputContext
 
-        Shortcut {
-            sequence: "Right"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.moveSelection(1)
-        }
-
-        Shortcut {
-            sequence: "Up"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.moveSelection(-1)
-        }
-
-        Shortcut {
-            sequence: "Down"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.moveSelection(1)
-        }
-
-        Shortcut {
-            sequence: "Tab"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.moveSelection(1)
-        }
-
-        Shortcut {
-            sequence: "Backtab"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.moveSelection(-1)
-        }
-
-        Shortcut {
-            sequence: "Return"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.activateSelection()
-        }
-
-        Shortcut {
-            sequence: "Enter"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.activateSelection()
-        }
-
-        Shortcut {
-            sequence: "Space"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.activateSelection()
-        }
-
-        Shortcut {
-            sequence: "Escape"
-            context: Qt.WindowShortcut
-            enabled: root.open
-            onActivated: root.cancelRequested()
+            width: 1
+            height: 1
+            opacity: 0
+            focus: root.open
+            cursorVisible: false
+            color: "transparent"
+            selectionColor: "transparent"
+            inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+            Keys.priority: Keys.BeforeItem
+            Keys.onPressed: root.handleNavigationKey(event)
+            onTextChanged: clear()
         }
 
         MouseArea {
