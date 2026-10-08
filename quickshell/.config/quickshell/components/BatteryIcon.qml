@@ -74,7 +74,10 @@ Item {
             font.family: Theme.fontUi
             font.pixelSize: 10
             font.weight: Font.Bold
-            color: root.clampedPercent >= 45 ? "#1d1d20" : Theme.textPrimary
+            // Keep the percentage dark at every charge level. The low-charge
+            // fill is intentionally bright enough that white text loses
+            // contrast and becomes hard to read.
+            color: "#1d1d20"
         }
     }
 
