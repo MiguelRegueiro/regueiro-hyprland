@@ -18,6 +18,11 @@ Item {
     // the small terminal at high charge levels.
     readonly property color remainderColor: "#8e9098"
     readonly property real bodyWidth: 29
+    // At this scale, 98% is only about half a pixel short of a full body.
+    // Keep a small slice of the remainder exposed for every non-full state:
+    // otherwise the fill's deliberately squarer end enters the body's rounded
+    // right cap and looks like it is sitting on top of it.
+    readonly property real partialFillRightInset: 1.5
 
     // Only reserve the bolt slot while it is visible; otherwise the status
     // cluster ends snugly at the battery terminal.
@@ -34,7 +39,10 @@ Item {
         clip: true
 
         Rectangle {
-            width: parent.width * root.clampedPercent / 100
+            width: root.clampedPercent >= 100
+                ? parent.width
+                : Math.min(parent.width * root.clampedPercent / 100,
+                           parent.width - root.partialFillRightInset)
             height: parent.height
             // A partial charge fills from the rounded left edge with a subtle
             // softened end. Only a full charge reaches the battery's fully
