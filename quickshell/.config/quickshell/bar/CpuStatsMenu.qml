@@ -218,15 +218,9 @@ PanelWindow {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 1
-                            color: Qt.rgba(0.56, 0.58, 0.62, 0.18)
-                        }
-
                         ColumnLayout {
                             Layout.fillWidth: true
-                            Layout.topMargin: 12
+                            Layout.topMargin: 8
                             Layout.leftMargin: 12
                             Layout.rightMargin: 12
                             Layout.bottomMargin: 12
