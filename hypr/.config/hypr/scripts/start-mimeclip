@@ -17,4 +17,14 @@ if [ -n "$client" ] && [ -x "$client" ] && "$client" ping >/dev/null 2>&1; then
     exit 0
 fi
 
-exec "$daemon"
+# Hyprland's command launcher may reap its direct child after the launcher
+# returns.  Give the daemon its own session and restart it if its Wayland
+# connection is interrupted, without requiring a systemd user service.
+log_file="${XDG_CACHE_HOME:-$HOME/.cache}/mimeclipd.log"
+mkdir -p "$(dirname "$log_file")"
+exec setsid -f sh -c '
+    while :; do
+        "$1" >>"$2" 2>&1
+        sleep 2
+    done
+' sh "$daemon" "$log_file"
