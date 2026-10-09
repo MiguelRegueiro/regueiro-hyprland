@@ -1,4 +1,6 @@
 vim.opt.clipboard = "unnamedplus"
+-- Avoid recovery prompts from stale swap files after a terminal is closed.
+vim.opt.swapfile = false
 
 local function set_transparent_background()
   local groups = {
