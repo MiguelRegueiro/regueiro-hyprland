@@ -3,7 +3,7 @@
 return {
     main_mod = "SUPER",
     terminal = "kitty",
-    file_manager = "kitty -e elio ~",
+    file_manager = "kitty -e fish -ic 'exec elio ~'",
     menu = "~/.config/hypr/scripts/launcher-toggle.sh",
     clipboard_menu = "qs ipc call clipboard toggle",
     wallpaper_menu = "qs ipc call wallpaper toggle",
