@@ -78,6 +78,21 @@ function _G.CleanCloseCurrentTab()
   close_tab(vim.fn.tabpagenr())
 end
 
+vim.api.nvim_create_user_command("Q", function(options)
+  if options.bang then
+    vim.cmd("q!")
+  else
+    _G.CleanCloseCurrentTab()
+  end
+end, { bang = true })
+
+vim.keymap.set("c", "<CR>", function()
+  if vim.fn.getcmdtype() == ":" and vim.fn.getcmdline() == "q" then
+    return "<C-u>lua CleanCloseCurrentTab()<CR>"
+  end
+  return "<CR>"
+end, { expr = true, silent = true })
+
 function _G.CleanTabline()
   local labels = {}
   local current = vim.fn.tabpagenr()
