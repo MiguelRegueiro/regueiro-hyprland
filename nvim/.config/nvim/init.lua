@@ -41,8 +41,17 @@ vim.opt.showtabline = 2
 -- Avoid popup_setpos selecting a tab before its right-click handler runs.
 vim.opt.mousemodel = "popup"
 
+local function tab_has_modified_buffer(tab)
+  for _, buffer in ipairs(vim.fn.tabpagebuflist(tab)) do
+    if vim.bo[buffer].modified then
+      return true
+    end
+  end
+  return false
+end
+
 local function close_tab(tab)
-  if vim.bo.modified then
+  if tab_has_modified_buffer(tab) then
     vim.api.nvim_echo({ { "Unsaved changes", "WarningMsg" } }, false, {})
     return
   end
