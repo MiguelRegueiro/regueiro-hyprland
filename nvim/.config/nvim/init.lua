@@ -4,6 +4,7 @@ vim.opt.swapfile = false
 vim.opt.number = true
 vim.opt.relativenumber = false
 vim.opt.cursorline = true
+vim.opt.laststatus = 0
 
 local function set_transparent_background()
   local groups = {
