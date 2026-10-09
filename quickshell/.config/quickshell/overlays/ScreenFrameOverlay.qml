@@ -27,6 +27,19 @@ PanelWindow {
     signal barPressed(real x, real y)
     signal powerActionRequested(string actionId)
 
+    onQuickSettingsVisibleChanged: {
+        if (!quickSettingsVisible)
+            return;
+
+        // A slider (or another non-text control) can retain active focus after
+        // the panel closes. Restore the real text-input context whenever this
+        // layer surface opens so Fcitx keeps the selected input method.
+        Qt.callLater(function() {
+            if (root.quickSettingsVisible)
+                inputContext.forceActiveFocus();
+        });
+    }
+
     function routeBarPress(mouse) {
         if (mouse.button !== Qt.LeftButton || mouse.y < 0 || mouse.y >= Theme.barHeight)
             return false;
@@ -57,6 +70,8 @@ PanelWindow {
     // instead of deactivating the IM due to "no text-input client".
     // Real text fields (WiFi password etc.) steal focus from this when clicked.
     TextInput {
+        id: inputContext
+
         width: 1
         height: 1
         opacity: 0

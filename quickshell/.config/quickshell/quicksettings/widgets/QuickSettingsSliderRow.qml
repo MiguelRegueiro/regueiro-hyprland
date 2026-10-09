@@ -210,6 +210,11 @@ Item {
                     live: true
                     value: row._displayValue
                     enabled: !row.muted
+                    // Slider focus replaces the hidden text-input context on
+                    // the layer-shell surface, causing Fcitx to reset its
+                    // selected input method after a drag. Pointer interaction
+                    // does not need keyboard focus here.
+                    focusPolicy: Qt.NoFocus
                     onMoved: {
                         row._displayValue = row.snapValue(value);
                         row.queueSliderValue(row._displayValue);
