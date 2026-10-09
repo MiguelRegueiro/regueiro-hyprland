@@ -37,6 +37,8 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 set_transparent_background()
 
 vim.opt.showtabline = 2
+-- Avoid popup_setpos selecting a tab before its right-click handler runs.
+vim.opt.mousemodel = "popup"
 
 local function close_tab(tab)
   if vim.bo.modified then
@@ -55,8 +57,12 @@ local function close_tab(tab)
   end
 end
 
-function _G.CleanSelectTab(tab)
-  vim.cmd(tab .. "tabnext")
+function _G.CleanSelectTab(tab, _, button)
+  if button == "m" then
+    _G.CleanCloseTab(tab, 1, "l", "")
+  elseif button == "l" then
+    vim.cmd(tab .. "tabnext")
+  end
 end
 
 function _G.CleanCloseTab(tab, _, button)
