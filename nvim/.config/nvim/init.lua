@@ -102,6 +102,9 @@ vim.keymap.set("n", "<C-w>", function()
   _G.CleanCloseCurrentTab()
 end, { silent = true, nowait = true, desc = "Close current tab" })
 
+vim.keymap.set({ "n", "i", "v" }, "<ScrollWheelUp>", "<Up>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "i", "v" }, "<ScrollWheelDown>", "<Down>", { noremap = true, silent = true })
+
 
 -- Ctrl+A selects all text
 vim.keymap.set("n", "<C-a>", "ggVG", { noremap = true, silent = true })
