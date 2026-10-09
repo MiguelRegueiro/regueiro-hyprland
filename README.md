@@ -237,7 +237,7 @@ Power actions are handled by QuickShell through `qs ipc call powermenu`, so the 
 ```sh
 git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
 cd ~/regueiro-hyprland
-stow --no-folding hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk xdg-portals flatpak
+stow --no-folding hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk xdg-portals flatpak nvim
 ```
 
 Restow the affected packages after pulling changes that add or rename files. Existing Stow symlinks already point at updated files; machine-local overrides remain outside the checkout.
