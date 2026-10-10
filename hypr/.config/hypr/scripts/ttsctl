@@ -6,6 +6,7 @@ set -euo pipefail
 
 state_root="${XDG_RUNTIME_DIR:-/tmp/regueiro-$(id -u)}/regueiro-easytts"
 state_file="$state_root/state.json"
+media_player_file="$state_root/media-player"
 
 server_host() {
     if [[ -n "${EASYTTS_HOST:-}" ]]; then
@@ -33,24 +34,16 @@ status() {
 }
 
 speak_clipboard() {
-    local copied host port voice rate
+    local copied host port provider voice rate
     # With no explicit arguments (the F7 binding), let the service use its
     # saved selection instead of silently forcing its old command defaults.
     notify_shell
-    voice="${1:-}"
-    rate="${2:-}"
-    if [[ -f "$state_file" ]]; then
-        local current_state
-        current_state="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("state", ""))' "$state_file" 2>/dev/null || true)"
-        if [[ "$current_state" == "generating" ]]; then
-            control cancel
-            return
-        fi
-        if [[ "$current_state" == "playing" ]]; then
-            control reset
-            return
-        fi
-    fi
+    provider="${1:-}"
+    voice="${2:-}"
+    rate="${3:-}"
+    # F7 always replaces whatever TTS was doing (generating, playing, or
+    # paused) with freshly generated clipboard speech.  The server cancels the
+    # old job atomically before starting the new one.
     copied="$(wl-paste --no-newline 2>/dev/null || true)"
     if [[ -z "$copied" ]]; then
         mkdir -p "$state_root"
@@ -62,7 +55,7 @@ speak_clipboard() {
     if [[ -z "$host" ]]; then
         host="127.0.0.1"
     fi
-    if ! printf '%s' "$copied" | python3 -c 'import json, sys; payload = {"text": sys.stdin.read()}; payload.update({key: value for key, value in (("voice", sys.argv[1]), ("rate", sys.argv[2])) if value}); print(json.dumps(payload))' "$voice" "$rate" \
+    if ! printf '%s' "$copied" | python3 -c 'import json, sys; payload = {"text": sys.stdin.read()}; payload.update({key: value for key, value in (("provider", sys.argv[1]), ("voice", sys.argv[2]), ("rate", sys.argv[3])) if value}); print(json.dumps(payload))' "$provider" "$voice" "$rate" \
         | curl --fail --silent --show-error --max-time 5 \
             -H 'Content-Type: application/json' \
             --data-binary @- "http://${host}:${port}/api/speak" >/dev/null; then
@@ -82,13 +75,72 @@ toggle() {
         --data '{"action":"toggle"}' "http://${host}:${port}/api/control" >/dev/null
 }
 
+forward_shortcut() {
+    # Hyprland consumed this global bind, so playerctl is not an equivalent
+    # fallback for browser tabs: Firefox can expose an idle MPRIS object while
+    # the actual YouTube player only responds to its own key event.  Send the
+    # original key straight to the focused window instead.
+    local key="$1"
+    case "$key" in
+        F6|F8|XF86AudioPause|XF86AudioPlay) ;;
+        *) return 2 ;;
+    esac
+    hyprctl dispatch "hl.dsp.send_shortcut({ mods = '', key = '$key', window = 'activewindow' })" >/dev/null
+}
+
+media_toggle() {
+    # TTS has priority only while it is audibly reading.  A paused, completed,
+    # or generating TTS job must not claim the normal media key: let MPRIS
+    # control the user's video/music player in those states.
+    local current
+    current="$(status 2>/dev/null || true)"
+    if printf '%s' "$current" | python3 -c 'import json, sys; print(json.load(sys.stdin).get("state") == "playing")' 2>/dev/null | grep -qx True; then
+        toggle
+        return
+    fi
+
+    # Firefox can expose several simultaneous MPRIS sessions.  The default
+    # playerctl target is arbitrary (and was selecting a paused tab instead
+    # of the YouTube tab that was actually playing), so select deliberately:
+    # pause a playing session first; otherwise resume a paused session.
+    local wanted player state remembered
+    # Always pause a currently playing session first.
+    while IFS= read -r player; do
+        state="$(playerctl --player="$player" status 2>/dev/null || true)"
+        if [[ "$state" == "Playing" ]] && playerctl --player="$player" play-pause; then
+            mkdir -p "$state_root"
+            printf '%s\n' "$player" > "$media_player_file"
+            return
+        fi
+    done < <(playerctl --list-all 2>/dev/null || true)
+
+    # After pausing YouTube, resume that same session rather than whichever
+    # unrelated Firefox tab happens to be listed first.
+    remembered="$(cat "$media_player_file" 2>/dev/null || true)"
+    if [[ -n "$remembered" ]] && [[ "$(playerctl --player="$remembered" status 2>/dev/null || true)" == "Paused" ]] && playerctl --player="$remembered" play-pause; then
+        return
+    fi
+
+    # No remembered active session: resume any real paused media session.
+    while IFS= read -r player; do
+        state="$(playerctl --player="$player" status 2>/dev/null || true)"
+        if [[ "$state" == "Paused" ]] && playerctl --player="$player" play-pause; then
+            mkdir -p "$state_root"
+            printf '%s\n' "$player" > "$media_player_file"
+            return
+        fi
+    done < <(playerctl --list-all 2>/dev/null || true)
+
+    forward_shortcut "${1:-F6}"
+}
+
 settings() {
-    local voice="${1:-}" rate="${2:-}" host port
+    local provider="${1:-}" voice="${2:-}" rate="${3:-}" host port
     notify_shell
     host="$(server_host)"
     port="${EASYTTS_PORT:-8765}"
     [[ -n "$host" ]] || host="127.0.0.1"
-    python3 -c 'import json, sys; print(json.dumps({"action": "settings", "voice": sys.argv[1], "rate": sys.argv[2]}))' "$voice" "$rate" \
+    python3 -c 'import json, sys; print(json.dumps({"action": "settings", "provider": sys.argv[1], "voice": sys.argv[2], "rate": sys.argv[3]}))' "$provider" "$voice" "$rate" \
         | curl --fail --silent --max-time 2 -H 'Content-Type: application/json' --data-binary @- "http://${host}:${port}/api/control" >/dev/null
 }
 
@@ -104,10 +156,12 @@ control() {
 
 case "${1:-speak-clipboard}" in
     status) status ;;
-    speak-clipboard) speak_clipboard "${2:-}" "${3:-}" ;;
-    settings) settings "${2:-}" "${3:-}" ;;
+    speak-clipboard) speak_clipboard "${2:-}" "${3:-}" "${4:-}" ;;
+    settings) settings "${2:-}" "${3:-}" "${4:-}" ;;
     toggle) toggle ;;
+    cancel) control cancel ;;
+    media-toggle) media_toggle "${2:-F6}" ;;
     reset) control reset ;;
     seek) control seek "${2:-0}" ;;
-    *) echo "usage: ttsctl {status|speak-clipboard [voice rate]|settings voice rate|toggle|reset|seek seconds}" >&2; exit 2 ;;
+    *) echo "usage: ttsctl {status|speak-clipboard [provider voice rate]|settings provider voice rate|toggle|cancel|media-toggle|reset|seek seconds}" >&2; exit 2 ;;
 esac
