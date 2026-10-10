@@ -12,4 +12,6 @@ quickshell/.config/quickshell/notification-times.ini
 
 # EasyTTS machine-local environment and Python bytecode
 easytts/.venv/
+easytts/.kokoro/
+easytts/.kokoro-model/
 easytts/__pycache__/

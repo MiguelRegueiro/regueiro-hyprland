@@ -10,7 +10,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from provider import DEFAULT_RATE, DEFAULT_VOICE, synthesize_to_file
+from provider import DEFAULT_PROVIDER, DEFAULT_RATE, DEFAULT_VOICE, synthesize_to_file
 
 
 ROOT = Path(__file__).resolve().parent
@@ -18,26 +18,52 @@ RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR", f"/tmp/regueiro-{os.getuid()}")
 STATE = RUNTIME / "state.json"
 PREFERENCES = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "regueiro-easytts" / "preferences.json"
 DEFAULT_SELECTION_RATE = "+50%"
+VALID_PROVIDERS = {"edge", "kokoro"}
+VALID_VOICES = {
+    "kokoro-michael", "kokoro-onyx",
+    "en-US-ChristopherNeural", "en-US-RogerNeural", "en-US-GuyNeural",
+    "en-US-AndrewMultilingualNeural",
+}
+
+
+def default_voice_for(provider):
+    if provider == "edge":
+        return "en-US-AndrewMultilingualNeural"
+    return "kokoro-michael"
+
+
+def compatible_voice(provider, voice):
+    # Omitted fields are normal for the lightweight /api/speak command used
+    # by F7.  They mean "keep the selected preference", not an invalid voice.
+    if not isinstance(voice, str):
+        return False
+    if provider == "edge":
+        return voice.startswith("en-US-")
+    return voice.startswith("kokoro-")
 
 
 def load_preferences():
     """Load the UI's last selected voice and rate, with sane first-run defaults."""
-    preferences = {"voice": DEFAULT_VOICE, "rate": DEFAULT_SELECTION_RATE}
+    preferences = {"provider": DEFAULT_PROVIDER, "voice": DEFAULT_VOICE, "rate": DEFAULT_SELECTION_RATE}
     try:
         stored = json.loads(PREFERENCES.read_text(encoding="utf-8"))
-        if isinstance(stored.get("voice"), str) and stored["voice"]:
+        if stored.get("voice") in VALID_VOICES:
             preferences["voice"] = stored["voice"]
+        if stored.get("provider") in VALID_PROVIDERS:
+            preferences["provider"] = stored["provider"]
         if isinstance(stored.get("rate"), str) and stored["rate"]:
             preferences["rate"] = stored["rate"]
     except (OSError, ValueError, TypeError):
         pass
+    if not compatible_voice(preferences["provider"], preferences["voice"]):
+        preferences["voice"] = default_voice_for(preferences["provider"])
     return preferences
 
 
-def save_preferences(voice, rate):
+def save_preferences(provider, voice, rate):
     PREFERENCES.parent.mkdir(parents=True, exist_ok=True)
     temporary = PREFERENCES.with_suffix(".tmp")
-    temporary.write_text(json.dumps({"voice": voice, "rate": rate}), encoding="utf-8")
+    temporary.write_text(json.dumps({"provider": provider, "voice": voice, "rate": rate}), encoding="utf-8")
     temporary.replace(PREFERENCES)
 
 
@@ -66,13 +92,13 @@ def server_addresses():
     return addresses
 
 
-async def synthesize(text, voice, rate):
+async def synthesize(text, voice, rate, provider):
     started = time.perf_counter()
 
     RUNTIME.mkdir(parents=True, exist_ok=True)
     output = RUNTIME / f"http-{threading.get_ident()}-{time.time_ns()}.mp3"
     try:
-        await synthesize_to_file(text, output, voice, rate)
+        await synthesize_to_file(text, output, voice, rate, provider)
         audio = output.read_bytes()
     finally:
         output.unlink(missing_ok=True)
@@ -86,6 +112,14 @@ async def synthesize(text, voice, rate):
     )
 
     return bytes(audio)
+
+
+def remove_orphaned_audio():
+    """A restart cannot replay a previous process's audio, so do not retain it."""
+    RUNTIME.mkdir(parents=True, exist_ok=True)
+    for pattern in ("speech-*.mp3", "http-*.mp3"):
+        for audio_file in RUNTIME.glob(pattern):
+            audio_file.unlink(missing_ok=True)
 
 
 class SpeechController:
@@ -111,7 +145,8 @@ class SpeechController:
         preferences = load_preferences()
         self.voice = preferences["voice"]
         self.rate = preferences["rate"]
-        RUNTIME.mkdir(parents=True, exist_ok=True)
+        self.provider = preferences["provider"]
+        remove_orphaned_audio()
         self.write_state("idle")
 
     def current_position(self):
@@ -125,7 +160,7 @@ class SpeechController:
         payload = json.dumps({"state": state, "text": self.text, "detail": detail,
                               "position": self.current_position(), "duration": self.duration,
                               "replayReady": self.replay_ready,
-                              "voice": self.voice, "rate": self.rate})
+                              "provider": self.provider, "voice": self.voice, "rate": self.rate})
         temporary = STATE.with_suffix(".tmp")
         temporary.write_text(payload, encoding="utf-8")
         temporary.replace(STATE)
@@ -136,15 +171,19 @@ class SpeechController:
                     "detail": self.detail,
                     "position": self.current_position(), "duration": self.duration,
                     "replayReady": self.replay_ready,
-                    "voice": self.voice, "rate": self.rate}
+                    "provider": self.provider, "voice": self.voice, "rate": self.rate}
 
-    def set_preferences(self, voice=None, rate=None):
+    def set_preferences(self, provider=None, voice=None, rate=None):
         with self.lock:
-            if isinstance(voice, str) and voice:
+            if provider in VALID_PROVIDERS:
+                self.provider = provider
+            if compatible_voice(self.provider, voice):
                 self.voice = voice
+            elif provider in VALID_PROVIDERS:
+                self.voice = default_voice_for(self.provider)
             if isinstance(rate, str) and rate:
                 self.rate = rate
-            save_preferences(self.voice, self.rate)
+            save_preferences(self.provider, self.voice, self.rate)
             self.write_state(self.state, self.detail)
 
     def _terminate_player(self):
@@ -184,11 +223,12 @@ class SpeechController:
             self._start_player(job, 0.0, paused=True)
             self.write_state("paused", "Ready to replay")
 
-    def speak(self, text, voice=None, rate=None):
+    def speak(self, text, provider=None, voice=None, rate=None):
         with self.lock:
-            self.voice = voice if isinstance(voice, str) and voice else self.voice
+            self.provider = provider if provider in VALID_PROVIDERS else self.provider
+            self.voice = voice if compatible_voice(self.provider, voice) else default_voice_for(self.provider)
             self.rate = rate if isinstance(rate, str) and rate else self.rate
-            save_preferences(self.voice, self.rate)
+            save_preferences(self.provider, self.voice, self.rate)
             self.job += 1
             job = self.job
             self.replay_ready = False
@@ -200,7 +240,7 @@ class SpeechController:
             self.duration = 0.0
             self.position = 0.0
             self.write_state("generating", "Preparing speech")
-        threading.Thread(target=self._run, args=(job, text, self.voice, self.rate), daemon=True).start()
+        threading.Thread(target=self._run, args=(job, text, self.provider, self.voice, self.rate), daemon=True).start()
 
     def toggle(self):
         """Pause/resume the current reading without a persistent player."""
@@ -264,10 +304,10 @@ class SpeechController:
         with self.lock:
             return job == self.job
 
-    def _run(self, job, text, voice, rate):
+    def _run(self, job, text, provider, voice, rate):
         audio_file = RUNTIME / f"speech-{job}.mp3"
         try:
-            asyncio.run(synthesize_to_file(text, audio_file, voice, rate))
+            asyncio.run(synthesize_to_file(text, audio_file, voice, rate, provider))
             if not self._current(job):
                 audio_file.unlink(missing_ok=True)
                 return
@@ -356,7 +396,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/control":
                 action = payload.get("action")
                 if action == "settings":
-                    speech.set_preferences(payload.get("voice"), payload.get("rate"))
+                    speech.set_preferences(payload.get("provider"), payload.get("voice"), payload.get("rate"))
                     self.send_json(speech.snapshot())
                     return
                 if action == "cancel":
@@ -384,6 +424,7 @@ class Handler(BaseHTTPRequestHandler):
             text = payload.get("text", "").strip()
             voice = payload.get("voice", DEFAULT_VOICE)
             rate = payload.get("rate", DEFAULT_RATE)
+            provider = payload.get("provider", DEFAULT_PROVIDER)
 
             if not text:
                 self.send_json(
@@ -393,15 +434,20 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path == "/api/speak":
-                speech.speak(text, payload.get("voice"), payload.get("rate"))
+                speech.speak(text, payload.get("provider"), payload.get("voice"), payload.get("rate"))
                 self.send_json({"state": "generating"}, 202)
                 return
 
+            # The Web UI sends short parallel preview requests rather than a
+            # /api/speak job.  Keep their provider/model choice persistent so
+            # the F7/QuickShell client uses the same local backend next time.
+            speech.set_preferences(provider, voice, rate)
             audio = asyncio.run(
                 synthesize(
                     text,
                     voice,
                     rate,
+                    provider,
                 )
             )
 
