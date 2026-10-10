@@ -85,7 +85,8 @@ textarea:focus {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 320px)
+        minmax(180px, 240px)
+        minmax(0, 260px)
         auto
         auto
         auto;
@@ -96,6 +97,10 @@ textarea:focus {
 }
 
 #voice {
+    width: 100%;
+}
+
+#provider {
     width: 100%;
 }
 
@@ -254,11 +259,13 @@ kbd {
     .controls {
         grid-template-columns:
             minmax(0, 1fr)
+            minmax(0, 1fr)
             auto
             auto
             auto;
     }
 
+    #provider,
     #voice {
         width: 100%;
         grid-column: 1 / -1;
@@ -280,102 +287,18 @@ kbd {
 
 <div class="controls">
 
+<select id="provider" aria-label="Speech provider">
+<option value="kokoro" selected>Local · Kokoro fast</option>
+<option value="edge">Edge · online test</option>
+</select>
+
 <select id="voice">
-
-<optgroup label="English · US">
-
-<option
-    value="en-US-AndrewMultilingualNeural"
-    selected
->
-    Andrew · multilingual
-</option>
-
-<option value="en-US-EmmaMultilingualNeural">
-    Emma · multilingual
-</option>
-
-<option value="en-US-BrianMultilingualNeural">
-    Brian · multilingual
-</option>
-
-<option value="en-US-AvaMultilingualNeural">
-    Ava · multilingual
-</option>
-
-<option value="en-US-AriaNeural">
-    Aria
-</option>
-
-<option value="en-US-JennyNeural">
-    Jenny
-</option>
-
-<option value="en-US-GuyNeural">
-    Guy
-</option>
-
-<option value="en-US-RogerNeural">
-    Roger
-</option>
-
-</optgroup>
-
-
-<optgroup label="English · UK">
-
-<option value="en-GB-RyanNeural">
-    Ryan
-</option>
-
-<option value="en-GB-SoniaNeural">
-    Sonia
-</option>
-
-<option value="en-GB-LibbyNeural">
-    Libby
-</option>
-
-</optgroup>
-
-
-<optgroup label="Spanish · Spain">
-
-<option value="es-ES-AlvaroNeural">
-    Álvaro
-</option>
-
-<option value="es-ES-ElviraNeural">
-    Elvira
-</option>
-
-</optgroup>
-
-
-<optgroup label="Portuguese · Brazil">
-
-<option value="pt-BR-AntonioNeural">
-    Antônio
-</option>
-
-<option value="pt-BR-FranciscaNeural">
-    Francisca
-</option>
-
-</optgroup>
-
-
-<optgroup label="Japanese">
-
-<option value="ja-JP-KeitaNeural">
-    Keita
-</option>
-
-<option value="ja-JP-NanamiNeural">
-    Nanami
-</option>
-
-</optgroup>
+<option value="kokoro-michael" data-provider="kokoro" selected>Michael · US English male</option>
+<option value="kokoro-onyx" data-provider="kokoro">Onyx · US English male</option>
+<option value="en-US-ChristopherNeural" data-provider="edge">Christopher · Edge US male</option>
+<option value="en-US-RogerNeural" data-provider="edge">Roger · Edge US male</option>
+<option value="en-US-GuyNeural" data-provider="edge">Guy · Edge US male</option>
+<option value="en-US-AndrewMultilingualNeural" data-provider="edge">Andrew · Edge multilingual male</option>
 
 </select>
 
@@ -464,6 +387,9 @@ const textBox =
 
 const voice =
     document.querySelector("#voice");
+
+const provider =
+    document.querySelector("#provider");
 
 const speed =
     document.querySelector("#speed");
@@ -907,6 +833,7 @@ async function generateChunk(
     mySession,
     selectedVoice,
     selectedRate,
+    selectedProvider,
     signal
 ) {
     const response =
@@ -922,6 +849,7 @@ async function generateChunk(
 
                 body: JSON.stringify({
                     text: chunkText,
+                    provider: selectedProvider,
                     voice: selectedVoice,
                     rate: selectedRate
                 }),
@@ -1141,6 +1069,9 @@ async function generate() {
     const selectedVoice =
         voice.value;
 
+    const selectedProvider =
+        provider.value;
+
 
     speak.textContent = "Cancel";
 
@@ -1179,6 +1110,7 @@ async function generate() {
                     mySession,
                     selectedVoice,
                     selectedRate,
+                    selectedProvider,
                     generationAbortController.signal
                 );
             } catch (error) {
@@ -1207,7 +1139,7 @@ async function generate() {
 
     const workerCount =
         Math.min(
-            3,
+            selectedProvider === "kokoro" ? 1 : 3,
             texts.length
         );
 
@@ -1400,6 +1332,108 @@ speed.addEventListener(
     "change",
     applySpeed
 );
+
+
+function updateProviderUi() {
+    const options = Array.from(voice.options);
+    const matching = options.filter(option => option.dataset.provider === provider.value);
+
+    options.forEach(option => {
+        option.hidden = option.dataset.provider !== provider.value;
+    });
+
+    if (!voice.selectedOptions[0] || voice.selectedOptions[0].hidden) {
+        voice.value = matching[0]?.value || "";
+    }
+
+    voice.disabled = false;
+    voice.title = "";
+}
+
+
+async function savePreferences() {
+    try {
+        await fetch(
+            "/api/control",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    action: "settings",
+                    provider: provider.value,
+                    voice: voice.value,
+                    rate: speechRate(Number(speed.value))
+                })
+            }
+        );
+    } catch {}
+}
+
+
+async function loadPreferences() {
+    try {
+        const response =
+            await fetch("/api/status");
+
+        if (!response.ok)
+            return;
+
+        const saved =
+            await response.json();
+
+        if (
+            saved.provider &&
+            Array.from(provider.options).some(
+                option => option.value === saved.provider
+            )
+        ) {
+            provider.value = saved.provider;
+        }
+
+        if (
+            saved.voice &&
+            Array.from(voice.options).some(
+                option => option.value === saved.voice
+            )
+        ) {
+            voice.value = saved.voice;
+        }
+
+        const savedSpeed =
+            1 + Number.parseInt(saved.rate || "+0%", 10) / 100;
+
+        if (
+            Number.isFinite(savedSpeed) &&
+            Array.from(speed.options).some(
+                option => Number(option.value) === savedSpeed
+            )
+        ) {
+            speed.value = String(savedSpeed);
+        }
+    } catch {}
+
+    updateProviderUi();
+}
+
+
+provider.addEventListener(
+    "change",
+    () => {
+        updateProviderUi();
+        savePreferences();
+    }
+);
+
+
+voice.addEventListener("change", savePreferences);
+
+
+speed.addEventListener("change", savePreferences);
+
+
+loadPreferences();
 
 
 seek.addEventListener(

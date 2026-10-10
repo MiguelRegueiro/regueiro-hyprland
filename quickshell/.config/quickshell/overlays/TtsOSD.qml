@@ -16,7 +16,9 @@ PanelWindow {
     readonly property bool paused: ttsService.status === "paused"
     readonly property bool replayReady: ttsService.replayReady
     readonly property bool error: ttsService.status === "error"
-    readonly property string message: error ? "Text-to-speech unavailable" : (generating ? "Preparing speech" : (paused ? "Paused" : "Reading"))
+    // A provider rejection (for example, Edge returning HTTP 403) is not the
+    // same thing as the local service being unavailable.
+    readonly property string message: error ? "Text-to-speech error" : (generating ? "Preparing speech" : (paused ? "Paused" : "Reading"))
 
     screen: targetScreen
     visible: active && osdVisible

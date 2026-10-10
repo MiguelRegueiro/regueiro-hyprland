@@ -11,11 +11,13 @@ Item {
     property real position: 0
     property real duration: 0
     property bool replayReady: false
-    property string voice: "en-US-AndrewMultilingualNeural"
+    property string provider: "kokoro"
+    property string voice: "kokoro-michael"
     property string rate: "+50%"
     property bool preferencesPending: false
     property string pendingVoice: ""
     property string pendingRate: ""
+    property string pendingProvider: ""
     property bool errorDismissed: false
     property int fastRefreshesRemaining: 0
     readonly property bool hasStatus: status !== "idle" && !errorDismissed
@@ -68,13 +70,15 @@ Item {
                     // completed reading for a manual pause.
                     root.replayReady = Boolean(next.replayReady);
                     root.status = next.state || "idle";
+                    const nextProvider = next.provider || root.provider;
                     const nextVoice = next.voice || root.voice;
                     const nextRate = next.rate || root.rate;
-                    if (root.preferencesPending && nextVoice === root.pendingVoice && nextRate === root.pendingRate) {
+                    if (root.preferencesPending && nextProvider === root.pendingProvider && nextVoice === root.pendingVoice && nextRate === root.pendingRate) {
                         root.preferencesPending = false;
                         preferenceTimer.stop();
                     }
                     if (!root.preferencesPending) {
+                        root.provider = nextProvider;
                         root.voice = nextVoice;
                         root.rate = nextRate;
                     }
@@ -88,27 +92,34 @@ Item {
         }
     }
 
-    function speakClipboard(voice, rate) {
+    function speakClipboard(provider, voice, rate) {
         startFastRefresh();
-        speakProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "speak-clipboard", voice, rate];
+        speakProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "speak-clipboard", provider, voice, rate];
         speakProcess.running = true;
     }
 
-    function setPreferences(voice, rate) {
+    function setPreferences(provider, voice, rate) {
         startFastRefresh();
+        root.provider = provider;
         root.voice = voice;
         root.rate = rate;
         root.pendingVoice = voice;
         root.pendingRate = rate;
+        root.pendingProvider = provider;
         root.preferencesPending = true;
         preferenceTimer.restart();
-        settingsProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "settings", voice, rate];
+        settingsProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "settings", provider, voice, rate];
         settingsProcess.running = true;
     }
 
     function toggle() {
         startFastRefresh();
         controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "toggle"];
+        controlProcess.running = true;
+    }
+    function cancel() {
+        startFastRefresh();
+        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "cancel"];
         controlProcess.running = true;
     }
     function reset() {

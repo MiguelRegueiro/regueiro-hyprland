@@ -13,15 +13,29 @@ PanelWindow {
     required property var ttsService
     property bool open: false
     property bool fullscreenActive: false
-    property string voice: "en-US-AndrewMultilingualNeural"
+    property string provider: "kokoro"
+    property string voice: "kokoro-michael"
     property string rate: "+50%"
     property int selectorOpen: 0
+    readonly property var kokoroVoices: [
+        { label: "Michael · US English male", value: "kokoro-michael" },
+        { label: "Onyx · US English male", value: "kokoro-onyx" }
+    ]
+    readonly property var edgeVoices: [
+        { label: "Christopher · Edge US male", value: "en-US-ChristopherNeural" },
+        { label: "Roger · Edge US male", value: "en-US-RogerNeural" },
+        { label: "Guy · Edge US male", value: "en-US-GuyNeural" },
+        { label: "Andrew · Edge multilingual male", value: "en-US-AndrewMultilingualNeural" }
+    ]
+    readonly property var voiceOptions: provider === "edge" ? edgeVoices : kokoroVoices
     signal closeRequested
     signal barPressed(real x, real y)
 
     onOpenChanged: {
         if (!open)
             selectorOpen = 0;
+        else
+            syncPreferences();
     }
 
     function routeBarPress(mouse) {
@@ -34,21 +48,35 @@ PanelWindow {
 
     function chooseSelectorOption(data, itemIndex) {
         if (selectorOpen === 1) {
+            provider = data.value;
+            modelBox.currentIndex = itemIndex;
+            voice = voiceOptions[0].value;
+            voiceBox.currentIndex = 0;
+        } else if (selectorOpen === 2) {
             voice = data.value;
             voiceBox.currentIndex = itemIndex;
-        } else if (selectorOpen === 2) {
+        } else if (selectorOpen === 3) {
             rate = data.value;
             speedBox.currentIndex = itemIndex;
         }
         selectorOpen = 0;
-        ttsService.setPreferences(voice, rate);
+        ttsService.setPreferences(provider, voice, rate);
     }
 
     function syncPreferences() {
+        if (ttsService.provider) {
+            provider = ttsService.provider;
+            for (let index = 0; index < modelBox.model.length; index++) {
+                if (modelBox.model[index].value === provider) {
+                    modelBox.currentIndex = index;
+                    break;
+                }
+            }
+        }
         if (ttsService.voice) {
             voice = ttsService.voice;
-            for (let index = 0; index < voiceBox.model.length; index++) {
-                if (voiceBox.model[index].value === voice) {
+            for (let index = 0; index < voiceOptions.length; index++) {
+                if (voiceOptions[index].value === voice) {
                     voiceBox.currentIndex = index;
                     break;
                 }
@@ -134,28 +162,29 @@ PanelWindow {
                 id: selectors
                 width: parent.width; height: 42; spacing: 12
                 ComboBox {
+                    id: modelBox
+                    Layout.preferredWidth: 160
+                    Layout.fillHeight: true
+                    model: [
+                        { label: "Local · Kokoro fast", value: "kokoro" },
+                        { label: "Edge · online test", value: "edge" }
+                    ]
+                    textRole: "label"
+                    valueRole: "value"
+                    contentItem: Text { leftPadding: 14; rightPadding: 30; text: modelBox.displayText; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 14; font.weight: Font.Medium; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight }
+                    indicator: Text { x: modelBox.width - width - 12; anchors.verticalCenter: parent.verticalCenter; text: "󰅀"; color: Theme.textPrimary; font.family: Theme.fontIcons; font.pixelSize: 14 }
+                    background: Rectangle { radius: 12; color: ttsPanel.controlBg; border.width: 1; border.color: modelBox.activeFocus ? ttsPanel.controlBorderActive : ttsPanel.controlBorder }
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        onClicked: root.selectorOpen = root.selectorOpen === 1 ? 0 : 1
+                    }
+                }
+                ComboBox {
                     id: voiceBox
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    model: [
-                        { label: "Andrew · multilingual", value: "en-US-AndrewMultilingualNeural" },
-                        { label: "Emma · multilingual", value: "en-US-EmmaMultilingualNeural" },
-                        { label: "Brian · multilingual", value: "en-US-BrianMultilingualNeural" },
-                        { label: "Ava · multilingual", value: "en-US-AvaMultilingualNeural" },
-                        { label: "Aria · US English", value: "en-US-AriaNeural" },
-                        { label: "Jenny · US English", value: "en-US-JennyNeural" },
-                        { label: "Guy · US English", value: "en-US-GuyNeural" },
-                        { label: "Roger · US English", value: "en-US-RogerNeural" },
-                        { label: "Ryan · UK English", value: "en-GB-RyanNeural" },
-                        { label: "Sonia · UK English", value: "en-GB-SoniaNeural" },
-                        { label: "Libby · UK English", value: "en-GB-LibbyNeural" },
-                        { label: "Álvaro · Spanish", value: "es-ES-AlvaroNeural" },
-                        { label: "Elvira · Spanish", value: "es-ES-ElviraNeural" },
-                        { label: "Antônio · Brazilian Portuguese", value: "pt-BR-AntonioNeural" },
-                        { label: "Francisca · Brazilian Portuguese", value: "pt-BR-FranciscaNeural" },
-                        { label: "Keita · Japanese", value: "ja-JP-KeitaNeural" },
-                        { label: "Nanami · Japanese", value: "ja-JP-NanamiNeural" }
-                    ]
+                    model: root.voiceOptions
                     textRole: "label"
                     valueRole: "value"
                     onActivated: root.voice = currentValue
@@ -165,7 +194,7 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton
-                        onClicked: root.selectorOpen = root.selectorOpen === 1 ? 0 : 1
+                        onClicked: root.selectorOpen = root.selectorOpen === 2 ? 0 : 2
                     }
                 }
                 ComboBox {
@@ -183,13 +212,13 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton
-                        onClicked: root.selectorOpen = root.selectorOpen === 2 ? 0 : 2
+                        onClicked: root.selectorOpen = root.selectorOpen === 3 ? 0 : 3
                     }
                 }
             }
             Row {
                 x: Math.round((parent.width - width) / 2); y: 54; spacing: 10
-                ButtonControl { text: ttsService.status === "generating" ? "Cancel" : "Speak"; primary: true; onClicked: ttsService.speakClipboard(root.voice, root.rate) }
+                ButtonControl { text: ttsService.status === "generating" ? "Cancel" : "Speak"; primary: true; onClicked: ttsService.status === "generating" ? ttsService.cancel() : ttsService.speakClipboard(root.provider, root.voice, root.rate) }
                 ButtonControl { text: ttsService.status === "playing" ? "󰏤" : "󰐊"; icon: true; onClicked: ttsService.toggle() }
                 ButtonControl { text: "■"; compact: true; onClicked: ttsService.reset() }
             }
@@ -247,12 +276,12 @@ PanelWindow {
     PanelWindow {
         id: selectorWindow
         readonly property real panelX: Math.max(8, root.width - 520 - 108)
-        readonly property real voiceWidth: 520 - 32 - 12 - 102
+        readonly property real modelWidth: 160
+        readonly property real voiceWidth: 520 - 32 - 24 - modelWidth - 102
         readonly property real speedWidth: 102
-        // Keep the narrow speed list aligned to the speed control's right edge.
-        readonly property real selectorX: root.selectorOpen === 1 ? panelX + 16 : panelX + 16 + voiceWidth + 12 + 102 - speedWidth
+        readonly property real selectorX: root.selectorOpen === 1 ? panelX + 16 : (root.selectorOpen === 2 ? panelX + 16 + modelWidth + 12 : panelX + 16 + modelWidth + 12 + voiceWidth + 12)
         readonly property real selectorY: Theme.barHeight + Theme.topBarMenuTopGap + 16 + 42 + 3
-        readonly property real selectorWidth: root.selectorOpen === 1 ? voiceWidth : speedWidth
+        readonly property real selectorWidth: root.selectorOpen === 1 ? modelWidth : (root.selectorOpen === 2 ? voiceWidth : speedWidth)
         screen: root.targetScreen
         visible: root.open && root.selectorOpen !== 0
         exclusiveZone: 0
@@ -273,8 +302,7 @@ PanelWindow {
 
         Rectangle {
             id: selectorMenu
-            readonly property bool choosingVoice: root.selectorOpen === 1
-            readonly property var sourceCombo: choosingVoice ? voiceBox : speedBox
+            readonly property var sourceCombo: root.selectorOpen === 1 ? modelBox : (root.selectorOpen === 2 ? voiceBox : speedBox)
 
             x: selectorWindow.selectorX
             y: selectorWindow.selectorY
