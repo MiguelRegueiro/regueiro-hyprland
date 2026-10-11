@@ -34,7 +34,14 @@ Item {
             return false;
 
         const lowered = host.toLowerCase();
-        return lowered !== "local" && lowered !== "localhost" && lowered !== "localhost.localdomain" && lowered !== ":0" && lowered !== ":1";
+        if (lowered === "local" || lowered === "localhost" || lowered === "localhost.localdomain"
+                || lowered === ":0" || lowered === ":1")
+            return false;
+
+        // systemd-logind records local graphical terminals in `who` as, for
+        // example, "(wayland-1)". They are not SSH connections and ending
+        // them from this menu would kill a local terminal session.
+        return !new RegExp("^(wayland|x11)-[0-9]+$").test(lowered);
     }
 
     function sessionKey(session) {
