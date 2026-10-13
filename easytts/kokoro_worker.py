@@ -72,10 +72,19 @@ def main():
     # five seconds after synthesis, so permit the proven ~2.2 GB active peak
     # rather than failing a reading midway through.
     cuda_options = {"gpu_mem_limit": 3 * 1024 * 1024 * 1024, "arena_extend_strategy": "kSameAsRequested"}
-    session = ort.InferenceSession(
-        str(ROOT / ".kokoro-model" / "kokoro-v1.0.onnx"),
-        providers=[("CUDAExecutionProvider", cuda_options), "CPUExecutionProvider"] if providers[0] == "CUDAExecutionProvider" else providers,
-    )
+    model_path = str(ROOT / ".kokoro-model" / "kokoro-v1.0.onnx")
+    primary_provider = providers[0][0] if isinstance(providers[0], tuple) else providers[0]
+    session_providers = [("CUDAExecutionProvider", cuda_options), "CPUExecutionProvider"] if primary_provider == "CUDAExecutionProvider" else providers
+    try:
+        session = ort.InferenceSession(model_path, providers=session_providers)
+    except Exception:
+        # Some OpenVINO versions advertise AUTO:GPU,CPU but cannot compile
+        # Kokoro's dynamic-shape graph. ONNX Runtime then aborts session
+        # creation instead of trying its listed CPU provider, so retry CPU
+        # explicitly and keep local TTS usable on those Intel systems.
+        if primary_provider != "OpenVINOExecutionProvider":
+            raise
+        session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
     model = Kokoro.from_session(session, str(ROOT / ".kokoro-model" / "voices-v1.0.bin"))
     reply(ready=True, provider=session.get_providers()[0])
 
