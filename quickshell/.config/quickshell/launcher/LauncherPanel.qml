@@ -817,10 +817,9 @@ FocusScope {
 
                                                     blocking: false
                                                     cursorShape: Qt.PointingHandCursor
-                                                    onHoveredChanged: {
-                                                        if (hovered && matched)
-                                                            root.selectedIndex = filteredIndex;
-                                                    }
+                                                    // Hover is only a visual affordance. Keeping the
+                                                    // selection keyboard-driven prevents Enter from
+                                                    // launching a tile the pointer happened to cross.
                                                 }
 
                                                 Behavior on scale {
