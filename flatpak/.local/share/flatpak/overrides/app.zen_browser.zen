@@ -1,4 +1,4 @@
 [Context]
-# MimeClip screenshot entries include a file URI.  Zen needs read-only access to
-# the screenshot directory in order to resolve that URI into an image on paste.
-filesystems=xdg-pictures:ro;
+# File-manager and MimeClip entries contain file URIs. Zen needs read-only
+# access to the usual image locations in order to resolve them on paste.
+filesystems=xdg-download:ro;xdg-documents:ro;xdg-pictures:ro;
