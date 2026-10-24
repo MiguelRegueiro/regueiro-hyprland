@@ -14,7 +14,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 IDLE_SECONDS = 90
-VOICES = {"kokoro-michael": "am_michael", "kokoro-onyx": "am_onyx"}
+# UI voice ID: (Kokoro voice ID, Kokoro language ID).
+# ``es`` uses Kokoro's Spanish (Spain) phonemizer.
+VOICES = {
+    "kokoro-michael": ("am_michael", "en-us"),
+    "kokoro-onyx": ("am_onyx", "en-us"),
+    "kokoro-alex": ("em_alex", "es"),
+}
 SPEEDS = {"0.75": 0.75, "1": 1.0, "1.25": 1.25, "1.5": 1.5, "1.75": 1.75, "2": 2.0,
           "-25%": 0.75, "+0%": 1.0, "+25%": 1.25, "+50%": 1.5, "+75%": 1.75, "+100%": 2.0}
 MIN_CUDA_VRAM_MIB = 3 * 1024
@@ -95,12 +101,12 @@ def main():
         try:
             request = json.loads(line)
             output = Path(request["output"])
-            voice = VOICES.get(request.get("voice"), "am_michael")
+            voice, language = VOICES.get(request.get("voice"), VOICES["kokoro-michael"])
             speed = SPEEDS.get(str(request.get("rate", "1.5")), 1.5)
             # Kokoro's native speed parameter changes the prosody model and
             # becomes muddy above 1x.  Generate clear, natural speech first;
             # then apply a transparent time stretch plus loudness normalization.
-            samples, sample_rate = model.create(request["text"], voice=voice, speed=1.0, lang="en-us")
+            samples, sample_rate = model.create(request["text"], voice=voice, speed=1.0, lang=language)
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temporary:
                 wav_path = Path(temporary.name)
             try:

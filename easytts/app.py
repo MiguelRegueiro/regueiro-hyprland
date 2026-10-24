@@ -20,7 +20,7 @@ PREFERENCES = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) /
 DEFAULT_SELECTION_RATE = "+50%"
 VALID_PROVIDERS = {"edge", "kokoro"}
 VALID_VOICES = {
-    "kokoro-michael", "kokoro-onyx",
+    "kokoro-michael", "kokoro-onyx", "kokoro-alex",
     "en-US-ChristopherNeural", "en-US-RogerNeural", "en-US-GuyNeural",
     "en-US-AndrewMultilingualNeural",
 }
@@ -39,7 +39,7 @@ def compatible_voice(provider, voice):
         return False
     if provider == "edge":
         return voice.startswith("en-US-")
-    return voice.startswith("kokoro-")
+    return voice in VALID_VOICES and voice.startswith("kokoro-")
 
 
 def load_preferences():
