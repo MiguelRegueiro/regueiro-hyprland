@@ -44,7 +44,7 @@ The previous Hyprlock theme remains in the repository as an inactive configurati
 The package commands below target CachyOS/Arch. Shared configuration also supports Fedora; package names and availability differ.
 
 ```sh
-sudo pacman -S git stow \
+sudo pacman -S git stow rust gtk4 \
                hyprland hyprpaper hyprpicker hypridle \
                hyprpolkitagent \
                quickshell \
