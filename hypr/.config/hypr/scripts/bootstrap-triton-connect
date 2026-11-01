@@ -6,9 +6,17 @@ set -euo pipefail
 repository="${TRITON_CONNECT_DIR:-$HOME/triton-connect}"
 installer="$repository/desktop-client/app/scripts/install-local.sh"
 
+if [[ ! -e "$repository" ]]; then
+  git clone https://github.com/MiguelRegueiro/triton-connect.git "$repository"
+elif [[ -d "$repository/.git" ]]; then
+  git -C "$repository" pull --ff-only
+else
+  printf 'Triton Connect path is not a Git checkout: %s\n' "$repository" >&2
+  exit 1
+fi
+
 if [[ ! -x "$installer" ]]; then
-  printf 'Triton Connect checkout not found at %s\n' "$repository" >&2
-  printf 'Clone it there, or set TRITON_CONNECT_DIR to its checkout path.\n' >&2
+  printf 'Triton Connect installer not found at %s\n' "$installer" >&2
   exit 1
 fi
 

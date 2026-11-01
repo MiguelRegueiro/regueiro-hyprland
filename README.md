@@ -104,8 +104,8 @@ sudo systemctl enable --now power-profiles-daemon
 ### Triton Connect
 
 Triton Connect starts in the system tray with Hyprland after it has been
-installed. Keep its checkout separate from these dotfiles (by default at
-`~/triton-connect`), then bootstrap it once:
+installed. Bootstrap it once; the helper clones its private checkout to
+`~/triton-connect` when needed and fast-forwards it later:
 
 ```sh
 ~/.config/hypr/scripts/bootstrap-triton-connect
