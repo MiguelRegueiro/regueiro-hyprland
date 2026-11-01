@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Keep the application itself in its own repository. This dotfiles helper
+# installs it into ~/.local/bin and makes the Hyprland autostart entry usable.
+repository="${TRITON_CONNECT_DIR:-$HOME/triton-connect}"
+installer="$repository/desktop-client/app/scripts/install-local.sh"
+
+if [[ ! -x "$installer" ]]; then
+  printf 'Triton Connect checkout not found at %s\n' "$repository" >&2
+  printf 'Clone it there, or set TRITON_CONNECT_DIR to its checkout path.\n' >&2
+  exit 1
+fi
+
+exec "$installer"

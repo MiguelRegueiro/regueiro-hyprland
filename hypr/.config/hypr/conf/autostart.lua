@@ -24,4 +24,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("sh -c 'sleep 2 && exec systemctl --user start hyprpolkitagent.service'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/fcitx-session.sh'")
     hl.exec_cmd("sh -c 'sleep 2 && exec blueman-applet'")
+    -- Triton Connect owns its tray window and starts its paired-device daemon
+    -- itself. It is optional so a fresh dotfiles install can still start a
+    -- session before Triton has been bootstrapped.
+    hl.exec_cmd("sh -c 'sleep 2; app=\"$HOME/.local/bin/triton-control\"; [ -x \"$app\" ] && exec \"$app\" --background'")
 end)

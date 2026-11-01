@@ -101,6 +101,19 @@ sudo systemctl enable --now bluetooth
 sudo systemctl enable --now power-profiles-daemon
 ```
 
+### Triton Connect
+
+Triton Connect starts in the system tray with Hyprland after it has been
+installed. Keep its checkout separate from these dotfiles (by default at
+`~/triton-connect`), then bootstrap it once:
+
+```sh
+~/.config/hypr/scripts/bootstrap-triton-connect
+```
+
+Set `TRITON_CONNECT_DIR` when the checkout lives elsewhere. The helper builds
+and installs the desktop client; future Hyprland logins start it automatically.
+
 On Fedora, keep `tuned-ppd` if it already provides power profiles. QuickShell uses the same PowerProfiles interface with either backend; it does not require `powerprofilesctl`.
 
 ### Privileged desktop apps
