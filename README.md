@@ -114,15 +114,6 @@ installed. Bootstrap it once; the helper clones its private checkout to
 Set `TRITON_CONNECT_DIR` when the checkout lives elsewhere. The helper builds
 and installs the desktop client; future Hyprland logins start it automatically.
 
-On Fedora, install its desktop requirements before bootstrapping:
-
-```sh
-sudo dnf install gtk4-devel libxkbcommon-utils
-```
-
-`libxkbcommon-utils` supplies `xkbcli`, which Triton needs at runtime for
-virtual keyboard input.
-
 On Fedora, keep `tuned-ppd` if it already provides power profiles. QuickShell uses the same PowerProfiles interface with either backend; it does not require `powerprofilesctl`.
 
 ### Privileged desktop apps

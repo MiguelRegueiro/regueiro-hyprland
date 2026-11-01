@@ -6,26 +6,6 @@ set -euo pipefail
 repository="${TRITON_CONNECT_DIR:-$HOME/triton-connect}"
 installer="$repository/desktop-client/app/scripts/install-local.sh"
 
-dependency_hint() {
-  if [[ -r /etc/os-release ]]; then
-    # shellcheck disable=SC1091
-    . /etc/os-release
-    case "${ID:-}" in
-      fedora) printf 'Install it with: sudo dnf install libxkbcommon-utils\n' >&2 ;;
-      arch|cachyos) printf 'Install it with: sudo pacman -S libxkbcommon\n' >&2 ;;
-      *) printf 'Install the package providing xkbcli, then run this helper again.\n' >&2 ;;
-    esac
-  fi
-}
-
-# The host builds without this utility, but virtual keyboard input needs it at
-# runtime to create the compositor keymap. Fail up front with the real fix.
-if ! command -v xkbcli >/dev/null 2>&1; then
-  printf 'Triton Connect needs xkbcli for keyboard input.\n' >&2
-  dependency_hint
-  exit 1
-fi
-
 if [[ ! -e "$repository" ]]; then
   git clone https://github.com/MiguelRegueiro/triton-connect.git "$repository"
 elif [[ -d "$repository/.git" ]]; then
