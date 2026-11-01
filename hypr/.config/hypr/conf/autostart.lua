@@ -4,7 +4,10 @@ hl.on("hyprland.start", function()
     -- Start the shell before the login-time portal, GPU, and Python work.  QS
     -- eagerly creates every panel, so prioritising it here keeps the bar and
     -- all menus warm without pushing that work to their first use.
-    hl.exec_cmd("qs -n -d")
+    -- Include per-user icon themes before QuickShell starts.  In particular,
+    -- this lets StatusNotifier tray icons resolve from ~/.local/share on both
+    -- Arch-based systems and Fedora instead of falling back to a placeholder.
+    hl.exec_cmd("sh -c 'export XDG_DATA_DIRS=\"$HOME/.local/share:$HOME/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}\"; exec qs -n -d'")
 
     -- Let QuickShell claim the newly-created Wayland session first.  These
     -- helpers are independent of the bar and can safely start just after it.
