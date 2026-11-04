@@ -1,97 +1,97 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
 format = """
-$cmd_duration$line_break$line_break\
-[](surface0)\
-$os$username\
-[](fg:surface0 bg:overlay0)\
+$cmd_duration\
+[](fg:overlay0)\
 $directory\
-[](fg:overlay0 bg:blue)\
+[](fg:overlay0 bg:git)\
 $git_branch$git_status\
-[](fg:blue bg:purple)\
+[](fg:git bg:runtime)\
 $python$nodejs$rust$golang$docker_context\
-[](fg:purple bg:accent)\
+[](fg:runtime bg:time_bg)\
 $time\
-[](fg:accent)\
-$line_break$character"""
+[](fg:time_bg)\
+$line_break$status$character"""
 
-palette = "custom_dark_polished"
+palette = "prompt"
 
-# ---------- Modules ----------
-
-[username]
-show_always = true
-style_user = "bg:surface0 fg:text"
-format = '[ $user ]($style)'
+[cmd_duration]
+min_time = 1000
+format = "[$duration]($style)\n"
+style = "fg:lavender"
 
 [directory]
-style = "fg:text bg:overlay0"
+style = "fg:foreground bg:overlay0"
 format = "[ $path ]($style)"
-truncation_length = 0
-truncate_to_repo = false
+truncation_length = 2
+truncate_to_repo = true
 
 [git_branch]
 symbol = ""
-style = "bg:blue fg:base"
+style = "bg:git fg:foreground"
 format = '[ $symbol $branch ]($style)'
 
 [git_status]
-style = "bg:blue fg:base"
-format = '[ $all_status$ahead_behind ]($style)'
+style = "bg:git fg:foreground"
+format = '([$all_status$ahead_behind]($style))'
+modified = "*"
+staged = "+"
+untracked = "?"
+stashed = ""
+ahead = "↑"
+behind = "↓"
+diverged = "↕"
+conflicted = "!"
 
 [python]
 symbol = ""
-style = "bg:purple fg:base"
+style = "bg:runtime fg:foreground"
 format = '[ $symbol $version ]($style)'
 
 [nodejs]
 symbol = ""
-style = "bg:purple fg:base"
+style = "bg:runtime fg:foreground"
 format = '[ $symbol $version ]($style)'
 
 [rust]
 symbol = ""
-style = "bg:purple fg:base"
+style = "bg:runtime fg:foreground"
 format = '[ $symbol $version ]($style)'
 
 [golang]
 symbol = ""
-style = "bg:purple fg:base"
+style = "bg:runtime fg:foreground"
 format = '[ $symbol $version ]($style)'
 
 [docker_context]
 symbol = ""
-style = "bg:purple fg:base"
+style = "bg:runtime fg:foreground"
 format = '[ $symbol $context ]($style)'
 
 [time]
 disabled = false
 time_format = "%H:%M"
-style = "bg:accent fg:base"
+style = "bg:time_bg fg:foreground"
 format = '[ $time ]($style)'
 
-[line_break]
-disabled = false
-
-[cmd_duration]
-min_time = 1
-format = "[$duration](fg:lavender)"
-style = "fg:lavender"
-
-# ---------- Modules ----------
-
+# Prompt character
 [character]
-disabled = false
-success_symbol = '[➜](bold fg:#5246f2)'  # Arrow
-error_symbol = '[✘](bold fg:#ff0000)'    # X mark
+success_symbol = '[➜](bold fg:#5246f2)'
+error_symbol = '[➜](bold fg:#5246f2)'
 
-# ---------- Custom Palette (Refined) ----------
-[palettes.custom_dark_polished]
-surface0 = "#262631"       # Darker grey
+[status]
+disabled = false
+map_symbol = true
+symbol = "✘"
+sigint_symbol = ""
+style = "bold fg:#ff0000"
+format = '([$symbol]($style) )'
+
+# ---------- Prompt Palette ----------
+[palettes.prompt]
 overlay0 = "#2f2f3c"       # Slightly lighter grey
-blue     = "#0286de"       # Muted blue-purple
-purple   = "#2D5BE3"       # Rich violet
-accent   = "#22222e"       # Deep bluish grey for end cap
-lavender = "#9a9fe1"       # Used in character and time
-text     = "#d4d6e0"       # Clean, not too bright
-base     = "#d4d6e0"       # Background base
+git = "#2D5BE3"             # Git branch and status
+runtime = "#1a48cf"         # Language and tool versions
+time_bg = "#22222e"         # Time segment and end cap
+lavender = "#9a9fe1"        # Command duration
+foreground = "#d4d6e0"      # Prompt text
