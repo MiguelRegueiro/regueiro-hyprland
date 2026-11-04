@@ -20,6 +20,30 @@ end
 
 fish_add_path $HOME/.local/bin
 
+# Text selection in Fish's command-line editor (provided by natural-selection).
+function fish_user_key_bindings
+    if functions --query _natural_selection
+        bind escape '_natural_selection end-selection'
+        bind left '_natural_selection backward-char'
+        bind right '_natural_selection forward-char'
+        bind up '_natural_selection up-or-search'
+        bind down '_natural_selection down-or-search'
+        bind ctrl-left '_natural_selection backward-token'
+        bind ctrl-right '_natural_selection forward-token'
+        bind ctrl-up '_natural_selection up-line'
+        bind ctrl-down '_natural_selection down-line'
+        bind shift-left '_natural_selection backward-char --is-selecting'
+        bind shift-right '_natural_selection forward-char --is-selecting'
+        bind shift-up '_natural_selection up-line --is-selecting'
+        bind shift-down '_natural_selection down-line --is-selecting'
+        bind ctrl-shift-left '_natural_selection backward-word --is-selecting'
+        bind ctrl-shift-right '_natural_selection forward-word --is-selecting'
+        bind ctrl-shift-up '_natural_selection up-line --is-selecting'
+        bind ctrl-shift-down '_natural_selection down-line --is-selecting'
+        bind '' kill-selection end-selection self-insert
+    end
+end
+
 # Keep ani-cli/anitrack on the terminal-native Enzo player in regular shells,
 # not only when launched through the dedicated Hyprland keybind.
 if command -sq enzo-mpv
