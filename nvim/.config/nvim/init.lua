@@ -141,6 +141,33 @@ vim.keymap.set({ "n", "i", "v" }, "<ScrollWheelDown>", "<Down>", { noremap = tru
 vim.keymap.set("n", "<C-a>", "ggVG", { noremap = true, silent = true })
 vim.keymap.set("i", "<C-a>", "<Esc>ggVG", { noremap = true, silent = true })
 
+local kitty_editor_group = vim.api.nvim_create_augroup("kitty-editor-keymaps", { clear = true })
+
+local function set_kitty_editor_var(active)
+  local sequence = active
+      and "\x1b]1337;SetUserVar=in_editor=MQ==\x07"
+    or "\x1b]1337;SetUserVar=in_editor\x07"
+  if vim.api.nvim_ui_send then
+    vim.api.nvim_ui_send(sequence)
+  else
+    io.stdout:write(sequence)
+  end
+end
+
+vim.api.nvim_create_autocmd({ "VimEnter", "VimResume", "UIEnter" }, {
+  group = kitty_editor_group,
+  callback = function()
+    set_kitty_editor_var(true)
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "VimLeavePre", "VimSuspend" }, {
+  group = kitty_editor_group,
+  callback = function()
+    set_kitty_editor_var(false)
+  end,
+})
+
 vim.keymap.set("n", "<F13>", "gt", {
   noremap = true,
   silent = true,
