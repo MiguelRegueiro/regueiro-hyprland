@@ -23,8 +23,11 @@ style = "fg:lavender"
 [directory]
 style = "fg:foreground bg:overlay0"
 format = "[ $path ]($style)"
-truncation_length = 2
-truncate_to_repo = true
+# Keep the complete working-directory path, including above a Git repository.
+truncation_length = 0
+truncate_to_repo = false
+# Abbreviate only the home-directory prefix; the rest of the path stays complete.
+home_symbol = "~"
 
 [git_branch]
 symbol = ""
