@@ -27,6 +27,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("sh -c 'sleep 2 && exec systemctl --user start hyprpolkitagent.service'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/fcitx-session.sh'")
     hl.exec_cmd("sh -c 'sleep 2 && exec blueman-applet'")
+    -- A few SOF/SoundWire sessions expose only PipeWire's auto_null fallback
+    -- during login. Retry WirePlumber only if that fallback remains default.
+    hl.exec_cmd("sh -c 'exec ~/.config/hypr/scripts/ensure-audio-sink'")
     -- Triton Connect owns its tray window and starts its paired-device daemon
     -- itself. It is optional so a fresh dotfiles install can still start a
     -- session before Triton has been bootstrapped.

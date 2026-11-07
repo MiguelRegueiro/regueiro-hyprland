@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Work around PipeWire sessions where WirePlumber sees the ALSA card but has
+# not created any of its sinks yet. Only restart it when the fallback sink is
+# still the default, so normal starts and deliberate Bluetooth/HDMI choices
+# are left untouched.
+set -euo pipefail
+
+# Give PipeWire, WirePlumber, and ALSA UCM time to enumerate first.
+sleep 8
+
+restarts=0
+for _ in 1 2 3 4 5; do
+    default_sink="$(wpctl inspect @DEFAULT_AUDIO_SINK@ 2>/dev/null || true)"
+    if grep -q 'node.name = "auto_null"' <<<"$default_sink"; then
+        if ((restarts == 2)); then
+            exit 0
+        fi
+
+        ((restarts += 1))
+        systemctl --user restart wireplumber
+        sleep 5
+        continue
+    fi
+
+    if grep -q 'media.class = "Audio/Sink"' <<<"$default_sink"; then
+        exit 0
+    fi
+
+    # PipeWire has not published a default sink yet; keep waiting instead of
+    # treating the absence of one as a healthy audio session.
+    sleep 3
+done
