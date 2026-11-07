@@ -270,7 +270,6 @@ Item {
             return;
         }
         if (reason === ConnectionFailReason.NoSecrets && mode === "password") {
-            passwordClearRequested();
             connectError = "Password rejected. Try again.";
             passwordFocusRequested();
             return;
