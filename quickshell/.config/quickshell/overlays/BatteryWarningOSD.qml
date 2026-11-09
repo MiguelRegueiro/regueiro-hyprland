@@ -12,13 +12,16 @@ PanelWindow {
 
     required property var targetScreen
     property bool active: true
+    required property int previewPercent
     readonly property var battery: UPower.displayDevice
     readonly property bool hasBattery: battery && battery.percentage >= 0
     readonly property int percent: hasBattery ? Math.min(100, Math.round(battery.percentage * 100)) : -1
     readonly property bool discharging: hasBattery && battery.state === UPowerDeviceState.Discharging
     readonly property bool warningRequested: active && UPower.onBattery && discharging && percent <= Theme.batteryCriticalThreshold
+    readonly property bool previewActive: active && previewPercent >= 0
+    readonly property int displayedPercent: previewActive ? previewPercent : percent
     property bool warningConfirmed: false
-    readonly property bool warningVisible: warningRequested && warningConfirmed
+    readonly property bool warningVisible: previewActive || (warningRequested && warningConfirmed)
 
     onWarningRequestedChanged: {
         warningConfirmed = false;
@@ -91,7 +94,7 @@ PanelWindow {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.percent + "% remaining · Plug in your charger"
+                    text: root.displayedPercent + "% remaining · Plug in your charger"
                     font.family: Theme.fontUi
                     font.pixelSize: 13
                     color: Theme.red

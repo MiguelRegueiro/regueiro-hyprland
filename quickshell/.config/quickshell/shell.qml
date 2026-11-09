@@ -35,6 +35,13 @@ ShellRoot {
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
     property string powerBusyAction: ""
+    property int batteryWarningPreviewPercent: -1
+
+    function previewBatteryWarning(percentText) {
+        const parsed = Number(percentText);
+        batteryWarningPreviewPercent = !isNaN(parsed) ? Math.max(0, Math.min(100, Math.round(parsed))) : Theme.batteryCriticalThreshold;
+        batteryWarningPreviewTimer.restart();
+    }
 
     function powerActionNeedsConfirmation(actionId) {
         return actionId === "logout" || actionId === "reboot" || actionId === "shutdown";
@@ -523,6 +530,26 @@ ShellRoot {
         target: "powermenu"
     }
 
+    IpcHandler {
+        function preview() {
+            root.previewBatteryWarning(Theme.batteryCriticalThreshold);
+        }
+
+        function previewAt(percent: string) {
+            root.previewBatteryWarning(percent);
+        }
+
+        target: "battery-warning"
+    }
+
+    Timer {
+        id: batteryWarningPreviewTimer
+
+        interval: Theme.osdTimeout
+        repeat: false
+        onTriggered: root.batteryWarningPreviewPercent = -1
+    }
+
     Process {
         id: lockProc
 
@@ -883,6 +910,7 @@ ShellRoot {
 
                 targetScreen: modelData
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                previewPercent: root.batteryWarningPreviewPercent
             }
         }
     }
