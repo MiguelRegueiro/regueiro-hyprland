@@ -545,7 +545,9 @@ ShellRoot {
     Timer {
         id: batteryWarningPreviewTimer
 
-        interval: Theme.osdTimeout
+        // The live warning remains visible until the battery state clears.
+        // Give the development preview enough time for visual inspection.
+        interval: 10000
         repeat: false
         onTriggered: root.batteryWarningPreviewPercent = -1
     }

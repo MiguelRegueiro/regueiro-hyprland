@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Services.UPower
@@ -44,62 +43,56 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qs-battery-warning-osd"
     color: "transparent"
-    anchors.bottom: true
-    margins.bottom: 82
-    implicitWidth: 430
-    implicitHeight: 112
+    anchors.top: true
+    anchors.left: true
+    anchors.right: true
+    // A critical warning is persistent, so place it with the other status
+    // pills below the bar instead of leaving it detached at the bottom edge.
+    implicitWidth: 242
+    implicitHeight: Theme.borderSize + Theme.barHeight + 12 + 60 + 12
 
     Rectangle {
         id: warningRect
 
-        anchors.centerIn: parent
-        width: 390
-        height: 72
-        radius: 18
+        anchors.top: parent.top
+        anchors.topMargin: Theme.borderSize + Theme.barHeight + 12
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: 242
+        height: 60
+        radius: 30
         color: Theme.osdSurfaceBg
-        border.color: Theme.red
-        border.width: 2
+        border.color: Theme.osdSurfaceBorder
+        border.width: 1
         opacity: root.warningVisible ? 1 : 0
         scale: root.warningVisible ? 1 : 0.96
         transformOrigin: Item.Center
         layer.enabled: true
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 18
-            anchors.rightMargin: 20
-            spacing: 14
+        Row {
+            anchors.centerIn: parent
+            spacing: 11
 
-            Text {
-                Layout.alignment: Qt.AlignVCenter
-                text: ""
-                font.family: Theme.fontIcons
-                font.pixelSize: 32
-                color: Theme.red
+            Item {
+                width: 44
+                height: 22
+
+                Components.BatteryIcon {
+                    anchors.centerIn: parent
+                    width: implicitWidth
+                    height: implicitHeight
+                    scale: 1.3
+                    percent: root.displayedPercent
+                    alert: true
+                }
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 2
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Battery critically low"
-                    font.family: Theme.fontUi
-                    font.pixelSize: 16
-                    font.weight: Font.DemiBold
-                    color: Theme.osdTextPrimary
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: root.displayedPercent + "% remaining · Plug in your charger"
-                    font.family: Theme.fontUi
-                    font.pixelSize: 13
-                    color: Theme.red
-                }
-
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Battery critically low"
+                font.family: Theme.fontUi
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+                color: Theme.osdTextPrimary
             }
 
         }
@@ -119,8 +112,8 @@ PanelWindow {
 
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.65)
-            shadowBlur: 0.8
+            shadowColor: Qt.rgba(0, 0, 0, 0.5)
+            shadowBlur: 0.75
             shadowVerticalOffset: 8
             shadowHorizontalOffset: 0
             blurMax: 32

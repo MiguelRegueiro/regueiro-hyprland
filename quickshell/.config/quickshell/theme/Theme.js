@@ -33,6 +33,8 @@ var accent = "#3f6fd5";
 var green = "#8ff0a4";
 var yellow = "#f8e45c";
 var red = "#ff7b63";
+// Muted enough for a persistent battery badge while still reading as critical.
+var batteryCriticalBadge = "#f28c8c";
 var blue = "#78aeed";
 var urgentAccent = Qt.rgba(0.47, 0.68, 0.93, 0.72);
 var urgentBg = Qt.rgba(0.47, 0.68, 0.93, 0.06);

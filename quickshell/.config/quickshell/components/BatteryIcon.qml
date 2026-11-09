@@ -9,14 +9,19 @@ Item {
     property int percent: 0
     property bool charging: false
     property bool full: false
+    // Alert callers retain the standard badge but promote its entire body to
+    // the critical color instead of leaving a hard-to-see low-charge sliver.
+    property bool alert: false
     readonly property int clampedPercent: Math.max(0, Math.min(100, percent))
+    readonly property int displayedFillPercent: alert ? 100 : clampedPercent
     // Less luminous than the general success green: this is a persistent
     // status mark, not an attention-grabbing confirmation.
-    readonly property color fillColor: charging || full ? "#84e89b"
+    readonly property color fillColor: alert ? Theme.batteryCriticalBadge : (charging || full ? "#84e89b"
         : clampedPercent <= Theme.batteryLowThreshold ? Theme.red : "#e4e6eb"
+    )
     // Opaque enough to remain visible against the dark bar, especially for
     // the small terminal at high charge levels.
-    readonly property color remainderColor: "#8e9098"
+    readonly property color remainderColor: alert ? Theme.batteryCriticalBadge : "#8e9098"
     readonly property real bodyWidth: 29
     // At this scale, 98% is only about half a pixel short of a full body.
     // Keep a small slice of the remainder exposed for every non-full state:
@@ -39,9 +44,9 @@ Item {
         clip: true
 
         Rectangle {
-            width: root.clampedPercent >= 100
+            width: root.displayedFillPercent >= 100
                 ? parent.width
-                : Math.min(parent.width * root.clampedPercent / 100,
+                : Math.min(parent.width * root.displayedFillPercent / 100,
                            parent.width - root.partialFillRightInset)
             height: parent.height
             // A partial charge fills from the rounded left edge with a subtle
@@ -49,8 +54,8 @@ Item {
             // rounded right end.
             topLeftRadius: parent.radius
             bottomLeftRadius: parent.radius
-            topRightRadius: root.clampedPercent >= 100 ? parent.radius : 1.5
-            bottomRightRadius: root.clampedPercent >= 100 ? parent.radius : 1.5
+            topRightRadius: root.displayedFillPercent >= 100 ? parent.radius : 1.5
+            bottomRightRadius: root.displayedFillPercent >= 100 ? parent.radius : 1.5
             color: root.fillColor
 
             Behavior on width {
