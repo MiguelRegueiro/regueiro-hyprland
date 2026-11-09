@@ -11,7 +11,9 @@ PanelWindow {
     required property var targetScreen
     required property var ttsService
     property bool active: true
+    property int stackIndex: 0
     property bool osdVisible: false
+    property real cardTopMargin: Theme.borderSize + Theme.barHeight + 12 + stackIndex * (60 + Theme.topOsdStackGap)
     readonly property bool generating: ttsService.status === "generating"
     readonly property bool paused: ttsService.status === "paused"
     readonly property bool replayReady: ttsService.replayReady
@@ -33,7 +35,7 @@ PanelWindow {
     implicitWidth: 230
     // Include the bar offset, card, and a little breathing room.  This panel
     // sits below the bar like dictation, rather than at the volume OSD edge.
-    implicitHeight: Theme.borderSize + Theme.barHeight + 12 + 60 + 12
+    implicitHeight: cardTopMargin + 60 + 12
 
     function showBriefly() {
         osdVisible = true;
@@ -71,7 +73,7 @@ PanelWindow {
 
     Rectangle {
         anchors.top: parent.top
-        anchors.topMargin: Theme.borderSize + Theme.barHeight + 12
+        anchors.topMargin: root.cardTopMargin
         anchors.horizontalCenter: parent.horizontalCenter
         width: 230
         height: 60
@@ -110,6 +112,12 @@ PanelWindow {
             }
         }
 
+        Behavior on anchors.topMargin {
+            Components.Anim {
+                curve: Components.Anim.DefaultSpatial
+                duration: Theme.animDurDefaultSpatial
+            }
+        }
         Behavior on opacity {
             Components.Anim {
                 curve: Components.Anim.DefaultEffects

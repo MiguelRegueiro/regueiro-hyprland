@@ -11,6 +11,8 @@ PanelWindow {
     required property var targetScreen
     required property var dictationService
     property bool active: true
+    property int stackIndex: 0
+    property real cardTopMargin: Theme.borderSize + Theme.barHeight + 12 + stackIndex * (60 + Theme.topOsdStackGap)
     // Finished text is delivered directly to the focused app and clipboard,
     // so the OSD is reserved for the active recording/transcription states.
     readonly property bool shown: active && dictationService.hasStatus && dictationService.status !== "ready"
@@ -33,7 +35,7 @@ PanelWindow {
     anchors.right: true
     // Leave room for the pill below the bar so the layer surface never clips
     // its own content into the panel chrome.
-    implicitHeight: Theme.borderSize + Theme.barHeight + 12 + card.height + 12
+    implicitHeight: cardTopMargin + card.height + 12
 
     Item {
         anchors.fill: parent
@@ -42,7 +44,7 @@ PanelWindow {
             id: card
 
             anchors.top: parent.top
-            anchors.topMargin: Theme.borderSize + Theme.barHeight + 12
+            anchors.topMargin: root.cardTopMargin
             anchors.horizontalCenter: parent.horizontalCenter
             // Keep the active state steady, but let finished text use only
             // the room it needs instead of leaving a huge empty pill.
@@ -119,6 +121,13 @@ PanelWindow {
                 Components.Anim {
                     curve: Components.Anim.DefaultEffects
                     duration: Theme.animDurDefaultEffects
+                }
+            }
+
+            Behavior on anchors.topMargin {
+                Components.Anim {
+                    curve: Components.Anim.DefaultSpatial
+                    duration: Theme.animDurDefaultSpatial
                 }
             }
 

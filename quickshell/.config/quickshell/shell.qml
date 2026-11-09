@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Services.UPower
 import Quickshell.Wayland
 import "bar" as Bar
 import "clipboard" as Clipboard
@@ -36,6 +37,31 @@ ShellRoot {
     property string powerMenuAction: ""
     property string powerBusyAction: ""
     property int batteryWarningPreviewPercent: -1
+    readonly property var battery: UPower.displayDevice
+    readonly property bool hasBattery: battery && battery.percentage >= 0
+    readonly property int batteryPercent: hasBattery ? Math.min(100, Math.round(battery.percentage * 100)) : -1
+    readonly property bool batteryDischarging: hasBattery && battery.state === UPowerDeviceState.Discharging
+    readonly property bool batteryWarningRequested: UPower.onBattery && batteryDischarging && batteryPercent <= Theme.batteryCriticalThreshold
+    property bool batteryWarningConfirmed: false
+    readonly property bool batteryWarningPreviewActive: batteryWarningPreviewPercent >= 0
+    readonly property bool batteryWarningVisible: batteryWarningPreviewActive || (batteryWarningRequested && batteryWarningConfirmed)
+    readonly property int batteryWarningDisplayPercent: batteryWarningPreviewActive ? batteryWarningPreviewPercent : batteryPercent
+    readonly property bool dictationOsdVisible: dictationServiceState.hasStatus && dictationServiceState.status !== "ready"
+    readonly property bool ttsOsdVisible: ttsServiceState.hasStatus && !ttsServiceState.replayReady
+    readonly property int dictationOsdStackIndex: batteryWarningVisible ? 1 : 0
+    readonly property int ttsOsdStackIndex: (batteryWarningVisible ? 1 : 0) + (dictationOsdVisible ? 1 : 0)
+
+    onBatteryWarningRequestedChanged: {
+        batteryWarningConfirmed = false;
+        if (batteryWarningRequested)
+            batteryWarningDelay.restart();
+        else
+            batteryWarningDelay.stop();
+    }
+    Component.onCompleted: {
+        if (batteryWarningRequested)
+            batteryWarningDelay.restart();
+    }
 
     function previewBatteryWarning(percentText) {
         const parsed = Number(percentText);
@@ -552,6 +578,14 @@ ShellRoot {
         onTriggered: root.batteryWarningPreviewPercent = -1
     }
 
+    Timer {
+        id: batteryWarningDelay
+
+        interval: 3000
+        repeat: false
+        onTriggered: root.batteryWarningConfirmed = root.batteryWarningRequested
+    }
+
     Process {
         id: lockProc
 
@@ -779,6 +813,7 @@ ShellRoot {
                 targetScreen: modelData
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 ttsService: ttsServiceState
+                stackIndex: root.ttsOsdStackIndex
             }
         }
     }
@@ -793,6 +828,7 @@ ShellRoot {
                 targetScreen: modelData
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 dictationService: dictationServiceState
+                stackIndex: root.dictationOsdStackIndex
             }
         }
     }
@@ -912,7 +948,8 @@ ShellRoot {
 
                 targetScreen: modelData
                 active: modelData.name !== Theme.primaryScreen || !root.externalConnected
-                previewPercent: root.batteryWarningPreviewPercent
+                warningVisible: root.batteryWarningVisible
+                displayedPercent: root.batteryWarningDisplayPercent
             }
         }
     }

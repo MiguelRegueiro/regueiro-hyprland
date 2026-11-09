@@ -88,6 +88,7 @@ var osdTextPrimary = "#ffffff";
 var osdTextSecondary = "#e0dfdc";
 var osdTextMuted = "#a3a29f";
 var osdSelectionBg = Qt.rgba(0.29, 0.29, 0.30, 0.96);
+var topOsdStackGap = 8;
 
 // Notification center
 var ncWidth = 760;
