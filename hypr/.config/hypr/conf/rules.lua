@@ -154,3 +154,16 @@ hl.window_rule({
     center = true,
     size = { 1000, 650 },
 })
+
+-- Anki's note editor is a separate window; keep it out of the tiling layout.
+hl.window_rule({
+    name = "anki-note-editor",
+    match = {
+        -- Match the title captured when the window is mapped.  The editor's
+        -- live title can change after the rule has been evaluated.
+        initial_title = "^現在のノートを編集$",
+    },
+    float = true,
+    center = true,
+    size = { 1000, 900 },
+})
