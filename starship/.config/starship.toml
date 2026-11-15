@@ -79,8 +79,8 @@ format = '[ $time ]($style)'
 
 # Prompt character
 [character]
-success_symbol = '[➜](bold fg:#5246f2)'
-error_symbol = '[➜](bold fg:#5246f2)'
+success_symbol = '[➜](bold fg:prompt_blue)'
+error_symbol = '[➜](bold fg:prompt_blue)'
 
 [status]
 disabled = false
@@ -92,9 +92,10 @@ format = '([$symbol]($style) )'
 
 # ---------- Prompt Palette ----------
 [palettes.prompt]
-overlay0 = "#2f2f3c"       # Slightly lighter grey
-git = "#2D5BE3"             # Git branch and status
-runtime = "#1a48cf"         # Language and tool versions
-time_bg = "#22222e"         # Time segment and end cap
+overlay0 = "#373039"       # Charcoal from the FreeBSD prompt
+git = "#174BC4"             # Vivid blue Git segment
+runtime = "#123A9B"         # Deeper blue runtime segment
+time_bg = "#28222A"         # Charcoal end segment from the FreeBSD prompt
 lavender = "#9a9fe1"        # Command duration
+prompt_blue = "#3972E6"     # Slightly lighter blue prompt arrow
 foreground = "#d4d6e0"      # Prompt text
