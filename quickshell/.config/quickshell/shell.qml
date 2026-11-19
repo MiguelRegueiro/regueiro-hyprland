@@ -23,8 +23,13 @@ ShellRoot {
     property bool clipboardVisible: false
     property bool clipboardOpening: false
     readonly property bool clipboardRequested: clipboardVisible || clipboardOpening
+    // Capture the monitor before the layer-shell surface takes focus.  Keeping
+    // this separate from Hyprland.focusedMonitor prevents the menu from
+    // hopping monitors while it is open.
+    property var clipboardTargetMonitor: null
     property bool launcherVisible: false
     readonly property bool launcherRequested: launcherVisible
+    property var launcherTargetMonitor: null
     property bool wallpaperPickerVisible: false
     property bool externalDrivesMenuVisible: false
     property bool cpuStatsMenuVisible: false
@@ -157,16 +162,16 @@ ShellRoot {
             Hyprland.dispatch("hl.dsp.focus({ workspace = " + workspace.id + " })");
     }
 
-    function closeClipboard() {
-        if (clipboardVisible || clipboardOpening)
+    function closeClipboard(restoreWorkspaceFocus = true) {
+        if (restoreWorkspaceFocus && (clipboardVisible || clipboardOpening))
             retainActiveWorkspaceFocus();
         clipboardOpenTimer.stop();
         clipboardOpening = false;
         clipboardVisible = false;
     }
 
-    function closeLauncher() {
-        if (launcherVisible)
+    function closeLauncher(restoreWorkspaceFocus = true) {
+        if (restoreWorkspaceFocus && launcherVisible)
             retainActiveWorkspaceFocus();
         launcherVisible = false;
     }
@@ -188,6 +193,7 @@ ShellRoot {
         if (powerMenuVisible)
             return;
 
+        clipboardTargetMonitor = Hyprland.focusedMonitor;
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
@@ -216,6 +222,7 @@ ShellRoot {
         if (powerMenuVisible)
             return;
 
+        launcherTargetMonitor = Hyprland.focusedMonitor;
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
@@ -1039,17 +1046,22 @@ ShellRoot {
         delegate: Component {
             Launcher.LauncherOverlay {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool launcherOverlayActive: activeScreen && root.launcherRequested && activeWorkspace && activeWorkspace.hasFullscreen
+                // Fall back to the old screen while Hyprland's initial monitor
+                // list is still loading. Normal openings always use the monitor
+                // that held focus when the shortcut was pressed.
+                readonly property bool legacyMenuScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool menuScreen: root.launcherTargetMonitor ? hyprMonitor === root.launcherTargetMonitor : legacyMenuScreen
+                readonly property bool launcherOverlayActive: menuScreen && root.launcherRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
-                showLayer: activeScreen
-                launcherVisible: root.launcherVisible && activeScreen
+                showLayer: true
+                launcherVisible: root.launcherVisible && menuScreen
+                dismissOnOutsideClick: root.launcherVisible && !menuScreen
                 forceOverlay: launcherOverlayActive
                 launcherService: launcherServiceState
-                onOutsidePressed: root.closeLauncher()
+                onOutsidePressed: restoreWorkspaceFocus => root.closeLauncher(restoreWorkspaceFocus)
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
                 onBarHoverCleared: root.clearBarMenuHover(modelData)
@@ -1063,17 +1075,19 @@ ShellRoot {
         delegate: Component {
             Clipboard.ClipboardOverlay {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool clipboardOverlayActive: activeScreen && root.clipboardRequested && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property bool legacyMenuScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool menuScreen: root.clipboardTargetMonitor ? hyprMonitor === root.clipboardTargetMonitor : legacyMenuScreen
+                readonly property bool clipboardOverlayActive: menuScreen && root.clipboardRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
-                showLayer: activeScreen
-                clipboardVisible: root.clipboardVisible && activeScreen
+                showLayer: true
+                clipboardVisible: root.clipboardVisible && menuScreen
+                dismissOnOutsideClick: root.clipboardVisible && !menuScreen
                 forceOverlay: clipboardOverlayActive
                 clipboardService: clipboardServiceState
-                onOutsidePressed: root.closeClipboard()
+                onOutsidePressed: restoreWorkspaceFocus => root.closeClipboard(restoreWorkspaceFocus)
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
                 onBarHoverCleared: root.clearBarMenuHover(modelData)

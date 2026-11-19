@@ -11,6 +11,9 @@ Scope {
     required property var launcherService
     property bool showLayer: true
     property bool launcherVisible: false
+    // A transparent, input-only instance on every non-target monitor lets a
+    // click there dismiss the drawer instead of leaking through unchanged.
+    property bool dismissOnOutsideClick: false
     property bool forceOverlay: false
     property bool openingGuard: false
     readonly property real launcherRegionX: launcherPanel.x + launcherPanel.inputRegion.x
@@ -18,7 +21,7 @@ Scope {
     readonly property real launcherRegionWidth: launcherPanel.inputRegion.width
     readonly property real launcherRegionHeight: launcherPanel.inputRegion.height
 
-    signal outsidePressed()
+    signal outsidePressed(bool restoreWorkspaceFocus)
     signal barPressed(real x, real y)
     signal barHovered(real x, real y)
     signal barHoverCleared()
@@ -45,7 +48,7 @@ Scope {
         if (root.openingGuard)
             return;
 
-        root.outsidePressed();
+        root.outsidePressed(true);
     }
 
     onLauncherVisibleChanged: {
@@ -73,13 +76,13 @@ Scope {
     screen: targetScreen
     // Match clipboard focus behavior: unmap the layer after the close animation
     // so Hyprland immediately returns typing to the client under the cursor.
-    visible: showLayer && (root.launcherVisible || launcherPanel.reveal > 0.001)
+    visible: showLayer && (root.launcherVisible || root.dismissOnOutsideClick || launcherPanel.reveal > 0.001)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     // Keep interactive panels below transient OSDs. The panel background is a
     // child of this surface, so it cannot cover the content as a separate
     // same-layer backdrop did.
-    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
+    WlrLayershell.layer: (root.forceOverlay || root.dismissOnOutsideClick) ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-launcher"
     WlrLayershell.keyboardFocus: root.launcherVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
@@ -153,6 +156,16 @@ Scope {
         }
     }
 
+    MouseArea {
+        // This is intentionally above every non-target-monitor surface. Its
+        // only job is to turn the first outside click into a dismissal; it must
+        // not restore focus to the monitor that originally opened the drawer.
+        anchors.fill: parent
+        visible: root.dismissOnOutsideClick
+        acceptedButtons: Qt.AllButtons
+        onPressed: root.outsidePressed(false)
+    }
+
     Launcher.LauncherPanel {
         id: launcherPanel
 
@@ -160,15 +173,15 @@ Scope {
         y: Math.round(parent.height - Theme.borderSize - bodyHeight - 70 + surfaceOffsetY)
         open: root.launcherVisible
         launcherService: root.launcherService
-        onRequestClose: root.outsidePressed()
+        onRequestClose: root.outsidePressed(true)
     }
 
     mask: Region {
         Region {
             x: 0
-            y: root.forceOverlay ? 0 : Theme.barHeight
-            width: root.launcherVisible ? Math.round(overlay.width) : 0
-            height: root.launcherVisible ? Math.max(0, Math.round(overlay.height - Theme.barHeight)) : 0
+            y: root.dismissOnOutsideClick || root.forceOverlay ? 0 : Theme.barHeight
+            width: (root.launcherVisible || root.dismissOnOutsideClick) ? Math.round(overlay.width) : 0
+            height: (root.launcherVisible || root.dismissOnOutsideClick) ? Math.max(0, Math.round(overlay.height - (root.dismissOnOutsideClick || root.forceOverlay ? 0 : Theme.barHeight))) : 0
         }
     }
     }
