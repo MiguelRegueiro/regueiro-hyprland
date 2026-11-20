@@ -17,6 +17,7 @@ FocusScope {
     required property var audioService
     required property var brightnessService
     required property var networkService
+    required property var displayService
     required property var targetScreen
     property bool open: false
     property real topOffset: 0
@@ -35,6 +36,7 @@ FocusScope {
     }
     property bool wifiPageOpen: false
     property bool bluetoothPageOpen: false
+    property bool displaysPageOpen: false
     property bool audioOutputPopupOpen: false
     property real reveal: 0
     readonly property alias inputRegion: inputRegion
@@ -45,7 +47,7 @@ FocusScope {
     readonly property real surfaceBottomRightRadius: Theme.qsSurfaceBottomRightRadius
     readonly property real attachTop: Theme.qsAttachTop
     readonly property real attachRight: 0
-    readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen
+    readonly property bool submenuOpen: root.wifiPageOpen || root.bluetoothPageOpen || root.displaysPageOpen
     readonly property real audioOutputPopupOverflow: root.audioOutputPopupOpen ? dashboard.audioOutputPopupOverflow : 0
     readonly property real popupSurfaceOriginX: root.x + motionFrame.x
     readonly property real popupSurfaceOriginY: root.y + motionFrame.y
@@ -68,6 +70,7 @@ FocusScope {
     readonly property real contentRevealProgress: root.reveal
 
     signal powerActionRequested(string actionId)
+    signal settingsRequested
 
     function applyPowerMode(nextMode) {
         if (nextMode === "power-saver")
@@ -82,6 +85,7 @@ FocusScope {
         if (!open) {
             wifiPageOpen = false;
             bluetoothPageOpen = false;
+            displaysPageOpen = false;
             audioOutputPopupOpen = false;
             dashboard.powerMenuOpen = false;
         }
@@ -392,6 +396,9 @@ FocusScope {
                             if (root.bluetoothPageOpen)
                                 return bluetoothPageView.implicitHeight;
 
+                            if (root.displaysPageOpen)
+                                return displaysPageView.implicitHeight;
+
                             return dashboard.implicitHeight;
                         }
 
@@ -427,7 +434,15 @@ FocusScope {
                                 root.audioOutputPopupOpen = false;
                                 root.bluetoothPageOpen = true;
                                 root.wifiPageOpen = false;
+                                root.displaysPageOpen = false;
                             }
+                            onDisplaysPageRequested: {
+                                root.audioOutputPopupOpen = false;
+                                root.displaysPageOpen = true;
+                                root.wifiPageOpen = false;
+                                root.bluetoothPageOpen = false;
+                            }
+                            onSettingsRequested: root.settingsRequested()
                             onPowerModeChangeRequested: mode => {
                                 return root.applyPowerMode(mode);
                             }
@@ -487,6 +502,31 @@ FocusScope {
                             opacity: root.bluetoothPageOpen ? 1 : 0
                             menuOpen: root.bluetoothPageOpen
                             onBackClicked: root.bluetoothPageOpen = false
+
+                            Behavior on x {
+                                Components.Anim {
+                                    duration: Theme.qsPageSlideDuration
+                                    curve: Components.Anim.DefaultSpatial
+                                }
+                            }
+
+                            Behavior on opacity {
+                                Components.Anim {
+                                    duration: Theme.qsPageFadeDuration
+                                    curve: Components.Anim.DefaultEffects
+                                }
+                            }
+                        }
+
+                        Pages.DisplaysPage {
+                            id: displaysPageView
+
+                            width: parent.width
+                            x: root.displaysPageOpen ? 0 : parent.width + 20
+                            opacity: root.displaysPageOpen ? 1 : 0
+                            menuOpen: root.displaysPageOpen
+                            displayService: root.displayService
+                            onBackClicked: root.displaysPageOpen = false
 
                             Behavior on x {
                                 Components.Anim {

@@ -1,0 +1,357 @@
+#!/usr/bin/env bash
+
+# Per-machine display profiles for Hyprland. State deliberately lives outside
+# Stow, so each laptop remembers its own chosen mode and primary output.
+set -euo pipefail
+
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+state_dir="$config_home/hypr-local"
+state_file="$state_dir/displays.json"
+
+default_state='{"mode":"extend","primary":"","positions":{},"transforms":{},"outputModes":{}}'
+
+state() {
+    if [ -r "$state_file" ] && jq -e . "$state_file" >/dev/null 2>&1; then
+        cat "$state_file"
+    else
+        printf '%s\n' "$default_state"
+    fi
+}
+
+save_state() {
+    install -d -m 700 "$state_dir"
+    local temporary
+    temporary="$(mktemp "$state_dir/displays.json.XXXXXX")"
+    cat >"$temporary"
+    chmod 600 "$temporary"
+    mv "$temporary" "$state_file"
+}
+
+monitors() {
+    # Mirrored outputs are absent from the active-only list on some builds.
+    hyprctl -j monitors all
+}
+
+cursor_anchor() {
+    local current="$1" cursor
+    cursor="$(hyprctl -j cursorpos 2>/dev/null)" || return 0
+    jq -cn --argjson monitors "$current" --argjson cursor "$cursor" '
+        ($monitors | map(select(.disabled != true and (.mirrorOf // "none") == "none"
+            and $cursor.x >= .x and $cursor.y >= .y
+            and $cursor.x < .x + (.width / .scale)
+            and $cursor.y < .y + (.height / .scale))) | .[0]) as $m |
+        if $m == null then {}
+        else {name: $m.name,
+              u: (($cursor.x - $m.x) / ($m.width / $m.scale)),
+              v: (($cursor.y - $m.y) / ($m.height / $m.scale))}
+        end
+    ' 2>/dev/null || true
+}
+
+restore_cursor() {
+    local anchor="$1" preferred="$2" current destination
+    [ -n "$anchor" ] && [ "$(jq -r '.name // ""' <<<"$anchor")" != "" ] || return 0
+    current="$(monitors)" || return 0
+    destination="$(jq -rn --argjson monitors "$current" --argjson anchor "$anchor" --arg preferred "$preferred" '
+        (($monitors | map(select(.name == $anchor.name and .disabled != true)) | .[0]) //
+         ($monitors | map(select(.name == $preferred and .disabled != true)) | .[0])) as $m |
+        if $m == null then empty
+        else
+            ($m.width / $m.scale) as $w |
+            ($m.height / $m.scale) as $h |
+            "\(($m.x + ([([$anchor.u * $w, 1] | max), ($w - 2)] | min) | round)) \(($m.y + ([([$anchor.v * $h, 1] | max), ($h - 2)] | min) | round))"
+        end
+    ' 2>/dev/null)" || return 0
+    [ -n "$destination" ] || return 0
+    local x y
+    read -r x y <<<"$destination"
+    hyprctl dispatch "hl.dsp.cursor.move({ x = $x, y = $y })" >/dev/null 2>&1 || true
+}
+
+scale_for() {
+    case "$1" in
+        eDP-*) printf '1.8\n' ;;
+        *) printf '1\n' ;;
+    esac
+}
+
+lua_string() {
+    jq -Rn --arg value "$1" '$value'
+}
+
+position_for() {
+    local output="$1"
+    local fallback="$2"
+    state | jq -r --arg output "$output" --arg fallback "$fallback" '.positions[$output] // $fallback'
+}
+
+monitor_expression() {
+    local output="$1"
+    local position="$2"
+    local mirror="${3:-}"
+    local transform requested_mode
+    transform="$(state | jq -r --arg output "$output" '.transforms[$output] // 0')"
+    requested_mode="$(state | jq -r --arg output "$output" '.outputModes[$output] // ""')"
+    if [ -z "$requested_mode" ]; then
+        case "$output" in
+            DP-1) requested_mode="1920x1080@170" ;;
+            eDP-1) requested_mode="2880x1800@120" ;;
+            *) requested_mode="preferred" ;;
+        esac
+    fi
+    printf 'hl.monitor({ output = %s, mode = %s, position = %s, scale = %s, transform = %s, mirror = %s })' \
+        "$(lua_string "$output")" "$(lua_string "$requested_mode")" "$(lua_string "$position")" \
+        "$(scale_for "$output")" "$transform" "$(lua_string "$mirror")"
+}
+
+apply_monitor() {
+    hyprctl eval "$(monitor_expression "$@")" >/dev/null
+}
+
+apply_extend_layout() {
+    local current="$1" primary="$2" laptop="$3" saved="$4"
+    local park_x output position program
+    local -a ordered=("$primary")
+    if [ -n "$laptop" ] && [ "$laptop" != "$primary" ]; then
+        ordered+=("$laptop")
+    fi
+    while IFS= read -r output; do
+        [ -n "$output" ] || continue
+        [ "$output" = "$primary" ] || [ "$output" = "$laptop" ] || ordered+=("$output")
+    done < <(jq -r '.[].name' <<<"$current")
+
+    if [ "$(jq 'length' <<<"$current")" -eq 1 ]; then
+        apply_monitor "$primary" "0x0"
+        return
+    fi
+    if [ "$saved" = true ]; then
+        park_x="$(jq -nr --argjson monitors "$current" --argjson positions "$(state | jq '.positions')" '
+            [0, ($monitors[] | .x + .width / .scale),
+             ($monitors[] | ($positions[.name] | split("x")[0] | tonumber) + .width / .scale)]
+            | max | ceil + 4096
+        ')"
+    else
+        park_x="$(jq -nr --argjson monitors "$current" '[0, ($monitors[] | .x + .width / .scale), ([$monitors[] | .width / .scale] | add)] | max | ceil + 4096')"
+    fi
+
+    # Repositioning adjacent outputs directly can overlap them halfway through
+    # a swap. Park each output beyond both layouts, then place all of them at
+    # their final coordinates in a single compositor request.
+    program="do "
+    for output in "${ordered[@]}"; do
+        program+="$(monitor_expression "$output" "${park_x}x0"); "
+        park_x=$((park_x + 8192))
+    done
+    for output in "${ordered[@]}"; do
+        if [ "$saved" = true ]; then
+            position="$(position_for "$output" "0x0")"
+        elif [ "$output" = "$primary" ]; then
+            position="0x0"
+        elif [ "$output" = "$laptop" ]; then
+            position="auto-left"
+        else
+            position="auto-right"
+        fi
+        program+="$(monitor_expression "$output" "$position"); "
+    done
+    local result
+    if ! result="$(hyprctl eval "${program}end" 2>&1)"; then
+        printf '%s\n' "$result" >&2
+        return 1
+    fi
+}
+
+workspace_target() {
+    local id="$1" primary="$2" secondary="$3" laptop="$4" mode="$5"
+    if [ "$mode" = duplicate ] || [ "$id" -lt 10 ]; then
+        printf '%s\n' "$primary"
+    elif [ "$id" -lt 20 ]; then
+        printf '%s\n' "${secondary:-${laptop:-$primary}}"
+    else
+        printf '%s\n' "${laptop:-${secondary:-$primary}}"
+    fi
+}
+
+apply_workspaces() {
+    local primary="$1" secondary="$2" laptop="$3" mode="$4"
+    local workspace monitor target program
+    program="do "
+
+    # Bind workspaces that do not exist yet as well as moving existing ones.
+    # Numbered workspace rules are installed through 99.
+    for workspace in $(seq 1 99); do
+        target="$(workspace_target "$workspace" "$primary" "$secondary" "$laptop" "$mode")"
+        program+="hl.workspace_rule({ workspace = $(lua_string "$workspace"), monitor = $(lua_string "$target") }); "
+    done
+
+    while IFS=$'\t' read -r workspace monitor; do
+        [[ "$workspace" =~ ^[1-9][0-9]*$ ]] || continue
+        target="$(workspace_target "$workspace" "$primary" "$secondary" "$laptop" "$mode")"
+        if [ "$monitor" != "$target" ]; then
+            program+="hl.dispatch(hl.dsp.workspace.move({ workspace = $workspace, monitor = $(lua_string "$target") })); "
+        fi
+    done < <(hyprctl -j workspaces | jq -r '.[] | select(.id > 0) | "\(.id)\t\(.monitor)"')
+
+    local result
+    if ! result="$(hyprctl eval "${program}end" 2>&1)"; then
+        printf '%s\n' "$result" >&2
+        return 1
+    fi
+}
+
+apply() {
+    local current mode primary laptop secondary saved_positions_complete anchor
+    current="$(monitors)"
+    anchor="$(cursor_anchor "$current")"
+    mode="$(state | jq -r '.mode // "extend"')"
+    primary="$(state | jq -r '.primary // ""')"
+    laptop="$(jq -r '.[] | select(.name | startswith("eDP-")) | .name' <<<"$current" | head -n1)"
+    if ! jq -e --arg output "$primary" '.[] | select(.name == $output)' >/dev/null <<<"$current"; then
+        primary="$(jq -r '.[] | select(.name | startswith("eDP-") | not) | .name' <<<"$current" | head -n1)"
+        [ -n "$primary" ] || primary="$laptop"
+    fi
+    [ -n "$primary" ] || exit 0
+
+    # Keep the selected primary local to this machine after the first profile
+    # application. A missing primary means "first external, otherwise laptop".
+    if [ "$(state | jq -r '.primary // ""')" != "$primary" ] && [ -z "$(state | jq -r '.primary // ""')" ]; then
+        state | jq --arg output "$primary" '.primary = $output' | save_state
+    fi
+
+    secondary="$(jq -r --arg primary "$primary" '.[] | select(.name != $primary and (.name | startswith("eDP-") | not)) | .name' <<<"$current" | head -n1)"
+
+    saved_positions_complete=false
+    if jq -en --argjson monitors "$current" --argjson saved "$(state)" \
+        'all($monitors[]; ($saved.positions[.name] // "") | test("^[0-9]+x[0-9]+$"))' >/dev/null 2>&1; then
+        saved_positions_complete=true
+    fi
+
+    if [ "$mode" = "duplicate" ]; then
+        apply_monitor "$primary" "$(position_for "$primary" "0x0")"
+        while IFS= read -r output; do
+            [ -z "$output" ] || [ "$output" = "$primary" ] || apply_monitor "$output" "0x0" "$primary"
+        done < <(jq -r '.[].name' <<<"$current")
+        apply_workspaces "$primary" "$secondary" "$laptop" "$mode"
+        restore_cursor "$anchor" "$primary"
+        return
+    fi
+
+    apply_extend_layout "$current" "$primary" "$laptop" "$saved_positions_complete"
+    apply_workspaces "$primary" "$secondary" "$laptop" "$mode"
+    restore_cursor "$anchor" "$primary"
+}
+
+status() {
+    local current config configured=false primary actual_mode
+    current="$(monitors)"
+    config="$(state)"
+    [ -e "$state_file" ] && configured=true
+    primary="$(jq -r '.primary // ""' <<<"$config")"
+    if ! jq -e --arg output "$primary" '.[] | select(.name == $output)' >/dev/null <<<"$current"; then
+        primary="$(jq -r '.[] | select(.name | startswith("eDP-") | not) | .name' <<<"$current" | head -n1)"
+        [ -n "$primary" ] || primary="$(jq -r '.[0].name // ""' <<<"$current")"
+    fi
+    actual_mode="$(jq -r 'if length > 1 then (if any(.[]; (.mirrorOf // "none") != "none") then "duplicate" else "extend" end) else "" end' <<<"$current")"
+    [ -n "$actual_mode" ] || actual_mode="$(jq -r '.mode // "extend"' <<<"$config")"
+    jq -cn --argjson monitors "$current" --argjson config "$config" --argjson configured "$configured" --arg primary "$primary" --arg mode "$actual_mode" '{configured: $configured, mode: $mode, primary: $primary, positions: ($config.positions // {}), transforms: ($config.transforms // {}), outputModes: ($config.outputModes // {}), monitors: $monitors}'
+}
+
+case "${1:-status}" in
+    status)
+        status
+        ;;
+    apply | restore)
+        # A machine without local state keeps its existing local monitor
+        # override. This preserves the presentation laptop's duplicate-only
+        # configuration until its owner explicitly uses this controller.
+        [ "$1" != "restore" ] || [ -e "$state_file" ] || exit 0
+        apply
+        ;;
+    route-workspaces)
+        current="$(monitors)"
+        profile="$(status)"
+        primary="$(jq -r '.primary' <<<"$profile")"
+        mode="$(jq -r '.mode' <<<"$profile")"
+        laptop="$(jq -r '.[] | select(.name | startswith("eDP-")) | .name' <<<"$current" | head -n1)"
+        secondary="$(jq -r --arg primary "$primary" '.[] | select(.name != $primary and (.name | startswith("eDP-") | not)) | .name' <<<"$current" | head -n1)"
+        [ -n "$primary" ] && apply_workspaces "$primary" "$secondary" "$laptop" "$mode"
+        ;;
+    mode)
+        case "${2:-}" in
+            extend | duplicate) ;;
+            *) printf 'Usage: %s mode [extend|duplicate]\n' "$0" >&2; exit 2 ;;
+        esac
+        state | jq --arg mode "$2" '.mode = $mode' | save_state
+        apply
+        ;;
+    primary)
+        [ -n "${2:-}" ] || { printf 'Usage: %s primary OUTPUT\n' "$0" >&2; exit 2; }
+        state | jq --arg output "$2" '.primary = $output' | save_state
+        apply
+        ;;
+    transform)
+        [ -n "${2:-}" ] && [[ "${3:-}" =~ ^[0-7]$ ]] || { printf 'Usage: %s transform OUTPUT [0-7]\n' "$0" >&2; exit 2; }
+        state | jq --arg output "$2" --argjson transform "$3" '.transforms[$output] = $transform' | save_state
+        apply
+        ;;
+    layout)
+        [ -n "${2:-}" ] || { printf 'Usage: %s layout POSITIONS_JSON\n' "$0" >&2; exit 2; }
+        current="$(monitors)"
+        # Verify the entire arrangement before writing anything: all connected
+        # outputs have coordinates, none overlap, and every output is reachable
+        # by crossing an edge with positive overlap. One pixel of tolerance
+        # accounts for rounded logical widths at fractional scale.
+        if ! jq -en --argjson monitors "$current" --argjson positions "$2" '
+            def adjacent($a; $b):
+                ((($a.x + $a.w - $b.x | fabs) <= 1 or ($b.x + $b.w - $a.x | fabs) <= 1)
+                 and $a.y < $b.y + $b.h - 1 and $b.y < $a.y + $a.h - 1)
+                or ((($a.y + $a.h - $b.y | fabs) <= 1 or ($b.y + $b.h - $a.y | fabs) <= 1)
+                 and $a.x < $b.x + $b.w - 1 and $b.x < $a.x + $a.w - 1);
+            def overlaps($a; $b):
+                $a.x < $b.x + $b.w - 1 and $b.x < $a.x + $a.w - 1 and
+                $a.y < $b.y + $b.h - 1 and $b.y < $a.y + $a.h - 1;
+            ($monitors | map(. as $m | ($positions[$m.name] // "") as $p |
+                select($p | test("^[0-9]+x[0-9]+$")) |
+                ($p | split("x") | map(tonumber)) as $xy |
+                {name: $m.name, x: $xy[0], y: $xy[1],
+                 w: ($m.width / (if $m.scale > 0 then $m.scale else 1 end)),
+                 h: ($m.height / (if $m.scale > 0 then $m.scale else 1 end))})) as $rects |
+            ($rects | length) == ($monitors | length) and
+            (all(range(0; $rects | length); . as $i |
+                all(range($i + 1; $rects | length); . as $j |
+                    overlaps($rects[$i]; $rects[$j]) | not))) and
+            (reduce range(0; $rects | length) as $pass ([0];
+                . as $seen | reduce range(0; $rects | length) as $i (.;
+                    if ($seen | any(. == $i)) or
+                       ($seen | any(. as $j | adjacent($rects[$i]; $rects[$j])))
+                    then . + [$i] | unique else . end)) | length) == ($rects | length)
+        ' >/dev/null 2>&1; then
+            printf 'Rejected layout: displays must touch at an edge and cannot overlap\n' >&2
+            exit 2
+        fi
+        state | jq --argjson positions "$2" '.positions = $positions' | save_state
+        apply
+        ;;
+    reset-layout)
+        state | jq '.positions = {}' | save_state
+        apply
+        ;;
+    dpms)
+        case "${2:-toggle}" in
+            on) hyprctl dispatch 'hl.dsp.dpms({ action = "enable" })' ;;
+            off) hyprctl dispatch 'hl.dsp.dpms({ action = "disable" })' ;;
+            toggle)
+                if monitors | jq -e 'any(.[]; .dpmsStatus == true)' >/dev/null; then
+                    hyprctl dispatch 'hl.dsp.dpms({ action = "disable" })'
+                else
+                    hyprctl dispatch 'hl.dsp.dpms({ action = "enable" })'
+                fi
+                ;;
+            *) printf 'Usage: %s dpms [on|off|toggle]\n' "$0" >&2; exit 2 ;;
+        esac
+        ;;
+    *)
+        printf 'Usage: %s [status|apply|restore|route-workspaces|mode|primary|transform|layout|reset-layout|dpms]\n' "$0" >&2
+        exit 2
+        ;;
+esac

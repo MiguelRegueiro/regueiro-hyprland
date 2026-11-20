@@ -31,12 +31,13 @@ ShellRoot {
     readonly property bool launcherRequested: launcherVisible
     property var launcherTargetMonitor: null
     property bool wallpaperPickerVisible: false
+    property bool settingsVisible: false
     property bool externalDrivesMenuVisible: false
     property bool cpuStatsMenuVisible: false
     property bool ramStatsMenuVisible: false
     property bool sshSessionsMenuVisible: false
     property bool ttsMenuVisible: false
-    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || cpuStatsMenuVisible || ramStatsMenuVisible || sshSessionsMenuVisible || ttsMenuVisible
+    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || cpuStatsMenuVisible || ramStatsMenuVisible || sshSessionsMenuVisible || ttsMenuVisible || settingsVisible
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -394,6 +395,15 @@ ShellRoot {
         }
     }
 
+    function openSettings() {
+        closeAllPanels();
+        settingsVisible = true;
+    }
+
+    function closeSettings() {
+        settingsVisible = false;
+    }
+
     function toggleNotificationCenter() {
         if (powerMenuVisible)
             return;
@@ -685,6 +695,10 @@ ShellRoot {
         id: brightnessServiceState
     }
 
+    Services.DisplayService {
+        id: displayServiceState
+    }
+
     Services.DictationService {
         id: dictationServiceState
     }
@@ -719,6 +733,22 @@ ShellRoot {
 
     Services.LauncherService {
         id: launcherServiceState
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Component {
+            Overlays.SettingsOverlay {
+                required property var modelData
+                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+
+                targetScreen: modelData
+                displayService: displayServiceState
+                open: root.settingsVisible && activeScreen
+                onCloseRequested: root.closeSettings()
+            }
+        }
     }
 
     Variants {
@@ -918,12 +948,14 @@ ShellRoot {
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 brightnessService: brightnessServiceState
+                displayService: displayServiceState
                 networkService: networkServiceState
                 onOutsidePressed: root.closeAllPanels()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onPowerActionRequested: actionId => {
                     return root.requestPowerAction(actionId);
                 }
+                onSettingsRequested: root.openSettings()
                 onQuickSettingsHoveredChanged: {
                     if (activeScreen)
                         qsController.panelHovered = quickSettingsHovered;

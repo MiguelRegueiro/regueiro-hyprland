@@ -1,6 +1,9 @@
 -- Session autostart.
 
 hl.on("hyprland.start", function()
+    -- Restore this machine's saved Extend/Duplicate mode after connector
+    -- discovery. The state file is deliberately outside the Stow package.
+    hl.exec_cmd("sh -c 'sleep 1 && exec ~/.config/hypr/scripts/displayctl restore'")
     -- Start the shell before the login-time portal, GPU, and Python work.  QS
     -- eagerly creates every panel, so prioritising it here keeps the bar and
     -- all menus warm without pushing that work to their first use.

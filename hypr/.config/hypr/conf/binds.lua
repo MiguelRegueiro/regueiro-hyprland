@@ -127,6 +127,7 @@ hl.bind(main_mod .. " + T", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl
 hl.bind("F10", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl toggle"), { release = true })
 hl.bind("F7", hl.dsp.exec_cmd("~/.config/hypr/scripts/ttsctl speak-clipboard"), { release = true })
 hl.bind(main_mod .. " + CTRL + S", hl.dsp.exec_cmd("qs ipc call quicksettings toggle"))
+hl.bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("~/.config/hypr/scripts/displayctl dpms toggle"), { locked = true })
 hl.bind(main_mod .. " + S", hl.dsp.exec_cmd(power_menu))
 
 hl.bind(main_mod .. " + L", hl.dsp.exec_cmd(power_menu .. " lock"))

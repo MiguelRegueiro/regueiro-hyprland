@@ -11,6 +11,7 @@ PanelWindow {
     required property var notificationStore
     required property var audioService
     required property var brightnessService
+    required property var displayService
     required property var networkService
     property bool hasBar: true
     property bool quickSettingsVisible: false
@@ -26,6 +27,7 @@ PanelWindow {
     signal outsidePressed()
     signal barPressed(real x, real y)
     signal powerActionRequested(string actionId)
+    signal settingsRequested()
 
     onQuickSettingsVisibleChanged: {
         if (!quickSettingsVisible)
@@ -137,11 +139,13 @@ PanelWindow {
         notificationStore: root.notificationStore
         audioService: root.audioService
         brightnessService: root.brightnessService
+        displayService: root.displayService
         networkService: root.networkService
         targetScreen: root.targetScreen
         onPowerActionRequested: (actionId) => {
             return root.powerActionRequested(actionId);
         }
+        onSettingsRequested: root.settingsRequested()
     }
 
     mask: Region {

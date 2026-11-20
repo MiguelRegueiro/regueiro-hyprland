@@ -139,6 +139,15 @@ machine-local files under `$XDG_CONFIG_HOME` (normally `~/.config`) can override
   assignments remain in `conf/workspaces.lua` unless also overridden. The
   cursor's startup display is configured natively by `cursor.default_monitor`
   in `conf/appearance.lua`.
+- `hypr-local/displays.json`: created by Quick Settings → Displays after the
+  first display change. It remembers that machine's Extend/Duplicate choice,
+  primary output, connected display arrangement, and rotations; it is never Stowed or committed. Until this
+  file exists, the display controller leaves existing local monitor overrides
+  alone (including a duplicate-only presentation laptop).
+  The Settings display board snaps dragged monitors to a touching edge and
+  rejects overlapping or disconnected layouts. If an older saved position
+  prevents pointer movement between screens, run
+  `~/.config/hypr/scripts/displayctl reset-layout` to clear it.
 - `quickshell-local/brightness.json`: an integer `step` (1–100) enables linear
   percentage-point adjustments; `minimum` (0–99, default 2) sets the lower bound.
   Without a valid step, the original stops apply. Edits reload automatically.

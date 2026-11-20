@@ -39,6 +39,8 @@ Item {
 
     signal wifiPageRequested
     signal bluetoothPageRequested
+    signal displaysPageRequested
+    signal settingsRequested
     signal powerModeChangeRequested(string mode)
     signal audioOutputPopupRequest(bool open)
     signal powerActionRequested(string actionId)
@@ -165,6 +167,53 @@ Item {
                             color: Theme.textDim
                             elide: Text.ElideRight
                         }
+                    }
+                }
+            }
+
+            Item {
+                Layout.preferredWidth: 38
+                Layout.preferredHeight: 38
+
+                Rectangle {
+                    id: settingsButton
+
+                    anchors.fill: parent
+                    radius: 19
+                    color: settingsButtonHover.hovered ? QS.cardBgHover : QS.cardBg
+                    border.width: 1
+                    border.color: settingsButtonHover.hovered ? QS.cardBorderHover : QS.cardBorder
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰒓"
+                        font.family: Theme.fontIcons
+                        font.pixelSize: 17
+                        color: Theme.textPrimary
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.qsPageFadeDuration }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation { duration: Theme.qsPageFadeDuration }
+                    }
+                }
+
+                HoverHandler {
+                    id: settingsButtonHover
+
+                    blocking: false
+                    cursorShape: Qt.ArrowCursor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.ArrowCursor
+                    onClicked: {
+                        root.powerMenuOpen = false;
+                        root.audioOutputPopupRequest(false);
+                        root.settingsRequested();
                     }
                 }
             }
@@ -467,6 +516,7 @@ Item {
                     root.notificationStore.toggleDnd();
                 }
             }
+
         }
 
         ColumnLayout {

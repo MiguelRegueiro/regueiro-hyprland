@@ -27,6 +27,13 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
+    name = "qs-settings-blur",
+    match = { namespace = "qs-settings" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
     name = "qs-clipboard-blur",
     match = { namespace = "qs-clipboard" },
     blur = true,
