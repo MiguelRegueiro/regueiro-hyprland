@@ -49,7 +49,7 @@ cursor_anchor() {
 }
 
 restore_cursor() {
-    local anchor="$1" preferred="$2" current destination
+    local anchor="$1" preferred="$2" current destination cursor
     [ -n "$anchor" ] && [ "$(jq -r '.name // ""' <<<"$anchor")" != "" ] || return 0
     current="$(monitors)" || return 0
     destination="$(jq -rn --argjson monitors "$current" --argjson anchor "$anchor" --arg preferred "$preferred" '
@@ -65,6 +65,12 @@ restore_cursor() {
     [ -n "$destination" ] || return 0
     local x y
     read -r x y <<<"$destination"
+    cursor="$(hyprctl -j cursorpos 2>/dev/null)" || return 0
+    if jq -e --argjson x "$x" --argjson y "$y" \
+        '((.x - $x) | fabs) <= 1 and ((.y - $y) | fabs) <= 1' \
+        >/dev/null 2>&1 <<<"$cursor"; then
+        return 0
+    fi
     hyprctl dispatch "hl.dsp.cursor.move({ x = $x, y = $y })" >/dev/null 2>&1 || true
 }
 
@@ -115,8 +121,8 @@ apply_monitor() {
 }
 
 apply_extend_layout() {
-    local current="$1" primary="$2" laptop="$3" saved="$4"
-    local park_x output position program
+    local current="$1" primary="$2" laptop="$3" saved="$4" action="$5"
+    local park_x output position program changed
     local -a ordered=("$primary")
     if [ -n "$laptop" ] && [ "$laptop" != "$primary" ]; then
         ordered+=("$laptop")
@@ -129,6 +135,20 @@ apply_extend_layout() {
     if [ "$(jq 'length' <<<"$current")" -eq 1 ]; then
         apply_monitor "$primary" "0x0"
         return
+    fi
+    if [ "$action" = layout ] && [ "$saved" = true ]; then
+        # A normal drag changes just one output. Reconfigure that output in
+        # place so the cursor never sees the temporary parking layout.
+        changed="$(jq -nr --argjson monitors "$current" --argjson positions "$(state | jq '.positions')" '
+            [$monitors[] | select(($positions[.name] // "") != ((.x | tostring) + "x" + (.y | tostring))) | .name]
+            | if length == 0 then "" elif length == 1 then .[0] else "multiple" end
+        ')"
+        if [ -z "$changed" ]; then
+            return
+        elif [ "$changed" != multiple ]; then
+            apply_monitor "$changed" "$(position_for "$changed" "0x0")"
+            return
+        fi
     fi
     if [ "$saved" = true ]; then
         park_x="$(jq -nr --argjson monitors "$current" --argjson positions "$(state | jq '.positions')" '
@@ -212,7 +232,7 @@ apply_workspaces() {
 }
 
 apply() {
-    local current mode primary laptop secondary saved_positions_complete anchor
+    local current mode primary laptop secondary saved_positions_complete anchor action="${1:-}"
     current="$(monitors)"
     anchor="$(cursor_anchor "$current")"
     mode="$(state | jq -r '.mode // "extend"')"
@@ -248,8 +268,10 @@ apply() {
         return
     fi
 
-    apply_extend_layout "$current" "$primary" "$laptop" "$saved_positions_complete"
-    apply_workspaces "$primary" "$secondary" "$laptop" "$mode"
+    apply_extend_layout "$current" "$primary" "$laptop" "$saved_positions_complete" "$action"
+    if [ "$action" != layout ]; then
+        apply_workspaces "$primary" "$secondary" "$laptop" "$mode"
+    fi
     restore_cursor "$anchor" "$primary"
 }
 
@@ -411,7 +433,7 @@ case "${1:-status}" in
             exit 2
         fi
         state | jq --argjson positions "$2" '.positions = $positions' | save_state
-        apply
+        apply layout
         ;;
     reset-layout)
         state | jq '.positions = {}' | save_state
