@@ -115,54 +115,85 @@ Item {
         return "Orientation";
     }
 
-    function alignedOffset(desired, start, otherSize, movedSize) {
-        const alignments = [start, start + (otherSize - movedSize) / 2, start + otherSize - movedSize];
-        return alignments.reduce((nearest, value) => Math.abs(value - desired) < Math.abs(nearest - desired) ? value : nearest, alignments[0]);
+    function guidedOffset(desired, start, otherSize, movedSize) {
+        // Only attract to an alignment when the pointer is actually near it.
+        const guides = [start, start + (otherSize - movedSize) / 2, start + otherSize - movedSize];
+        const nearest = guides.reduce((best, value) => Math.abs(value - desired) < Math.abs(best - desired) ? value : best, guides[0]);
+        return Math.abs(nearest - desired) * layoutScale <= 5 ? nearest : desired;
+    }
+
+    function connectedPlacement(moved, candidate, monitors) {
+        const rects = monitors.map(monitor => ({
+            x: monitor.name === moved.name ? candidate.x : monitorX(monitor),
+            y: monitor.name === moved.name ? candidate.y : monitorY(monitor),
+            w: monitor.width / Math.max(1, monitor.scale),
+            h: monitor.height / Math.max(1, monitor.scale)
+        }));
+        const seen = [0];
+        for (let index = 0; index < seen.length; index++) {
+            const a = rects[seen[index]];
+            for (let next = 0; next < rects.length; next++) {
+                if (seen.includes(next))
+                    continue;
+                const b = rects[next];
+                const horizontal = (Math.abs(a.x + a.w - b.x) <= 1 || Math.abs(b.x + b.w - a.x) <= 1)
+                    && a.y < b.y + b.h - 1 && b.y < a.y + a.h - 1;
+                const vertical = (Math.abs(a.y + a.h - b.y) <= 1 || Math.abs(b.y + b.h - a.y) <= 1)
+                    && a.x < b.x + b.w - 1 && b.x < a.x + a.w - 1;
+                if (horizontal || vertical)
+                    seen.push(next);
+            }
+        }
+        return seen.length === rects.length;
     }
 
     function placementForDrag(moved, dragX, dragY) {
-        if (Math.max(Math.abs(dragX), Math.abs(dragY)) < 30)
+        if (Math.max(Math.abs(dragX), Math.abs(dragY)) < 4)
             return null;
         const monitors = displayService.monitors;
         const width = moved.width / Math.max(1, moved.scale);
         const height = moved.height / Math.max(1, moved.scale);
-        const desiredX = moved.x + dragX / layoutScale;
-        const desiredY = moved.y + dragY / layoutScale;
+        const desiredX = monitorX(moved) + dragX / layoutScale;
+        const desiredY = monitorY(moved) + dragY / layoutScale;
         const others = monitors.filter(monitor => monitor.name !== moved.name);
-        others.sort((a, b) => {
-            function distance(monitor) {
-                const cx = monitor.x + monitor.width / Math.max(1, monitor.scale) / 2;
-                const cy = monitor.y + monitor.height / Math.max(1, monitor.scale) / 2;
-                return (cx - desiredX - width / 2) ** 2 + (cy - desiredY - height / 2) ** 2;
-            }
-            return distance(a) - distance(b);
-        });
+        let best = null;
+        // Keep at least a small usable passage between screens. The other
+        // coordinate remains free except near optional alignment guides.
+        const minOverlap = 12 / layoutScale;
         for (const other of others) {
             const ow = other.width / Math.max(1, other.scale);
             const oh = other.height / Math.max(1, other.scale);
-            const centerX = desiredX + width / 2 - (other.x + ow / 2);
-            const centerY = desiredY + height / 2 - (other.y + oh / 2);
-            const horizontalScore = Math.abs(centerX) / ((width + ow) / 2);
-            const verticalScore = Math.abs(centerY) / ((height + oh) / 2);
-            const direction = horizontalScore >= verticalScore
-                ? (centerX < 0 ? "left" : "right")
-                : (centerY < 0 ? "above" : "below");
-            const x = direction === "left" ? other.x - width
-                    : direction === "right" ? other.x + ow
-                    : alignedOffset(desiredX, other.x, ow, width);
-            const y = direction === "above" ? other.y - height
-                    : direction === "below" ? other.y + oh
-                    : alignedOffset(desiredY, other.y, oh, height);
-            const collides = others.some(monitor => {
-                const mw = monitor.width / Math.max(1, monitor.scale);
-                const mh = monitor.height / Math.max(1, monitor.scale);
-                return x < monitor.x + mw - 1 && monitor.x < x + width - 1 &&
-                       y < monitor.y + mh - 1 && monitor.y < y + height - 1;
-            });
-            if (!collides)
-                return { x: x, y: y, direction: direction, target: other.name };
+            const ox = monitorX(other);
+            const oy = monitorY(other);
+            const vertical = Math.min(minOverlap, height / 2, oh / 2);
+            const horizontal = Math.min(minOverlap, width / 2, ow / 2);
+            const guidedY = guidedOffset(desiredY, oy, oh, height);
+            const guidedX = guidedOffset(desiredX, ox, ow, width);
+            const y = Math.max(oy - height + vertical, Math.min(guidedY, oy + oh - vertical));
+            const x = Math.max(ox - width + horizontal, Math.min(guidedX, ox + ow - horizontal));
+            const candidates = [
+                { x: ox - width, y: y, direction: "left" },
+                { x: ox + ow, y: y, direction: "right" },
+                { x: x, y: oy - height, direction: "above" },
+                { x: x, y: oy + oh, direction: "below" }
+            ];
+            for (const candidate of candidates) {
+                const collides = others.some(monitor => {
+                    const mx = monitorX(monitor);
+                    const my = monitorY(monitor);
+                    const mw = monitor.width / Math.max(1, monitor.scale);
+                    const mh = monitor.height / Math.max(1, monitor.scale);
+                    return candidate.x < mx + mw - 1 && mx < candidate.x + width - 1 &&
+                           candidate.y < my + mh - 1 && my < candidate.y + height - 1;
+                });
+                if (collides || !connectedPlacement(moved, candidate, monitors))
+                    continue;
+                const distance = (candidate.x - desiredX) ** 2 + (candidate.y - desiredY) ** 2;
+                if (!best || distance < best.distance)
+                    best = { x: candidate.x, y: candidate.y, direction: candidate.direction, target: other.name, distance: distance };
+            }
         }
-        return null;
+        return best;
     }
 
     function snapLayout(moved, best) {
@@ -376,7 +407,7 @@ Item {
                 anchors.top: parent.top
                 anchors.rightMargin: 12
                 anchors.topMargin: 10
-                text: "Drag to arrange · Release to snap"
+                text: "Drag to arrange · Release to attach"
                 font.family: Theme.fontUi
                 font.pixelSize: 10
                 color: Theme.textDisabled
