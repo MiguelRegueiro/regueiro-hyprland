@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls.Basic as Controls
 import "../../theme/Theme.js" as Theme
 import "../QuickSettingsStyle.js" as QS
 
@@ -22,6 +23,12 @@ Item {
     readonly property real layoutScale: Math.min(0.14, (layoutCanvas.width - 64) / Math.max(1, layoutMaxX - layoutMinX), (layoutCanvas.height - 86) / Math.max(1, layoutMaxY - layoutMinY, displayService.monitors.length === 2 ? stackedHeight : 1))
     readonly property real layoutOffsetX: Math.max(16, (layoutCanvas.width - (layoutMaxX - layoutMinX) * layoutScale) / 2)
     readonly property real layoutOffsetY: 36 + Math.max(8, (layoutCanvas.height - 44 - (layoutMaxY - layoutMinY) * layoutScale) / 2)
+    readonly property var orientations: [
+        { transform: 0, label: "Landscape (0°)" },
+        { transform: 2, label: "Landscape (180°)" },
+        { transform: 1, label: "Portrait (90°)" },
+        { transform: 3, label: "Portrait (270°)" }
+    ]
 
     signal backClicked
 
@@ -43,6 +50,15 @@ Item {
         if (output.indexOf("eDP-") === 0)
             return displayService.monitors.length > 2 ? "Workspaces 20+" : "Workspaces 10+";
         return "Workspaces 10–19";
+    }
+
+    function orientationLabel(transform) {
+        const option = orientations.find(item => item.transform === transform);
+        if (option)
+            return option.label;
+        if (transform >= 4 && transform <= 7)
+            return "Flipped (" + [0, 90, 180, 270][transform - 4] + "°)";
+        return "Orientation";
     }
 
     function alignedOffset(desired, start, otherSize, movedSize) {
@@ -93,24 +109,6 @@ Item {
                 return { x: x, y: y, direction: direction, target: other.name };
         }
         return null;
-    }
-
-    function placeSelected(direction) {
-        if (displayService.monitors.length !== 2 || !selectedMonitor || displayService.busy)
-            return;
-        const moved = selectedMonitor;
-        const other = displayService.monitors.find(monitor => monitor.name !== moved.name);
-        const width = moved.width / Math.max(1, moved.scale);
-        const height = moved.height / Math.max(1, moved.scale);
-        const ow = other.width / Math.max(1, other.scale);
-        const oh = other.height / Math.max(1, other.scale);
-        const x = direction === "left" ? other.x - width
-                : direction === "right" ? other.x + ow
-                : alignedOffset(moved.x, other.x, ow, width);
-        const y = direction === "above" ? other.y - height
-                : direction === "below" ? other.y + oh
-                : alignedOffset(moved.y, other.y, oh, height);
-        snapLayout(moved, { x: x, y: y });
     }
 
     function snapLayout(moved, best) {
@@ -297,6 +295,7 @@ Item {
             id: layoutCanvas
 
             Layout.fillWidth: true
+            Layout.fillHeight: true
             Layout.preferredHeight: 300
             clip: true
             color: QS.cardBg
@@ -583,6 +582,7 @@ Item {
             }
         }
         Rectangle {
+            id: orientationRow
             Layout.fillWidth: true
             Layout.preferredHeight: 52
             visible: root.selectedMonitor !== null && root.displayService.mode === "extend"
@@ -599,71 +599,89 @@ Item {
 
                 Text { Layout.fillWidth: true; text: "Orientation"; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 12 }
                 Rectangle {
-                    Layout.preferredWidth: 112
+                    Layout.preferredWidth: 172
                     Layout.preferredHeight: 32
                     radius: 10
                     color: rotateHover.hovered ? QS.chipBgHover : QS.chipBg
                     Text {
                         anchors.centerIn: parent
-                        text: root.selectedMonitor && (root.selectedMonitor.transform === 1 || root.selectedMonitor.transform === 3) ? "Portrait  ⌄" : "Landscape  ⌄"
+                        text: root.orientationLabel(root.selectedMonitor ? root.selectedMonitor.transform : 0) + "  ⌄"
                         color: Theme.textPrimary
                         font.family: Theme.fontUi
                         font.pixelSize: 11
                     }
-                    HoverHandler { id: rotateHover; cursorShape: Qt.ArrowCursor }
+                    HoverHandler { id: rotateHover; cursorShape: Qt.PointingHandCursor }
                     MouseArea {
                         anchors.fill: parent
                         enabled: root.selectedMonitor !== null && !root.displayService.busy
-                        onClicked: root.displayService.rotate(root.selectedMonitor.name, root.selectedMonitor.transform === 0 ? 1 : 0)
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: orientationMenu.open()
                     }
                 }
             }
-        }
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 50
-            visible: root.displayService.monitors.length === 2 && root.displayService.mode === "extend"
-            color: QS.cardBg
-            radius: 16
-            border.width: 1
-            border.color: QS.cardBorder
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 6
+            Controls.Popup {
+                id: orientationMenu
+                parent: orientationRow
+                x: orientationRow.width - width - 10
+                y: -height - 6
+                width: 194
+                padding: 6
+                closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
 
-                Text {
-                    text: "Place selected"
-                    color: Theme.textDim
-                    font.family: Theme.fontUi
-                    font.pixelSize: 11
-                    Layout.rightMargin: 6
+                background: Rectangle {
+                    radius: 12
+                    color: "#282c34"
+                    border.width: 1
+                    border.color: QS.cardBorderHover
                 }
-                Repeater {
-                    model: ["Left", "Above", "Below", "Right"]
 
-                    delegate: Rectangle {
-                        required property string modelData
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 30
-                        radius: 9
-                        color: placeHover.hovered ? QS.chipBgHover : QS.chipBg
+                contentItem: Column {
+                    spacing: 2
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: parent.modelData
-                            color: Theme.textPrimary
-                            font.family: Theme.fontUi
-                            font.pixelSize: 11
-                        }
-                        HoverHandler { id: placeHover; cursorShape: Qt.PointingHandCursor }
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: !root.displayService.busy
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.placeSelected(parent.modelData.toLowerCase())
+                    Repeater {
+                        model: root.orientations
+
+                        delegate: Rectangle {
+                            required property var modelData
+                            readonly property bool selected: root.selectedMonitor && root.selectedMonitor.transform === modelData.transform
+
+                            width: orientationMenu.availableWidth
+                            height: 34
+                            radius: 8
+                            color: selected ? Qt.rgba(0.24, 0.39, 0.69, 0.68)
+                                            : choiceHover.hovered ? QS.chipBgHover : "transparent"
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 12
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: parent.modelData.label
+                                color: Theme.textPrimary
+                                font.family: Theme.fontUi
+                                font.pixelSize: 11
+                            }
+                            Text {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 12
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: parent.selected
+                                text: "✓"
+                                color: Theme.textPrimary
+                                font.family: Theme.fontUi
+                                font.pixelSize: 12
+                            }
+                            HoverHandler { id: choiceHover; cursorShape: Qt.PointingHandCursor }
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: !root.displayService.busy
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    orientationMenu.close();
+                                    if (root.selectedMonitor && !parent.selected)
+                                        root.displayService.rotate(root.selectedMonitor.name, parent.modelData.transform);
+                                }
+                            }
                         }
                     }
                 }

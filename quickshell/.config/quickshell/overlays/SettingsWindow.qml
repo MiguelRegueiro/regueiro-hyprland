@@ -1,28 +1,26 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
 import "../quicksettings/pages" as Pages
 import "../theme/Theme.js" as Theme
-import "../quicksettings/QuickSettingsStyle.js" as QS
 
-PanelWindow {
+FloatingWindow {
     id: root
 
     required property var displayService
-    required property var targetScreen
+    property var targetScreen: null
     property bool open: false
     signal closeRequested
 
     screen: targetScreen
     visible: open
-    exclusiveZone: 0
-    color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "qs-settings"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    title: "Quickshell Settings"
+    implicitWidth: 1060
+    implicitHeight: 760
+    minimumSize: Qt.size(900, 700)
+    color: "#181b20"
 
-    anchors { top: true; bottom: true; left: true; right: true }
+    onClosed: closeRequested()
 
     onOpenChanged: {
         if (open)
@@ -45,27 +43,11 @@ PanelWindow {
         onTextChanged: clear()
     }
 
-    MouseArea {
-        anchors.fill: parent
-        onClicked: mouse => {
-            // Rectangle and layout backgrounds do not consume mouse events.
-            // Only a click outside the actual settings window dismisses it.
-            if (mouse.x < window.x || mouse.x >= window.x + window.width ||
-                mouse.y < window.y || mouse.y >= window.y + window.height)
-                root.closeRequested();
-        }
-    }
-
     Rectangle {
         id: window
 
-        width: Math.min(1060, parent.width - 64)
-        height: Math.min(760, parent.height - 72)
-        anchors.centerIn: parent
-        radius: 24
-        color: Qt.rgba(0.095, 0.105, 0.125, 0.94)
-        border.width: 1
-        border.color: QS.edge
+        anchors.fill: parent
+        color: "#181b20"
 
         RowLayout {
             anchors.fill: parent
@@ -75,7 +57,6 @@ PanelWindow {
             Rectangle {
                 Layout.fillHeight: true
                 Layout.preferredWidth: 238
-                radius: 24
                 color: Qt.rgba(0.04, 0.05, 0.07, 0.54)
 
                 ColumnLayout {
@@ -83,10 +64,21 @@ PanelWindow {
                     anchors.margins: 18
                     spacing: 12
 
-                    RowLayout {
+                    Item {
                         Layout.fillWidth: true
-                        Text { text: "Settings"; font.family: Theme.fontUi; font.pixelSize: 20; font.weight: Font.DemiBold; color: Theme.textPrimary }
-                        Item { Layout.fillWidth: true }
+                        Layout.preferredHeight: 30
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Settings"
+                            font.family: Theme.fontUi
+                            font.pixelSize: 20
+                            font.weight: Font.DemiBold
+                            color: Theme.textPrimary
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: root.startSystemMove()
+                        }
                     }
                     Text { text: "SYSTEM"; font.family: Theme.fontUi; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.textDisabled }
                     Rectangle {

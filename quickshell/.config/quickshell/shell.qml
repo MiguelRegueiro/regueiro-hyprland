@@ -32,12 +32,13 @@ ShellRoot {
     property var launcherTargetMonitor: null
     property bool wallpaperPickerVisible: false
     property bool settingsVisible: false
+    property var settingsTargetScreen: null
     property bool externalDrivesMenuVisible: false
     property bool cpuStatsMenuVisible: false
     property bool ramStatsMenuVisible: false
     property bool sshSessionsMenuVisible: false
     property bool ttsMenuVisible: false
-    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || cpuStatsMenuVisible || ramStatsMenuVisible || sshSessionsMenuVisible || ttsMenuVisible || settingsVisible
+    readonly property bool panelChromeRequested: launcherRequested || clipboardRequested || quickSettingsVisible || notificationCenterVisible || externalDrivesMenuVisible || cpuStatsMenuVisible || ramStatsMenuVisible || sshSessionsMenuVisible || ttsMenuVisible
     property bool powerMenuVisible: false
     property string powerMenuMode: "menu"
     property string powerMenuAction: ""
@@ -395,8 +396,10 @@ ShellRoot {
         }
     }
 
-    function openSettings() {
+    function openSettings(targetScreen) {
         closeAllPanels();
+        settingsTargetScreen = targetScreen || Quickshell.screens.find(screen =>
+            Hyprland.focusedMonitor && screen.name === Hyprland.focusedMonitor.name) || Quickshell.screens[0];
         settingsVisible = true;
     }
 
@@ -476,6 +479,18 @@ ShellRoot {
         }
 
         target: "quicksettings"
+    }
+
+    IpcHandler {
+        function open() {
+            root.openSettings();
+        }
+
+        function close() {
+            root.closeSettings();
+        }
+
+        target: "settings"
     }
 
     IpcHandler {
@@ -735,20 +750,11 @@ ShellRoot {
         id: launcherServiceState
     }
 
-    Variants {
-        model: Quickshell.screens
-
-        delegate: Component {
-            Overlays.SettingsOverlay {
-                required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
-
-                targetScreen: modelData
-                displayService: displayServiceState
-                open: root.settingsVisible && activeScreen
-                onCloseRequested: root.closeSettings()
-            }
-        }
+    Overlays.SettingsWindow {
+        targetScreen: root.settingsTargetScreen
+        displayService: displayServiceState
+        open: root.settingsVisible
+        onCloseRequested: root.closeSettings()
     }
 
     Variants {
@@ -955,7 +961,7 @@ ShellRoot {
                 onPowerActionRequested: actionId => {
                     return root.requestPowerAction(actionId);
                 }
-                onSettingsRequested: root.openSettings()
+                onSettingsRequested: root.openSettings(modelData)
                 onQuickSettingsHoveredChanged: {
                     if (activeScreen)
                         qsController.panelHovered = quickSettingsHovered;
