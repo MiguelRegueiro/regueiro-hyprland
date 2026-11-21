@@ -704,6 +704,11 @@ ShellRoot {
             ncController.closeImmediately();
         }
 
+        function onDefaultActionInvoked() {
+            ncController.pinned = false;
+            ncController.closeImmediately();
+        }
+
         target: notificationStoreService
     }
 

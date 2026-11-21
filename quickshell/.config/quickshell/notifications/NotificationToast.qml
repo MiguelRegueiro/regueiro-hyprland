@@ -107,9 +107,12 @@ Item {
                 hoverEnabled: root.canActivate
                 cursorShape: root.canActivate ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: {
-                    if (root.notif && root.notificationStore.invokeDefault(root.notif))
-                        root.dismiss();
-
+                    if (!root.notif)
+                        return;
+                    const notif = root.notif;
+                    const store = root.notificationStore;
+                    root.dismiss();
+                    store.invokeDefault(notif);
                 }
             }
 

@@ -1,6 +1,8 @@
 import QtCore
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import "../theme/Theme.js" as Theme
 
@@ -14,13 +16,43 @@ Item {
     property var popups: []
     readonly property int count: notifications.length
     readonly property bool holdOpen: holdOpenTimer.running
+    property string clickedDesktopEntry: ""
+    property string clickedAppName: ""
 
     signal allDismissed()
+    signal defaultActionInvoked()
 
     Timer {
         id: holdOpenTimer
         interval: Theme.notificationHoldDelay
         repeat: false
+    }
+
+    // A notification click is an explicit request to visit its app. Resolve
+    // that window directly; ordinary app activation requests remain disabled.
+    Timer {
+        id: focusClickedAppDelay
+        interval: 80
+        onTriggered: {
+            if (!focusClickedApp.running)
+                focusClickedApp.running = true;
+        }
+    }
+
+    Process {
+        id: focusClickedApp
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const target = root.findClickedApp(JSON.parse(text), root.clickedDesktopEntry, root.clickedAppName);
+                    if (target && /^0x[0-9a-f]+$/i.test(target.address))
+                        Hyprland.dispatch("hl.dsp.focus({ window = " + JSON.stringify("address:" + target.address) + " })");
+                } catch (error) {
+                    console.warn("Could not focus notification app:", error);
+                }
+            }
+        }
     }
 
     Settings {
@@ -134,13 +166,52 @@ Item {
         return notif.actions.some(action => action.identifier === "default")
     }
 
+    function appKey(value) {
+        return String(value || "").replace(/\.desktop$/i, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function findClickedApp(clients, desktopEntry, appName) {
+        if (!Array.isArray(clients))
+            return null;
+        const entry = appKey(desktopEntry);
+        const name = appKey(appName);
+        if (!entry && !name)
+            return null;
+        let best = null;
+        let bestScore = 0;
+        for (const client of clients) {
+            const app = appKey(client.class);
+            if (!app || !/^0x[0-9a-f]+$/i.test(String(client.address || "")))
+                continue;
+            let score = 0;
+            if (entry && (app === entry || entry.endsWith(app) || app.endsWith(entry)))
+                score = 4;
+            else if (name && (app === name || app.endsWith(name)))
+                score = 2;
+            if (score === 0)
+                continue;
+            if (client.urgent)
+                score += 1;
+            if (score > bestScore || (score === bestScore && Number(client.focusHistoryID) < Number(best.focusHistoryID))) {
+                best = client;
+                bestScore = score;
+            }
+        }
+        return best;
+    }
+
     function invokeDefault(notif) {
         if (!notif || !notif.actions)
             return false
 
         for (const action of notif.actions) {
             if (action.identifier === "default") {
+                clickedDesktopEntry = notif.desktopEntry || "";
+                clickedAppName = notif.appName || "";
                 action.invoke()
+                root.defaultActionInvoked();
+                if (clickedDesktopEntry || clickedAppName)
+                    focusClickedAppDelay.restart();
                 return true
             }
         }
