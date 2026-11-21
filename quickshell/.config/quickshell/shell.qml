@@ -409,6 +409,11 @@ ShellRoot {
 
     function openSettings(targetScreen) {
         closeAllPanels();
+        if (settingsVisible) {
+            if (!focusSettingsProcess.running)
+                focusSettingsProcess.running = true;
+            return;
+        }
         settingsTargetScreen = targetScreen || Quickshell.screens.find(screen =>
             Hyprland.focusedMonitor && screen.name === Hyprland.focusedMonitor.name) || Quickshell.screens[0];
         settingsVisible = true;
@@ -776,6 +781,25 @@ ShellRoot {
         powerService: powerServiceState
         open: root.settingsVisible
         onCloseRequested: root.closeSettings()
+    }
+
+    Process {
+        id: focusSettingsProcess
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const client = JSON.parse(text).find(entry => entry.title === "Quickshell Settings"
+                        && entry.class === "org.quickshell" && entry.mapped && !entry.hidden);
+                    if (client && /^0x[0-9a-f]+$/i.test(client.address)) {
+                        Hyprland.dispatch("hl.dsp.focus({ window = " + JSON.stringify("address:" + client.address) + " })");
+                        return;
+                    }
+                } catch (error) {
+                    console.warn("Could not find Settings window:", error);
+                }
+            }
+        }
     }
 
     Variants {
