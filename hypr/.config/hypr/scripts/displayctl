@@ -174,14 +174,20 @@ workspace_target() {
 
 apply_workspaces() {
     local primary="$1" secondary="$2" laptop="$3" mode="$4"
-    local workspace monitor target program
+    local workspace monitor target program default_workspace
     program="do "
 
     # Bind workspaces that do not exist yet as well as moving existing ones.
     # Numbered workspace rules are installed through 99.
     for workspace in $(seq 1 99); do
         target="$(workspace_target "$workspace" "$primary" "$secondary" "$laptop" "$mode")"
-        program+="hl.workspace_rule({ workspace = $(lua_string "$workspace"), monitor = $(lua_string "$target") }); "
+        default_workspace=false
+        if [ "$workspace" -eq 1 ] || \
+           { [ "$mode" = extend ] && [ "$workspace" -eq 10 ] && [ "$target" != "$primary" ]; } || \
+           { [ "$mode" = extend ] && [ "$workspace" -eq 20 ] && [ -n "$secondary" ] && [ -n "$laptop" ] && [ "$laptop" != "$primary" ]; }; then
+            default_workspace=true
+        fi
+        program+="hl.workspace_rule({ workspace = $(lua_string "$workspace"), monitor = $(lua_string "$target"), default = $default_workspace }); "
     done
 
     while IFS=$'\t' read -r workspace monitor; do
@@ -266,6 +272,11 @@ case "${1:-status}" in
         # configuration until its owner explicitly uses this controller.
         [ "$1" != "restore" ] || [ -e "$state_file" ] || exit 0
         apply
+        if [ "$1" = restore ]; then
+            # Login has already created a workspace on each output. Select the
+            # primary display's default once, after its workspace rules exist.
+            hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })' >/dev/null
+        fi
         ;;
     route-workspaces)
         current="$(monitors)"
