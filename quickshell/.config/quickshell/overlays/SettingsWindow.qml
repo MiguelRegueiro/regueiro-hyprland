@@ -8,8 +8,10 @@ FloatingWindow {
     id: root
 
     required property var displayService
+    required property var powerService
     property var targetScreen: null
     property bool open: false
+    property string page: "displays"
     signal closeRequested
 
     screen: targetScreen
@@ -85,12 +87,25 @@ FloatingWindow {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 10
-                        color: Qt.rgba(0.28, 0.45, 0.79, 0.42)
+                        color: root.page === "displays" ? Qt.rgba(0.28, 0.45, 0.79, 0.42) : "transparent"
                         RowLayout {
                             anchors.fill: parent; anchors.leftMargin: 14; spacing: 10
                             Text { text: "󰍹"; font.family: Theme.fontIcons; font.pixelSize: 18; color: "white" }
                             Text { text: "Displays"; font.family: Theme.fontUi; font.pixelSize: 13; font.weight: Font.Medium; color: "white" }
                         }
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "displays" }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 44
+                        radius: 10
+                        color: root.page === "power" ? Qt.rgba(0.28, 0.45, 0.79, 0.42) : "transparent"
+                        RowLayout {
+                            anchors.fill: parent; anchors.leftMargin: 14; spacing: 10
+                            Text { text: "󰂄"; font.family: Theme.fontIcons; font.pixelSize: 18; color: "white" }
+                            Text { text: "Power"; font.family: Theme.fontUi; font.pixelSize: 13; font.weight: Font.Medium; color: "white" }
+                        }
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "power" }
                     }
                     Item { Layout.fillHeight: true }
                 }
@@ -105,14 +120,21 @@ FloatingWindow {
                 Layout.bottomMargin: 24
                 spacing: 6
 
-                Text { text: "Displays"; font.family: Theme.fontUi; font.pixelSize: 25; font.weight: Font.DemiBold; color: Theme.textPrimary }
+                Text { text: root.page === "power" ? "Power" : "Displays"; font.family: Theme.fontUi; font.pixelSize: 25; font.weight: Font.DemiBold; color: Theme.textPrimary }
                 Pages.DisplaysPage {
+                    visible: root.page === "displays"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     displayService: root.displayService
                     showHeader: false
                     showAdvanced: true
                     onBackClicked: root.closeRequested()
+                }
+                Pages.PowerPage {
+                    visible: root.page === "power"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    powerService: root.powerService
                 }
             }
         }

@@ -1,0 +1,258 @@
+#!/usr/bin/env python3
+"""Machine-local idle policy and hypridle supervisor for this Hyprland session."""
+
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import signal
+import subprocess
+import sys
+import time
+
+
+CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "hypr-local"
+STATE_FILE = CONFIG_DIR / "power.json"
+IDLE_CONFIG = CONFIG_DIR / "hypridle.conf"
+RUNTIME_DIR = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+SESSION = re.sub(r"[^a-zA-Z0-9_-]", "_", os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", ""))
+PID_FILE = RUNTIME_DIR / f"powerctl-{SESSION}.pid"
+LOCK_FILE = RUNTIME_DIR / f"powerctl-{SESSION}.lock"
+AWAKE_FILE = RUNTIME_DIR / f"powerctl-{SESSION}.awake"
+DEFAULTS = {"screenOff": 0, "lock": 20, "suspend": 0, "powerButton": "system"}
+MINUTES = {0, 2, 5, 10, 15, 20, 30, 45, 60, 90, 120}
+BUTTONS = {"system", "lock", "suspend", "shutdown", "reboot", "nothing"}
+SCRIPT = Path(__file__).resolve()
+
+
+def state():
+    try:
+        saved = json.loads(STATE_FILE.read_text())
+    except (OSError, ValueError):
+        saved = {}
+    result = DEFAULTS.copy()
+    if isinstance(saved, dict):
+        for key in ("screenOff", "lock", "suspend"):
+            if type(saved.get(key)) is int and saved[key] in MINUTES:
+                result[key] = saved[key]
+        if saved.get("powerButton") in BUTTONS:
+            result["powerButton"] = saved["powerButton"]
+    return result
+
+
+def atomic_write(path, contents):
+    CONFIG_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
+    temporary.write_text(contents)
+    temporary.chmod(0o600)
+    temporary.replace(path)
+
+
+def render(settings):
+    lines = [
+        "general {",
+        "    lock_cmd = ~/.config/hypr/scripts/quickshell-lock",
+        "    inhibit_sleep = 3",
+        "    before_sleep_cmd = loginctl lock-session",
+        "    after_sleep_cmd = ~/.config/hypr/scripts/displayctl dpms on",
+        "}",
+    ]
+    listeners = (
+        ("screenOff", "~/.config/hypr/scripts/displayctl dpms off", "~/.config/hypr/scripts/displayctl dpms on"),
+        ("lock", "loginctl lock-session", None),
+        ("suspend", "~/.config/hypr/scripts/power-menu suspend", None),
+    )
+    for key, command, resume in listeners:
+        if not settings[key]:
+            continue
+        lines += ["", "listener {", f"    timeout = {settings[key] * 60}", f"    on-timeout = {command}"]
+        if resume:
+            lines.append(f"    on-resume = {resume}")
+        lines += ["    condition_cmd = ~/.config/hypr/scripts/powerctl allowed", "    condition_retry = 10", "}"]
+    return "\n".join(lines) + "\n"
+
+
+def daemon_pid():
+    try:
+        pid = int(PID_FILE.read_text())
+        command = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode()
+        return pid if "powerctl daemon" in command else None
+    except (OSError, ValueError):
+        return None
+
+
+def legacy_idle_pids():
+    """Replace only the old bare hypridle from this Hyprland session."""
+    if not SESSION:
+        return []
+    found = []
+    for proc in Path("/proc").iterdir():
+        if not proc.name.isdigit():
+            continue
+        try:
+            command = (proc / "cmdline").read_bytes().split(b"\0")
+            if len(command) < 2 or Path(os.fsdecode(command[0])).name != "hypridle" or command[1] != b"":
+                continue
+            environ = (proc / "environ").read_bytes()
+            if b"HYPRLAND_INSTANCE_SIGNATURE=" + SESSION.encode() + b"\0" in environ:
+                found.append(int(proc.name))
+        except (OSError, ValueError):
+            continue
+    return found
+
+
+def stop(process):
+    if process is None or process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
+def stop_inhibitor(process):
+    if process is None or process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
+
+
+def start_inhibitor():
+    return subprocess.Popen([
+        "systemd-inhibit", "--what=handle-power-key", "--mode=block",
+        "--who=Quickshell Settings", "--why=Custom power button action",
+        "sleep", "infinity",
+    ], start_new_session=True)
+
+
+def daemon():
+    RUNTIME_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    with LOCK_FILE.open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+        PID_FILE.write_text(str(os.getpid()))
+        legacy = legacy_idle_pids()
+        changed = True
+        running = True
+
+        def reload_policy(_signal, _frame):
+            nonlocal changed
+            changed = True
+
+        def shutdown(_signal, _frame):
+            nonlocal running
+            running = False
+
+        signal.signal(signal.SIGHUP, reload_policy)
+        signal.signal(signal.SIGTERM, shutdown)
+        signal.signal(signal.SIGINT, shutdown)
+        idle = None
+        inhibitor = None
+        inhibitor_retry_at = 0.0
+        button_action = "system"
+        try:
+            while running:
+                if changed or idle is None or idle.poll() is not None:
+                    stop(idle)
+                    stop_inhibitor(inhibitor)
+                    settings = state()
+                    button_action = settings["powerButton"]
+                    atomic_write(IDLE_CONFIG, render(settings))
+                    idle = subprocess.Popen(["hypridle", "-c", str(IDLE_CONFIG)])
+                    if legacy:
+                        time.sleep(0.2)
+                        if idle.poll() is not None:
+                            raise RuntimeError("New hypridle exited; keeping the previous idle manager")
+                        for pid in legacy:
+                            try:
+                                os.kill(pid, signal.SIGTERM)
+                            except ProcessLookupError:
+                                pass
+                        legacy = []
+                    inhibitor = None
+                    inhibitor_retry_at = 0.0
+                    changed = False
+                if button_action != "system" and (inhibitor is None or inhibitor.poll() is not None):
+                    if time.monotonic() >= inhibitor_retry_at:
+                        inhibitor = start_inhibitor()
+                        inhibitor_retry_at = time.monotonic() + 5
+                time.sleep(0.25)
+        finally:
+            stop_inhibitor(inhibitor)
+            stop(idle)
+            PID_FILE.unlink(missing_ok=True)
+
+
+def ensure_daemon():
+    if not SESSION:
+        return
+    pid = daemon_pid()
+    if pid is not None:
+        os.kill(pid, signal.SIGHUP)
+        return
+    subprocess.Popen([sys.executable, str(SCRIPT), "daemon"], start_new_session=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def main():
+    args = sys.argv[1:]
+    if not args or args[0] == "status":
+        print(json.dumps({**state(), "keepAwake": AWAKE_FILE.exists(), "active": daemon_pid() is not None}))
+    elif args[0] == "allowed":
+        return 1 if AWAKE_FILE.exists() else 0
+    elif args[0] == "daemon":
+        daemon()
+    elif args[0] == "set" and len(args) == 3:
+        key, value = args[1:]
+        settings = state()
+        if key in ("screenOff", "lock", "suspend") and value.isdigit() and int(value) in MINUTES:
+            settings[key] = int(value)
+        elif key == "powerButton" and value in BUTTONS:
+            if value != "system":
+                subprocess.run([
+                    "systemd-inhibit", "--what=handle-power-key", "--mode=block",
+                    "--who=Quickshell Settings", "--why=Custom power button action", "true",
+                ], check=True, capture_output=True)
+            settings[key] = value
+        else:
+            raise ValueError("Invalid power setting")
+        atomic_write(STATE_FILE, json.dumps(settings, indent=2) + "\n")
+        atomic_write(IDLE_CONFIG, render(settings))
+        ensure_daemon()
+    elif args[0] == "awake" and len(args) == 2 and args[1] in ("on", "off", "toggle"):
+        enabled = AWAKE_FILE.exists()
+        if args[1] == "on" or (args[1] == "toggle" and not enabled):
+            AWAKE_FILE.touch(mode=0o600)
+        else:
+            AWAKE_FILE.unlink(missing_ok=True)
+        ensure_daemon()
+    elif args[0] == "button":
+        action = state()["powerButton"]
+        if action not in ("system", "nothing"):
+            subprocess.run([str(Path.home() / ".config/hypr/scripts/power-menu"), action], check=True)
+    else:
+        raise ValueError("Usage: powerctl [status|set FIELD VALUE|awake on|off|toggle|allowed|daemon|button]")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
+        print(f"powerctl: {error}", file=sys.stderr)
+        sys.exit(1)

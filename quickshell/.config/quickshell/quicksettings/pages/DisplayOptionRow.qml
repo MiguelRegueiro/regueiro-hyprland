@@ -13,6 +13,7 @@ Rectangle {
     required property var options
     property string currentValue: ""
     property bool busy: false
+    property bool openBelow: false
     signal chosen(string value)
 
     Layout.fillWidth: true
@@ -64,7 +65,7 @@ Rectangle {
         id: menu
         parent: root
         x: root.width - width - 10
-        y: -height - 6
+        y: root.openBelow ? root.height + 6 : -height - 6
         width: 194
         height: Math.min(272, root.options.length * 36 + 12)
         padding: 6

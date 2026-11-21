@@ -155,6 +155,7 @@ hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ to
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("~/.config/hypr/scripts/brightness-up.sh"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("~/.config/hypr/scripts/brightness-down.sh"), { locked = true, repeating = true })
+hl.bind("XF86PowerOff", hl.dsp.exec_cmd("~/.config/hypr/scripts/powerctl button"), { locked = true })
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd(tts_or_media_toggle .. " XF86AudioPause"), { locked = true })
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd(tts_or_media_toggle .. " XF86AudioPlay"), { locked = true })

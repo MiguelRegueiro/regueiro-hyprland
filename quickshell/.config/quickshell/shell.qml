@@ -730,6 +730,10 @@ ShellRoot {
         id: displayServiceState
     }
 
+    Services.PowerService {
+        id: powerServiceState
+    }
+
     Services.DictationService {
         id: dictationServiceState
     }
@@ -769,6 +773,7 @@ ShellRoot {
     Overlays.SettingsWindow {
         targetScreen: root.settingsTargetScreen
         displayService: displayServiceState
+        powerService: powerServiceState
         open: root.settingsVisible
         onCloseRequested: root.closeSettings()
     }
