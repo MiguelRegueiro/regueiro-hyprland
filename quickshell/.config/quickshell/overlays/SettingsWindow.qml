@@ -106,7 +106,6 @@ FloatingWindow {
                 spacing: 6
 
                 Text { text: "Displays"; font.family: Theme.fontUi; font.pixelSize: 25; font.weight: Font.DemiBold; color: Theme.textPrimary }
-                Text { text: "Arrange and configure connected displays"; font.family: Theme.fontUi; font.pixelSize: 12; color: Theme.textDim }
                 Pages.DisplaysPage {
                     Layout.fillWidth: true
                     Layout.fillHeight: true

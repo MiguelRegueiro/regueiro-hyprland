@@ -333,50 +333,6 @@ Item {
             }
         }
         Rectangle {
-            Layout.fillWidth: true
-            border.color: QS.cardBorder
-            border.width: 1
-            color: QS.cardBg
-            Layout.preferredHeight: 44
-            radius: 14
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 8
-
-                Text {
-                    Layout.fillWidth: true
-                    color: Theme.textPrimary
-                    font.family: Theme.fontUi
-                    font.pixelSize: 12
-                    text: "Blackout displays"
-                }
-                Text {
-                    color: Theme.textDim
-                font.family: Theme.fontUi
-                    font.pixelSize: 10
-                    text: "Super+Shift+S"
-                }
-                Rectangle {
-                    Layout.preferredWidth: 32
-                    Layout.preferredHeight: 32
-                    radius: 16
-                    color: blackoutHover.hovered ? QS.chipBgHover : QS.chipBg
-
-                    Text {
-                        anchors.centerIn: parent
-                        color: Theme.textPrimary
-                        font.family: Theme.fontIcons
-                        font.pixelSize: 15
-                        text: "󰖨"
-                    }
-                    HoverHandler { id: blackoutHover; blocking: false; cursorShape: Qt.ArrowCursor }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.ArrowCursor; onClicked: root.displayService.toggleDpms() }
-                }
-            }
-        }
-        Rectangle {
             id: layoutCanvas
 
             Layout.fillWidth: true
@@ -399,18 +355,6 @@ Item {
                 font.pixelSize: 11
                 font.weight: Font.Medium
                 color: Theme.textDim
-            }
-
-            Text {
-                visible: root.displayService.mode === "extend"
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.rightMargin: 12
-                anchors.topMargin: 10
-                text: "Drag to arrange · Release to attach"
-                font.family: Theme.fontUi
-                font.pixelSize: 10
-                color: Theme.textDisabled
             }
 
             Repeater {
