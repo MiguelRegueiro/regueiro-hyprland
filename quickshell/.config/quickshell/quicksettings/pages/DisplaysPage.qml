@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Basic as Controls
 import "../../theme/Theme.js" as Theme
 import "../QuickSettingsStyle.js" as QS
 
@@ -645,111 +644,14 @@ Item {
             columnSpacing: 8
             rowSpacing: 8
 
-            Rectangle {
-                id: orientationRow
-                Layout.fillWidth: true
-                Layout.preferredHeight: 52
+            DisplayOptionRow {
+                label: "Orientation"
+                valueText: root.orientationLabel(root.selectedMonitor ? root.selectedMonitor.transform : 0)
+                options: root.orientations.map(item => ({ label: item.label, value: String(item.transform) }))
+                currentValue: root.selectedMonitor ? String(root.selectedMonitor.transform) : ""
+                busy: root.displayService.busy
                 visible: root.selectedMonitor !== null
-                color: QS.cardBg
-                radius: 16
-                border.width: 1
-                border.color: QS.cardBorder
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 10
-                    spacing: 10
-
-                    Text { Layout.fillWidth: true; text: "Orientation"; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 12 }
-                    Rectangle {
-                        Layout.preferredWidth: 172
-                        Layout.preferredHeight: 32
-                        radius: 10
-                        color: rotateHover.hovered ? QS.chipBgHover : QS.chipBg
-                        Text {
-                            anchors.centerIn: parent
-                            text: root.orientationLabel(root.selectedMonitor ? root.selectedMonitor.transform : 0) + "  ⌄"
-                            color: Theme.textPrimary
-                            font.family: Theme.fontUi
-                            font.pixelSize: 11
-                        }
-                        HoverHandler { id: rotateHover; cursorShape: Qt.PointingHandCursor }
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: root.selectedMonitor !== null && !root.displayService.busy
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: orientationMenu.open()
-                        }
-                    }
-                }
-
-                Controls.Popup {
-                    id: orientationMenu
-                    parent: orientationRow
-                    x: orientationRow.width - width - 10
-                    y: -height - 6
-                    width: 194
-                    padding: 6
-                    closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
-
-                    background: Rectangle {
-                        radius: 12
-                        color: "#282c34"
-                        border.width: 1
-                        border.color: QS.cardBorderHover
-                    }
-
-                    contentItem: Column {
-                        spacing: 2
-
-                        Repeater {
-                            model: root.orientations
-
-                            delegate: Rectangle {
-                                required property var modelData
-                                readonly property bool selected: root.selectedMonitor && root.selectedMonitor.transform === modelData.transform
-
-                                width: orientationMenu.availableWidth
-                                height: 34
-                                radius: 8
-                                color: selected ? Qt.rgba(0.24, 0.39, 0.69, 0.68)
-                                                : choiceHover.hovered ? QS.chipBgHover : "transparent"
-
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 12
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: parent.modelData.label
-                                    color: Theme.textPrimary
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 11
-                                }
-                                Text {
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 12
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    visible: parent.selected
-                                    text: "✓"
-                                    color: Theme.textPrimary
-                                    font.family: Theme.fontUi
-                                    font.pixelSize: 12
-                                }
-                                HoverHandler { id: choiceHover; cursorShape: Qt.PointingHandCursor }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    enabled: !root.displayService.busy
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        orientationMenu.close();
-                                        if (root.selectedMonitor && !parent.selected)
-                                            root.displayService.rotate(root.selectedMonitor.name, parent.modelData.transform);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                onChosen: transform => root.displayService.rotate(root.selectedMonitor.name, Number(transform))
             }
             DisplayOptionRow {
                 label: "Resolution"

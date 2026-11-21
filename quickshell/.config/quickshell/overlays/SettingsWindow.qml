@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import "../quicksettings/pages" as Pages
+import "../quicksettings/QuickSettingsStyle.js" as QS
 import "../theme/Theme.js" as Theme
 
 FloatingWindow {
@@ -20,7 +21,7 @@ FloatingWindow {
     implicitWidth: 1060
     implicitHeight: 720
     minimumSize: Qt.size(900, 650)
-    color: "#181b20"
+    color: "transparent"
 
     onClosed: closeRequested()
 
@@ -49,7 +50,7 @@ FloatingWindow {
         id: window
 
         anchors.fill: parent
-        color: "#181b20"
+        color: QS.surfaceBg
 
         RowLayout {
             anchors.fill: parent
@@ -59,7 +60,7 @@ FloatingWindow {
             Rectangle {
                 Layout.fillHeight: true
                 Layout.preferredWidth: 238
-                color: Qt.rgba(0.04, 0.05, 0.07, 0.54)
+                color: Qt.rgba(0.06, 0.07, 0.09, 0.90)
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -82,29 +83,39 @@ FloatingWindow {
                             onPressed: root.startSystemMove()
                         }
                     }
-                    Text { text: "SYSTEM"; font.family: Theme.fontUi; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.textDisabled }
                     Rectangle {
                         Layout.fillWidth: true
+                        Layout.topMargin: 8
                         Layout.preferredHeight: 44
                         radius: 10
-                        color: root.page === "displays" ? Qt.rgba(0.28, 0.45, 0.79, 0.42) : "transparent"
+                        color: root.page === "displays" ? Qt.rgba(0.20, 0.40, 0.74, displayNavHover.hovered ? 0.58 : 0.48)
+                                                        : displayNavHover.hovered ? QS.cardBgHover : QS.cardBg
+                        border.width: 1
+                        border.color: root.page === "displays" ? Qt.rgba(0.40, 0.59, 0.89, 0.46)
+                                                               : displayNavHover.hovered ? QS.cardBorderHover : QS.cardBorder
                         RowLayout {
                             anchors.fill: parent; anchors.leftMargin: 14; spacing: 10
-                            Text { text: "󰍹"; font.family: Theme.fontIcons; font.pixelSize: 18; color: "white" }
-                            Text { text: "Displays"; font.family: Theme.fontUi; font.pixelSize: 13; font.weight: Font.Medium; color: "white" }
+                            Text { text: "󰍹"; font.family: Theme.fontIcons; font.pixelSize: 18; color: Theme.textPrimary }
+                            Text { text: "Displays"; font.family: Theme.fontUi; font.pixelSize: 14; font.weight: Font.Medium; color: Theme.textPrimary }
                         }
+                        HoverHandler { id: displayNavHover; cursorShape: Qt.PointingHandCursor }
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "displays" }
                     }
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         radius: 10
-                        color: root.page === "power" ? Qt.rgba(0.28, 0.45, 0.79, 0.42) : "transparent"
+                        color: root.page === "power" ? Qt.rgba(0.20, 0.40, 0.74, powerNavHover.hovered ? 0.58 : 0.48)
+                                                     : powerNavHover.hovered ? QS.cardBgHover : QS.cardBg
+                        border.width: 1
+                        border.color: root.page === "power" ? Qt.rgba(0.40, 0.59, 0.89, 0.46)
+                                                            : powerNavHover.hovered ? QS.cardBorderHover : QS.cardBorder
                         RowLayout {
                             anchors.fill: parent; anchors.leftMargin: 14; spacing: 10
-                            Text { text: "󰂄"; font.family: Theme.fontIcons; font.pixelSize: 18; color: "white" }
-                            Text { text: "Power"; font.family: Theme.fontUi; font.pixelSize: 13; font.weight: Font.Medium; color: "white" }
+                            Text { text: "󰂄"; font.family: Theme.fontIcons; font.pixelSize: 18; color: Theme.textPrimary }
+                            Text { text: "Power"; font.family: Theme.fontUi; font.pixelSize: 14; font.weight: Font.Medium; color: Theme.textPrimary }
                         }
+                        HoverHandler { id: powerNavHover; cursorShape: Qt.PointingHandCursor }
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "power" }
                     }
                     Item { Layout.fillHeight: true }
@@ -118,7 +129,7 @@ FloatingWindow {
                 Layout.rightMargin: 28
                 Layout.topMargin: 24
                 Layout.bottomMargin: 24
-                spacing: 6
+                spacing: root.page === "power" ? 0 : 6
 
                 Text { text: root.page === "power" ? "Power" : "Displays"; font.family: Theme.fontUi; font.pixelSize: 25; font.weight: Font.DemiBold; color: Theme.textPrimary }
                 Pages.DisplaysPage {

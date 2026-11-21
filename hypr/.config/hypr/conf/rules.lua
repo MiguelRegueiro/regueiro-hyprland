@@ -127,6 +127,7 @@ hl.window_rule({
     match = { title = "^Quickshell Settings$" },
     float = true,
     center = true,
+    no_blur = false,
 })
 
 hl.window_rule({

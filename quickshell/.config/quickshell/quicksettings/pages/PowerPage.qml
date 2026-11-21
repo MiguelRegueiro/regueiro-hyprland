@@ -46,7 +46,7 @@ Item {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 76
+            Layout.preferredHeight: 60
             radius: 16
             color: root.policy.keepAwake ? QS.tileActiveBg : QS.cardBg
             border.width: 1
@@ -58,16 +58,18 @@ Item {
                 anchors.rightMargin: 16
                 spacing: 12
                 Text {
-                    text: "󰖙"
+                    text: "\uf0f4"
                     font.family: Theme.fontIcons
-                    font.pixelSize: 23
+                    font.pixelSize: 22
                     color: Theme.textPrimary
                 }
-                ColumnLayout {
+                Text {
                     Layout.fillWidth: true
-                    spacing: 2
-                    Text { text: "Keep awake"; font.family: Theme.fontUi; font.pixelSize: 14; font.weight: Font.Medium; color: Theme.textPrimary }
-                    Text { text: "Pause idle actions until turned off"; font.family: Theme.fontUi; font.pixelSize: 11; color: Theme.textDim }
+                    text: "Keep awake"
+                    font.family: Theme.fontUi
+                    font.pixelSize: 14
+                    font.weight: Font.Medium
+                    color: Theme.textPrimary
                 }
                 Rectangle {
                     Layout.preferredWidth: 48
