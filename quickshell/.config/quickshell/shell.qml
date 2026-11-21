@@ -17,7 +17,18 @@ import "wallpaper" as Wallpaper
 ShellRoot {
     id: root
 
-    property bool externalConnected: Quickshell.screens.length > 1
+    readonly property string shellScreenName: {
+        const screens = Quickshell.screens;
+        const selected = displayServiceState.primary;
+        if (selected && screens.some(screen => screen.name === selected))
+            return selected;
+        const external = screens.find(screen => screen.name.indexOf("eDP-") !== 0);
+        return external ? external.name : screens.length > 0 ? screens[0].name : "";
+    }
+
+    function isShellScreen(screen) {
+        return screen && screen.name === shellScreenName;
+    }
     readonly property bool quickSettingsVisible: qsController.open
     readonly property bool notificationCenterVisible: ncController.open
     property bool clipboardVisible: false
@@ -765,14 +776,13 @@ ShellRoot {
         delegate: Component {
             Bar.BarWindow {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
                 readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
                 targetScreen: modelData
                 showBar: activeScreen
-                externalConnected: root.externalConnected
                 forceOverlay: fullscreenPanelChromeActive
                 quickSettingsOpen: root.quickSettingsVisible
                 notificationCenterOpen: root.notificationCenterVisible
@@ -813,7 +823,7 @@ ShellRoot {
         delegate: Component {
             Bar.CpuStatsMenu {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
@@ -832,7 +842,7 @@ ShellRoot {
         delegate: Component {
             Bar.TtsMenu {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
@@ -854,7 +864,7 @@ ShellRoot {
                 required property var modelData
 
                 targetScreen: modelData
-                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                active: root.isShellScreen(modelData)
                 ttsService: ttsServiceState
                 stackIndex: root.ttsOsdStackIndex
             }
@@ -869,7 +879,7 @@ ShellRoot {
                 required property var modelData
 
                 targetScreen: modelData
-                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                active: root.isShellScreen(modelData)
                 dictationService: dictationServiceState
                 stackIndex: root.dictationOsdStackIndex
             }
@@ -882,7 +892,7 @@ ShellRoot {
         delegate: Component {
             Bar.RamStatsMenu {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
@@ -902,7 +912,7 @@ ShellRoot {
         delegate: Component {
             Bar.SshSessionsMenu {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
@@ -922,7 +932,7 @@ ShellRoot {
         delegate: Component {
             Bar.ExternalDrivesMenu {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
 
@@ -942,7 +952,7 @@ ShellRoot {
         delegate: Component {
             Overlays.ScreenFrameOverlay {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
                 readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && activeWorkspace.hasFullscreen
@@ -992,7 +1002,7 @@ ShellRoot {
                 required property var modelData
 
                 targetScreen: modelData
-                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                active: root.isShellScreen(modelData)
                 warningVisible: root.batteryWarningVisible
                 displayedPercent: root.batteryWarningDisplayPercent
             }
@@ -1007,7 +1017,7 @@ ShellRoot {
                 required property var modelData
 
                 targetScreen: modelData
-                active: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                active: root.isShellScreen(modelData)
                 inputService: inputServiceState
             }
         }
@@ -1019,7 +1029,7 @@ ShellRoot {
         delegate: Component {
             Overlays.PowerMenuOSD {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
 
                 targetScreen: modelData
                 active: activeScreen
@@ -1042,7 +1052,7 @@ ShellRoot {
         delegate: Component {
             Notifications.NotificationsOverlay {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
                 readonly property bool notificationOverlayActive: activeScreen && root.notificationCenterVisible && activeWorkspace && activeWorkspace.hasFullscreen
@@ -1069,7 +1079,7 @@ ShellRoot {
         delegate: Component {
             Wallpaper.WallpaperOverlay {
                 required property var modelData
-                readonly property bool activeScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool activeScreen: root.isShellScreen(modelData)
 
                 targetScreen: modelData
                 open: root.wallpaperPickerVisible && activeScreen
@@ -1086,10 +1096,10 @@ ShellRoot {
                 required property var modelData
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                // Fall back to the old screen while Hyprland's initial monitor
-                // list is still loading. Normal openings always use the monitor
-                // that held focus when the shortcut was pressed.
-                readonly property bool legacyMenuScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                // Use the configured primary while Hyprland's initial monitor
+                // list is loading. Normal openings use the monitor that held
+                // focus when the shortcut was pressed.
+                readonly property bool legacyMenuScreen: root.isShellScreen(modelData)
                 readonly property bool menuScreen: root.launcherTargetMonitor ? hyprMonitor === root.launcherTargetMonitor : legacyMenuScreen
                 readonly property bool launcherOverlayActive: menuScreen && root.launcherRequested && activeWorkspace && activeWorkspace.hasFullscreen
 
@@ -1115,7 +1125,7 @@ ShellRoot {
                 required property var modelData
                 readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
                 readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool legacyMenuScreen: modelData.name !== Theme.primaryScreen || !root.externalConnected
+                readonly property bool legacyMenuScreen: root.isShellScreen(modelData)
                 readonly property bool menuScreen: root.clipboardTargetMonitor ? hyprMonitor === root.clipboardTargetMonitor : legacyMenuScreen
                 readonly property bool clipboardOverlayActive: menuScreen && root.clipboardRequested && activeWorkspace && activeWorkspace.hasFullscreen
 

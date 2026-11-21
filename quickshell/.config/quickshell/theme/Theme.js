@@ -144,9 +144,6 @@ var tileActiveBgHover = "#2f64c9";
 var tileActiveBorder = Qt.rgba(0.60, 0.75, 1.0, 0.24);
 var tileActiveBorderHover = Qt.rgba(0.66, 0.80, 1.0, 0.32);
 
-// Screen identity
-var primaryScreen = "eDP-1";
-
 // Timings (ms)
 var hoverCloseDelay = 140;
 var osdTimeout = 1500;

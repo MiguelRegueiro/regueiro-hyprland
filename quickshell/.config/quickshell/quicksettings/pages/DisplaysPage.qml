@@ -10,11 +10,13 @@ Item {
     required property var displayService
     property bool menuOpen: false
     property bool showHeader: true
+    property bool showAdvanced: false
     property string selectedOutput: ""
     property var dragPosition: null
     property var dropPreview: null
     property var pendingPositions: null
     readonly property var selectedMonitor: displayService.monitors.find(m => m.name === (selectedOutput || displayService.primary)) || displayService.monitors[0] || null
+    readonly property bool selectedIsPrimary: selectedMonitor !== null && selectedMonitor.name === displayService.primary
     readonly property real layoutMinX: displayService.monitors.length > 0 ? Math.min.apply(null, displayService.monitors.map(monitor => monitorX(monitor))) : 0
     readonly property real layoutMinY: displayService.monitors.length > 0 ? Math.min.apply(null, displayService.monitors.map(monitor => monitorY(monitor))) : 0
     readonly property real layoutMaxX: displayService.monitors.length > 0 ? Math.max.apply(null, displayService.monitors.map(monitor => monitorX(monitor) + monitor.width / Math.max(1, monitor.scale))) : 1
@@ -29,8 +31,60 @@ Item {
         { transform: 1, label: "Portrait (90°)" },
         { transform: 3, label: "Portrait (270°)" }
     ]
+    readonly property var advertisedModes: modesFor(selectedMonitor)
+    readonly property string selectedResolution: {
+        if (!selectedMonitor)
+            return "";
+        const direct = selectedMonitor.width + "x" + selectedMonitor.height;
+        if (advertisedModes.some(mode => mode.resolution === direct))
+            return direct;
+        const rotated = selectedMonitor.height + "x" + selectedMonitor.width;
+        return advertisedModes.some(mode => mode.resolution === rotated) ? rotated : direct;
+    }
+    readonly property var resolutionOptions: {
+        const resolutions = [];
+        for (const mode of advertisedModes) {
+            if (!resolutions.some(item => item.value === mode.resolution))
+                resolutions.push({ label: mode.width + " × " + mode.height, value: mode.resolution, area: mode.width * mode.height });
+        }
+        return resolutions.sort((a, b) => b.area - a.area || b.value.localeCompare(a.value));
+    }
+    readonly property var refreshOptions: advertisedModes.filter(mode => mode.resolution === selectedResolution)
+        .sort((a, b) => b.rate - a.rate)
+        .map(mode => ({ label: (Number.isInteger(mode.rate) ? mode.rate : mode.rate.toFixed(2)) + " Hz", value: mode.value }))
+    readonly property string selectedMode: {
+        if (!selectedMonitor)
+            return "";
+        const match = advertisedModes.find(mode => mode.resolution === selectedResolution && Math.abs(mode.rate - selectedMonitor.refreshRate) < 0.15);
+        return match ? match.value : "";
+    }
+    readonly property var scaleOptions: {
+        const values = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 1.8, 2, 2.25, 2.5, 3];
+        if (selectedMonitor && !values.some(value => Math.abs(value - selectedMonitor.scale) < 0.001))
+            values.push(selectedMonitor.scale);
+        return values.sort((a, b) => a - b).map(value => ({ label: Math.round(value * 100) + "%", value: String(value) }));
+    }
 
     signal backClicked
+
+    function modesFor(monitor) {
+        const result = [];
+        for (const advertised of (monitor && monitor.availableModes || [])) {
+            const match = /^(\d+)x(\d+)@(\d+(?:\.\d+)?)Hz?$/.exec(advertised);
+            if (!match)
+                continue;
+            const value = match[1] + "x" + match[2] + "@" + match[3];
+            if (!result.some(mode => mode.value === value))
+                result.push({ width: Number(match[1]), height: Number(match[2]), resolution: match[1] + "x" + match[2], rate: Number(match[3]), value: value });
+        }
+        return result;
+    }
+
+    function setResolution(resolution) {
+        const matching = advertisedModes.filter(mode => mode.resolution === resolution).sort((a, b) => b.rate - a.rate);
+        if (selectedMonitor && matching.length > 0)
+            displayService.setOutputMode(selectedMonitor.name, matching[0].value);
+    }
 
     function monitorX(monitor) {
         return pendingPositions && pendingPositions[monitor.name] ? pendingPositions[monitor.name].x : monitor.x;
@@ -521,170 +575,234 @@ Item {
                 }
             }
         }
-        Rectangle {
+        RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 96
-            visible: root.displayService.mode === "extend" && root.selectedMonitor !== null
-            color: QS.cardBg
-            radius: 16
-            border.width: 1
-            border.color: QS.cardBorder
+            spacing: 8
+            visible: root.displayService.mode === "duplicate" && root.displayService.monitors.length > 1
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 6
+            Repeater {
+                model: root.displayService.monitors
 
-                RowLayout {
+                delegate: Rectangle {
+                    required property int index
+                    required property var modelData
+                    readonly property bool selected: root.selectedMonitor && root.selectedMonitor.name === modelData.name
+                    readonly property bool primary: modelData.name === root.displayService.primary
+
                     Layout.fillWidth: true
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.selectedMonitor ? (root.selectedMonitor.description || root.selectedMonitor.name) : ""
-                        elide: Text.ElideRight
-                        color: Theme.textPrimary
-                        font.family: Theme.fontUi
-                        font.pixelSize: 13
-                        font.weight: Font.DemiBold
+                    Layout.preferredHeight: 42
+                    radius: 12
+                    color: selected ? Qt.rgba(0.24, 0.39, 0.69, 0.68) : QS.cardBg
+                    border.width: 1
+                    border.color: selected ? Theme.blue : QS.cardBorder
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 6
+
+                        Text {
+                            text: (parent.parent.index + 1) + "  " + parent.parent.modelData.name
+                            color: Theme.textPrimary
+                            font.family: Theme.fontUi
+                            font.pixelSize: 12
+                            font.weight: parent.parent.selected ? Font.DemiBold : Font.Normal
+                        }
+                        Item { Layout.fillWidth: true }
+                        Text {
+                            visible: parent.parent.primary
+                            text: "Primary"
+                            color: parent.parent.selected ? Theme.textPrimary : Theme.blue
+                            font.family: Theme.fontUi
+                            font.pixelSize: 10
+                        }
                     }
-                    Text {
-                        text: root.selectedMonitor && root.selectedMonitor.name === root.displayService.primary ? "Primary display" : ""
-                        color: Theme.blue
-                        font.family: Theme.fontUi
-                        font.pixelSize: 11
-                    }
-                }
-                Text {
-                    text: root.selectedMonitor ? (root.selectedMonitor.width + " × " + root.selectedMonitor.height + "  ·  " + Math.round(root.selectedMonitor.refreshRate) + " Hz  ·  " + Math.round(root.selectedMonitor.scale * 100) + "% scale") : ""
-                    color: Theme.textDim
-                    font.family: Theme.fontUi
-                    font.pixelSize: 11
-                }
-                RowLayout {
-                    Layout.fillWidth: true
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.workspaceLabel(root.selectedMonitor ? root.selectedMonitor.name : "")
-                        color: Theme.textDim
-                        font.family: Theme.fontUi
-                        font.pixelSize: 11
-                    }
-                    Rectangle {
-                        visible: root.selectedMonitor && root.selectedMonitor.name !== root.displayService.primary
-                        Layout.preferredWidth: 100
-                        Layout.preferredHeight: 26
-                        radius: 13
-                        color: primaryHover.hovered ? QS.chipBgHover : QS.chipBg
-                        Text { anchors.centerIn: parent; text: "Make primary"; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 11 }
-                        HoverHandler { id: primaryHover; cursorShape: Qt.ArrowCursor }
-                        MouseArea { anchors.fill: parent; enabled: parent.visible && !root.displayService.busy; onClicked: root.displayService.setPrimary(root.selectedMonitor.name) }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.selectedOutput = parent.modelData.name
                     }
                 }
             }
         }
-        Rectangle {
-            id: orientationRow
+        RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 52
-            visible: root.selectedMonitor !== null && root.displayService.mode === "extend"
-            color: QS.cardBg
-            radius: 16
-            border.width: 1
-            border.color: QS.cardBorder
+            Layout.preferredHeight: 36
+            visible: root.selectedMonitor !== null
+            spacing: 8
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 14
-                anchors.rightMargin: 10
-                spacing: 10
+            Text {
+                Layout.fillWidth: true
+                text: "Selected display"
+                color: Theme.textPrimary
+                font.family: Theme.fontUi
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+            }
+            Rectangle {
+                visible: root.displayService.monitors.length > 1 && !root.selectedIsPrimary
+                Layout.preferredWidth: 112
+                Layout.preferredHeight: 30
+                radius: 10
+                color: primaryHover.hovered ? QS.chipBgHover : QS.chipBg
 
-                Text { Layout.fillWidth: true; text: "Orientation"; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 12 }
-                Rectangle {
-                    Layout.preferredWidth: 172
-                    Layout.preferredHeight: 32
-                    radius: 10
-                    color: rotateHover.hovered ? QS.chipBgHover : QS.chipBg
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.orientationLabel(root.selectedMonitor ? root.selectedMonitor.transform : 0) + "  ⌄"
-                        color: Theme.textPrimary
-                        font.family: Theme.fontUi
-                        font.pixelSize: 11
-                    }
-                    HoverHandler { id: rotateHover; cursorShape: Qt.PointingHandCursor }
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: root.selectedMonitor !== null && !root.displayService.busy
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: orientationMenu.open()
-                    }
+                Text {
+                    anchors.centerIn: parent
+                    text: "Make primary"
+                    color: Theme.textPrimary
+                    font.family: Theme.fontUi
+                    font.pixelSize: 11
+                }
+                HoverHandler { id: primaryHover; cursorShape: Qt.PointingHandCursor }
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: parent.visible && root.selectedMonitor !== null && !root.displayService.busy
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.displayService.setPrimary(root.selectedMonitor.name)
                 }
             }
+        }
+        GridLayout {
+            Layout.fillWidth: true
+            visible: root.selectedMonitor !== null
+            columns: root.showAdvanced ? 2 : 1
+            columnSpacing: 8
+            rowSpacing: 8
 
-            Controls.Popup {
-                id: orientationMenu
-                parent: orientationRow
-                x: orientationRow.width - width - 10
-                y: -height - 6
-                width: 194
-                padding: 6
-                closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
+            Rectangle {
+                id: orientationRow
+                Layout.fillWidth: true
+                Layout.preferredHeight: 52
+                visible: root.selectedMonitor !== null
+                color: QS.cardBg
+                radius: 16
+                border.width: 1
+                border.color: QS.cardBorder
 
-                background: Rectangle {
-                    radius: 12
-                    color: "#282c34"
-                    border.width: 1
-                    border.color: QS.cardBorderHover
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 10
+                    spacing: 10
+
+                    Text { Layout.fillWidth: true; text: "Orientation"; color: Theme.textPrimary; font.family: Theme.fontUi; font.pixelSize: 12 }
+                    Rectangle {
+                        Layout.preferredWidth: 172
+                        Layout.preferredHeight: 32
+                        radius: 10
+                        color: rotateHover.hovered ? QS.chipBgHover : QS.chipBg
+                        Text {
+                            anchors.centerIn: parent
+                            text: root.orientationLabel(root.selectedMonitor ? root.selectedMonitor.transform : 0) + "  ⌄"
+                            color: Theme.textPrimary
+                            font.family: Theme.fontUi
+                            font.pixelSize: 11
+                        }
+                        HoverHandler { id: rotateHover; cursorShape: Qt.PointingHandCursor }
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: root.selectedMonitor !== null && !root.displayService.busy
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: orientationMenu.open()
+                        }
+                    }
                 }
 
-                contentItem: Column {
-                    spacing: 2
+                Controls.Popup {
+                    id: orientationMenu
+                    parent: orientationRow
+                    x: orientationRow.width - width - 10
+                    y: -height - 6
+                    width: 194
+                    padding: 6
+                    closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
 
-                    Repeater {
-                        model: root.orientations
+                    background: Rectangle {
+                        radius: 12
+                        color: "#282c34"
+                        border.width: 1
+                        border.color: QS.cardBorderHover
+                    }
 
-                        delegate: Rectangle {
-                            required property var modelData
-                            readonly property bool selected: root.selectedMonitor && root.selectedMonitor.transform === modelData.transform
+                    contentItem: Column {
+                        spacing: 2
 
-                            width: orientationMenu.availableWidth
-                            height: 34
-                            radius: 8
-                            color: selected ? Qt.rgba(0.24, 0.39, 0.69, 0.68)
-                                            : choiceHover.hovered ? QS.chipBgHover : "transparent"
+                        Repeater {
+                            model: root.orientations
 
-                            Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 12
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: parent.modelData.label
-                                color: Theme.textPrimary
-                                font.family: Theme.fontUi
-                                font.pixelSize: 11
-                            }
-                            Text {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 12
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: parent.selected
-                                text: "✓"
-                                color: Theme.textPrimary
-                                font.family: Theme.fontUi
-                                font.pixelSize: 12
-                            }
-                            HoverHandler { id: choiceHover; cursorShape: Qt.PointingHandCursor }
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: !root.displayService.busy
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    orientationMenu.close();
-                                    if (root.selectedMonitor && !parent.selected)
-                                        root.displayService.rotate(root.selectedMonitor.name, parent.modelData.transform);
+                            delegate: Rectangle {
+                                required property var modelData
+                                readonly property bool selected: root.selectedMonitor && root.selectedMonitor.transform === modelData.transform
+
+                                width: orientationMenu.availableWidth
+                                height: 34
+                                radius: 8
+                                color: selected ? Qt.rgba(0.24, 0.39, 0.69, 0.68)
+                                                : choiceHover.hovered ? QS.chipBgHover : "transparent"
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: parent.modelData.label
+                                    color: Theme.textPrimary
+                                    font.family: Theme.fontUi
+                                    font.pixelSize: 11
+                                }
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: parent.selected
+                                    text: "✓"
+                                    color: Theme.textPrimary
+                                    font.family: Theme.fontUi
+                                    font.pixelSize: 12
+                                }
+                                HoverHandler { id: choiceHover; cursorShape: Qt.PointingHandCursor }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: !root.displayService.busy
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        orientationMenu.close();
+                                        if (root.selectedMonitor && !parent.selected)
+                                            root.displayService.rotate(root.selectedMonitor.name, parent.modelData.transform);
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+            DisplayOptionRow {
+                label: "Resolution"
+                valueText: root.selectedResolution.replace("x", " × ")
+                options: root.resolutionOptions
+                currentValue: root.selectedResolution
+                busy: root.displayService.busy
+                visible: root.showAdvanced && root.selectedMonitor !== null
+                onChosen: resolution => root.setResolution(resolution)
+            }
+            DisplayOptionRow {
+                label: "Refresh rate"
+                valueText: root.selectedMonitor ? (Number.isInteger(root.selectedMonitor.refreshRate)
+                           ? root.selectedMonitor.refreshRate : root.selectedMonitor.refreshRate.toFixed(2)) + " Hz" : ""
+                options: root.refreshOptions
+                currentValue: root.selectedMode
+                busy: root.displayService.busy
+                visible: root.showAdvanced && root.selectedMonitor !== null
+                onChosen: mode => root.displayService.setOutputMode(root.selectedMonitor.name, mode)
+            }
+            DisplayOptionRow {
+                label: "Scale"
+                valueText: root.selectedMonitor ? Math.round(root.selectedMonitor.scale * 100) + "%" : ""
+                options: root.scaleOptions
+                currentValue: root.selectedMonitor ? String(root.selectedMonitor.scale) : ""
+                busy: root.displayService.busy
+                visible: root.showAdvanced && root.selectedMonitor !== null
+                onChosen: scale => root.displayService.setScale(root.selectedMonitor.name, scale)
             }
         }
         Text {

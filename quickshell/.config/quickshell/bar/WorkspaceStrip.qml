@@ -9,10 +9,9 @@ Row {
     property var targetScreen: null
     property string screenName: ""
     property int barHeight: 34
-    property bool externalConnected: false
     readonly property var hyprMonitor: targetScreen ? Hyprland.monitorFor(targetScreen) : null
     readonly property int activeWorkspaceId: hyprMonitor && hyprMonitor.activeWorkspace ? Number(hyprMonitor.activeWorkspace.id) : -1
-    readonly property var pinnedWorkspaceIds: externalConnected && screenName === Theme.primaryScreen ? [10] : [1, 2, 3, 4, 5]
+    readonly property var pinnedWorkspaceIds: [1, 2, 3, 4, 5]
 
     function dispatchWorkspace(workspace) {
         if (typeof workspace === "number")

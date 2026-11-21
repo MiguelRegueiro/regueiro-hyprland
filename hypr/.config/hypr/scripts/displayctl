@@ -8,7 +8,7 @@ config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 state_dir="$config_home/hypr-local"
 state_file="$state_dir/displays.json"
 
-default_state='{"mode":"extend","primary":"","positions":{},"transforms":{},"outputModes":{}}'
+default_state='{"mode":"extend","primary":"","positions":{},"transforms":{},"outputModes":{},"scales":{}}'
 
 state() {
     if [ -r "$state_file" ] && jq -e . "$state_file" >/dev/null 2>&1; then
@@ -69,6 +69,12 @@ restore_cursor() {
 }
 
 scale_for() {
+    local saved
+    saved="$(state | jq -r --arg output "$1" '.scales[$output] // empty')"
+    if [ -n "$saved" ]; then
+        printf '%s\n' "$saved"
+        return
+    fi
     case "$1" in
         eDP-*) printf '1.8\n' ;;
         *) printf '1\n' ;;
@@ -259,7 +265,23 @@ status() {
     fi
     actual_mode="$(jq -r 'if length > 1 then (if any(.[]; (.mirrorOf // "none") != "none") then "duplicate" else "extend" end) else "" end' <<<"$current")"
     [ -n "$actual_mode" ] || actual_mode="$(jq -r '.mode // "extend"' <<<"$config")"
-    jq -cn --argjson monitors "$current" --argjson config "$config" --argjson configured "$configured" --arg primary "$primary" --arg mode "$actual_mode" '{configured: $configured, mode: $mode, primary: $primary, positions: ($config.positions // {}), transforms: ($config.transforms // {}), outputModes: ($config.outputModes // {}), monitors: $monitors}'
+    jq -cn --argjson monitors "$current" --argjson config "$config" --argjson configured "$configured" --arg primary "$primary" --arg mode "$actual_mode" '{configured: $configured, mode: $mode, primary: $primary, positions: ($config.positions // {}), transforms: ($config.transforms // {}), outputModes: ($config.outputModes // {}), scales: ($config.scales // {}), monitors: $monitors}'
+}
+
+reflow_for() {
+    local current="$1" output="$2" width="$3" height="$4"
+    jq -cn --argjson monitors "$current" --arg changed "$output" --argjson width "$width" --argjson height "$height" \
+        '{monitors: $monitors, changed: $changed, width: $width, height: $height}' |
+        python3 "$(dirname "$0")/display-reflow.py"
+}
+
+apply_saved_change() {
+    local previous="$1"
+    if ! apply; then
+        printf '%s\n' "$previous" | save_state
+        apply || true
+        return 1
+    fi
 }
 
 case "${1:-status}" in
@@ -304,6 +326,54 @@ case "${1:-status}" in
         [ -n "${2:-}" ] && [[ "${3:-}" =~ ^[0-7]$ ]] || { printf 'Usage: %s transform OUTPUT [0-7]\n' "$0" >&2; exit 2; }
         state | jq --arg output "$2" --argjson transform "$3" '.transforms[$output] = $transform' | save_state
         apply
+        ;;
+    output-mode)
+        [ -n "${2:-}" ] && [[ "${3:-}" =~ ^[0-9]+x[0-9]+@[0-9]+(\.[0-9]+)?$ ]] || {
+            printf 'Usage: %s output-mode OUTPUT WIDTHxHEIGHT@HZ\n' "$0" >&2; exit 2;
+        }
+        current="$(monitors)"
+        if ! jq -e --arg output "$2" --arg mode "$3" \
+            '.[] | select(.name == $output) | .availableModes[] | sub("Hz$"; "") | select(. == $mode)' \
+            >/dev/null <<<"$current"; then
+            printf 'Display %s does not advertise mode %s\n' "$2" "$3" >&2
+            exit 2
+        fi
+        previous="$(state)"
+        if [ "$(jq -r '.mode' <<<"$previous")" = extend ]; then
+            dims="$(jq -cn --arg mode "$3" --argjson scale "$(scale_for "$2")" --argjson current "$current" --arg output "$2" '
+                ($mode | capture("^(?<w>[0-9]+)x(?<h>[0-9]+)@")) as $size |
+                ($current | map(select(.name == $output)) | .[0].transform) as $transform |
+                if ($transform % 2) == 1 then [($size.h | tonumber) / $scale, ($size.w | tonumber) / $scale]
+                else [($size.w | tonumber) / $scale, ($size.h | tonumber) / $scale] end')"
+            positions="$(reflow_for "$current" "$2" "$(jq '.[0]' <<<"$dims")" "$(jq '.[1]' <<<"$dims")")" || exit 2
+        else
+            positions='{}'
+        fi
+        jq --arg output "$2" --arg mode "$3" --argjson positions "$positions" \
+            '.outputModes[$output] = $mode | .positions = ((.positions // {}) + $positions)' <<<"$previous" | save_state
+        apply_saved_change "$previous"
+        ;;
+    scale)
+        [ -n "${2:-}" ] && [[ "${3:-}" =~ ^[0-9]+(\.[0-9]{1,2})?$ ]] &&
+            jq -en --arg value "$3" '($value | tonumber) >= 0.5 and ($value | tonumber) <= 3' >/dev/null || {
+            printf 'Usage: %s scale OUTPUT 0.5..3\n' "$0" >&2; exit 2;
+        }
+        current="$(monitors)"
+        if ! jq -e --arg output "$2" '.[] | select(.name == $output)' >/dev/null <<<"$current"; then
+            printf 'Display %s is not connected\n' "$2" >&2
+            exit 2
+        fi
+        previous="$(state)"
+        if [ "$(jq -r '.mode' <<<"$previous")" = extend ]; then
+            dims="$(jq -cn --argjson monitors "$current" --arg output "$2" --argjson scale "$3" '
+                $monitors | map(select(.name == $output)) | .[0] | [.width / $scale, .height / $scale]')"
+            positions="$(reflow_for "$current" "$2" "$(jq '.[0]' <<<"$dims")" "$(jq '.[1]' <<<"$dims")")" || exit 2
+        else
+            positions='{}'
+        fi
+        jq --arg output "$2" --argjson scale "$3" --argjson positions "$positions" \
+            '.scales[$output] = $scale | .positions = ((.positions // {}) + $positions)' <<<"$previous" | save_state
+        apply_saved_change "$previous"
         ;;
     layout)
         [ -n "${2:-}" ] || { printf 'Usage: %s layout POSITIONS_JSON\n' "$0" >&2; exit 2; }
@@ -362,7 +432,7 @@ case "${1:-status}" in
         esac
         ;;
     *)
-        printf 'Usage: %s [status|apply|restore|route-workspaces|mode|primary|transform|layout|reset-layout|dpms]\n' "$0" >&2
+        printf 'Usage: %s [status|apply|restore|route-workspaces|mode|primary|transform|output-mode|scale|layout|reset-layout|dpms]\n' "$0" >&2
         exit 2
         ;;
 esac

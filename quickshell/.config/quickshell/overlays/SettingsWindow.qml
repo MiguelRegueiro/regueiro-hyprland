@@ -16,8 +16,8 @@ FloatingWindow {
     visible: open
     title: "Quickshell Settings"
     implicitWidth: 1060
-    implicitHeight: 760
-    minimumSize: Qt.size(900, 700)
+    implicitHeight: 720
+    minimumSize: Qt.size(900, 650)
     color: "#181b20"
 
     onClosed: closeRequested()
@@ -112,6 +112,7 @@ FloatingWindow {
                     Layout.fillHeight: true
                     displayService: root.displayService
                     showHeader: false
+                    showAdvanced: true
                     onBackClicked: root.closeRequested()
                 }
             }
