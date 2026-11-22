@@ -23,7 +23,7 @@ Item {
     readonly property real stackedHeight: displayService.monitors.reduce((sum, monitor) => sum + monitor.height / Math.max(1, monitor.scale), 0)
     readonly property real layoutScale: Math.min(0.14, (layoutCanvas.width - 64) / Math.max(1, layoutMaxX - layoutMinX), (layoutCanvas.height - 86) / Math.max(1, layoutMaxY - layoutMinY, displayService.monitors.length === 2 ? stackedHeight : 1))
     readonly property real layoutOffsetX: Math.max(16, (layoutCanvas.width - (layoutMaxX - layoutMinX) * layoutScale) / 2)
-    readonly property real layoutOffsetY: 36 + Math.max(8, (layoutCanvas.height - 44 - (layoutMaxY - layoutMinY) * layoutScale) / 2)
+    readonly property real layoutOffsetY: Math.max(16, (layoutCanvas.height - (layoutMaxY - layoutMinY) * layoutScale) / 2)
     readonly property var orientations: [
         { transform: 0, label: "Landscape (0°)" },
         { transform: 2, label: "Landscape (180°)" },
@@ -342,19 +342,6 @@ Item {
             radius: 16
             border.width: 1
             border.color: QS.cardBorder
-
-            Text {
-                visible: root.displayService.mode === "extend"
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.leftMargin: 12
-                anchors.topMargin: 10
-                text: "Arrange displays"
-                font.family: Theme.fontUi
-                font.pixelSize: 11
-                font.weight: Font.Medium
-                color: Theme.textDim
-            }
 
             Repeater {
                 model: root.displayService.monitors

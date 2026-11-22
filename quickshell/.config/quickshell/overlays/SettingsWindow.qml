@@ -59,7 +59,7 @@ FloatingWindow {
 
             Rectangle {
                 Layout.fillHeight: true
-                Layout.preferredWidth: 238
+                Layout.preferredWidth: 192
                 color: Qt.rgba(0.06, 0.07, 0.09, 0.90)
 
                 ColumnLayout {
@@ -93,10 +93,31 @@ FloatingWindow {
                         border.width: 1
                         border.color: root.page === "displays" ? Qt.rgba(0.40, 0.59, 0.89, 0.46)
                                                                : displayNavHover.hovered ? QS.cardBorderHover : QS.cardBorder
-                        RowLayout {
-                            anchors.fill: parent; anchors.leftMargin: 14; spacing: 10
-                            Text { text: "󰍹"; font.family: Theme.fontIcons; font.pixelSize: 18; color: Theme.textPrimary }
-                            Text { text: "Displays"; font.family: Theme.fontUi; font.pixelSize: 14; font.weight: Font.Medium; color: Theme.textPrimary }
+                        Item {
+                            anchors.centerIn: parent
+                            width: 96
+                            height: parent.height
+                            Text {
+                                id: displaysNavIcon
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 20
+                                horizontalAlignment: Text.AlignHCenter
+                                text: "󰍹"
+                                font.family: Theme.fontIcons
+                                font.pixelSize: 18
+                                color: Theme.textPrimary
+                            }
+                            Text {
+                                anchors.left: displaysNavIcon.right
+                                anchors.leftMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Displays"
+                                font.family: Theme.fontUi
+                                font.pixelSize: 14
+                                font.weight: Font.Medium
+                                color: Theme.textPrimary
+                            }
                         }
                         HoverHandler { id: displayNavHover; cursorShape: Qt.PointingHandCursor }
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "displays" }
@@ -110,10 +131,31 @@ FloatingWindow {
                         border.width: 1
                         border.color: root.page === "power" ? Qt.rgba(0.40, 0.59, 0.89, 0.46)
                                                             : powerNavHover.hovered ? QS.cardBorderHover : QS.cardBorder
-                        RowLayout {
-                            anchors.fill: parent; anchors.leftMargin: 14; spacing: 10
-                            Text { text: "󰂄"; font.family: Theme.fontIcons; font.pixelSize: 18; color: Theme.textPrimary }
-                            Text { text: "Power"; font.family: Theme.fontUi; font.pixelSize: 14; font.weight: Font.Medium; color: Theme.textPrimary }
+                        Item {
+                            anchors.centerIn: parent
+                            width: 96
+                            height: parent.height
+                            Text {
+                                id: powerNavIcon
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 20
+                                horizontalAlignment: Text.AlignHCenter
+                                text: "󰂄"
+                                font.family: Theme.fontIcons
+                                font.pixelSize: 18
+                                color: Theme.textPrimary
+                            }
+                            Text {
+                                anchors.left: powerNavIcon.right
+                                anchors.leftMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Power"
+                                font.family: Theme.fontUi
+                                font.pixelSize: 14
+                                font.weight: Font.Medium
+                                color: Theme.textPrimary
+                            }
                         }
                         HoverHandler { id: powerNavHover; cursorShape: Qt.PointingHandCursor }
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "power" }
@@ -129,7 +171,7 @@ FloatingWindow {
                 Layout.rightMargin: 28
                 Layout.topMargin: 24
                 Layout.bottomMargin: 24
-                spacing: root.page === "power" ? 0 : 6
+                spacing: 6
 
                 Text { text: root.page === "power" ? "Power" : "Displays"; font.family: Theme.fontUi; font.pixelSize: 25; font.weight: Font.DemiBold; color: Theme.textPrimary }
                 Pages.DisplaysPage {
