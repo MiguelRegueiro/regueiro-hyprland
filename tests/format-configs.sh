@@ -11,7 +11,7 @@ if ! command -v qmlformat >/dev/null 2>&1; then
 fi
 
 mapfile -d '' qml_files < <(
-    find quickshell/.config/quickshell -type f -name '*.qml' \
+    find desktop/quickshell/.config/quickshell -type f -name '*.qml' \
         ! -name 'NotificationStore.qml' \
         -print0 | sort -z
 )
@@ -20,11 +20,11 @@ if [ "${#qml_files[@]}" -gt 0 ]; then
     qmlformat -n -i "${qml_files[@]}"
 fi
 
-echo "Skipped quickshell/.config/quickshell/services/NotificationStore.qml on purpose."
+echo "Skipped desktop/quickshell/.config/quickshell/services/NotificationStore.qml on purpose."
 echo "That file stays manually formatted because forcing qmlformat on it caused runtime regressions."
 
 if command -v shfmt >/dev/null 2>&1; then
-    shfmt -w hypr/.config/hypr/scripts/*.sh
+    shfmt -w compositors/hyprland/hypr/.config/hypr/scripts/*.sh
 else
     echo "shfmt not installed; shell scripts left unchanged." >&2
 fi

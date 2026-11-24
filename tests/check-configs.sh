@@ -17,13 +17,13 @@ fi
 
 while IFS= read -r -d '' file; do
     qmlformat -n "$file" >/dev/null
-done < <(find quickshell/.config/quickshell -type f -name '*.qml' ! -name 'NotificationStore.qml' -print0 | sort -z)
+done < <(find desktop/quickshell/.config/quickshell -type f -name '*.qml' ! -name 'NotificationStore.qml' -print0 | sort -z)
 
 while IFS= read -r -d '' file; do
     qmllint "$file" >/dev/null
-done < <(find quickshell/.config/quickshell -type f -name '*.qml' -print0 | sort -z)
+done < <(find desktop/quickshell/.config/quickshell -type f -name '*.qml' -print0 | sort -z)
 
-bash -n hypr/.config/hypr/scripts/*.sh
+bash -n compositors/hyprland/hypr/.config/hypr/scripts/*.sh
 git diff --check
 
 echo "Formatting and syntax checks passed."

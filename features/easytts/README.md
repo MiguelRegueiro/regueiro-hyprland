@@ -7,10 +7,10 @@ the address printed at startup.
 ## Run
 
 ```sh
-./easytts/runtts.sh
+./features/easytts/runtts.sh
 ```
 
-The first run creates `easytts/.venv/`; it is local to each machine and is not
+The first run creates `features/easytts/.venv/`; it is local to each machine and is not
 tracked by Git. Set `EASYTTS_HOST` or `EASYTTS_PORT` to override the default
 address or port.
 
@@ -39,7 +39,7 @@ and are not stored in Git. After cloning or pulling this repository on a new
 machine, run once:
 
 ```sh
-./easytts/setup-local-tts.sh
+./features/easytts/setup-local-tts.sh
 ```
 
 The setup downloads roughly 360 MB of model files and installs the separate

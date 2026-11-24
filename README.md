@@ -1,6 +1,8 @@
-# regueiro-hyprland
+# Triton Desktop
 
-Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShell bar and panels, built for a consistent, responsive desktop. Feel free to use as inspiration but expect rough edges.
+Shared desktop UI and settings with compositor, operating-system, and distribution integrations. Hyprland on Linux is the supported profile today; Niri and native BSD adapters are future work.
+
+See [MIGRATION.md](MIGRATION.md) for the staged plan. Each stage keeps the current Linux desktop working and leaves the FreeBSD branch intact while useful backend functionality moves into shared interfaces.
 
 ## Stack
 
@@ -19,9 +21,9 @@ Personal dotfiles for my work-in-progress Hyprland setup with a custom QuickShel
 
 The lock screen includes read-only battery/charging and volume indicators, plus a brief OSD when brightness, volume, or mute changes. These are rendered inside the lock surfaces; they do not expose the bar or desktop controls.
 
-The entry point is `quickshell/.config/quickshell/lock.qml`. It uses Wayland's `ext-session-lock-v1` on every display and `/etc/pam.d/login`, retaining the system's password and failed-attempt policy. It runs separately from the bar, with file watching disabled. The launcher disables core dumps and external input-method integration for password entry. Passwords are not written to files or logs; QML strings cannot provide a guarantee of zeroing every in-memory copy.
+The entry point is `desktop/quickshell/.config/quickshell/lock.qml`. It uses Wayland's `ext-session-lock-v1` on every display and `/etc/pam.d/login`, retaining the system's password and failed-attempt policy. It runs separately from the bar, with file watching disabled. The launcher disables core dumps and external input-method integration for password entry. Passwords are not written to files or logs; QML strings cannot provide a guarantee of zeroing every in-memory copy.
 
-`hypr/.config/hypr/scripts/quickshell-lock` supervises the process and retries up to three times after an unexpected exit. Hyprland's `allow_session_lock_restore` lets Quickshell recover while the compositor keeps the session locked. Hypridle uses `inhibit_sleep = 3` to wait for the compositor's lock notification. The power menu refuses to suspend unless Quickshell confirms its lock.
+`compositors/hyprland/hypr/.config/hypr/scripts/quickshell-lock` supervises the process and retries up to three times after an unexpected exit. Hyprland's `allow_session_lock_restore` lets Quickshell recover while the compositor keeps the session locked. Hypridle uses `inhibit_sleep = 3` to wait for the compositor's lock notification. The power menu refuses to suspend unless Quickshell confirms its lock.
 
 Settings → Power configures idle screen off, automatic lock, automatic suspend, the power button, and a temporary Keep awake switch. The defaults preserve the previous behavior: lock after 20 minutes, with automatic screen off and suspend disabled. Preferences are saved on each machine in `~/.config/hypr-local/power.json`, outside the stow repository. Keep awake lasts only for the current session and pauses automatic idle actions. The generated hypridle policy is stored beside the preferences; `powerctl` starts and reloads hypridle for the current Hyprland session.
 
@@ -43,31 +45,9 @@ The previous Hyprlock theme remains in the repository as an inactive configurati
 
 ## Dependencies
 
-The package commands below target CachyOS/Arch. Shared configuration also supports Fedora; package names and availability differ.
+The package scripts under `installer/packages/` install the portable bootstrap tools, Git and GNU Stow, for Arch, Fedora, Debian/Ubuntu, Void, or FreeBSD. Run `./install.sh packages` to select the current OS package manager. Desktop runtime dependencies remain profile-specific while the platform adapters are being separated; this does not claim the full Hyprland desktop profile works on every listed OS.
 
-```sh
-sudo pacman -S git stow rust gtk4 \
-               hyprland hyprpaper hyprpicker hypridle \
-               hyprpolkitagent \
-               quickshell \
-               kitty fish starship fastfetch btop \
-               fcitx5 fcitx5-anthy fcitx5-gtk fcitx5-qt fcitx5-configtool \
-               nautilus \
-               networkmanager \
-               bluez bluez-utils blueman \
-               pipewire pipewire-pulse wireplumber libpulse libcanberra sound-theme-freedesktop \
-               wl-clipboard wl-clip-persist \
-               brightnessctl playerctl \
-               jq grim slurp libnotify \
-               xorg-xhost \
-               power-profiles-daemon \
-               flatpak \
-               adwaita-fonts cantarell-fonts \
-               adw-gtk-theme
-```
-
-> Some of these may already be installed or available under slightly different names depending on your repos/AUR helper.
-> Region screenshots use `grim` + `slurp`. `hyprpicker` is only used by the color-picker bind, `flatpak` is only needed if you keep the Zen Browser bind or want Flatpak apps in the launcher, and the Quick Settings power mode switcher uses `power-profiles-daemon` through QuickShell’s PowerProfiles interface.
+The Hyprland profile additionally needs Hyprland, QuickShell, hypridle, hyprpaper, and the services documented below. Install those with the package source appropriate to your distribution. Some personal apps are optional and listed in their feature documentation.
 
 Optional / personal extras:
 
@@ -81,15 +61,15 @@ cargo install runin
 ### Bibata cursor theme
 
 ```sh
-cp -r icons/Bibata-Modern-Classic ~/.local/share/icons/
+cp -r desktop/assets/icons/Bibata-Modern-Classic ~/.local/share/icons/
 ```
 
 ### Fonts
 
-The `fonts/` folder contains all needed fonts. Install them by copying to your fonts directory:
+The `desktop/assets/fonts/` folder contains all needed fonts. Install them by copying to your fonts directory:
 
 ```sh
-cp -r fonts/. ~/.local/share/fonts/
+cp -r desktop/assets/fonts/. ~/.local/share/fonts/
 fc-cache -fv
 ```
 
@@ -160,11 +140,12 @@ Keep these files outside Stow and version control.
 
 ### Portals and Elio file chooser
 
-Install `xdg-desktop-portal-hyprland` and `xdg-desktop-portal-gtk`, then Stow
-`xdg-portals`. Startup handles both plain and UWSM-managed Hyprland sessions.
+Install `xdg-desktop-portal-hyprland` and `xdg-desktop-portal-gtk`, then run
+`./install.sh` to link the `xdg-portals` package with the rest of the profile.
+Startup handles both plain and UWSM-managed Hyprland sessions.
 The desktop-specific `hyprland-portals.conf` leaves GNOME's portal selection alone.
 When upgrading, remove the old `~/.config/xdg-desktop-portal/portals.conf` **only
-if it is a symlink into this repo**, then restow `xdg-portals`.
+if it is a symlink into this repo**, then rerun `./install.sh`.
 
 Elio integration requires `xdg-desktop-portal-termfilechooser`, `kitty`, and an
 `elio` build supporting `--chooser-file`. GTK is the fallback when termfilechooser
@@ -194,8 +175,9 @@ wlroots clipboard protocol MimeClip requires. A systemd user service remains an
 optional supervisor for installations that want one.
 
 The `mimeclip` Stow package keeps history at 500 entries and 256 MiB of stored
-payload data. Apply it with `stow --no-folding mimeclip`; afterwards run
-`mimeclip config` whenever you want to change those limits interactively.
+payload data. The root `./install.sh` links it with the rest of the desktop;
+afterwards run `mimeclip config` whenever you want to change those limits
+interactively.
 
 ### Input method
 
@@ -208,10 +190,13 @@ Fcitx runs only in Hyprland; GNOME retains its own IBus input sources. The sessi
 
 The Anki Flatpak clears `QT_IM_MODULE` so its sandbox does not use its bundled
 direct Fcitx client; it instead uses native Wayland text input. The override is
-installed by Stowing the `flatpak` package; fully close and reopen Anki after
-applying it.
+linked by `./install.sh`; fully close and reopen Anki after applying it.
 
-When upgrading, back up conflicting files before Stowing `gtk` and `fcitx5`. Remove old global Fcitx environment exports, separate Fcitx autostart services, and `gtk-im-module=fcitx` entries in non-stowed GTK files. Keep input-method variables scoped to Hyprland, outside shell profiles and the shared systemd/D-Bus environment.
+When upgrading, back up conflicting files before running `./install.sh` to link
+`gtk` and `fcitx5`. Remove old global Fcitx environment exports, separate Fcitx
+autostart services, and `gtk-im-module=fcitx` entries in non-stowed GTK files.
+Keep input-method variables scoped to Hyprland, outside shell profiles and the
+shared systemd/D-Bus environment.
 
 Log out and back in after applying these changes. Simultaneous graphical sessions for the same user share input-method D-Bus services and are not supported by this setup.
 
@@ -223,10 +208,11 @@ flatpak install flathub app.zen_browser.zen
 
 #### Zen Browser and MimeClip screenshots
 
-The `flatpak` Stow package grants Zen **read-only** access to `~/Pictures`:
+The `flatpak` package grants Zen **read-only** access to `~/Pictures` when you
+run `./install.sh`:
 
 ```sh
-stow --no-folding flatpak
+./install.sh
 ```
 
 This is needed because MimeClip intentionally preserves a screenshot as a
@@ -239,8 +225,8 @@ path. Fully quit and reopen Zen after applying or changing the override.
 Homebrew is optional; Fish initializes it only when `/home/linuxbrew/.linuxbrew/bin/brew` is installed.
 
 Some personal keybinds also expect `anitrack`, `elio`, `enzo`, and `runin`. The NormCap keybind prefers native `normcap`, then falls back to Flatpak `com.github.dynobo.normcap`.
-The Fish config selects `ANI_CLI_PLAYER=enzo-mpv` whenever the wrapper is installed, so both normal terminal launches and the `Super+W` anime tracker bind use Enzo. The wrapper is stowed by the `hypr` package to `~/.local/bin/enzo-mpv` and forwards the media URL to `enzo`.
-If you do not use those apps, either skip them or change the matching binds in `hypr/.config/hypr/conf/binds.lua`.
+The Fish config selects `ANI_CLI_PLAYER=enzo-mpv` whenever the wrapper is installed, so both normal terminal launches and the `Super+W` anime tracker bind use Enzo. The wrapper is linked by `./install.sh` to `~/.local/bin/enzo-mpv` and forwards the media URL to `enzo`.
+If you do not use those apps, either skip them or change the matching binds in `compositors/hyprland/hypr/.config/hypr/conf/binds.lua`.
 
 ### Screenshots
 
@@ -259,21 +245,21 @@ Power actions are handled by QuickShell through `qs ipc call powermenu`, so the 
 ## Install
 
 ```sh
-git clone https://github.com/MiguelRegueiro/regueiro-hyprland ~/regueiro-hyprland
-cd ~/regueiro-hyprland
-stow --no-folding hypr quickshell fish starship fastfetch kitty hypridle fcitx5 gtk xdg-portals flatpak nvim
+git clone https://github.com/MiguelRegueiro/triton-desktop ~/triton-desktop
+cd ~/triton-desktop
+./install.sh
 ```
 
-Restow the affected packages after pulling changes that add or rename files. Existing Stow symlinks already point at updated files; machine-local overrides remain outside the checkout.
+The root `install.sh` is the public installer. It deploys the current Hyprland profile through GNU Stow. Use `./install.sh packages` to install the base packages for a supported package manager. After pulling file additions or moves, rerun `./install.sh`; machine-local overrides remain outside the checkout.
 
 ## Formatting
 
 Use the repo scripts instead of running `qmlformat` blindly over the whole tree:
 
 ```sh
-./scripts/format-configs.sh
-./scripts/check-configs.sh
+./tests/format-configs.sh
+./tests/check-configs.sh
 ```
 
-`quickshell/.config/quickshell/services/NotificationStore.qml` is intentionally excluded from automatic `qmlformat`.
+`desktop/quickshell/.config/quickshell/services/NotificationStore.qml` is intentionally excluded from automatic `qmlformat`.
 That file stays manually formatted because forcing `qmlformat` on it caused notification regressions.
