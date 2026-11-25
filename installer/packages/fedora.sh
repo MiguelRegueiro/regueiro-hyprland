@@ -1,3 +1,4 @@
 #!/bin/sh
 set -eu
-exec sudo dnf install git stow "$@"
+. "$(dirname "$0")/root.sh"
+run_as_root dnf install git stow "$@"

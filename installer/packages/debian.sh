@@ -1,3 +1,4 @@
 #!/bin/sh
 set -eu
-exec sudo apt install git stow "$@"
+. "$(dirname "$0")/root.sh"
+run_as_root apt install git stow "$@"

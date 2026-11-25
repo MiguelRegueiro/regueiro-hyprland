@@ -1,3 +1,4 @@
 #!/bin/sh
 set -eu
-exec sudo xbps-install -S git stow "$@"
+. "$(dirname "$0")/root.sh"
+run_as_root xbps-install -S git stow "$@"

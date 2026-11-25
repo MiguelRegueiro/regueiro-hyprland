@@ -14,8 +14,12 @@ case "$action" in
 esac
 
 if ! command -v stow >/dev/null 2>&1; then
-    echo "GNU Stow is required. Install it with your distribution package manager, then rerun ./install.sh." >&2
-    exit 1
+    echo "GNU Stow is missing; installing the bootstrap packages with the native package manager."
+    "$repo_dir/installer/packages/install.sh"
+    if ! command -v stow >/dev/null 2>&1; then
+        echo "GNU Stow is still unavailable after package installation." >&2
+        exit 1
+    fi
 fi
 
 is_legacy_link() {
