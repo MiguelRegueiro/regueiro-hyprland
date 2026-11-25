@@ -20,7 +20,7 @@ case "$action" in
         ;;
     suspend)
         ~/.config/hypr/scripts/quickshell-lock --wait || exit 1
-        exec systemctl suspend
+        exec ~/.local/bin/triton-linux-power suspend
         ;;
     toggle | open | close | logout | reboot | shutdown)
         exec qs ipc call powermenu "$action"

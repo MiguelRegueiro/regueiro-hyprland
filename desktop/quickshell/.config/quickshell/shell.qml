@@ -666,7 +666,7 @@ ShellRoot {
     Process {
         id: rebootProc
 
-        command: ["systemctl", "reboot"]
+        command: [(Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-power", "reboot"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("reboot");
@@ -676,7 +676,7 @@ ShellRoot {
     Process {
         id: shutdownProc
 
-        command: ["systemctl", "poweroff"]
+        command: [(Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-power", "poweroff"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("shutdown");

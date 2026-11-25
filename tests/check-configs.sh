@@ -24,6 +24,8 @@ while IFS= read -r -d '' file; do
 done < <(find desktop/quickshell/.config/quickshell platforms/linux/.config/quickshell -type f -name '*.qml' -print0 | sort -z)
 
 bash -n compositors/hyprland/hypr/.config/hypr/scripts/*.sh
+sh -n platforms/linux/.local/bin/triton-linux-power
+python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 git diff --check
 
 echo "Formatting and syntax checks passed."

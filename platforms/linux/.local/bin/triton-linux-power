@@ -1,0 +1,43 @@
+#!/bin/sh
+set -eu
+
+usage() {
+    printf '%s\n' "Usage: ${0##*/} {lock-session|suspend|reboot|poweroff|inhibit-handle-power-key|block-handle-power-key [COMMAND ...]}" >&2
+    exit 2
+}
+
+action=${1:-}
+[ "$#" -gt 0 ] || usage
+shift
+
+case "$action" in
+    lock-session)
+        [ "$#" -eq 0 ] || usage
+        exec loginctl lock-session
+        ;;
+    suspend)
+        [ "$#" -eq 0 ] || usage
+        exec systemctl suspend
+        ;;
+    reboot)
+        [ "$#" -eq 0 ] || usage
+        exec systemctl reboot
+        ;;
+    poweroff)
+        [ "$#" -eq 0 ] || usage
+        exec systemctl poweroff
+        ;;
+    inhibit-handle-power-key)
+        [ "$#" -gt 0 ] || usage
+        exec systemd-inhibit --what=handle-power-key --mode=block \
+            --who='Triton Desktop' --why='Custom power button action' "$@"
+        ;;
+    block-handle-power-key)
+        [ "$#" -eq 0 ] || usage
+        exec systemd-inhibit --what=handle-power-key --mode=block \
+            --who='Triton Desktop' --why='Custom power button action' true
+        ;;
+    *)
+        usage
+        ;;
+esac

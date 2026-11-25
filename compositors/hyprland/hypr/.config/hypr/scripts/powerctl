@@ -24,6 +24,7 @@ DEFAULTS = {"screenOff": 0, "lock": 20, "suspend": 0, "powerButton": "system"}
 MINUTES = {0, 2, 5, 10, 15, 20, 30, 45, 60, 90, 120}
 BUTTONS = {"system", "lock", "suspend", "shutdown", "reboot", "nothing"}
 SCRIPT = Path(__file__).resolve()
+LINUX_POWER = Path.home() / ".local/bin/triton-linux-power"
 
 
 def state():
@@ -54,13 +55,13 @@ def render(settings):
         "general {",
         "    lock_cmd = ~/.config/hypr/scripts/quickshell-lock",
         "    inhibit_sleep = 3",
-        "    before_sleep_cmd = loginctl lock-session",
+        f"    before_sleep_cmd = {LINUX_POWER} lock-session",
         "    after_sleep_cmd = ~/.config/hypr/scripts/displayctl dpms on",
         "}",
     ]
     listeners = (
         ("screenOff", "~/.config/hypr/scripts/displayctl dpms off", "~/.config/hypr/scripts/displayctl dpms on"),
-        ("lock", "loginctl lock-session", None),
+        ("lock", f"{LINUX_POWER} lock-session", None),
         ("suspend", "~/.config/hypr/scripts/power-menu suspend", None),
     )
     for key, command, resume in listeners:
@@ -131,11 +132,8 @@ def stop_inhibitor(process):
 
 
 def start_inhibitor():
-    return subprocess.Popen([
-        "systemd-inhibit", "--what=handle-power-key", "--mode=block",
-        "--who=Quickshell Settings", "--why=Custom power button action",
-        "sleep", "infinity",
-    ], start_new_session=True)
+    return subprocess.Popen([str(LINUX_POWER), "inhibit-handle-power-key", "sleep", "infinity"],
+                            start_new_session=True)
 
 
 def daemon():
@@ -224,10 +222,7 @@ def main():
             settings[key] = int(value)
         elif key == "powerButton" and value in BUTTONS:
             if value != "system":
-                subprocess.run([
-                    "systemd-inhibit", "--what=handle-power-key", "--mode=block",
-                    "--who=Quickshell Settings", "--why=Custom power button action", "true",
-                ], check=True, capture_output=True)
+                subprocess.run([str(LINUX_POWER), "block-handle-power-key"], check=True, capture_output=True)
             settings[key] = value
         else:
             raise ValueError("Invalid power setting")
