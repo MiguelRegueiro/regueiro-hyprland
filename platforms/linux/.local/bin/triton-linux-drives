@@ -1,0 +1,42 @@
+#!/bin/sh
+set -eu
+
+usage() {
+    printf '%s\n' "Usage: ${0##*/} {list|open PATH|mount DEVICE|unmount DEVICE|eject PARTITION DISK}" >&2
+    exit 2
+}
+
+action=${1:-}
+[ "$#" -gt 0 ] || usage
+shift
+
+case "$action" in
+    list)
+        [ "$#" -eq 0 ] || usage
+        exec lsblk -J -o NAME,KNAME,TYPE,SIZE,LABEL,MODEL,TRAN,HOTPLUG,RM,MOUNTPOINTS,PATH,FSTYPE,UUID
+        ;;
+    open)
+        [ "$#" -eq 1 ] || usage
+        exec gio open "$1"
+        ;;
+    mount)
+        [ "$#" -eq 1 ] || usage
+        exec udisksctl mount -b "$1"
+        ;;
+    unmount)
+        [ "$#" -eq 1 ] || usage
+        exec udisksctl unmount -b "$1"
+        ;;
+    eject)
+        [ "$#" -eq 2 ] || usage
+        partition=$1
+        disk=$2
+        if [ -n "$partition" ]; then
+            udisksctl unmount -b "$partition" >/dev/null 2>&1 || true
+        fi
+        exec udisksctl power-off -b "$disk"
+        ;;
+    *)
+        usage
+        ;;
+esac

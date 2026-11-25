@@ -807,6 +807,8 @@ ShellRoot {
 
     Services.ExternalDrivesService {
         id: externalDrivesServiceState
+
+        platformService: platformServiceState
     }
 
     Services.SystemDetailsService {

@@ -5,6 +5,8 @@ import "../theme/Theme.js" as Theme
 Item {
     id: root
 
+    required property var platformService
+
     property var drives: []
     property string lastError: ""
     readonly property bool loading: listProc.running
@@ -90,49 +92,49 @@ Item {
     }
 
     function refresh() {
-        if (!listProc.running)
+        if (platformService.externalDrivesCommandPath.length > 0 && !listProc.running)
             listProc.running = true;
     }
 
     function openDrive(drive) {
-        if (actionProc.running || !drive || !drive.mounted || drive.mountPath.length === 0)
+        if (platformService.externalDrivesCommandPath.length === 0 || actionProc.running || !drive || !drive.mounted || drive.mountPath.length === 0)
             return;
 
         root.lastError = "";
-        actionProc.command = ["gio", "open", drive.mountPath];
+        actionProc.command = [platformService.externalDrivesCommandPath, "open", drive.mountPath];
         actionProc.running = true;
     }
 
     function mountDrive(drive) {
-        if (actionProc.running || !drive || drive.path.length === 0)
+        if (platformService.externalDrivesCommandPath.length === 0 || actionProc.running || !drive || drive.path.length === 0)
             return;
 
         root.lastError = "";
-        actionProc.command = ["udisksctl", "mount", "-b", drive.path];
+        actionProc.command = [platformService.externalDrivesCommandPath, "mount", drive.path];
         actionProc.running = true;
     }
 
     function unmountDrive(drive) {
-        if (actionProc.running || !drive || drive.path.length === 0)
+        if (platformService.externalDrivesCommandPath.length === 0 || actionProc.running || !drive || drive.path.length === 0)
             return;
 
         root.lastError = "";
-        actionProc.command = ["udisksctl", "unmount", "-b", drive.path];
+        actionProc.command = [platformService.externalDrivesCommandPath, "unmount", drive.path];
         actionProc.running = true;
     }
 
     function ejectDrive(drive) {
-        if (actionProc.running || !drive || drive.diskPath.length === 0)
+        if (platformService.externalDrivesCommandPath.length === 0 || actionProc.running || !drive || drive.diskPath.length === 0)
             return;
 
         root.lastError = "";
-        actionProc.command = ["bash", "-lc", "udisksctl unmount -b \"$1\" >/dev/null 2>&1 || true; udisksctl power-off -b \"$2\"", "external-drive", drive.path, drive.diskPath];
+        actionProc.command = [platformService.externalDrivesCommandPath, "eject", drive.path, drive.diskPath];
         actionProc.running = true;
     }
 
     Timer {
         interval: Theme.slowPollInterval
-        running: true
+        running: root.platformService.externalDrivesCommandPath.length > 0
         repeat: true
         triggeredOnStart: true
         onTriggered: root.refresh()
@@ -149,7 +151,7 @@ Item {
     Process {
         id: listProc
 
-        command: ["lsblk", "-J", "-o", "NAME,KNAME,TYPE,SIZE,LABEL,MODEL,TRAN,HOTPLUG,RM,MOUNTPOINTS,PATH,FSTYPE,UUID"]
+        command: [root.platformService.externalDrivesCommandPath, "list"]
 
         stdout: StdioCollector {
             id: listOut
