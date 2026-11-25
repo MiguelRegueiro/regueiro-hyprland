@@ -10,6 +10,11 @@ Item {
     readonly property string backendPath: backendName === "hyprland" ? Quickshell.shellPath("compositors/HyprlandBackend.qml") : ""
     readonly property var backend: backendLoader.item
     readonly property string powerCommandPath: backend ? backend.powerCommandPath : ""
+    readonly property string displayCommandPath: backend ? backend.displayCommandPath : ""
+    readonly property string powerMenuCommandPath: backend ? backend.powerMenuCommandPath : ""
+    readonly property string logoutCommandPath: backend ? backend.logoutCommandPath : ""
+    readonly property string wallpaperCommandPath: backend ? backend.wallpaperCommandPath : ""
+    readonly property string ttsCommandPath: backend ? backend.ttsCommandPath : ""
     readonly property var workspaceModel: backend ? backend.workspaceModel : []
     readonly property var focusedWorkspace: backend ? backend.focusedWorkspace : null
     readonly property var focusedMonitor: backend ? backend.focusedMonitor : null

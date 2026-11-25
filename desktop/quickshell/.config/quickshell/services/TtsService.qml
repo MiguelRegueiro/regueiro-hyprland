@@ -1,9 +1,12 @@
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
 Item {
     id: root
+
+    required property var compositorService
+
+    readonly property string commandPath: compositorService.ttsCommandPath
 
     property string status: "idle"
     property string text: ""
@@ -40,7 +43,7 @@ Item {
         // Playback/progress stays as responsive as before. The long idle
         // period is deliberately cheaper: status invokes an external client.
         interval: root.busy || root.fastRefreshesRemaining > 0 ? 180 : 1500
-        running: true
+        running: root.commandPath.length > 0
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -52,7 +55,7 @@ Item {
 
     Process {
         id: statusProcess
-        command: [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "status"]
+        command: [root.commandPath, "status"]
         stdout: StdioCollector {
             id: statusOutput
             onStreamFinished: {
@@ -93,12 +96,16 @@ Item {
     }
 
     function speakClipboard(provider, voice, rate) {
+        if (commandPath.length === 0)
+            return;
         startFastRefresh();
-        speakProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "speak-clipboard", provider, voice, rate];
+        speakProcess.command = [commandPath, "speak-clipboard", provider, voice, rate];
         speakProcess.running = true;
     }
 
     function setPreferences(provider, voice, rate) {
+        if (commandPath.length === 0)
+            return;
         startFastRefresh();
         root.provider = provider;
         root.voice = voice;
@@ -108,28 +115,36 @@ Item {
         root.pendingProvider = provider;
         root.preferencesPending = true;
         preferenceTimer.restart();
-        settingsProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "settings", provider, voice, rate];
+        settingsProcess.command = [commandPath, "settings", provider, voice, rate];
         settingsProcess.running = true;
     }
 
     function toggle() {
+        if (commandPath.length === 0)
+            return;
         startFastRefresh();
-        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "toggle"];
+        controlProcess.command = [commandPath, "toggle"];
         controlProcess.running = true;
     }
     function cancel() {
+        if (commandPath.length === 0)
+            return;
         startFastRefresh();
-        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "cancel"];
+        controlProcess.command = [commandPath, "cancel"];
         controlProcess.running = true;
     }
     function reset() {
+        if (commandPath.length === 0)
+            return;
         startFastRefresh();
-        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "reset"];
+        controlProcess.command = [commandPath, "reset"];
         controlProcess.running = true;
     }
     function seek(seconds) {
+        if (commandPath.length === 0)
+            return;
         startFastRefresh();
-        controlProcess.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "seek", String(seconds)];
+        controlProcess.command = [commandPath, "seek", String(seconds)];
         controlProcess.running = true;
     }
 

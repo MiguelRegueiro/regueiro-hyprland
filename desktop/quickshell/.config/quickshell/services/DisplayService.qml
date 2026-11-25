@@ -1,9 +1,13 @@
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
 Item {
     id: root
+
+    required property var compositorService
+
+    readonly property string commandPath: compositorService.displayCommandPath
+    readonly property bool available: commandPath.length > 0
 
     property bool busy: false
     property bool configured: false
@@ -35,9 +39,9 @@ Item {
         run("scale", output, String(scale));
     }
     function run() {
-        if (arguments.length === 0 || actionProc.running)
+        if (commandPath.length === 0 || arguments.length === 0 || actionProc.running)
             return;
-        actionProc.command = [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/displayctl"].concat(Array.prototype.slice.call(arguments));
+        actionProc.command = [commandPath].concat(Array.prototype.slice.call(arguments));
         lastError = "";
         busy = true;
         actionProc.running = true;
@@ -55,7 +59,7 @@ Item {
     Timer {
         interval: 5000
         repeat: true
-        running: true
+        running: root.available
         triggeredOnStart: true
 
         onTriggered: root.refresh()
@@ -63,7 +67,7 @@ Item {
     Process {
         id: statusProc
 
-        command: [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/displayctl", "status"]
+        command: [root.commandPath, "status"]
 
         stdout: StdioCollector {
             onStreamFinished: {

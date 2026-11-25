@@ -10,6 +10,11 @@ Item {
     readonly property var focusedWorkspace: Hyprland.focusedWorkspace
     readonly property var focusedMonitor: Hyprland.focusedMonitor
     readonly property string powerCommandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/powerctl"
+    readonly property string displayCommandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/displayctl"
+    readonly property string powerMenuCommandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/power-menu"
+    readonly property string logoutCommandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/session-logout.sh"
+    readonly property string wallpaperCommandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/set-wallpaper"
+    readonly property string ttsCommandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl"
 
     signal clientsListed(var clients)
 

@@ -646,7 +646,7 @@ ShellRoot {
     Process {
         id: suspendProc
 
-        command: ["sh", "-c", "exec \"$HOME/.config/hypr/scripts/power-menu\" suspend"]
+        command: [compositorServiceState.powerMenuCommandPath, "suspend"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("suspend");
@@ -656,7 +656,7 @@ ShellRoot {
     Process {
         id: logoutProc
 
-        command: ["sh", "-c", "exec \"$HOME/.config/hypr/scripts/session-logout.sh\""]
+        command: [compositorServiceState.logoutCommandPath]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("logout");
@@ -686,7 +686,7 @@ ShellRoot {
     Process {
         id: ttsClipboardProc
 
-        command: [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/ttsctl", "speak-clipboard"]
+        command: [compositorServiceState.ttsCommandPath, "speak-clipboard"]
     }
 
     Services.HoverOverlayController {
@@ -753,6 +753,8 @@ ShellRoot {
 
     Services.DisplayService {
         id: displayServiceState
+
+        compositorService: compositorServiceState
     }
 
     Services.PowerService {
@@ -767,6 +769,8 @@ ShellRoot {
 
     Services.TtsService {
         id: ttsServiceState
+
+        compositorService: compositorServiceState
     }
 
     Services.PlatformService {
@@ -1141,6 +1145,7 @@ ShellRoot {
                 readonly property bool activeScreen: root.isShellScreen(modelData)
 
                 targetScreen: modelData
+                compositorService: compositorServiceState
                 open: root.wallpaperPickerVisible && activeScreen
                 onRequestClose: root.closeWallpaperPicker()
             }

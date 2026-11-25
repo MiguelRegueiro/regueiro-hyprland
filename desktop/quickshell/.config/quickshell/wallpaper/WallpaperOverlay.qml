@@ -11,6 +11,7 @@ PanelWindow {
     id: root
 
     required property var targetScreen
+    required property var compositorService
     property bool open: false
     property string currentWallpaper: ""
     property int selectedIndex: 0
@@ -88,9 +89,9 @@ PanelWindow {
 
     function applySelected() {
         const path = pathForIndex(selectedIndex);
-        if (!path)
+        if (!path || compositorService.wallpaperCommandPath.length === 0)
             return;
-        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/set-wallpaper", path]);
+        Quickshell.execDetached([compositorService.wallpaperCommandPath, path]);
         currentWallpaper = path;
         requestClose();
     }
