@@ -9,6 +9,7 @@ Item {
     readonly property string backendName: Quickshell.env("TRITON_COMPOSITOR") || "hyprland"
     readonly property string backendPath: backendName === "hyprland" ? Quickshell.shellPath("compositors/HyprlandBackend.qml") : ""
     readonly property var backend: backendLoader.item
+    readonly property string powerCommandPath: backend ? backend.powerCommandPath : ""
     readonly property var workspaceModel: backend ? backend.workspaceModel : []
     readonly property var focusedWorkspace: backend ? backend.focusedWorkspace : null
     readonly property var focusedMonitor: backend ? backend.focusedMonitor : null

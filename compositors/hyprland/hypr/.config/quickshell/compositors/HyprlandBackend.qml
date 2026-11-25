@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 
@@ -8,6 +9,7 @@ Item {
     readonly property var workspaceModel: Hyprland.workspaces
     readonly property var focusedWorkspace: Hyprland.focusedWorkspace
     readonly property var focusedMonitor: Hyprland.focusedMonitor
+    readonly property string powerCommandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/powerctl"
 
     signal clientsListed(var clients)
 

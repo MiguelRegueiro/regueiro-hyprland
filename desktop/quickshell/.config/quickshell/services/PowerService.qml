@@ -1,9 +1,10 @@
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
 Item {
     id: root
+
+    required property var compositorService
 
     property int screenOff: 0
     property int lock: 20
@@ -13,15 +14,15 @@ Item {
     property bool active: false
     property bool busy: false
     property string lastError: ""
-    readonly property string commandPath: (Quickshell.env("HOME") || "") + "/.config/hypr/scripts/powerctl"
+    readonly property string commandPath: compositorService.powerCommandPath
 
     function refresh() {
-        if (!statusProc.running)
+        if (commandPath.length > 0 && !statusProc.running)
             statusProc.running = true;
     }
 
     function run() {
-        if (actionProc.running)
+        if (commandPath.length === 0 || actionProc.running)
             return;
         actionProc.command = [commandPath].concat(Array.prototype.slice.call(arguments));
         lastError = "";
@@ -51,7 +52,7 @@ Item {
 
     Process {
         id: statusProc
-        command: [root.commandPath, "status"]
+        command: root.commandPath.length > 0 ? [root.commandPath, "status"] : ["true"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
