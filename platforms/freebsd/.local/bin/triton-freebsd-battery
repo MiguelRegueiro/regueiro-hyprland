@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+percent=$(apm -l 2>/dev/null || printf '%s' -1)
+ac=$(apm -a 2>/dev/null || printf '%s' -1)
+state=unknown
+remaining=unknown
+
+if command -v acpiconf >/dev/null 2>&1; then
+    info=$(acpiconf -i 0 2>/dev/null || true)
+    if [ -n "$info" ]; then
+        state=$(printf '%s\n' "$info" | awk -F: '/State:/ {sub(/^[ \t]+/, "", $2); print $2; exit}')
+        remaining=$(printf '%s\n' "$info" | awk -F: '/Remaining time:/ {sub(/^[ \t]+/, "", $2); print $2; exit}')
+    fi
+fi
+
+case "$percent" in
+    ''|*[!0-9]*) percent=-1 ;;
+esac
+case "$ac" in
+    ''|*[!0-9]*) ac=-1 ;;
+esac
+printf '%s\037%s\037%s\037%s\n' "$percent" "$ac" "${state:-unknown}" "${remaining:-unknown}"

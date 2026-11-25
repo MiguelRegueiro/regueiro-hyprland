@@ -19,7 +19,9 @@ Item {
         id: backend
 
         active: root.platformService.hasBatteryAdapter
-        source: active ? Qt.resolvedUrl("../platforms/linux/BatteryBackend.qml") : ""
+        source: !active ? "" : root.platformService.isLinux
+            ? Qt.resolvedUrl("../platforms/linux/BatteryBackend.qml")
+            : Qt.resolvedUrl("../platforms/freebsd/BatteryBackend.qml")
     }
 }
 // qmllint enable missing-property

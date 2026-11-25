@@ -98,7 +98,11 @@ preflight_packages() {
 # new ones, so a failed install leaves the current desktop untouched.
 preflight_packages compositors/hyprland hypr hypridle
 preflight_packages desktop quickshell scripts
-preflight_packages platforms linux
+platform_package=linux
+if [ "$(uname -s)" = FreeBSD ]; then
+    platform_package=freebsd
+fi
+preflight_packages platforms "$platform_package"
 preflight_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
 
 stow_packages() {
@@ -166,7 +170,7 @@ stow_packages() {
 stow_packages compositors/hyprland hypr hypridle
 stow_packages desktop quickshell
 stow_packages desktop scripts
-stow_packages platforms linux
+stow_packages platforms "$platform_package"
 stow_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
 
 printf '%s\n' "Triton Desktop configuration linked. Log out and back in to start the session changes."

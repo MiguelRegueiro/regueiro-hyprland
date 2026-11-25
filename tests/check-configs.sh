@@ -17,11 +17,11 @@ fi
 
 while IFS= read -r -d '' file; do
     qmlformat -n "$file" >/dev/null
-done < <(find desktop/quickshell/.config/quickshell platforms/linux/.config/quickshell -type f -name '*.qml' ! -name 'NotificationStore.qml' -print0 | sort -z)
+done < <(find desktop/quickshell/.config/quickshell platforms/linux/.config/quickshell platforms/freebsd/.config/quickshell -type f -name '*.qml' ! -name 'NotificationStore.qml' -print0 | sort -z)
 
 while IFS= read -r -d '' file; do
     qmllint "$file" >/dev/null
-done < <(find desktop/quickshell/.config/quickshell platforms/linux/.config/quickshell -type f -name '*.qml' -print0 | sort -z)
+done < <(find desktop/quickshell/.config/quickshell platforms/linux/.config/quickshell platforms/freebsd/.config/quickshell -type f -name '*.qml' -print0 | sort -z)
 
 bash -n compositors/hyprland/hypr/.config/hypr/scripts/*.sh
 sh -n platforms/linux/.local/bin/triton-linux-power
@@ -30,6 +30,8 @@ bash -n platforms/linux/.local/bin/triton-fcitx-toggle
 sh -n platforms/linux/.local/bin/triton-linux-bluetooth
 bash -n platforms/linux/.local/bin/triton-linux-system-details
 sh -n platforms/linux/.local/bin/triton-linux-drives
+sh -n platforms/freebsd/.local/bin/triton-freebsd-battery
+sh -n installer/install.sh
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 git diff --check
 

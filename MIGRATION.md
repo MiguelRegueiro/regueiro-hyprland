@@ -44,6 +44,12 @@ backends already work on FreeBSD.
 - [ ] Port external-drive and system-statistics support.
 - [ ] Validate audio, portals, authentication, and suspend.
 
+Progress: The native FreeBSD battery adapter is now ported behind the shared
+battery service. It reads `apm` and `acpiconf` through a small platform helper;
+the installer selects the FreeBSD platform Stow package on FreeBSD. This
+adapter has only been syntax-checked on Linux and still needs validation on the
+preserved FreeBSD machine.
+
 ## 05 — Make the session reliable
 
 - [ ] Unify startup and shutdown.
