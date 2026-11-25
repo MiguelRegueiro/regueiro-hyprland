@@ -8,7 +8,7 @@ QtObject {
     readonly property bool isFreeBSD: name === "freebsd"
 
     // Capabilities describe implemented adapters, not merely OS support.
-    readonly property bool hasNetworkAdapter: isLinux
+    readonly property bool hasNetworkAdapter: isLinux || isFreeBSD
     readonly property bool hasWifiAdapter: isLinux
     readonly property bool hasBrightnessAdapter: isLinux || isFreeBSD
     readonly property bool hasBatteryAdapter: isLinux || isFreeBSD

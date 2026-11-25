@@ -25,7 +25,9 @@ Item {
     Loader {
         id: backend
         active: root.platformService.hasNetworkAdapter
-        source: active ? Qt.resolvedUrl("../platforms/linux/NetworkBackend.qml") : ""
+        source: !active ? "" : root.platformService.isLinux
+            ? Qt.resolvedUrl("../platforms/linux/NetworkBackend.qml")
+            : Qt.resolvedUrl("../platforms/freebsd/NetworkBackend.qml")
     }
 }
 // qmllint enable missing-property
