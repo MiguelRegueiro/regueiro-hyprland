@@ -32,7 +32,9 @@ Item {
         id: backend
 
         active: root.platformService.hasBrightnessAdapter
-        source: active ? Qt.resolvedUrl("../platforms/linux/BrightnessBackend.qml") : ""
+        source: !active ? "" : root.platformService.isLinux
+            ? Qt.resolvedUrl("../platforms/linux/BrightnessBackend.qml")
+            : Qt.resolvedUrl("../platforms/freebsd/BrightnessBackend.qml")
     }
 
     Connections {

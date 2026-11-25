@@ -2,9 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Effects
-import Quickshell.Io
 import "pages" as Pages
-import "../services" as Services
 import "../components" as Components
 import "../theme/Theme.js" as Theme
 import "QuickSettingsStyle.js" as QS

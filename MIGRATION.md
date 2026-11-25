@@ -39,16 +39,17 @@ backends already work on FreeBSD.
 
 ## 04 — Port FreeBSD functionality incrementally
 
-- [ ] Port the native hardware bridge.
+- [x] Port the native hardware bridge.
 - [ ] Port battery, Wi-Fi, Bluetooth, and power services.
 - [ ] Port external-drive and system-statistics support.
 - [ ] Validate audio, portals, authentication, and suspend.
 
-Progress: The native FreeBSD battery adapter is now ported behind the shared
-battery service. It reads `apm` and `acpiconf` through a small platform helper;
-the installer selects the FreeBSD platform Stow package on FreeBSD. This
-adapter has only been syntax-checked on Linux and still needs validation on the
-preserved FreeBSD machine.
+Progress: The native FreeBSD battery adapter is ported behind the shared
+battery service, using `apm` and `acpiconf`. The branch's persistent brightness
+and OSS mixer bridge is now in the FreeBSD platform package; the installer
+builds it on FreeBSD and the shared brightness service selects its adapter.
+These FreeBSD paths have only been syntax-checked on Linux and still need a
+build and hardware validation on the preserved FreeBSD machine.
 
 ## 05 — Make the session reliable
 

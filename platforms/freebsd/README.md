@@ -1,5 +1,14 @@
-# FreeBSD services
+# FreeBSD platform adapters
 
-Native hardware and system service adapters for FreeBSD belong here. The
-current desktop does not yet have a FreeBSD compositor profile or service
-implementation; this directory marks the boundary for that future work.
+The shared battery service uses `apm` and `acpiconf` through
+`triton-freebsd-battery`. The shared brightness service uses the persistent
+native backlight and OSS mixer bridge from `src/triton-freebsd-hardware.c`.
+
+On FreeBSD, `./install.sh` selects this Stow package and compiles the bridge
+into `~/.local/bin/triton-freebsd-hardware`. The bridge targets the device paths
+validated by the existing FreeBSD branch (`/dev/backlight/backlight0` and
+`/dev/mixer0`); machines with different device paths need adaptation.
+
+The FreeBSD adapters are not runtime-validated by the Linux test host. Confirm
+device permissions, backlight behavior, and mixer behavior on the target
+FreeBSD machine before relying on them.

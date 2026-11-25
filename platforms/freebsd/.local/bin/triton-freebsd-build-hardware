@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+repo_dir=${TRITON_DESKTOP_DIR:-}
+if [ -z "$repo_dir" ] || [ ! -f "$repo_dir/platforms/freebsd/src/triton-freebsd-hardware.c" ]; then
+    echo "TRITON_DESKTOP_DIR must point to the Triton Desktop checkout" >&2
+    exit 1
+fi
+
+mkdir -p "$HOME/.local/bin"
+exec cc -O2 -pipe -std=c11 -Wall -Wextra -Werror \
+    -o "$HOME/.local/bin/triton-freebsd-hardware" \
+    "$repo_dir/platforms/freebsd/src/triton-freebsd-hardware.c"

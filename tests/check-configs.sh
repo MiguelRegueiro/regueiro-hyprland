@@ -31,6 +31,7 @@ sh -n platforms/linux/.local/bin/triton-linux-bluetooth
 bash -n platforms/linux/.local/bin/triton-linux-system-details
 sh -n platforms/linux/.local/bin/triton-linux-drives
 sh -n platforms/freebsd/.local/bin/triton-freebsd-battery
+sh -n platforms/freebsd/.local/bin/triton-freebsd-build-hardware
 sh -n installer/install.sh
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 git diff --check

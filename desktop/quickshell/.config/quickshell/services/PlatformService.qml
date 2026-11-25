@@ -10,7 +10,7 @@ QtObject {
     // Capabilities describe implemented adapters, not merely OS support.
     readonly property bool hasNetworkAdapter: isLinux
     readonly property bool hasWifiAdapter: isLinux
-    readonly property bool hasBrightnessAdapter: isLinux
+    readonly property bool hasBrightnessAdapter: isLinux || isFreeBSD
     readonly property bool hasBatteryAdapter: isLinux || isFreeBSD
     readonly property bool hasPowerProfilesAdapter: isLinux
     readonly property string inputMethodCommandPath: isLinux ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-fcitx-toggle" : ""

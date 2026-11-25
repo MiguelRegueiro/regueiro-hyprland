@@ -171,6 +171,9 @@ stow_packages compositors/hyprland hypr hypridle
 stow_packages desktop quickshell
 stow_packages desktop scripts
 stow_packages platforms "$platform_package"
+if [ "$platform_package" = freebsd ]; then
+    TRITON_DESKTOP_DIR="$repo_dir" "$HOME/.local/bin/triton-freebsd-build-hardware"
+fi
 stow_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
 
 printf '%s\n' "Triton Desktop configuration linked. Log out and back in to start the session changes."
