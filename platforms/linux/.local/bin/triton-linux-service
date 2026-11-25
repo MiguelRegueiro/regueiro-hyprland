@@ -1,0 +1,30 @@
+#!/bin/sh
+set -eu
+
+usage() {
+    printf '%s\n' "Usage: ${0##*/} {activation-environment|user|run-user} [ARG ...]" >&2
+    exit 2
+}
+
+action=${1:-}
+[ "$#" -gt 0 ] || usage
+shift
+
+case "$action" in
+    activation-environment)
+        [ "$#" -gt 0 ] || usage
+        dbus-update-activation-environment --systemd "$@"
+        exec systemctl --user import-environment "$@"
+        ;;
+    user)
+        [ "$#" -gt 0 ] || usage
+        exec systemctl --user "$@"
+        ;;
+    run-user)
+        [ "$#" -gt 0 ] || usage
+        exec systemd-run --user "$@"
+        ;;
+    *)
+        usage
+        ;;
+esac

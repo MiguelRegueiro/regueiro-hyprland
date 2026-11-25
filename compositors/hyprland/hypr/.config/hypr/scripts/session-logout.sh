@@ -5,7 +5,7 @@ set -euo pipefail
 # `uwsm check is-active` also succeeds for a plain graphical-session.target,
 # including the target started by our portal helper in a non-UWSM login.
 if command -v uwsm >/dev/null 2>&1; then
-    uwsm_units=$(systemctl --user list-units --type=service \
+    uwsm_units=$(~/.local/bin/triton-linux-service user list-units --type=service \
         --state=active,activating --plain --no-legend --no-pager \
         'wayland-wm@*.service' 2>/dev/null) || uwsm_units=""
     if [[ -n "$uwsm_units" ]]; then

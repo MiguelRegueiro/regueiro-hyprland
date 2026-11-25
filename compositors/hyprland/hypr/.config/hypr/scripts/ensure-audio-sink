@@ -18,7 +18,7 @@ for _ in 1 2 3 4 5; do
         fi
 
         ((restarts += 1))
-        systemctl --user restart wireplumber
+        ~/.local/bin/triton-linux-service user restart wireplumber
         sleep 5
         continue
     fi

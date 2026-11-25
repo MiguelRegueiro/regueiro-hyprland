@@ -27,7 +27,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/triton-tts-start'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/powerctl daemon'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/set-wallpaper restore'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec systemctl --user start hyprpolkitagent.service'")
+    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/triton-linux-service user start hyprpolkitagent.service'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/fcitx-session.sh'")
     hl.exec_cmd("sh -c 'sleep 2 && exec blueman-applet'")
     -- A few SOF/SoundWire sessions expose only PipeWire's auto_null fallback
