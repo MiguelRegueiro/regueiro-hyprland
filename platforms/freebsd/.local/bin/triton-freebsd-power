@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+
+usage() {
+    printf '%s\n' "Usage: ${0##*/} {reboot|poweroff}" >&2
+    exit 2
+}
+
+action=${1:-}
+[ "$#" -eq 1 ] || usage
+
+case "$action" in
+    reboot)
+        exec doas -n shutdown -r now
+        ;;
+    poweroff)
+        exec doas -n shutdown -p now
+        ;;
+    *)
+        usage
+        ;;
+esac

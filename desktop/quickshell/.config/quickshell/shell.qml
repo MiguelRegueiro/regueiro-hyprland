@@ -151,6 +151,9 @@ ShellRoot {
     function runPowerAction(actionId) {
         if (powerBusyAction !== "")
             return;
+        if ((actionId === "reboot" || actionId === "shutdown")
+                && platformServiceState.systemPowerCommandPath.length === 0)
+            return;
 
         closeAllPanels();
         powerBusyAction = actionId;
@@ -666,7 +669,7 @@ ShellRoot {
     Process {
         id: rebootProc
 
-        command: [(Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-power", "reboot"]
+        command: [platformServiceState.systemPowerCommandPath, "reboot"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("reboot");
@@ -676,7 +679,7 @@ ShellRoot {
     Process {
         id: shutdownProc
 
-        command: [(Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-power", "poweroff"]
+        command: [platformServiceState.systemPowerCommandPath, "poweroff"]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("shutdown");

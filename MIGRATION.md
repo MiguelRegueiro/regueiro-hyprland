@@ -58,12 +58,14 @@ CPU, memory, swap, and process statistics are normalized by a FreeBSD helper
 for the shared system-details service. External-drive discovery parses the
 FreeBSD UDisks dump, while mount and eject operations use FreeBSD platform
 helpers. The shared power-profile selector now uses the FreeBSD `powerd` and
-EPP helper.
+EPP helper. Shared reboot and poweroff actions now resolve through the
+platform service; FreeBSD uses a dedicated non-interactive `doas shutdown`
+adapter. Suspend remains unvalidated and is still part of hardware validation.
 
 ## 05 — Make the session reliable
 
 - [ ] Unify startup and shutdown.
-- [ ] Fix MimeClip client/daemon resolution.
+- [x] Fix MimeClip client/daemon resolution.
 - [ ] Implement restart and health checks.
 - [ ] Make optional services capability-aware.
 

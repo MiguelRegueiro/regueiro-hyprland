@@ -13,6 +13,9 @@ for the shared system-details UI.
 operations for the shared external-drive menu.
 The shared power-profile selector uses `triton-freebsd-power-profile` to apply
 `powerd` flags and Intel EPP values.
+Shared reboot and poweroff actions use `triton-freebsd-power`, which invokes
+`shutdown` through non-interactive `doas`. Configure an appropriate narrowly
+scoped `doas` rule on the target system; without it the command fails closed.
 
 On FreeBSD, `./install.sh` selects this Stow package and compiles the bridge
 into `~/.local/bin/triton-freebsd-hardware`. The bridge targets the device paths
