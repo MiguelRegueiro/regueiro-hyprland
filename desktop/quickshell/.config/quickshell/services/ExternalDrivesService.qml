@@ -39,8 +39,7 @@ Item {
         try {
             parsed = JSON.parse(output);
         } catch (error) {
-            root.lastError = "Failed to read drives";
-            return [];
+            return root.parseUdisksDump(output);
         }
 
         const found = [];
@@ -91,6 +90,93 @@ Item {
         return found;
     }
 
+    function formatBytes(size) {
+        const bytes = Number(size);
+        if (!Number.isFinite(bytes) || bytes <= 0)
+            return "";
+        const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+        let value = bytes;
+        let unit = 0;
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024;
+            unit++;
+        }
+        return value.toFixed(value >= 10 || unit === 0 ? 0 : 1) + units[unit];
+    }
+
+    function parseUdisksDump(output) {
+        const blocks = {};
+        const drives = {};
+        const sections = String(output || "").split(/\n(?=\/org\/freedesktop\/UDisks2\/)/);
+
+        function fieldValue(line, key) {
+            const index = line.indexOf(key + ":");
+            return index < 0 ? "" : line.slice(index + key.length + 1).trim();
+        }
+
+        for (const rawSection of sections) {
+            const lines = rawSection.trim().split(/\r?\n/);
+            if (!lines.length || !lines[0].startsWith("/org/freedesktop/UDisks2/"))
+                continue;
+            const path = lines[0].replace(/:$/, "");
+            const entry = { path: path, mountpoints: [] };
+            for (const line of lines.slice(1)) {
+                if (line.includes("PreferredDevice:")) entry.preferredDevice = fieldValue(line, "PreferredDevice");
+                else if (line.includes("Device:")) entry.device = fieldValue(line, "Device");
+                else if (line.includes("Drive:")) entry.drive = fieldValue(line, "Drive").replace(/^'|'$/g, "");
+                else if (line.includes("HintName:")) entry.hintName = fieldValue(line, "HintName");
+                else if (line.includes("HintIgnore:")) entry.hintIgnore = fieldValue(line, "HintIgnore") === "true";
+                else if (line.includes("IdLabel:")) entry.idLabel = fieldValue(line, "IdLabel");
+                else if (line.includes("IdType:")) entry.idType = fieldValue(line, "IdType");
+                else if (line.includes("IdUsage:")) entry.idUsage = fieldValue(line, "IdUsage");
+                else if (line.includes("Size:")) entry.size = fieldValue(line, "Size");
+                else if (line.includes("MountPoints:")) {
+                    const value = fieldValue(line, "MountPoints");
+                    entry.mountpoints = Array.from(value.matchAll(/'([^']+)'/g), (match) => match[1]);
+                } else if (line.includes("CanPowerOff:")) entry.canPowerOff = fieldValue(line, "CanPowerOff") === "true";
+                else if (line.includes("ConnectionBus:")) entry.connectionBus = fieldValue(line, "ConnectionBus");
+                else if (line.includes("Model:")) entry.model = fieldValue(line, "Model");
+                else if (line.includes("Removable:")) entry.removable = fieldValue(line, "Removable") === "true";
+                else if (line.includes("bsdisks_IsHotpluggable:")) entry.hotpluggable = fieldValue(line, "bsdisks_IsHotpluggable") === "true";
+            }
+            if (path.includes("/block_devices/")) blocks[path] = entry;
+            else if (path.includes("/drives/")) drives[path] = entry;
+        }
+
+        const diskByDrive = {};
+        for (const path in blocks) {
+            const block = blocks[path];
+            if (block.drive && !block.idUsage)
+                diskByDrive[block.drive] = block.preferredDevice || block.device || "";
+        }
+
+        const found = [];
+        for (const path in blocks) {
+            const block = blocks[path];
+            const drive = drives[block.drive] || {};
+            const device = block.preferredDevice || block.device || "";
+            const mounts = root.cleanMountpoints(block.mountpoints);
+            const mountPath = mounts.length ? mounts[0] : "";
+            const external = drive.connectionBus === "usb" || drive.removable || drive.hotpluggable || drive.canPowerOff;
+            const systemMount = mountPath === "/" || mountPath.startsWith("/boot") || mountPath.startsWith("/compat");
+            const mountable = block.idUsage === "filesystem" && block.idType && block.idType !== "swap";
+            if (!external || block.hintIgnore || !mountable || systemMount)
+                continue;
+            found.push({
+                name: device.replace(/^\/dev\//, ""),
+                label: block.idLabel || block.hintName || drive.model || device || "External drive",
+                size: root.formatBytes(block.size),
+                path: device,
+                diskPath: diskByDrive[block.drive] || device,
+                fstype: block.idType,
+                mountPath: mountPath,
+                mounted: mountPath.length > 0
+            });
+        }
+        root.lastError = "";
+        return found;
+    }
+
     function refresh() {
         if (platformService.externalDrivesCommandPath.length > 0 && !listProc.running)
             listProc.running = true;
@@ -119,7 +205,9 @@ Item {
             return;
 
         root.lastError = "";
-        actionProc.command = [platformService.externalDrivesCommandPath, "unmount", drive.path];
+        actionProc.command = platformService.isFreeBSD
+            ? [platformService.externalDrivesCommandPath, "unmount", drive.path, drive.mountPath]
+            : [platformService.externalDrivesCommandPath, "unmount", drive.path];
         actionProc.running = true;
     }
 
@@ -128,7 +216,9 @@ Item {
             return;
 
         root.lastError = "";
-        actionProc.command = [platformService.externalDrivesCommandPath, "eject", drive.path, drive.diskPath];
+        actionProc.command = platformService.isFreeBSD
+            ? [platformService.externalDrivesCommandPath, "eject", drive.path, drive.mountPath, drive.diskPath]
+            : [platformService.externalDrivesCommandPath, "eject", drive.path, drive.diskPath];
         actionProc.running = true;
     }
 

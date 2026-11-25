@@ -20,5 +20,7 @@ QtObject {
     readonly property string systemDetailsCommandPath: isLinux
         ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-system-details"
         : (isFreeBSD ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-freebsd-system-details" : "")
-    readonly property string externalDrivesCommandPath: isLinux ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-drives" : ""
+    readonly property string externalDrivesCommandPath: isLinux
+        ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-drives"
+        : (isFreeBSD ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-freebsd-drives" : "")
 }

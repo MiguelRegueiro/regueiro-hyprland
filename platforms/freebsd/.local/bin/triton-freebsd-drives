@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+action=${1:-}
+case "$action" in
+    list)
+        [ "$#" -eq 1 ] || exit 2
+        exec udisksctl dump
+        ;;
+    open)
+        [ "$#" -eq 2 ] || exit 2
+        exec xdg-open "$2"
+        ;;
+    mount)
+        [ "$#" -eq 2 ] || exit 2
+        exec udisksctl mount -b "$2"
+        ;;
+    unmount)
+        [ "$#" -ge 2 ] && [ "$#" -le 3 ] || exit 2
+        part=$2
+        mountpoint=${3:-}
+        if udisksctl unmount -b "$part"; then
+            exit 0
+        fi
+        [ -n "$mountpoint" ] || exit 1
+        exec doas -n umount -f "$mountpoint"
+        ;;
+    eject)
+        [ "$#" -eq 4 ] || exit 2
+        exec "$(dirname "$0")/triton-freebsd-drive-eject" eject "$2" "$3" "$4"
+        ;;
+    *)
+        echo "Usage: ${0##*/} {list|open PATH|mount DEVICE|unmount DEVICE [MOUNTPOINT]|eject PARTITION MOUNTPOINT DISK}" >&2
+        exit 2
+        ;;
+esac

@@ -9,6 +9,8 @@ The shared Bluetooth page uses `triton-freebsd-bluetooth` for controller state,
 device connections, and the native settings action.
 `triton-freebsd-system-details` normalizes CPU, memory, swap, and process data
 for the shared system-details UI.
+`triton-freebsd-drives` supplies UDisks discovery, mount, unmount, and eject
+operations for the shared external-drive menu.
 
 On FreeBSD, `./install.sh` selects this Stow package and compiles the bridge
 into `~/.local/bin/triton-freebsd-hardware`. The bridge targets the device paths
