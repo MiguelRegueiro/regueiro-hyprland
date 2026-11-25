@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Submit the current Wayland clipboard to the always-running EasyTTS server.
+# Submit the current Wayland clipboard to the always-running Triton TTS server.
 # The server owns generation/playback; this command only starts a job and exits.
 set -euo pipefail
 

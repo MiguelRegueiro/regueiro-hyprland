@@ -7,10 +7,10 @@ the address printed at startup.
 ## Run
 
 ```sh
-./features/easytts/runtts.sh
+./features/speech/tts/runtts.sh
 ```
 
-The first run creates `features/easytts/.venv/`; it is local to each machine
+The first run creates `features/speech/tts/.venv/`; it is local to each machine
 and is not tracked by Git. Set `EASYTTS_HOST` or `EASYTTS_PORT` to override the
 address or port.
 
@@ -18,7 +18,7 @@ address or port.
 
 Hyprland starts Triton TTS automatically without opening a browser. The
 startup helper resolves the repository after the Stow migration and starts the
-server from `features/easytts`. Restarting Hyprland will not create another
+server from `features/speech/tts`. Restarting Hyprland will not create another
 server. Open the printed URL (or `http://127.0.0.1:8765` when Tailscale is
 unavailable) whenever you want it.
 
@@ -39,7 +39,7 @@ The local Kokoro runtime and model weights are machine-local and are not stored
 in Git. On a new machine, run once:
 
 ```sh
-./features/easytts/setup-local-tts.sh
+./features/speech/tts/setup-local-tts.sh
 ```
 
 The setup downloads roughly 360 MB of model files and installs the separate

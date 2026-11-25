@@ -10,11 +10,11 @@ desktop/quickshell/.config/quickshell/notification-times.ini
 # editor/AI session dirs
 .codex
 
-# EasyTTS machine-local environment and Python bytecode
-features/easytts/.venv/
-features/easytts/.kokoro/
-features/easytts/.kokoro-model/
-features/easytts/__pycache__/
+# Triton TTS machine-local environment and Python bytecode
+features/speech/tts/.venv/
+features/speech/tts/.kokoro/
+features/speech/tts/.kokoro-model/
+features/speech/tts/__pycache__/
 
 # Python bytecode caches
 __pycache__/

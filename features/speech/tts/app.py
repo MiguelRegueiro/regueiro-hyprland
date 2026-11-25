@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import signal
+import socket
 import subprocess
 import threading
 import time
@@ -75,7 +76,17 @@ def server_addresses():
     if host:
         return [(host, port)]
 
+    # Linux commonly maps the machine's own hostname to another 127/8 address
+    # (often 127.0.1.1) in /etc/hosts. Bind local loopback aliases too, without
+    # opening the service to the LAN.
     addresses = [("127.0.0.1", port)]
+    try:
+        hostname_addresses = socket.gethostbyname_ex(socket.gethostname())[2]
+        for address in hostname_addresses:
+            if address.startswith("127.") and (address, port) not in addresses:
+                addresses.append((address, port))
+    except OSError:
+        pass
     try:
         result = subprocess.run(
             ["tailscale", "ip", "-4"],
@@ -84,7 +95,8 @@ def server_addresses():
             text=True,
         )
         tailnet_host = result.stdout.strip().splitlines()[0]
-        addresses.append((tailnet_host, port))
+        if (tailnet_host, port) not in addresses:
+            addresses.append((tailnet_host, port))
     except (FileNotFoundError, IndexError, subprocess.CalledProcessError):
         print("  Tailscale IPv4 not found; listening locally only.")
         print("  Start Tailscale, then restart Triton TTS to share it on your tailnet.")

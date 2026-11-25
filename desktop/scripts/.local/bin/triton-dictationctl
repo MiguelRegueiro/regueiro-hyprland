@@ -3,4 +3,4 @@ set -eu
 
 script_path=$(readlink -f -- "$0")
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$script_path")/../../../.." && pwd)
-exec "$repo_dir/features/dictation/dictationctl" "$@"
+exec "$repo_dir/features/speech/stt/dictationctl" "$@"

@@ -12,7 +12,7 @@ the top bar.
 The source, model, and build output intentionally stay outside this repository:
 
 ```sh
-./features/dictation/install.sh
+./features/speech/stt/install.sh
 ```
 
 The installer uses a pinned `whisper.cpp` release and stores its engine, model,
@@ -23,7 +23,7 @@ the setup, controller, and QuickShell UI.
 Run this once after pulling the dotfiles on each machine:
 
 ```sh
-./features/dictation/install.sh
+./features/speech/stt/install.sh
 ```
 
 It selects the fastest available backend in this order: CUDA, Vulkan, then
@@ -35,8 +35,8 @@ binding needs no per-machine edits.
 Override either choice only when wanted:
 
 ```sh
-REGUEIRO_DICTATION_MODEL=small ./features/dictation/install.sh
-REGUEIRO_DICTATION_BACKEND=cpu ./features/dictation/install.sh
+REGUEIRO_DICTATION_MODEL=small ./features/speech/stt/install.sh
+REGUEIRO_DICTATION_BACKEND=cpu ./features/speech/stt/install.sh
 ```
 
 System requirements are `git`, `cmake`, `python3`, `pkg-config`, `pw-record`
@@ -63,7 +63,7 @@ sudo dnf install git cmake python3 pkgconf-pkg-config SDL2-devel pipewire-utils 
   wl-clipboard wtype vulkan-loader-devel glslc
 ```
 
-Then pull/deploy the dotfiles and run `./features/dictation/install.sh`. The script
+Then pull/deploy the dotfiles and run `./features/speech/stt/install.sh`. The script
 prints the backend and model it selected; no Hyprland or Quickshell edits are
 needed per machine.
 

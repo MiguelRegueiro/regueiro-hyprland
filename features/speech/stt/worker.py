@@ -105,7 +105,7 @@ def deliver(text: str) -> str:
 def run() -> int:
     global recording, transcriber
     if not ENGINE.is_file() or not MODEL.is_file():
-        write_state("error", "", "Dictation is not installed. Run ./features/dictation/install.sh from the dotfiles repository.")
+        write_state("error", "", "Dictation is not installed. Run ./features/speech/stt/install.sh from the dotfiles repository.")
         return 1
 
     RUNTIME.mkdir(parents=True, exist_ok=True)
