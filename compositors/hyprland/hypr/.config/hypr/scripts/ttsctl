@@ -60,7 +60,7 @@ speak_clipboard() {
             -H 'Content-Type: application/json' \
             --data-binary @- "http://${host}:${port}/api/speak" >/dev/null; then
         mkdir -p "$state_root"
-        printf '%s\n' '{"state":"error","text":"","detail":"EasyTTS is not reachable"}' > "$state_file"
+        printf '%s\n' '{"state":"error","text":"","detail":"Triton TTS is not reachable"}' > "$state_file"
         exit 1
     fi
 }

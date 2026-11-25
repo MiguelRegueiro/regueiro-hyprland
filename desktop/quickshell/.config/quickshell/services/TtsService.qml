@@ -86,7 +86,7 @@ Item {
                     root.status = "error";
                     root.replayReady = false;
                     root.text = "";
-                    root.detail = "EasyTTS status could not be read";
+                    root.detail = "Triton TTS status could not be read";
                 }
             }
         }

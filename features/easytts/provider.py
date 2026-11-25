@@ -1,4 +1,4 @@
-"""The EasyTTS speech-provider boundary.
+"""The Triton TTS speech-provider boundary.
 
 Only this module knows which service turns text into audio.  Replacing Edge
 TTS with a local engine later should require implementing ``synthesize_to_file``

@@ -68,7 +68,7 @@ def save_preferences(provider, voice, rate):
 
 
 def server_addresses():
-    """Return loopback plus the optional Tailscale interface for EasyTTS."""
+    """Return loopback plus the optional Tailscale interface for Triton TTS."""
     host = os.environ.get("EASYTTS_HOST")
     port = int(os.environ.get("EASYTTS_PORT", "8765"))
 
@@ -87,7 +87,7 @@ def server_addresses():
         addresses.append((tailnet_host, port))
     except (FileNotFoundError, IndexError, subprocess.CalledProcessError):
         print("  Tailscale IPv4 not found; listening locally only.")
-        print("  Start Tailscale, then restart EasyTTS to share it on your tailnet.")
+        print("  Start Tailscale, then restart Triton TTS to share it on your tailnet.")
 
     return addresses
 
@@ -469,7 +469,7 @@ if __name__ == "__main__":
     addresses = server_addresses()
 
     print()
-    print("  EasyTTS")
+    print("  Triton TTS")
     for host, port in addresses:
         print(f"  http://{host}:{port}")
     print()

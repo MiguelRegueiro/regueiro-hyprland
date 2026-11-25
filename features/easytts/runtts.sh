@@ -8,7 +8,7 @@ cd "$DIR"
 PYTHON="${PYTHON:-python3}"
 
 if [[ ! -x ".venv/bin/python" ]]; then
-    echo "EasyTTS: setting up local environment..."
+    echo "Triton TTS: setting up local environment..."
     "$PYTHON" -m venv .venv
 
     .venv/bin/python -m pip install \
@@ -16,7 +16,7 @@ if [[ ! -x ".venv/bin/python" ]]; then
         --quiet \
         -r requirements.txt
 
-    echo "EasyTTS: ready."
+    echo "Triton TTS: ready."
 fi
 
 HOST="${EASYTTS_HOST:-}"

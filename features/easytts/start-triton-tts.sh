@@ -3,8 +3,8 @@
 set -euo pipefail
 
 SOURCE="$(readlink -f -- "${BASH_SOURCE[0]}")"
-ROOT="$(cd -- "$(dirname -- "$SOURCE")/../../../.." && pwd)"
-RUNNER="$ROOT/easytts/runtts.sh"
+TTS_ROOT="$(cd -- "$(dirname -- "$SOURCE")" && pwd)"
+RUNNER="$TTS_ROOT/runtts.sh"
 restart=false
 background=false
 
@@ -13,7 +13,7 @@ for argument in "$@"; do
         --restart) restart=true ;;
         --background) background=true ;;
         *)
-            echo "usage: start-easytts.sh [--restart] [--background]" >&2
+            echo "usage: start-triton-tts.sh [--restart] [--background]" >&2
             exit 2
             ;;
     esac
@@ -25,8 +25,8 @@ if "$background" && [[ -z "${EASYTTS_BACKGROUND_CHILD:-}" ]]; then
     arguments=()
     "$restart" && arguments+=(--restart)
     nohup env EASYTTS_BACKGROUND_CHILD=1 "$0" "${arguments[@]}" \
-        </dev/null >/tmp/easytts.log 2>&1 &
-    echo "EasyTTS started in the background (log: /tmp/easytts.log)"
+        </dev/null >/tmp/triton-tts.log 2>&1 &
+    echo "Triton TTS started in the background (log: /tmp/triton-tts.log)"
     exit 0
 fi
 
@@ -34,7 +34,7 @@ fi
 # command itself uses relative paths, so identify it by its working directory.
 active_pids=()
 while IFS= read -r PID; do
-    if [[ "$(readlink -f -- "/proc/$PID/cwd")" == "$ROOT/easytts" ]]; then
+    if [[ "$(readlink -f -- "/proc/$PID/cwd")" == "$TTS_ROOT" ]]; then
         active_pids+=("$PID")
     fi
 done < <(pgrep -u "$(id -u)" -f '\.venv/bin/python app\.py' || true)
@@ -60,7 +60,7 @@ if ((${#active_pids[@]})); then
     done
 
     if "$still_running"; then
-        echo "EasyTTS did not stop cleanly" >&2
+        echo "Triton TTS did not stop cleanly" >&2
         exit 1
     fi
 fi
