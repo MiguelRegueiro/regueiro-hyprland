@@ -10,5 +10,6 @@ are deployed as a platform package and loaded through shared service
 contracts. `triton-linux-power` owns Linux systemd and logind power commands;
 `triton-linux-service` owns user service-manager and activation-environment
 operations. Fcitx input switching and Bluetooth power commands are also
-provided by this package. Linux system-statistics and external-drive behavior
-remain to be extracted from the desktop services.
+provided by this package. `triton-linux-system-details` supplies Linux CPU and
+memory statistics to the shared system-details service. External-drive
+handling remains to be extracted from the desktop service.

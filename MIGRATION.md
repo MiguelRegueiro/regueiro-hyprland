@@ -30,9 +30,10 @@ adapters. Linux networking, brightness, battery, and power-profile
 implementations now live under `platforms/linux/` and load through shared
 service contracts. Fcitx and Bluetooth commands also live in the Linux
 platform package. Linux power and systemd session-service operations now go
-through platform commands. The installer deploys those backends. Hyprland idle
-policy, Linux system-statistics and external-drive services, and any remaining
-platform-only imports still need to be separated; the stage remains open.
+through platform commands. CPU and memory collection also uses a Linux
+platform command behind the shared system-details service. The installer
+deploys those backends. Hyprland idle policy and external-drive handling still
+need to be separated; the stage remains open.
 
 ## 04 — Port FreeBSD functionality incrementally
 

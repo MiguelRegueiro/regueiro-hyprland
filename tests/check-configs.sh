@@ -28,6 +28,7 @@ sh -n platforms/linux/.local/bin/triton-linux-power
 sh -n platforms/linux/.local/bin/triton-linux-service
 bash -n platforms/linux/.local/bin/triton-fcitx-toggle
 sh -n platforms/linux/.local/bin/triton-linux-bluetooth
+bash -n platforms/linux/.local/bin/triton-linux-system-details
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 git diff --check
 

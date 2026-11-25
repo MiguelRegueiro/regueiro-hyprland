@@ -811,6 +811,8 @@ ShellRoot {
 
     Services.SystemDetailsService {
         id: systemDetailsServiceState
+
+        platformService: platformServiceState
     }
 
     Services.SshSessionsService {

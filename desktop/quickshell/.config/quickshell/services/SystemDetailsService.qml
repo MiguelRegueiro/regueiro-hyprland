@@ -4,6 +4,8 @@ import Quickshell.Io
 Item {
     id: root
 
+    required property var platformService
+
     property string cpuCores: ""
     property string cpuModel: ""
     property string cpuTemp: ""
@@ -173,19 +175,19 @@ Item {
     }
 
     function refreshCpu() {
-        if (!cpuProc.running)
+        if (platformService.systemDetailsCommandPath.length > 0 && !cpuProc.running)
             cpuProc.running = true;
     }
 
     function refreshRam() {
-        if (!ramProc.running)
+        if (platformService.systemDetailsCommandPath.length > 0 && !ramProc.running)
             ramProc.running = true;
     }
 
     Process {
         id: cpuProc
 
-        command: ["bash", "-lc", "printf 'model\\t'; awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo; printf 'cores\\t'; nproc; temp=$(for f in /sys/class/thermal/thermal_zone*/temp; do [ -r \"$f\" ] || continue; v=$(cat \"$f\"); [ \"$v\" -gt 0 ] 2>/dev/null || continue; awk -v v=\"$v\" 'BEGIN { printf \"%.0f°C\", v / 1000 }'; break; done); printf 'temp\\t%s\\n' \"$temp\"; printf 'times\\t'; awk '/^cpu[0-9]+ / { printf \"%s %s %s %s %s %s %s %s \", $2, $3, $4, $5, $6, $7, $8, $9 } END { print \"\" }' /proc/stat; printf 'top\\n'; ps -eo pcpu,rss,pid,user,comm --no-headers --sort=-pcpu | head -3"]
+        command: [root.platformService.systemDetailsCommandPath, "cpu"]
 
         stdout: StdioCollector {
             id: cpuOut
@@ -210,7 +212,7 @@ Item {
     Process {
         id: ramProc
 
-        command: ["bash", "-lc", "awk '/MemTotal:/ { total=$2 } /MemAvailable:/ { available=$2 } /MemFree:/ { free=$2 } /^Cached:/ { cached=$2 } END { used=total-available; printf \"mem\\t%d\\t%d\\t%d\\t%d\\t%d\\n\", total*1024, used*1024, cached*1024, available*1024, free*1024 }' /proc/meminfo; awk '/SwapTotal:/ { total=$2 } /SwapFree:/ { free=$2 } END { used=total-free; pct=total > 0 ? used * 100 / total : 0; printf \"swap\\t%d\\t%d\\t%.0f\\n\", used*1024, total*1024, pct }' /proc/meminfo; printf 'top\\n'; ps -eo rss,pcpu,pid,user,comm --no-headers --sort=-rss | head -5"]
+        command: [root.platformService.systemDetailsCommandPath, "ram"]
 
         stdout: StdioCollector {
             id: ramOut
