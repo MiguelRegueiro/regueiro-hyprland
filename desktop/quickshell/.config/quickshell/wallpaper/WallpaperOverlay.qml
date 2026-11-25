@@ -19,7 +19,7 @@ PanelWindow {
     property bool carouselInitialized: false
     property bool carouselVisible: false
     property bool carouselMotionEnabled: false
-    readonly property string desktopRoot: Quickshell.env("TRITON_DESKTOP_DIR") || (Quickshell.env("HOME") + "/regueiro-hyprland")
+    readonly property string desktopRoot: Quickshell.env("TRITON_DESKTOP_DIR") || (Quickshell.env("HOME") + "/triton-desktop")
     readonly property string wallpaperDir: desktopRoot + "/desktop/assets/wallpapers"
     property var previewSources: ({})
 
@@ -77,6 +77,9 @@ PanelWindow {
         const legacyDir = Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/";
         if (path.startsWith(legacyDir))
             return wallpaperDir + "/" + path.slice(legacyDir.length);
+        const legacyCheckoutDir = Quickshell.env("HOME") + "/regueiro-hyprland/desktop/assets/wallpapers/";
+        if (path.startsWith(legacyCheckoutDir))
+            return wallpaperDir + "/" + path.slice(legacyCheckoutDir.length);
         return path;
     }
 

@@ -15,6 +15,9 @@ if [[ "$action" == restore ]]; then
         "$HOME"/regueiro-hyprland/wallpapers/*)
             wallpaper="$wallpaper_dir/${wallpaper##*/}"
             ;;
+        "$HOME"/regueiro-hyprland/desktop/assets/wallpapers/*)
+            wallpaper="$wallpaper_dir/${wallpaper##*/}"
+            ;;
     esac
     if [[ ! -f "$wallpaper" ]]; then
         wallpaper="$wallpaper_dir/wallpaper5.png"
