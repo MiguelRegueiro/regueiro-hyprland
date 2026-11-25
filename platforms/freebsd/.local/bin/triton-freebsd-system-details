@@ -1,0 +1,58 @@
+#!/bin/sh
+set -eu
+
+cpu_times() {
+    sysctl -n kern.cp_times | awk '{
+        for (i = 1; i + 4 <= NF; i += 5)
+            printf "%s %s %s %s 0 %s 0 0 ", $i, $(i+1), $(i+2), $(i+4), $(i+3)
+        print ""
+    }'
+}
+
+memory_values() {
+    sysctl -n hw.physmem vm.stats.vm.v_active_count vm.stats.vm.v_wire_count \
+        vm.stats.vm.v_inactive_count vm.stats.vm.v_free_count hw.pagesize | tr '\n' ' '
+}
+
+ram_summary() {
+    memory_values | awk '{
+        total=$1; active=$2*$6; wired=$3*$6; inactive=$4*$6; free=$5*$6
+        printf "mem\t%d\t%d\t%d\t%d\t%d\n", total, active+wired, inactive, inactive+free, free
+    }'
+    swapinfo -k | awk 'NR > 1 { total += $2; used += $3 } END {
+        pct=total > 0 ? used * 100 / total : 0
+        printf "swap\t%d\t%d\t%.0f\n", used*1024, total*1024, pct
+    }'
+}
+
+case "${1:-}" in
+    cpu)
+        printf 'model\t%s\n' "$(sysctl -n hw.model)"
+        printf 'cores\t%s\n' "$(sysctl -n hw.ncpu)"
+        printf 'temp\t%s\n' "$(sysctl -n dev.cpu.0.temperature 2>/dev/null || true)"
+        printf 'times\t%s\n' "$(cpu_times)"
+        printf 'top\n'
+        ps -axo pcpu,rss,pid,user,comm | awk 'NR > 1 && $5 !~ /^(idle|intr)$/ { print }' | sort -nr | head -3
+        ;;
+    ram)
+        ram_summary
+        printf 'top\n'
+        ps -axo rss,pcpu,pid,user,comm | awk 'NR > 1 { print }' | sort -nr | head -5
+        ;;
+    bar)
+        cpu_times | awk '{
+            for (i=1; i+7<=NF; i+=8) for (j=0; j<8; ++j) sum[j]+=$(i+j)
+            printf "cpu\t"
+            for (j=0; j<8; ++j) printf "%s%s", (j ? " " : ""), sum[j]
+            print ""
+        }'
+        memory_values | awk '{ used=($2+$3)*$6; printf "ram\t%.1f\n", used/1073741824 }'
+        ;;
+    lock)
+        printf '%s\n' unavailable -1
+        ;;
+    *)
+        printf 'Usage: %s {cpu|ram|bar|lock}\n' "${0##*/}" >&2
+        exit 2
+        ;;
+esac

@@ -7,6 +7,8 @@ Shared network and Wi-Fi UI uses `triton-freebsd-network` for interface status,
 Wi-Fi scanning, saved profiles, connection, and Ethernet toggling.
 The shared Bluetooth page uses `triton-freebsd-bluetooth` for controller state,
 device connections, and the native settings action.
+`triton-freebsd-system-details` normalizes CPU, memory, swap, and process data
+for the shared system-details UI.
 
 On FreeBSD, `./install.sh` selects this Stow package and compiles the bridge
 into `~/.local/bin/triton-freebsd-hardware`. The bridge targets the device paths

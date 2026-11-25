@@ -34,6 +34,7 @@ sh -n platforms/freebsd/.local/bin/triton-freebsd-battery
 sh -n platforms/freebsd/.local/bin/triton-freebsd-build-hardware
 sh -n platforms/freebsd/.local/bin/triton-freebsd-network
 sh -n platforms/freebsd/.local/bin/triton-freebsd-bluetooth
+sh -n platforms/freebsd/.local/bin/triton-freebsd-system-details
 sh -n installer/install.sh
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 git diff --check
