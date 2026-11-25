@@ -1,7 +1,33 @@
 #!/bin/sh
+set -eu
 
-if /usr/bin/bluetoothctl show | grep -q "Powered: yes"; then
-    /usr/bin/bluetoothctl power off
-else
-    /usr/bin/bluetoothctl power on
-fi
+action=${1:-toggle}
+case "$action" in
+    toggle)
+        if bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
+            exec bluetoothctl power off
+        fi
+        exec bluetoothctl power on
+        ;;
+    status)
+        powered=$(bluetoothctl show 2>/dev/null | awk '/Powered:/{print $2; exit}')
+        printf 'bt:%s\n' "${powered:-no}"
+        connected=$(bluetoothctl devices Connected 2>/dev/null | awk '{print $2}')
+        bluetoothctl devices Paired 2>/dev/null | while read -r _ mac name; do
+            [ -n "$mac" ] || continue
+            if printf '%s\n' "$connected" | grep -qF "$mac"; then
+                printf 'DEV|%s|%s|yes\n' "$mac" "$name"
+            else
+                printf 'DEV|%s|%s|no\n' "$mac" "$name"
+            fi
+        done
+        ;;
+    connect|disconnect)
+        [ "$#" -eq 2 ] || { echo "Usage: ${0##*/} $action MAC" >&2; exit 2; }
+        exec bluetoothctl "$action" "$2"
+        ;;
+    *)
+        echo "Usage: ${0##*/} {toggle|status|connect MAC|disconnect MAC}" >&2
+        exit 2
+        ;;
+esac

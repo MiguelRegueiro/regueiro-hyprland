@@ -448,7 +448,7 @@ Item {
             Widgets.QuickSettingsTile {
                 label: "Wi-Fi"
                 // Networking already knows a live connection while the Wi-Fi
-                // page's nmcli status check is still starting after a reload.
+                // network adapter status can still be initializing after a reload.
                 sublabel: root.wifiPage.connectedSsid.length > 0 ? root.wifiPage.connectedSsid : ((root.wifiPage.wifiOn || root.networkService.wifiConnected) ? "On" : "Off")
                 iconOn: "󰤨"
                 iconOff: "󰤭"
