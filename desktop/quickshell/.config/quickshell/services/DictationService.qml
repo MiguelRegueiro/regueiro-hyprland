@@ -55,7 +55,7 @@ Item {
     Process {
         id: statusProcess
 
-        command: [(Quickshell.env("HOME") || "") + "/.config/hypr/scripts/dictationctl", "status"]
+        command: [(Quickshell.env("HOME") || "") + "/.local/bin/triton-dictationctl", "status"]
         stdout: StdioCollector {
             id: statusOutput
 

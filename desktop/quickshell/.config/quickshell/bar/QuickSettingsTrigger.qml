@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Services.UPower
 import "../components" as Components
 import "../theme/Theme.js" as Theme
 
@@ -7,14 +6,14 @@ Rectangle {
     id: root
 
     required property var audioService
+    required property var batteryService
     required property var networkService
     property int barHeight: 34
     property bool menuOpen: false
     readonly property bool hovered: triggerHover.hovered
-    property var batteryDevice: UPower.displayDevice
-    property int batteryPercent: batteryDevice ? Math.min(100, Math.round(batteryDevice.percentage * 100)) : -1
-    property bool batteryCharging: batteryDevice && (batteryDevice.state === UPowerDeviceState.Charging || batteryDevice.state === UPowerDeviceState.FullyCharged)
-    property bool batteryFull: batteryDevice && batteryDevice.state === UPowerDeviceState.FullyCharged
+    property int batteryPercent: batteryService.percent
+    property bool batteryCharging: batteryService.charging
+    property bool batteryFull: batteryService.full
 
     signal clicked()
 

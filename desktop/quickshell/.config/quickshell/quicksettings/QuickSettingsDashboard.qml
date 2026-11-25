@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Services.UPower
 import "widgets" as Widgets
 import "../components" as Components
 import "../theme/Theme.js" as Theme
@@ -13,6 +12,7 @@ Item {
     required property real popupSurfaceOriginX
     required property real popupSurfaceOriginY
     required property var audioService
+    required property var batteryService
     required property var brightnessService
     required property var networkService
     required property var targetScreen
@@ -99,12 +99,11 @@ Item {
             Item {
                 id: headerStatus
 
-                property var dev: UPower.displayDevice
-                property bool hasBattery: dev && dev.percentage >= 0
-                property int percent: hasBattery ? Math.min(100, Math.round(dev.percentage * 100)) : 0
-                property bool charging: hasBattery && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
-                property bool full: hasBattery && dev.state === UPowerDeviceState.FullyCharged
-                property real secondsLeft: hasBattery && !charging ? dev.timeToEmpty : 0
+                property bool hasBattery: root.batteryService.present
+                property int percent: hasBattery ? root.batteryService.percent : 0
+                property bool charging: root.batteryService.charging
+                property bool full: root.batteryService.full
+                property real secondsLeft: root.batteryService.secondsLeft
 
                 function batteryText() {
                     if (full)

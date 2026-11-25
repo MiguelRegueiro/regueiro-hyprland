@@ -23,20 +23,20 @@ The lock screen includes read-only battery/charging and volume indicators, plus 
 
 The entry point is `desktop/quickshell/.config/quickshell/lock.qml`. It uses Wayland's `ext-session-lock-v1` on every display and `/etc/pam.d/login`, retaining the system's password and failed-attempt policy. It runs separately from the bar, with file watching disabled. The launcher disables core dumps and external input-method integration for password entry. Passwords are not written to files or logs; QML strings cannot provide a guarantee of zeroing every in-memory copy.
 
-`compositors/hyprland/hypr/.config/hypr/scripts/quickshell-lock` supervises the process and retries up to three times after an unexpected exit. Hyprland's `allow_session_lock_restore` lets Quickshell recover while the compositor keeps the session locked. Hypridle uses `inhibit_sleep = 3` to wait for the compositor's lock notification. The power menu refuses to suspend unless Quickshell confirms its lock.
+`desktop/session/quickshell-lock` supervises the locker and retries up to three times after an unexpected exit. The command is installed as `~/.local/bin/triton-lock`. Hyprland's `allow_session_lock_restore` lets Quickshell recover while the compositor keeps the session locked. Hypridle uses `inhibit_sleep = 3` to wait for the compositor's lock notification. The power menu refuses to suspend unless Quickshell confirms its lock.
 
 Settings → Power configures idle screen off, automatic lock, automatic suspend, the power button, and a temporary Keep awake switch. The defaults preserve the previous behavior: lock after 20 minutes, with automatic screen off and suspend disabled. Preferences are saved on each machine in `~/.config/hypr-local/power.json`, outside the stow repository. Keep awake lasts only for the current session and pauses automatic idle actions. The generated hypridle policy is stored beside the preferences; `powerctl` starts and reloads hypridle for the current Hyprland session.
 
 To lock manually:
 
 ```bash
-~/.config/hypr/scripts/quickshell-lock
+~/.local/bin/triton-lock
 ```
 
 If automatic recovery fails, sign in on a TTY and relaunch Quickshell in the correct Hyprland instance (find its ID with `hyprctl instances`):
 
 ```bash
-hyprctl -i INSTANCE dispatch 'hl.dsp.exec_cmd("~/.config/hypr/scripts/quickshell-lock")'
+hyprctl -i INSTANCE dispatch 'hl.dsp.exec_cmd("~/.local/bin/triton-lock")'
 ```
 
 Do not kill or forcibly clear a live lock to unlock it. Compositor crash behavior, suspend/resume, and graphics-driver failures are outside the QML authentication tests; keep those limits in mind when changing this security-sensitive code.
@@ -90,7 +90,7 @@ installed. Bootstrap it once; the helper clones its private checkout to
 `~/triton-connect` when needed and fast-forwards it later:
 
 ```sh
-~/.config/hypr/scripts/bootstrap-triton-connect
+~/.local/bin/triton-connect-bootstrap
 ```
 
 Set `TRITON_CONNECT_DIR` when the checkout lives elsewhere. The helper builds

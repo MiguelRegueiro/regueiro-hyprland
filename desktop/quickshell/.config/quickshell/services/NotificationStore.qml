@@ -1,8 +1,6 @@
 import QtCore
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
-import Quickshell.Io
 import Quickshell.Services.Notifications
 import "../theme/Theme.js" as Theme
 
@@ -18,6 +16,12 @@ Item {
     readonly property bool holdOpen: holdOpenTimer.running
     property string clickedDesktopEntry: ""
     property string clickedAppName: ""
+    property string lastInvokedNotificationId: ""
+    property bool focusClickedAppPending: false
+    property bool focusAfterDefaultActionPending: false
+    property var pendingDefaultAction: null
+    property var pendingClickedNotification: null
+    required property var compositorService
 
     signal allDismissed()
     signal defaultActionInvoked()
@@ -34,25 +38,59 @@ Item {
         id: focusClickedAppDelay
         interval: 80
         onTriggered: {
-            if (!focusClickedApp.running)
-                focusClickedApp.running = true;
+            root.focusClickedAppPending = true;
+            root.compositorService.requestClients();
         }
     }
 
-    Process {
-        id: focusClickedApp
-        command: ["hyprctl", "-j", "clients"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const target = root.findClickedApp(JSON.parse(text), root.clickedDesktopEntry, root.clickedAppName);
-                    if (target && /^0x[0-9a-f]+$/i.test(target.address))
-                        Hyprland.dispatch("hl.dsp.focus({ window = " + JSON.stringify("address:" + target.address) + " })");
-                } catch (error) {
-                    console.warn("Could not focus notification app:", error);
-                }
-            }
+    Timer {
+        id: focusAfterDefaultActionDelay
+        interval: 350
+        onTriggered: {
+            if (!root.focusAfterDefaultActionPending)
+                return;
+            root.focusClickedAppPending = true;
+            root.compositorService.requestClients();
         }
+    }
+
+    Timer {
+        id: duplicateClickGuard
+        interval: 900
+        onTriggered: root.lastInvokedNotificationId = ""
+    }
+
+    Connections {
+        function onClientsListed(clients) {
+            if (!root.focusClickedAppPending)
+                return;
+            root.focusClickedAppPending = false;
+            const target = root.findClickedApp(clients, root.clickedDesktopEntry, root.clickedAppName);
+            if (target) {
+                root.pendingDefaultAction = null;
+                root.compositorService.focusWindow(target.address);
+                root.dismissClickedNotification(root.pendingClickedNotification);
+                root.pendingClickedNotification = null;
+                root.focusAfterDefaultActionPending = false;
+                focusAfterDefaultActionDelay.stop();
+                return;
+            }
+
+            if (root.pendingDefaultAction) {
+                const action = root.pendingDefaultAction;
+                root.pendingDefaultAction = null;
+                root.focusAfterDefaultActionPending = true;
+                action.invoke();
+                root.dismissClickedNotification(root.pendingClickedNotification);
+                root.pendingClickedNotification = null;
+                focusAfterDefaultActionDelay.restart();
+                return;
+            }
+
+            root.focusAfterDefaultActionPending = false;
+        }
+
+        target: root.compositorService
     }
 
     Settings {
@@ -200,18 +238,40 @@ Item {
         return best;
     }
 
+    function dismissClickedNotification(notif) {
+        if (!notif)
+            return;
+        const item = notifications.find(entry => entry.notif.id === notif.id);
+        if (item)
+            dismiss(item);
+    }
+
     function invokeDefault(notif) {
         if (!notif || !notif.actions)
             return false
 
+        const notificationId = String(notif.id);
+        if (notificationId === lastInvokedNotificationId)
+            return true;
+
         for (const action of notif.actions) {
             if (action.identifier === "default") {
+                lastInvokedNotificationId = notificationId;
+                duplicateClickGuard.restart();
                 clickedDesktopEntry = notif.desktopEntry || "";
                 clickedAppName = notif.appName || "";
-                action.invoke()
+                pendingClickedNotification = notif;
+                pendingDefaultAction = action;
                 root.defaultActionInvoked();
-                if (clickedDesktopEntry || clickedAppName)
+                if (clickedDesktopEntry || clickedAppName) {
+                    focusClickedAppPending = true;
                     focusClickedAppDelay.restart();
+                } else {
+                    pendingDefaultAction = null;
+                    action.invoke();
+                    dismissClickedNotification(notif);
+                    pendingClickedNotification = null;
+                }
                 return true
             }
         }

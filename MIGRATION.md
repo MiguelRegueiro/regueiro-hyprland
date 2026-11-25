@@ -13,10 +13,10 @@ reviewable changes. Do not merge the old FreeBSD UI wholesale.
 
 ## 02 — Remove Hyprland assumptions from shared code
 
-- [ ] Create `CompositorService`.
-- [ ] Refactor `WorkspaceStrip` and `NotificationStore`.
-- [ ] Move general-purpose scripts outside `~/.config/hypr/scripts`.
-- [ ] Isolate window rules, keybindings, and display commands.
+- [x] Create `CompositorService`.
+- [x] Refactor `WorkspaceStrip` and `NotificationStore`.
+- [x] Move shared session and feature launchers outside `~/.config/hypr/scripts`; retain compatibility shims for existing Hyprland calls.
+- [x] Isolate window rules, keybindings, and display commands under `compositors/hyprland`.
 
 ## 03 — Separate Linux-specific services
 
@@ -24,6 +24,14 @@ reviewable changes. Do not merge the old FreeBSD UI wholesale.
 - [ ] Isolate networking, battery, brightness, and power implementations.
 - [ ] Remove unconditional Linux-only QML imports.
 - [ ] Isolate systemd-specific service management.
+
+Progress: `PlatformService` detects Linux/FreeBSD and advertises implemented
+adapters. Linux networking, brightness, battery, and power-profile
+implementations now live under `platforms/linux/` and load through shared
+service contracts. The installer deploys those backends. Hyprland idle/power
+handling and systemd-specific session management still need to be separated;
+the stage remains open until those paths and all platform-only imports are
+handled.
 
 ## 04 — Port FreeBSD functionality incrementally
 

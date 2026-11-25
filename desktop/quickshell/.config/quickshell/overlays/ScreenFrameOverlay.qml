@@ -10,6 +10,8 @@ PanelWindow {
     required property var targetScreen
     required property var notificationStore
     required property var audioService
+    required property var batteryService
+    required property var powerProfileService
     required property var brightnessService
     required property var displayService
     required property var networkService
@@ -138,6 +140,8 @@ PanelWindow {
         topOffset: Theme.barHeight + Theme.topBarMenuTopGap
         notificationStore: root.notificationStore
         audioService: root.audioService
+        batteryService: root.batteryService
+        powerProfileService: root.powerProfileService
         brightnessService: root.brightnessService
         displayService: root.displayService
         networkService: root.networkService

@@ -26,7 +26,7 @@ hl.bind(main_mod .. " + B", hl.dsp.exec_cmd("flatpak run app.zen_browser.zen"))
 hl.bind(main_mod .. " + R", hl.dsp.exec_cmd(terminal .. " -e btop"))
 hl.bind(main_mod .. " + W", hl.dsp.exec_cmd(terminal .. " -e fish -ic 'env ANI_CLI_PLAYER=enzo-mpv ANI_CLI_NO_DETACH=1 anitrack; exec fish'"))
 hl.bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaper_menu))
-hl.bind(main_mod .. " + F9", hl.dsp.exec_cmd("~/.config/hypr/scripts/normcap-launch.sh"))
+hl.bind(main_mod .. " + F9", hl.dsp.exec_cmd("~/.local/bin/normcap-launch"))
 
 -- Window management.
 hl.bind(main_mod .. " + Q", hl.dsp.window.close())
@@ -123,8 +123,8 @@ hl.bind(main_mod .. " + CTRL + SHIFT + Down", hl.dsp.window.move({ direction = "
 
 -- Clipboard, shell panels, power, input, screenshots, and utilities.
 hl.bind(main_mod .. " + V", hl.dsp.exec_cmd(clipboard_menu))
-hl.bind(main_mod .. " + T", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl toggle"), { release = true })
-hl.bind("F10", hl.dsp.exec_cmd("~/.config/hypr/scripts/dictationctl toggle"), { release = true })
+hl.bind(main_mod .. " + T", hl.dsp.exec_cmd("~/.local/bin/triton-dictationctl toggle"), { release = true })
+hl.bind("F10", hl.dsp.exec_cmd("~/.local/bin/triton-dictationctl toggle"), { release = true })
 hl.bind("F7", hl.dsp.exec_cmd("~/.config/hypr/scripts/ttsctl speak-clipboard"), { release = true })
 hl.bind(main_mod .. " + CTRL + S", hl.dsp.exec_cmd("qs ipc call quicksettings toggle"))
 hl.bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("~/.config/hypr/scripts/displayctl dpms toggle"), { locked = true })

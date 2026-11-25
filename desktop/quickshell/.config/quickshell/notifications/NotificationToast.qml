@@ -111,7 +111,6 @@ Item {
                         return;
                     const notif = root.notif;
                     const store = root.notificationStore;
-                    root.dismiss();
                     store.invokeDefault(notif);
                 }
             }

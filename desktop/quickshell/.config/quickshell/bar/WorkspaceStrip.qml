@@ -1,34 +1,32 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../theme/Theme.js" as Theme
 
 Row {
     id: wsRow
 
     property var targetScreen: null
+    required property var compositorService
     property string screenName: ""
     property int barHeight: 34
-    readonly property var hyprMonitor: targetScreen ? Hyprland.monitorFor(targetScreen) : null
-    readonly property int activeWorkspaceId: hyprMonitor && hyprMonitor.activeWorkspace ? Number(hyprMonitor.activeWorkspace.id) : -1
+    readonly property var compositorMonitor: targetScreen ? compositorService.monitorFor(targetScreen) : null
+    readonly property int activeWorkspaceId: compositorService.workspaceId(compositorService.activeWorkspaceFor(targetScreen))
     readonly property var pinnedWorkspaceIds: [1, 2, 3, 4, 5]
 
     function dispatchWorkspace(workspace) {
-        if (typeof workspace === "number")
-            Hyprland.dispatch("hl.dsp.focus({ workspace = " + workspace + " })");
-        else
-            Hyprland.dispatch("hl.dsp.focus({ workspace = \"" + workspace + "\" })");
+        compositorService.focusWorkspace(workspace);
     }
 
     function belongsToScreen(workspace) {
-        return workspace.monitor !== null && workspace.monitor !== undefined && workspace.monitor.name === screenName;
+        return compositorService.workspaceBelongsTo(workspace, screenName);
     }
 
     function workspaceForId(id) {
-        const workspaces = Hyprland.workspaces.values;
+        const model = compositorService.workspaceModel;
+        const workspaces = model && model.values ? model.values : [];
 
         for (let index = 0; index < workspaces.length; index++) {
-            if (Number(workspaces[index].id) === id)
+            if (compositorService.workspaceId(workspaces[index]) === id)
                 return workspaces[index];
         }
 
@@ -36,7 +34,7 @@ Row {
     }
 
     function workspaceLabel(workspace) {
-        const name = workspace !== null && typeof workspace === "object" ? workspace.name : workspace;
+        const name = workspace !== null && typeof workspace === "object" ? compositorService.workspaceName(workspace) : workspace;
         const number = Number(name);
         const numerals = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
 
@@ -63,7 +61,7 @@ Row {
         required property int workspaceId
         property var workspace: null
         readonly property bool hovered: hover.hovered
-        readonly property bool occupied: workspace !== null && workspace.toplevels.values.length > 0
+        readonly property bool occupied: wsRow.compositorService.workspaceOccupied(workspace)
         readonly property bool active: workspaceId === wsRow.activeWorkspaceId
 
         height: barHeight
@@ -121,8 +119,7 @@ Row {
     }
 
     // The primary workspaces are part of the UI contract, not merely a view of
-    // Hyprland's currently-created workspace objects. In a standalone session,
-    // Hyprland only creates workspace 1 until another workspace is selected.
+    // the compositor's currently-created workspace objects.
     Repeater {
         model: wsRow.pinnedWorkspaceIds
 
@@ -135,12 +132,12 @@ Row {
     }
 
     Repeater {
-        model: Hyprland.workspaces
+        model: wsRow.compositorService.workspaceModel
 
         delegate: WorkspaceButton {
             required property var modelData
 
-            workspaceId: Number(modelData.id)
+            workspaceId: wsRow.compositorService.workspaceId(modelData)
             workspace: modelData
             visible: wsRow.pinnedWorkspaceIds.indexOf(workspaceId) === -1 && wsRow.belongsToScreen(modelData)
         }

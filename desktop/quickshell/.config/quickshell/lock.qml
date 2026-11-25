@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pam
+import "services" as Services
 import "lockscreen"
 
 ShellRoot {
@@ -14,7 +15,15 @@ ShellRoot {
     property bool passwordVisible: false
     property bool revealed: false
 
-    LockStatus { id: lockStatus }
+    Services.PlatformService { id: platformService }
+    Services.BatteryService {
+        id: batteryService
+        platformService: platformService
+    }
+    LockStatus {
+        id: lockStatus
+        batteryService: batteryService
+    }
 
     Component.onCompleted: {
         // A running locker must not reload when the bar/theme is edited.

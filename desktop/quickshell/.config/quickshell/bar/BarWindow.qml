@@ -8,8 +8,10 @@ PanelWindow {
     id: bar
 
     required property var targetScreen
+    required property var compositorService
     required property var notificationStore
     required property var audioService
+    required property var batteryService
     required property var brightnessService
     required property var networkService
     required property var inputService
@@ -156,6 +158,7 @@ PanelWindow {
             }
 
             WorkspaceStrip {
+                compositorService: bar.compositorService
                 targetScreen: bar.targetScreen
                 screenName: bar.targetScreen ? bar.targetScreen.name : ""
                 barHeight: Theme.barHeight
@@ -263,6 +266,7 @@ PanelWindow {
                 barHeight: Theme.barHeight
                 menuOpen: bar.quickSettingsOpen
                 audioService: bar.audioService
+                batteryService: bar.batteryService
                 networkService: bar.networkService
                 onClicked: bar.quickSettingsClicked()
             }

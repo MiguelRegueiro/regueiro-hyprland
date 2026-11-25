@@ -23,10 +23,10 @@ hl.on("hyprland.start", function()
 
     -- Hyprland's PATH may exclude Cargo; prefer a system install, then Cargo.
     hl.exec_cmd("sh -c 'sleep 2; persist=$(command -v wl-clip-persist || true); persist=${persist:-\"$HOME/.cargo/bin/wl-clip-persist\"}; [ -x \"$persist\" ] && exec \"$persist\" --clipboard regular --ignore-event-on-error'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/start-mimeclip'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/start-easytts.sh'")
+    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/triton-mimeclip-start'")
+    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/triton-tts-start'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/powerctl daemon'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec hyprpaper'")
+    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/set-wallpaper restore'")
     hl.exec_cmd("sh -c 'sleep 2 && exec systemctl --user start hyprpolkitagent.service'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/fcitx-session.sh'")
     hl.exec_cmd("sh -c 'sleep 2 && exec blueman-applet'")

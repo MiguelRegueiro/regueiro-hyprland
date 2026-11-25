@@ -4,7 +4,7 @@ return {
     main_mod = "SUPER",
     terminal = "kitty",
     file_manager = "kitty -e fish -ic 'exec elio ~'",
-    menu = "~/.config/hypr/scripts/launcher-toggle.sh",
+    menu = "~/.local/bin/triton-launcher-toggle",
     clipboard_menu = "qs ipc call clipboard toggle",
     wallpaper_menu = "qs ipc call wallpaper toggle",
     power_menu = "~/.config/hypr/scripts/power-menu",

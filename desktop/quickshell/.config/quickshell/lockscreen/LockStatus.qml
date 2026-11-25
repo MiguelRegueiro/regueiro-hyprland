@@ -1,18 +1,17 @@
 import QtQuick
 import Quickshell.Io
-import Quickshell.Services.UPower
 
 // Read-only state shared by all lock surfaces. No control or unlock IPC.
 Item {
     id: root
+    required property var batteryService
     property int volume: -1
     property bool muted: false
     property int brightness: -1
     property string osdMode: ""
-    readonly property var battery: UPower.displayDevice
-    readonly property int batteryPercent: battery && battery.isPresent ? Math.round(battery.percentage * 100) : -1
-    readonly property bool charging: battery && (battery.state === UPowerDeviceState.Charging || battery.state === UPowerDeviceState.FullyCharged)
-    readonly property bool full: battery && battery.state === UPowerDeviceState.FullyCharged
+    readonly property int batteryPercent: batteryService.percent
+    readonly property bool charging: batteryService.charging
+    readonly property bool full: batteryService.full
 
     function updateState(nextVolume, nextMuted, nextBrightness) {
         // The first reading establishes a baseline without flashing an OSD.

@@ -1,54 +1,31 @@
 import QtQuick
-import Quickshell.Networking
 
+// Loader exposes the platform backend as QObject, so its stable service
+// contract is accessed dynamically below.
+// qmllint disable missing-property
 Item {
     id: root
 
-    readonly property var ethernetDevice: findEthernetDevice()
-    readonly property bool ethernetAvailable: ethernetDevice !== null
-    readonly property bool ethernetConnected: ethernetAvailable && ethernetDevice.connected
-    readonly property bool ethernetBusy: ethernetAvailable && (ethernetDevice.state === ConnectionState.Connecting || ethernetDevice.state === ConnectionState.Disconnecting)
-    readonly property bool ethernetCanToggle: ethernetAvailable && ethernetDevice.hasLink && ethernetDevice.network !== null && !ethernetBusy
-    readonly property bool wifiConnected: hasConnectedWifi()
-    readonly property string networkIcon: ethernetConnected ? "󰌗" : (wifiConnected ? "󰤨" : "󰤭")
+    required property var platformService
 
-    function isPhysicalEthernet(device) {
-        return device.name.length > 0 && !/^(docker|br[0-9]|virbr|veth)/.test(device.name);
-    }
-
-    function findEthernetDevice() {
-        const devices = Networking.devices.values;
-        let fallback = null;
-        for (let i = 0; i < devices.length; ++i) {
-            const device = devices[i];
-            if (device.type !== DeviceType.Wired || !isPhysicalEthernet(device))
-                continue;
-
-            if (device.connected)
-                return device;
-
-            if (fallback === null)
-                fallback = device;
-        }
-        return fallback;
-    }
-
-    function hasConnectedWifi() {
-        const devices = Networking.devices.values;
-        for (let i = 0; i < devices.length; ++i) {
-            if (devices[i].type === DeviceType.Wifi && devices[i].connected)
-                return true;
-        }
-        return false;
-    }
+    readonly property bool adapterAvailable: platformService.hasNetworkAdapter && backend.status === Loader.Ready
+    readonly property var ethernetDevice: adapterAvailable ? backend.item["ethernetDevice"] : null
+    readonly property bool ethernetAvailable: adapterAvailable && backend.item["ethernetAvailable"]
+    readonly property bool ethernetConnected: adapterAvailable && backend.item["ethernetConnected"]
+    readonly property bool ethernetBusy: adapterAvailable && backend.item["ethernetBusy"]
+    readonly property bool ethernetCanToggle: adapterAvailable && backend.item["ethernetCanToggle"]
+    readonly property bool wifiConnected: adapterAvailable && backend.item["wifiConnected"]
+    readonly property string networkIcon: adapterAvailable ? backend.item["networkIcon"] : "󰤭"
 
     function toggleEthernet() {
-        if (!ethernetCanToggle)
-            return ;
+        if (ethernetCanToggle)
+            backend.item["toggleEthernet"]();
+    }
 
-        if (ethernetConnected)
-            ethernetDevice.disconnect();
-        else
-            ethernetDevice.network.connect();
+    Loader {
+        id: backend
+        active: root.platformService.hasNetworkAdapter
+        source: active ? Qt.resolvedUrl("../platforms/linux/NetworkBackend.qml") : ""
     }
 }
+// qmllint enable missing-property

@@ -18,20 +18,88 @@ if ! command -v stow >/dev/null 2>&1; then
     exit 1
 fi
 
-# Moving a Stow package can leave links to its former top-level path dangling.
-# Find those links even when they pointed at empty directories (such as the
-# Quickshell screenshot cache), which have no source files for the package loop
-# below to discover.
-find "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share" -type l -print 2>/dev/null |
-while IFS= read -r link_path; do
-    [ -e "$link_path" ] && continue
-    link=$(readlink "$link_path")
-    case "$link" in
+is_legacy_link() {
+    case "$1" in
         *regueiro-hyprland/hypr/*|*regueiro-hyprland/hypridle/*|*regueiro-hyprland/quickshell/*|*regueiro-hyprland/fish/*|*regueiro-hyprland/starship/*|*regueiro-hyprland/fastfetch/*|*regueiro-hyprland/kitty/*|*regueiro-hyprland/fcitx5/*|*regueiro-hyprland/gtk/*|*regueiro-hyprland/xdg-portals/*|*regueiro-hyprland/flatpak/*|*regueiro-hyprland/nvim/*|*regueiro-hyprland/mimeclip/*|*regueiro-hyprland/fonts/*|*regueiro-hyprland/icons/*|*regueiro-hyprland/wallpapers/*|*regueiro-hyprland/easytts/*|*regueiro-hyprland/dictation/*)
-            rm "$link_path"
+            return 0
             ;;
+        *) return 1 ;;
     esac
-done
+}
+
+is_local_override() {
+    case "$1" in
+        .local/share/applications/elio.desktop|.local/share/flatpak/overrides/app.zen_browser.zen|.config/quickshell/notification-times.ini|.config/fcitx5/conf/cached_layouts)
+            return 0
+            ;;
+        *) return 1 ;;
+    esac
+}
+
+preflight_package() {
+    package_dir=$1
+    package=$2
+    package_root=$repo_dir/$package_dir/$package
+    [ -d "$package_root" ] || return 0
+
+    find "$package_root" -type f | while IFS= read -r source; do
+        relative=${source#"$package_root"/}
+        target=$HOME/$relative
+        target_relative=${target#"$HOME"/}
+        is_local_override "$target_relative" && continue
+
+        parent=$(dirname "$target")
+        while [ "$parent" != "$HOME" ] && [ "$parent" != / ]; do
+            if [ -L "$parent" ]; then
+                if [ ! -e "$parent" ]; then
+                    link=$(readlink "$parent")
+                    if is_legacy_link "$link"; then
+                        break
+                    fi
+                    printf 'Install conflict: %s is a dangling symlink not owned by this migration.\n' "$parent" >&2
+                    exit 1
+                fi
+                expected_parent=$package_root/${parent#"$HOME"/}
+                if [ ! -d "$parent" ] || [ ! -d "$expected_parent" ] || [ "$(realpath "$parent")" != "$(realpath "$expected_parent")" ]; then
+                    printf 'Install conflict: %s is an existing symlink directory.\n' "$parent" >&2
+                    exit 1
+                fi
+            fi
+            parent=$(dirname "$parent")
+        done
+
+        if [ -L "$target" ]; then
+            if [ -e "$target" ] && [ "$(realpath "$target")" = "$(realpath "$source")" ]; then
+                continue
+            fi
+            link=$(readlink "$target")
+            if [ ! -e "$target" ] && is_legacy_link "$link"; then
+                continue
+            fi
+            printf 'Install conflict: %s is an existing symlink to another target.\n' "$target" >&2
+            exit 1
+        fi
+        if [ -e "$target" ]; then
+            printf 'Install conflict: %s already exists; move it or add it to your local overrides.\n' "$target" >&2
+            exit 1
+        fi
+    done
+}
+
+preflight_packages() {
+    package_dir=$1
+    shift
+    for package do
+        preflight_package "$package_dir" "$package"
+    done
+}
+
+# Detect all destination conflicts before removing old links or creating any
+# new ones, so a failed install leaves the current desktop untouched.
+preflight_packages compositors/hyprland hypr hypridle
+preflight_packages desktop quickshell scripts
+preflight_packages platforms linux
+preflight_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
 
 stow_packages() {
     package_dir=$1
@@ -77,6 +145,10 @@ stow_packages() {
                     stow --no-folding --ignore='notification-times\.ini$' \
                         --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
                     ;;
+                configs/fcitx5)
+                    stow --no-folding --ignore='cached_layouts$' \
+                        --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
+                    ;;
                 configs/flatpak)
                     stow --no-folding --ignore='^\.local/share/flatpak/overrides/app\.zen_browser\.zen$' \
                         --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
@@ -93,6 +165,8 @@ stow_packages() {
 # installation is a separate, explicit operation in installer/packages/.
 stow_packages compositors/hyprland hypr hypridle
 stow_packages desktop quickshell
+stow_packages desktop scripts
+stow_packages platforms linux
 stow_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
 
 printf '%s\n' "Triton Desktop configuration linked. Log out and back in to start the session changes."

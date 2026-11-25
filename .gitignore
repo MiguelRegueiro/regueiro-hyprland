@@ -1,17 +1,17 @@
 # fish local state
-fish/.config/fish/fish_variables
+configs/fish/.config/fish/fish_variables
 
 # fcitx5 cache
-fcitx5/.config/fcitx5/conf/cached*
+configs/fcitx5/.config/fcitx5/conf/cached*
 
 # quickshell runtime state
-quickshell/.config/quickshell/notification-times.ini
+desktop/quickshell/.config/quickshell/notification-times.ini
 
 # editor/AI session dirs
 .codex
 
 # EasyTTS machine-local environment and Python bytecode
-easytts/.venv/
-easytts/.kokoro/
-easytts/.kokoro-model/
-easytts/__pycache__/
+features/easytts/.venv/
+features/easytts/.kokoro/
+features/easytts/.kokoro-model/
+features/easytts/__pycache__/

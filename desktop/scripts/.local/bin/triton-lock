@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+script_path=$(readlink -f -- "$0")
+repo_dir=$(CDPATH= cd -- "$(dirname -- "$script_path")/../../../.." && pwd)
+exec "$repo_dir/desktop/session/quickshell-lock" "$@"

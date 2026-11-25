@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Effects
-import Quickshell.Services.UPower
 import Quickshell.Io
 import "pages" as Pages
 import "../services" as Services
@@ -15,6 +14,8 @@ FocusScope {
 
     required property var notificationStore
     required property var audioService
+    required property var batteryService
+    required property var powerProfileService
     required property var brightnessService
     required property var networkService
     required property var displayService
@@ -22,18 +23,7 @@ FocusScope {
     property bool open: false
     property real topOffset: 0
     property bool hovered: panelHover.hovered || boundsHover.hovered
-    readonly property string powerMode: {
-        switch (PowerProfiles.profile) {
-        case PowerProfile.PowerSaver:
-            return "power-saver";
-        case PowerProfile.Balanced:
-            return "balanced";
-        case PowerProfile.Performance:
-            return "performance";
-        default:
-            return "";
-        }
-    }
+    readonly property string powerMode: powerProfileService.mode
     property bool wifiPageOpen: false
     property bool bluetoothPageOpen: false
     property bool displaysPageOpen: false
@@ -73,12 +63,7 @@ FocusScope {
     signal settingsRequested
 
     function applyPowerMode(nextMode) {
-        if (nextMode === "power-saver")
-            PowerProfiles.profile = PowerProfile.PowerSaver;
-        else if (nextMode === "balanced")
-            PowerProfiles.profile = PowerProfile.Balanced;
-        else if (nextMode === "performance" && PowerProfiles.hasPerformanceProfile)
-            PowerProfiles.profile = PowerProfile.Performance;
+        powerProfileService.setMode(nextMode);
     }
 
     onOpenChanged: {
@@ -418,13 +403,14 @@ FocusScope {
                             popupSurfaceOriginX: root.popupSurfaceOriginX
                             popupSurfaceOriginY: root.popupSurfaceOriginY
                             audioService: root.audioService
+                            batteryService: root.batteryService
                             brightnessService: root.brightnessService
                             networkService: root.networkService
                             targetScreen: root.targetScreen
                             wifiPage: wifiPageView
                             bluetoothPage: bluetoothPageView
                             powerMode: root.powerMode
-                            hasPerformanceProfile: PowerProfiles.hasPerformanceProfile
+                            hasPerformanceProfile: root.powerProfileService.hasPerformanceProfile
                             onWifiPageRequested: {
                                 root.audioOutputPopupOpen = false;
                                 root.wifiPageOpen = true;

@@ -1,9 +1,7 @@
 //@ pragma UseQApplication
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
-import Quickshell.Services.UPower
 import Quickshell.Wayland
 import "bar" as Bar
 import "clipboard" as Clipboard
@@ -34,8 +32,8 @@ ShellRoot {
     property bool clipboardVisible: false
     property bool clipboardOpening: false
     readonly property bool clipboardRequested: clipboardVisible || clipboardOpening
-    // Capture the monitor before the layer-shell surface takes focus.  Keeping
-    // this separate from Hyprland.focusedMonitor prevents the menu from
+    // Capture the monitor before the layer-shell surface takes focus. Keeping
+    // this separate from the compositor's focused monitor prevents the menu from
     // hopping monitors while it is open.
     property var clipboardTargetMonitor: null
     property bool launcherVisible: false
@@ -43,6 +41,7 @@ ShellRoot {
     property var launcherTargetMonitor: null
     property bool wallpaperPickerVisible: false
     property bool settingsVisible: false
+    property bool focusSettingsPending: false
     property var settingsTargetScreen: null
     property bool externalDrivesMenuVisible: false
     property bool cpuStatsMenuVisible: false
@@ -55,11 +54,11 @@ ShellRoot {
     property string powerMenuAction: ""
     property string powerBusyAction: ""
     property int batteryWarningPreviewPercent: -1
-    readonly property var battery: UPower.displayDevice
-    readonly property bool hasBattery: battery && battery.percentage >= 0
-    readonly property int batteryPercent: hasBattery ? Math.min(100, Math.round(battery.percentage * 100)) : -1
-    readonly property bool batteryDischarging: hasBattery && battery.state === UPowerDeviceState.Discharging
-    readonly property bool batteryWarningRequested: UPower.onBattery && batteryDischarging && batteryPercent <= Theme.batteryCriticalThreshold
+    readonly property var battery: batteryServiceState.device
+    readonly property bool hasBattery: batteryServiceState.present
+    readonly property int batteryPercent: batteryServiceState.percent
+    readonly property bool batteryDischarging: batteryServiceState.discharging
+    readonly property bool batteryWarningRequested: batteryServiceState.onBattery && batteryDischarging && batteryPercent <= Theme.batteryCriticalThreshold
     property bool batteryWarningConfirmed: false
     readonly property bool batteryWarningPreviewActive: batteryWarningPreviewPercent >= 0
     readonly property bool batteryWarningVisible: batteryWarningPreviewActive || (batteryWarningRequested && batteryWarningConfirmed)
@@ -170,9 +169,9 @@ ShellRoot {
     }
 
     function retainActiveWorkspaceFocus() {
-        const workspace = Hyprland.focusedWorkspace;
+        const workspace = compositorServiceState.focusedWorkspace;
         if (workspace)
-            Hyprland.dispatch("hl.dsp.focus({ workspace = " + workspace.id + " })");
+            compositorServiceState.focusWorkspace(compositorServiceState.workspaceId(workspace));
     }
 
     function closeClipboard(restoreWorkspaceFocus = true) {
@@ -206,7 +205,7 @@ ShellRoot {
         if (powerMenuVisible)
             return;
 
-        clipboardTargetMonitor = Hyprland.focusedMonitor;
+        clipboardTargetMonitor = compositorServiceState.focusedMonitor;
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
@@ -235,7 +234,7 @@ ShellRoot {
         if (powerMenuVisible)
             return;
 
-        launcherTargetMonitor = Hyprland.focusedMonitor;
+        launcherTargetMonitor = compositorServiceState.focusedMonitor;
         closeExternalDrivesMenu();
         closeCpuStatsMenu();
         closeRamStatsMenu();
@@ -410,12 +409,12 @@ ShellRoot {
     function openSettings(targetScreen) {
         closeAllPanels();
         if (settingsVisible) {
-            if (!focusSettingsProcess.running)
-                focusSettingsProcess.running = true;
+            focusSettingsPending = true;
+            compositorServiceState.requestClients();
             return;
         }
         settingsTargetScreen = targetScreen || Quickshell.screens.find(screen =>
-            Hyprland.focusedMonitor && screen.name === Hyprland.focusedMonitor.name) || Quickshell.screens[0];
+            compositorServiceState.focusedMonitor && screen.name === compositorServiceState.monitorName(compositorServiceState.focusedMonitor)) || Quickshell.screens[0];
         settingsVisible = true;
     }
 
@@ -637,7 +636,7 @@ ShellRoot {
     Process {
         id: lockProc
 
-        command: ["sh", "-c", "exec \"$HOME/.config/hypr/scripts/quickshell-lock\""]
+        command: ["sh", "-c", "exec \"$HOME/.local/bin/triton-lock\""]
         onRunningChanged: {
             if (!running)
                 root.clearPowerBusy("lock");
@@ -717,10 +716,29 @@ ShellRoot {
         target: notificationStoreService
     }
 
+    Services.CompositorService {
+        id: compositorServiceState
+    }
+
     Services.NotificationStore {
         id: notificationStoreService
 
+        compositorService: compositorServiceState
         popupSuppressed: root.notificationCenterVisible
+    }
+
+    Connections {
+        function onClientsListed(clients) {
+            if (!root.focusSettingsPending)
+                return;
+            root.focusSettingsPending = false;
+            const client = clients.find(entry => entry.title === "Quickshell Settings"
+                && entry.class === "org.quickshell" && entry.mapped && !entry.hidden);
+            if (client)
+                compositorServiceState.focusWindow(client.address);
+        }
+
+        target: compositorServiceState
     }
 
     Services.AudioService {
@@ -729,6 +747,8 @@ ShellRoot {
 
     Services.BrightnessService {
         id: brightnessServiceState
+
+        platformService: platformServiceState
     }
 
     Services.DisplayService {
@@ -747,8 +767,26 @@ ShellRoot {
         id: ttsServiceState
     }
 
+    Services.PlatformService {
+        id: platformServiceState
+    }
+
+    Services.BatteryService {
+        id: batteryServiceState
+
+        platformService: platformServiceState
+    }
+
+    Services.PowerProfileService {
+        id: powerProfileServiceState
+
+        platformService: platformServiceState
+    }
+
     Services.NetworkService {
         id: networkServiceState
+
+        platformService: platformServiceState
     }
 
     Services.InputService {
@@ -783,25 +821,6 @@ ShellRoot {
         onCloseRequested: root.closeSettings()
     }
 
-    Process {
-        id: focusSettingsProcess
-        command: ["hyprctl", "-j", "clients"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const client = JSON.parse(text).find(entry => entry.title === "Quickshell Settings"
-                        && entry.class === "org.quickshell" && entry.mapped && !entry.hidden);
-                    if (client && /^0x[0-9a-f]+$/i.test(client.address)) {
-                        Hyprland.dispatch("hl.dsp.focus({ window = " + JSON.stringify("address:" + client.address) + " })");
-                        return;
-                    }
-                } catch (error) {
-                    console.warn("Could not find Settings window:", error);
-                }
-            }
-        }
-    }
-
     Variants {
         id: barWindows
 
@@ -811,11 +830,12 @@ ShellRoot {
             Bar.BarWindow {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
+                readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
 
                 targetScreen: modelData
+                compositorService: compositorServiceState
                 showBar: activeScreen
                 forceOverlay: fullscreenPanelChromeActive
                 quickSettingsOpen: root.quickSettingsVisible
@@ -828,6 +848,7 @@ ShellRoot {
                 ttsOpen: root.ttsMenuVisible
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
+                batteryService: batteryServiceState
                 brightnessService: brightnessServiceState
                 networkService: networkServiceState
                 inputService: inputServiceState
@@ -858,13 +879,13 @@ ShellRoot {
             Bar.CpuStatsMenu {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
 
                 targetScreen: modelData
                 detailsService: systemDetailsServiceState
                 open: root.cpuStatsMenuVisible && activeScreen
-                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
+                fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeCpuStatsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
@@ -877,13 +898,13 @@ ShellRoot {
             Bar.TtsMenu {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
 
                 targetScreen: modelData
                 ttsService: ttsServiceState
                 open: root.ttsMenuVisible && activeScreen
-                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
+                fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeTtsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
@@ -927,13 +948,13 @@ ShellRoot {
             Bar.RamStatsMenu {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
 
                 targetScreen: modelData
                 detailsService: systemDetailsServiceState
                 open: root.ramStatsMenuVisible && activeScreen
-                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
+                fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeRamStatsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
@@ -947,13 +968,13 @@ ShellRoot {
             Bar.SshSessionsMenu {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
 
                 targetScreen: modelData
                 sshService: sshSessionsServiceState
                 open: root.sshSessionsMenuVisible && activeScreen
-                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
+                fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeSshSessionsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
@@ -967,13 +988,13 @@ ShellRoot {
             Bar.ExternalDrivesMenu {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
 
                 targetScreen: modelData
                 driveService: externalDrivesServiceState
                 open: root.externalDrivesMenuVisible && activeScreen
-                fullscreenActive: activeScreen && activeWorkspace && activeWorkspace.hasFullscreen
+                fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeExternalDrivesMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
             }
@@ -987,9 +1008,9 @@ ShellRoot {
             Overlays.ScreenFrameOverlay {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
+                readonly property bool fullscreenPanelChromeActive: activeScreen && root.panelChromeRequested && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
 
                 targetScreen: modelData
                 hasBar: activeScreen
@@ -997,6 +1018,8 @@ ShellRoot {
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
+                batteryService: batteryServiceState
+                powerProfileService: powerProfileServiceState
                 brightnessService: brightnessServiceState
                 displayService: displayServiceState
                 networkService: networkServiceState
@@ -1087,9 +1110,9 @@ ShellRoot {
             Notifications.NotificationsOverlay {
                 required property var modelData
                 readonly property bool activeScreen: root.isShellScreen(modelData)
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                readonly property bool notificationOverlayActive: activeScreen && root.notificationCenterVisible && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
+                readonly property bool notificationOverlayActive: activeScreen && root.notificationCenterVisible && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
 
                 targetScreen: modelData
                 showLayer: activeScreen
@@ -1128,14 +1151,14 @@ ShellRoot {
         delegate: Component {
             Launcher.LauncherOverlay {
                 required property var modelData
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
-                // Use the configured primary while Hyprland's initial monitor
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
+                // Use the configured primary while compositor's initial monitor
                 // list is loading. Normal openings use the monitor that held
                 // focus when the shortcut was pressed.
                 readonly property bool legacyMenuScreen: root.isShellScreen(modelData)
-                readonly property bool menuScreen: root.launcherTargetMonitor ? hyprMonitor === root.launcherTargetMonitor : legacyMenuScreen
-                readonly property bool launcherOverlayActive: menuScreen && root.launcherRequested && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property bool menuScreen: root.launcherTargetMonitor ? compositorServiceState.sameMonitor(compositorMonitor, root.launcherTargetMonitor) : legacyMenuScreen
+                readonly property bool launcherOverlayActive: menuScreen && root.launcherRequested && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
 
                 targetScreen: modelData
                 showLayer: true
@@ -1157,11 +1180,11 @@ ShellRoot {
         delegate: Component {
             Clipboard.ClipboardOverlay {
                 required property var modelData
-                readonly property var hyprMonitor: Hyprland.monitorFor(modelData)
-                readonly property var activeWorkspace: hyprMonitor ? hyprMonitor.activeWorkspace : null
+                readonly property var compositorMonitor: compositorServiceState.monitorFor(modelData)
+                readonly property var activeWorkspace: compositorServiceState.activeWorkspaceFor(modelData)
                 readonly property bool legacyMenuScreen: root.isShellScreen(modelData)
-                readonly property bool menuScreen: root.clipboardTargetMonitor ? hyprMonitor === root.clipboardTargetMonitor : legacyMenuScreen
-                readonly property bool clipboardOverlayActive: menuScreen && root.clipboardRequested && activeWorkspace && activeWorkspace.hasFullscreen
+                readonly property bool menuScreen: root.clipboardTargetMonitor ? compositorServiceState.sameMonitor(compositorMonitor, root.clipboardTargetMonitor) : legacyMenuScreen
+                readonly property bool clipboardOverlayActive: menuScreen && root.clipboardRequested && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
 
                 targetScreen: modelData
                 showLayer: true
