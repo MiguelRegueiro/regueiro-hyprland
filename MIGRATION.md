@@ -57,7 +57,8 @@ connection, and settings commands now use the shared Bluetooth page.
 CPU, memory, swap, and process statistics are normalized by a FreeBSD helper
 for the shared system-details service. External-drive discovery parses the
 FreeBSD UDisks dump, while mount and eject operations use FreeBSD platform
-helpers.
+helpers. The shared power-profile selector now uses the FreeBSD `powerd` and
+EPP helper.
 
 ## 05 — Make the session reliable
 

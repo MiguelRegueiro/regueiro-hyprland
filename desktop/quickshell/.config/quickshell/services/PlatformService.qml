@@ -12,7 +12,7 @@ QtObject {
     readonly property bool hasWifiAdapter: isLinux || isFreeBSD
     readonly property bool hasBrightnessAdapter: isLinux || isFreeBSD
     readonly property bool hasBatteryAdapter: isLinux || isFreeBSD
-    readonly property bool hasPowerProfilesAdapter: isLinux
+    readonly property bool hasPowerProfilesAdapter: isLinux || isFreeBSD
     readonly property string inputMethodCommandPath: isLinux ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-fcitx-toggle" : ""
     readonly property string bluetoothCommandPath: isLinux
         ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-bluetooth"

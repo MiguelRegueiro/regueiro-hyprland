@@ -37,6 +37,7 @@ sh -n platforms/freebsd/.local/bin/triton-freebsd-bluetooth
 sh -n platforms/freebsd/.local/bin/triton-freebsd-system-details
 sh -n platforms/freebsd/.local/bin/triton-freebsd-drives
 sh -n platforms/freebsd/.local/bin/triton-freebsd-drive-eject
+sh -n platforms/freebsd/.local/bin/triton-freebsd-power-profile
 sh -n installer/install.sh
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 git diff --check
