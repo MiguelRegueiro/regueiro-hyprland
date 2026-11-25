@@ -19,8 +19,8 @@ Item {
 
         active: root.platformService.hasPowerProfilesAdapter
         source: !active ? "" : root.platformService.isLinux
-            ? Qt.resolvedUrl("../platforms/linux/PowerProfileBackend.qml")
-            : Qt.resolvedUrl("../platforms/freebsd/PowerProfileBackend.qml")
+            ? Qt.resolvedUrl("backends/power-profile/linux/PowerProfileBackend.qml")
+            : Qt.resolvedUrl("backends/power-profile/freebsd/PowerProfileBackend.qml")
     }
 }
 // qmllint enable missing-property

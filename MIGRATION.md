@@ -26,27 +26,25 @@ reviewable changes. Do not merge the old FreeBSD UI wholesale.
 - [x] Isolate systemd-specific service management.
 
 Progress: `PlatformService` detects Linux/FreeBSD and advertises implemented
-adapters. Linux networking, Wi-Fi, Bluetooth, brightness, battery,
-power-profile, external-drive, lock-status, and system-statistics operations
-now live under `platforms/linux/` and load or run through shared service
-contracts. Fcitx, power, and systemd session-service operations also go through
-Linux platform commands. Linux-only QML imports and direct Linux paths and
-commands have been removed from the shared UI. The installer deploys the Linux
-adapters, and the live CachyOS/Hyprland configuration has been reloaded after
-the changes. Other operating systems currently report unavailable capabilities
-until their adapters are implemented in Stage 04; this does not claim Linux
-backends already work on FreeBSD.
+adapters. Quickshell QML backends live under the service adapters that load
+them. OS command helpers and the FreeBSD hardware bridge live under
+`desktop/platforms/{linux,freebsd}/`. Fcitx, power, systemd session-service,
+external-drive, and system-statistics operations use OS-specific commands
+through the shared desktop services. Linux-only QML imports and direct Linux
+paths and commands have been removed from shared UI. Other operating systems
+report unavailable capabilities until their adapters are implemented in Stage
+04; this does not claim Linux backends already work on FreeBSD.
 
 ## 04 — Port FreeBSD functionality incrementally
 
 - [x] Port the native hardware bridge.
-- [ ] Port battery, Wi-Fi, Bluetooth, and power services.
-- [ ] Port external-drive and system-statistics support.
+- [x] Port battery, Wi-Fi, Bluetooth, and power services.
+- [x] Port external-drive and system-statistics support.
 - [ ] Validate audio, portals, authentication, and suspend.
 
 Progress: The native FreeBSD battery adapter is ported behind the shared
 battery service, using `apm` and `acpiconf`. The branch's persistent brightness
-and OSS mixer bridge is now in the FreeBSD platform package; the installer
+and OSS mixer bridge is now in `desktop/platforms/freebsd/`; the installer
 builds it on FreeBSD and the shared brightness service selects its adapter.
 The FreeBSD network status and Ethernet-toggle backend now feeds the shared
 network service. The Wi-Fi scan, saved-profile, connect, and forget commands

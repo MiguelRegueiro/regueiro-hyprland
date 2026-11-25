@@ -292,8 +292,8 @@ Item {
         id: wifiBackend
         active: controller.platformService.hasWifiAdapter
         source: !active ? "" : controller.platformService.isLinux
-            ? Qt.resolvedUrl("../../platforms/linux/WifiBackend.qml")
-            : Qt.resolvedUrl("../../platforms/freebsd/WifiBackend.qml")
+            ? Qt.resolvedUrl("../../services/backends/wifi/linux/WifiBackend.qml")
+            : Qt.resolvedUrl("../../services/backends/wifi/freebsd/WifiBackend.qml")
     }
 
     Timer {

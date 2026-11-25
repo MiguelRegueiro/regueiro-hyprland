@@ -24,7 +24,7 @@ fi
 
 is_legacy_link() {
     case "$1" in
-        *regueiro-hyprland/*)
+        *regueiro-hyprland/*|*triton-desktop/platforms/linux/*|*triton-desktop/platforms/freebsd/*)
             return 0
             ;;
         *) return 1 ;;
@@ -106,7 +106,7 @@ platform_package=linux
 if [ "$(uname -s)" = FreeBSD ]; then
     platform_package=freebsd
 fi
-preflight_packages platforms "$platform_package"
+preflight_packages desktop/platforms "$platform_package"
 preflight_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
 
 stow_packages() {
@@ -166,7 +166,7 @@ stow_packages() {
 stow_packages compositors/hyprland hypr hypridle
 stow_packages desktop quickshell
 stow_packages desktop scripts
-stow_packages platforms "$platform_package"
+stow_packages desktop/platforms "$platform_package"
 if [ "$platform_package" = freebsd ]; then
     TRITON_DESKTOP_DIR="$repo_dir" "$HOME/.local/bin/triton-freebsd-build-hardware"
 fi
@@ -176,7 +176,10 @@ stow_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg
 # sweep limited to Stow-managed locations and the old checkout's unique path.
 for managed_root in "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share"; do
     [ -d "$managed_root" ] || continue
-    find "$managed_root" -type l -lname '*regueiro-hyprland/*' -print |
+    find "$managed_root" -type l \
+        \( -lname '*regueiro-hyprland/*' \
+        -o -lname '*triton-desktop/platforms/linux/*' \
+        -o -lname '*triton-desktop/platforms/freebsd/*' \) -print |
         while IFS= read -r stale_link; do
             [ -e "$stale_link" ] || rm "$stale_link"
         done
