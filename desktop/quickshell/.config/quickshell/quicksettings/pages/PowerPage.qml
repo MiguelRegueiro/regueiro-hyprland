@@ -7,7 +7,8 @@ Item {
     id: root
 
     required property var powerService
-    readonly property var policy: powerService || ({ screenOff: 0, lock: 20, suspend: 0, powerButton: "system", keepAwake: false, busy: true, lastError: "" })
+    readonly property bool available: powerService && powerService.available
+    readonly property var policy: powerService || ({ screenOff: 0, lock: 20, suspend: 0, powerButton: "system", keepAwake: false, busy: true, lastError: "", available: false })
     readonly property var timerOptions: [
         { label: "Never", value: "0" },
         { label: "2 minutes", value: "2" },
@@ -43,6 +44,7 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         spacing: 12
+        visible: root.available
 
         Rectangle {
             Layout.fillWidth: true
@@ -157,5 +159,17 @@ Item {
         }
 
         Item { Layout.fillHeight: true }
+    }
+
+    Text {
+        anchors.centerIn: parent
+        visible: !root.available
+        width: Math.min(parent.width - 48, 480)
+        text: "Power policy settings are not available on this platform yet."
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.WordWrap
+        font.family: Theme.fontUi
+        font.pixelSize: 14
+        color: Theme.textDim
     }
 }

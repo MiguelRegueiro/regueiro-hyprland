@@ -5,6 +5,7 @@ Item {
     id: root
 
     required property var compositorService
+    required property var platformService
 
     property int screenOff: 0
     property int lock: 20
@@ -14,7 +15,8 @@ Item {
     property bool active: false
     property bool busy: false
     property string lastError: ""
-    readonly property string commandPath: compositorService.powerCommandPath
+    readonly property bool available: platformService.hasPowerPolicyAdapter
+    readonly property string commandPath: available ? compositorService.powerCommandPath : ""
 
     function refresh() {
         if (commandPath.length > 0 && !statusProc.running)

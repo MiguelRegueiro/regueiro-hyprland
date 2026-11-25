@@ -764,6 +764,7 @@ ShellRoot {
         id: powerServiceState
 
         compositorService: compositorServiceState
+        platformService: platformServiceState
     }
 
     Services.DictationService {
