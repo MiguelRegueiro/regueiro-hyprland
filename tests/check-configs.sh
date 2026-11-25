@@ -26,6 +26,8 @@ done < <(find desktop/quickshell/.config/quickshell platforms/linux/.config/quic
 bash -n compositors/hyprland/hypr/.config/hypr/scripts/*.sh
 sh -n platforms/linux/.local/bin/triton-linux-power
 sh -n platforms/linux/.local/bin/triton-linux-service
+bash -n platforms/linux/.local/bin/triton-fcitx-toggle
+sh -n platforms/linux/.local/bin/triton-linux-bluetooth
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 git diff --check
 

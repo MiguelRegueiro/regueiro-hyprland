@@ -16,6 +16,7 @@ FocusScope {
     required property var audioService
     required property var batteryService
     required property var powerProfileService
+    required property var platformService
     required property var brightnessService
     required property var networkService
     required property var displayService
@@ -481,6 +482,7 @@ FocusScope {
                         }
 
                         Pages.BluetoothPage {
+                            platformService: root.platformService
                             id: bluetoothPageView
 
                             width: parent.width

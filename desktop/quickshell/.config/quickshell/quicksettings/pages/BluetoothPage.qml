@@ -1,13 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
-import Quickshell
 import Quickshell.Io
 import "../../theme/Theme.js" as Theme
 import "../QuickSettingsStyle.js" as QS
 
 Item {
     id: root
+
+    required property var platformService
 
     property bool btOn: false
     property string connectedDevice: ""
@@ -21,6 +22,8 @@ Item {
     signal backClicked
 
     function toggle() {
+        if (platformService.bluetoothCommandPath.length === 0)
+            return;
         btOn = !btOn;
         btToggleProc.running = true;
         afterToggle.start();
@@ -525,7 +528,7 @@ Item {
     Process {
         id: btToggleProc
 
-        command: [Quickshell.env("HOME") + "/.config/hypr/scripts/bt-toggle.sh"]
+        command: [root.platformService.bluetoothCommandPath]
     }
 
     Process {

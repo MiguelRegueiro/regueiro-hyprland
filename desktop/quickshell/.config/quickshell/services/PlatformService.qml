@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 
 QtObject {
     readonly property string name: Qt.platform.os === "linux" ? "linux"
@@ -11,4 +12,6 @@ QtObject {
     readonly property bool hasBrightnessAdapter: isLinux
     readonly property bool hasBatteryAdapter: isLinux
     readonly property bool hasPowerProfilesAdapter: isLinux
+    readonly property string inputMethodCommandPath: isLinux ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-fcitx-toggle" : ""
+    readonly property string bluetoothCommandPath: isLinux ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-bluetooth" : ""
 }

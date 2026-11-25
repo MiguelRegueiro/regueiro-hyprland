@@ -28,10 +28,11 @@ reviewable changes. Do not merge the old FreeBSD UI wholesale.
 Progress: `PlatformService` detects Linux/FreeBSD and advertises implemented
 adapters. Linux networking, brightness, battery, and power-profile
 implementations now live under `platforms/linux/` and load through shared
-service contracts. Linux power and systemd session-service operations now go
+service contracts. Fcitx and Bluetooth commands also live in the Linux
+platform package. Linux power and systemd session-service operations now go
 through platform commands. The installer deploys those backends. Hyprland idle
-policy and any remaining platform-only imports still need to be separated;
-the stage remains open.
+policy, Linux system-statistics and external-drive services, and any remaining
+platform-only imports still need to be separated; the stage remains open.
 
 ## 04 — Port FreeBSD functionality incrementally
 

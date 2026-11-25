@@ -797,6 +797,8 @@ ShellRoot {
 
     Services.InputService {
         id: inputServiceState
+
+        platformService: platformServiceState
     }
 
     Services.ClipboardService {
@@ -1026,6 +1028,7 @@ ShellRoot {
                 audioService: audioServiceState
                 batteryService: batteryServiceState
                 powerProfileService: powerProfileServiceState
+                platformService: platformServiceState
                 brightnessService: brightnessServiceState
                 displayService: displayServiceState
                 networkService: networkServiceState

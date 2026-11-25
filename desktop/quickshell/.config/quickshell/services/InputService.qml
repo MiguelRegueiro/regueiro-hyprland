@@ -7,6 +7,8 @@ import "InputMethodMetadata.js" as InputMethodMetadata
 Item {
     id: root
 
+    required property var platformService
+
     property var methods: []
     property string currentIM: ""
     property string currentGroup: ""
@@ -54,7 +56,7 @@ Item {
     }
     readonly property string statusTitle: _statusTitle()
     readonly property string statusDetail: _statusDetail()
-    readonly property string backendScript: Quickshell.env("HOME") + "/.config/hypr/scripts/fcitx-toggle.sh"
+    readonly property string backendScript: platformService.inputMethodCommandPath
 
     signal imChanged(string newIM)
 

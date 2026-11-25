@@ -12,6 +12,7 @@ PanelWindow {
     required property var audioService
     required property var batteryService
     required property var powerProfileService
+    required property var platformService
     required property var brightnessService
     required property var displayService
     required property var networkService
@@ -142,6 +143,7 @@ PanelWindow {
         audioService: root.audioService
         batteryService: root.batteryService
         powerProfileService: root.powerProfileService
+        platformService: root.platformService
         brightnessService: root.brightnessService
         displayService: root.displayService
         networkService: root.networkService
