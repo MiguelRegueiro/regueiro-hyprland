@@ -3,6 +3,8 @@
 The shared battery service uses `apm` and `acpiconf` through
 `triton-freebsd-battery`. The shared brightness service uses the persistent
 native backlight and OSS mixer bridge from `src/triton-freebsd-hardware.c`.
+Shared network and Wi-Fi UI uses `triton-freebsd-network` for interface status,
+Wi-Fi scanning, saved profiles, connection, and Ethernet toggling.
 
 On FreeBSD, `./install.sh` selects this Stow package and compiles the bridge
 into `~/.local/bin/triton-freebsd-hardware`. The bridge targets the device paths

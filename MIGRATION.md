@@ -49,10 +49,10 @@ battery service, using `apm` and `acpiconf`. The branch's persistent brightness
 and OSS mixer bridge is now in the FreeBSD platform package; the installer
 builds it on FreeBSD and the shared brightness service selects its adapter.
 The FreeBSD network status and Ethernet-toggle backend now feeds the shared
-network service. These FreeBSD paths have only been syntax-checked on Linux
-and still need a build and hardware validation on the preserved FreeBSD
-machine. The Wi-Fi page's scan, profile, and connection operations remain to
-be adapted to its shared UI model.
+network service. The Wi-Fi scan, saved-profile, connect, and forget commands
+are also adapted to the shared Wi-Fi page model. These FreeBSD paths have only
+been syntax-checked on Linux and still need a build and hardware validation on
+the preserved FreeBSD machine.
 
 ## 05 — Make the session reliable
 
