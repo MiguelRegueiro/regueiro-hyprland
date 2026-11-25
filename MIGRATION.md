@@ -20,20 +20,22 @@ reviewable changes. Do not merge the old FreeBSD UI wholesale.
 
 ## 03 — Separate Linux-specific services
 
-- [ ] Introduce platform and capability detection.
-- [ ] Isolate networking, battery, brightness, and power implementations.
-- [ ] Remove unconditional Linux-only QML imports.
-- [ ] Isolate systemd-specific service management.
+- [x] Introduce platform and capability detection.
+- [x] Isolate networking, battery, brightness, and power implementations.
+- [x] Remove unconditional Linux-only QML imports and direct Linux command/path use from shared UI.
+- [x] Isolate systemd-specific service management.
 
 Progress: `PlatformService` detects Linux/FreeBSD and advertises implemented
-adapters. Linux networking, brightness, battery, and power-profile
-implementations now live under `platforms/linux/` and load through shared
-service contracts. Fcitx and Bluetooth commands also live in the Linux
-platform package. Linux power and systemd session-service operations now go
-through platform commands. CPU and memory collection also uses a Linux
-platform command behind the shared system-details service. The installer
-deploys those backends. Hyprland idle policy and external-drive handling still
-need to be separated; the stage remains open.
+adapters. Linux networking, Wi-Fi, Bluetooth, brightness, battery,
+power-profile, external-drive, lock-status, and system-statistics operations
+now live under `platforms/linux/` and load or run through shared service
+contracts. Fcitx, power, and systemd session-service operations also go through
+Linux platform commands. Linux-only QML imports and direct Linux paths and
+commands have been removed from the shared UI. The installer deploys the Linux
+adapters, and the live CachyOS/Hyprland configuration has been reloaded after
+the changes. Other operating systems currently report unavailable capabilities
+until their adapters are implemented in Stage 04; this does not claim Linux
+backends already work on FreeBSD.
 
 ## 04 — Port FreeBSD functionality incrementally
 
