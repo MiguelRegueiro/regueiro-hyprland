@@ -461,6 +461,7 @@ FocusScope {
                             opacity: root.wifiPageOpen ? 1 : 0
                             menuOpen: root.wifiPageOpen
                             wifiService: wifiService
+                            platformService: root.platformService
                             popupSurfaceOriginX: root.popupSurfaceOriginX
                             popupSurfaceOriginY: root.popupSurfaceOriginY
                             targetScreen: root.targetScreen

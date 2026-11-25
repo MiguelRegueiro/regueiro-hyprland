@@ -12,6 +12,7 @@ FocusScope {
     property string connectedSsid: wifiCtrl.connectedSsid
     property bool needsFocus: wifiCtrl.needsFocus
     required property var wifiService
+    required property var platformService
     required property real popupSurfaceOriginX
     required property real popupSurfaceOriginY
     required property var targetScreen
@@ -37,6 +38,7 @@ FocusScope {
         id: wifiCtrl
 
         wifiService: root.wifiService
+        platformService: root.platformService
     }
 
     Timer {

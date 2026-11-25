@@ -1,16 +1,15 @@
 import QtQuick
-import Quickshell.Networking
 
 Item {
     id: controller
 
-    // Kept as part of the page boundary while the controller moves to the
-    // native Networking model. The dashboard still supplies this service.
     required property var wifiService
-    readonly property var wifiDevice: findWifiDevice()
-    readonly property bool wifiOn: Networking.wifiEnabled
-    readonly property var networks: wifiDevice ? wifiDevice.networks : null
-    readonly property var connectedNetwork: findConnectedNetwork()
+    required property var platformService
+    readonly property bool wifiAdapterAvailable: platformService.hasWifiAdapter && wifiBackend.status === Loader.Ready
+    readonly property var wifiDevice: wifiAdapterAvailable ? wifiBackend.item["wifiDevice"] : null
+    readonly property bool wifiOn: wifiAdapterAvailable && wifiBackend.item["wifiEnabled"]
+    readonly property var networks: wifiAdapterAvailable ? wifiBackend.item["networks"] : null
+    readonly property var connectedNetwork: wifiAdapterAvailable ? wifiBackend.item["connectedNetwork"] : null
     readonly property string connectedSsid: connectedNetwork ? connectedNetwork.name : ""
 
     property bool needsFocus: false
@@ -36,41 +35,19 @@ Item {
     onMenuOpenChanged: syncScanner()
     onWifiDeviceChanged: syncScanner()
 
-    function findWifiDevice() {
-        const devices = Networking.devices.values;
-        for (let i = 0; i < devices.length; ++i) {
-            if (devices[i].type === DeviceType.Wifi)
-                return devices[i];
-        }
-        return null;
-    }
-
-    function findConnectedNetwork() {
-        const device = wifiDevice;
-        if (!device)
-            return null;
-
-        const available = device.networks.values;
-        for (let i = 0; i < available.length; ++i) {
-            if (available[i].connected)
-                return available[i];
-        }
-        return null;
-    }
-
     function networkFor(networkOrSsid) {
         if (networkOrSsid && typeof networkOrSsid !== "string")
             return networkOrSsid;
 
         const wanted = (networkOrSsid || "").trim();
-        const device = wifiDevice;
-        if (!device || wanted === "")
+        const available = networks;
+        if (!available || wanted === "")
             return null;
 
-        const available = device.networks.values;
-        for (let i = 0; i < available.length; ++i) {
-            if (available[i].name === wanted)
-                return available[i];
+        const values = available.values;
+        for (let i = 0; i < values.length; ++i) {
+            if (values[i].name === wanted)
+                return values[i];
         }
         return null;
     }
@@ -86,7 +63,8 @@ Item {
     }
 
     function toggle() {
-        Networking.wifiEnabled = !Networking.wifiEnabled;
+        if (wifiAdapterAvailable)
+            wifiBackend.item["toggleWifi"]();
     }
 
     function onMenuOpen(isOpen) {
@@ -96,19 +74,17 @@ Item {
     function securityText(networkOrSecurity) {
         const security = networkOrSecurity && typeof networkOrSecurity !== "number" && typeof networkOrSecurity !== "string"
             ? networkOrSecurity.security : networkOrSecurity;
-        return typeof security === "string" ? security : WifiSecurityType.toString(security);
+        return wifiAdapterAvailable ? wifiBackend.item["securityText"](security) : String(security || "");
     }
 
     function isSecureNetwork(networkOrSecurity) {
         const security = networkOrSecurity && typeof networkOrSecurity !== "number" && typeof networkOrSecurity !== "string"
             ? networkOrSecurity.security : networkOrSecurity;
-        return security !== WifiSecurityType.Open;
+        return !wifiAdapterAvailable || !wifiBackend.item["isOpen"](security);
     }
 
     function isPskNetwork(network) {
-        return network && (network.security === WifiSecurityType.WpaPsk
-            || network.security === WifiSecurityType.Wpa2Psk
-            || network.security === WifiSecurityType.Sae);
+        return network && wifiAdapterAvailable && wifiBackend.item["isPsk"](network.security);
     }
 
     function hasSavedProfile(networkOrSsid) {
@@ -264,12 +240,13 @@ Item {
         const mode = connectMode;
         connecting = false;
 
-        if (reason === ConnectionFailReason.NoSecrets && mode === "saved") {
+        const kind = wifiAdapterAvailable ? wifiBackend.item["failureKind"](reason) : "other";
+        if (kind === "no-secrets" && mode === "saved") {
             openPasswordPrompt(network);
             connectError = "Saved password was rejected. Enter it again.";
             return;
         }
-        if (reason === ConnectionFailReason.NoSecrets && mode === "password") {
+        if (kind === "no-secrets" && mode === "password") {
             connectError = "Password rejected. Try again.";
             passwordFocusRequested();
             return;
@@ -283,11 +260,14 @@ Item {
     }
 
     function _failureText(reason) {
-        if (reason === ConnectionFailReason.WifiNetworkLost)
+        if (!wifiAdapterAvailable)
+            return "Could not connect to this network";
+        const kind = wifiBackend.item["failureKind"](reason);
+        if (kind === "network-lost")
             return "Network is no longer available";
-        if (reason === ConnectionFailReason.WifiAuthTimeout)
+        if (kind === "auth-timeout")
             return "Connection timed out";
-        if (reason === ConnectionFailReason.WifiClientDisconnected)
+        if (kind === "client-disconnected")
             return "Wi-Fi disconnected while connecting";
         return "Could not connect to this network";
     }
@@ -305,8 +285,14 @@ Item {
     }
 
     function syncScanner() {
-        if (wifiDevice)
-            wifiDevice.scannerEnabled = menuOpen;
+        if (wifiAdapterAvailable)
+            wifiBackend.item["setScannerEnabled"](menuOpen);
+    }
+
+    Loader {
+        id: wifiBackend
+        active: controller.platformService.hasWifiAdapter
+        source: active ? Qt.resolvedUrl("../../platforms/linux/WifiBackend.qml") : ""
     }
 
     Timer {

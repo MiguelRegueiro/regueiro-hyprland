@@ -9,6 +9,7 @@ QtObject {
 
     // Capabilities describe implemented adapters, not merely OS support.
     readonly property bool hasNetworkAdapter: isLinux
+    readonly property bool hasWifiAdapter: isLinux
     readonly property bool hasBrightnessAdapter: isLinux
     readonly property bool hasBatteryAdapter: isLinux
     readonly property bool hasPowerProfilesAdapter: isLinux
