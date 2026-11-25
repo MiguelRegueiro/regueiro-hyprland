@@ -20,7 +20,7 @@ fi
 
 is_legacy_link() {
     case "$1" in
-        *regueiro-hyprland/hypr/*|*regueiro-hyprland/hypridle/*|*regueiro-hyprland/quickshell/*|*regueiro-hyprland/fish/*|*regueiro-hyprland/starship/*|*regueiro-hyprland/fastfetch/*|*regueiro-hyprland/kitty/*|*regueiro-hyprland/fcitx5/*|*regueiro-hyprland/gtk/*|*regueiro-hyprland/xdg-portals/*|*regueiro-hyprland/flatpak/*|*regueiro-hyprland/nvim/*|*regueiro-hyprland/mimeclip/*|*regueiro-hyprland/fonts/*|*regueiro-hyprland/icons/*|*regueiro-hyprland/wallpapers/*|*regueiro-hyprland/easytts/*|*regueiro-hyprland/dictation/*)
+        *regueiro-hyprland/*)
             return 0
             ;;
         *) return 1 ;;
@@ -121,21 +121,13 @@ stow_packages() {
                 while [ "$parent" != "$HOME" ] && [ "$parent" != / ]; do
                     if [ -L "$parent" ] && [ ! -e "$parent" ]; then
                         link=$(readlink "$parent")
-                        case "$link" in
-                            *regueiro-hyprland/hypr/*|*regueiro-hyprland/hypridle/*|*regueiro-hyprland/quickshell/*|*regueiro-hyprland/fish/*|*regueiro-hyprland/starship/*|*regueiro-hyprland/fastfetch/*|*regueiro-hyprland/kitty/*|*regueiro-hyprland/fcitx5/*|*regueiro-hyprland/gtk/*|*regueiro-hyprland/xdg-portals/*|*regueiro-hyprland/flatpak/*|*regueiro-hyprland/nvim/*|*regueiro-hyprland/mimeclip/*)
-                                rm "$parent"
-                                ;;
-                        esac
+                        if is_legacy_link "$link"; then rm "$parent"; fi
                     fi
                     parent=$(dirname "$parent")
                 done
                 if [ -L "$target" ] && [ ! -e "$target" ]; then
                     link=$(readlink "$target")
-                    case "$link" in
-                        *regueiro-hyprland/hypr/*|*regueiro-hyprland/hypridle/*|*regueiro-hyprland/quickshell/*|*regueiro-hyprland/fish/*|*regueiro-hyprland/starship/*|*regueiro-hyprland/fastfetch/*|*regueiro-hyprland/kitty/*|*regueiro-hyprland/fcitx5/*|*regueiro-hyprland/gtk/*|*regueiro-hyprland/xdg-portals/*|*regueiro-hyprland/flatpak/*|*regueiro-hyprland/nvim/*|*regueiro-hyprland/mimeclip/*)
-                            rm "$target"
-                            ;;
-                    esac
+                    if is_legacy_link "$link"; then rm "$target"; fi
                 fi
             done
             # Keep machine-local application overrides that already exist as
@@ -175,5 +167,15 @@ if [ "$platform_package" = freebsd ]; then
     TRITON_DESKTOP_DIR="$repo_dir" "$HOME/.local/bin/triton-freebsd-build-hardware"
 fi
 stow_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
+
+# Remove dangling links left by files deleted in earlier refactors. Keep this
+# sweep limited to Stow-managed locations and the old checkout's unique path.
+for managed_root in "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share"; do
+    [ -d "$managed_root" ] || continue
+    find "$managed_root" -type l -lname '*regueiro-hyprland/*' -print |
+        while IFS= read -r stale_link; do
+            [ -e "$stale_link" ] || rm "$stale_link"
+        done
+done
 
 printf '%s\n' "Triton Desktop configuration linked. Log out and back in to start the session changes."
