@@ -5,6 +5,7 @@ import "../theme/Theme.js" as Theme
 Row {
     id: root
 
+    required property var platformService
     property int barHeight: 34
     property bool cpuMenuOpen: false
     property bool ramMenuOpen: false
@@ -13,7 +14,7 @@ Row {
     property alias cpuTriggerItem: cpuTrigger
     property alias ramTriggerItem: ramTrigger
     // ── CPU polling ────────────────────────────────────────────
-    // Read /proc/stat twice to compute delta
+    // Read platform CPU counters twice to compute the delta.
     property var _prevIdle: 0
     property var _prevTotal: 0
     property bool _cpuCountersReady: false
@@ -46,19 +47,20 @@ Row {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: cpuProc.running = true
+        onTriggered: if (root.platformService.systemDetailsCommandPath.length > 0) cpuProc.running = true
     }
 
     Process {
         id: cpuProc
 
-        command: ["awk", "NR==1{print $2,$3,$4,$5,$6,$7,$8,$9}", "/proc/stat"]
+        command: [root.platformService.systemDetailsCommandPath, "bar"]
 
         stdout: StdioCollector {
             id: cpuOut
 
             onStreamFinished: {
-                var parts = cpuOut.text.trim().split(/\s+/);
+                var cpuLine = cpuOut.text.split(/\r?\n/).find((line) => line.startsWith("cpu\t")) || "";
+                var parts = cpuLine.slice(4).trim().split(/\s+/);
                 if (parts.length < 8)
                     return ;
 
@@ -90,19 +92,20 @@ Row {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: ramProc.running = true
+        onTriggered: if (root.platformService.systemDetailsCommandPath.length > 0) ramProc.running = true
     }
 
     Process {
         id: ramProc
 
-        command: ["awk", "/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.1f\", (t-a)/1048576}", "/proc/meminfo"]
+        command: [root.platformService.systemDetailsCommandPath, "bar"]
 
         stdout: StdioCollector {
             id: ramOut
 
             onStreamFinished: {
-                var val = parseFloat(ramOut.text.trim());
+                var ramLine = ramOut.text.split(/\r?\n/).find((line) => line.startsWith("ram\t")) || "";
+                var val = parseFloat(ramLine.slice(4).trim());
                 if (!isNaN(val))
                     root.ramUsedGb = val;
 

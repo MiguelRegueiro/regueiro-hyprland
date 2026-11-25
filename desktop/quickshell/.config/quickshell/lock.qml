@@ -23,6 +23,7 @@ ShellRoot {
     LockStatus {
         id: lockStatus
         batteryService: batteryService
+        platformService: platformService
     }
 
     Component.onCompleted: {

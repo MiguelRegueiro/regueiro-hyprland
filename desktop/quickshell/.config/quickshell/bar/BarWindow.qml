@@ -14,6 +14,7 @@ PanelWindow {
     required property var batteryService
     required property var brightnessService
     required property var networkService
+    required property var platformService
     required property var inputService
     required property var externalDrivesService
     required property var sshSessionsService
@@ -167,6 +168,7 @@ PanelWindow {
             SystemStats {
                 id: systemStats
 
+                platformService: bar.platformService
                 barHeight: Theme.barHeight
                 cpuMenuOpen: bar.cpuStatsOpen
                 ramMenuOpen: bar.ramStatsOpen

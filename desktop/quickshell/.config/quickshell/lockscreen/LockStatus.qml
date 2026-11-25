@@ -5,6 +5,7 @@ import Quickshell.Io
 Item {
     id: root
     required property var batteryService
+    required property var platformService
     property int volume: -1
     property bool muted: false
     property int brightness: -1
@@ -46,7 +47,7 @@ Item {
     }
     Process {
         id: poll
-        command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || echo unavailable; for dev in /sys/class/backlight/*; do if [[ -r $dev/brightness && -r $dev/max_brightness ]]; then read -r b < \"$dev/brightness\"; read -r m < \"$dev/max_brightness\"; if ((m > 0)); then echo $(((b * 100 + m / 2) / m)); exit; fi; fi; done; echo -1"]
+        command: [root.platformService.systemDetailsCommandPath, "lock"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n");

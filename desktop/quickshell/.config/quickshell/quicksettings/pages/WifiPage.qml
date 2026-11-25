@@ -11,7 +11,6 @@ FocusScope {
     property bool wifiOn: wifiCtrl.wifiOn
     property string connectedSsid: wifiCtrl.connectedSsid
     property bool needsFocus: wifiCtrl.needsFocus
-    required property var wifiService
     required property var platformService
     required property real popupSurfaceOriginX
     required property real popupSurfaceOriginY
@@ -37,7 +36,6 @@ FocusScope {
     WifiController {
         id: wifiCtrl
 
-        wifiService: root.wifiService
         platformService: root.platformService
     }
 

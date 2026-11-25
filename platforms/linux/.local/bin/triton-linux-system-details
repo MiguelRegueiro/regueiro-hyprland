@@ -26,8 +26,25 @@ case "${1:-}" in
         printf 'top\n'
         ps -eo rss,pcpu,pid,user,comm --no-headers --sort=-rss | head -5
         ;;
+    bar)
+        awk '/^cpu / { printf "cpu\t%s %s %s %s %s %s %s %s\n", $2, $3, $4, $5, $6, $7, $8, $9 }' /proc/stat
+        awk '/MemTotal:/ { total=$2 } /MemAvailable:/ { available=$2 } END { printf "ram\t%.1f\n", (total-available)/1048576 }' /proc/meminfo
+        ;;
+    lock)
+        wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || echo unavailable
+        for dev in /sys/class/backlight/*; do
+            [ -r "$dev/brightness" ] && [ -r "$dev/max_brightness" ] || continue
+            read -r brightness < "$dev/brightness"
+            read -r maximum < "$dev/max_brightness"
+            if [ "$maximum" -gt 0 ] 2>/dev/null; then
+                printf '%s\n' "$(( (brightness * 100 + maximum / 2) / maximum ))"
+                exit 0
+            fi
+        done
+        printf '%s\n' -1
+        ;;
     *)
-        printf 'Usage: %s {cpu|ram}\n' "${0##*/}" >&2
+        printf 'Usage: %s {cpu|ram|bar|lock}\n' "${0##*/}" >&2
         exit 2
         ;;
 esac

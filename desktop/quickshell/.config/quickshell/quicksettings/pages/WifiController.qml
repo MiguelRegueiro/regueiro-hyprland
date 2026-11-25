@@ -3,7 +3,6 @@ import QtQuick
 Item {
     id: controller
 
-    required property var wifiService
     required property var platformService
     readonly property bool wifiAdapterAvailable: platformService.hasWifiAdapter && wifiBackend.status === Loader.Ready
     readonly property var wifiDevice: wifiAdapterAvailable ? wifiBackend.item["wifiDevice"] : null

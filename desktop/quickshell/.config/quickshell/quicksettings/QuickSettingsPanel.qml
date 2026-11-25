@@ -460,7 +460,6 @@ FocusScope {
                             x: root.wifiPageOpen ? 0 : (root.bluetoothPageOpen ? -parent.width - 20 : parent.width + 20)
                             opacity: root.wifiPageOpen ? 1 : 0
                             menuOpen: root.wifiPageOpen
-                            wifiService: wifiService
                             platformService: root.platformService
                             popupSurfaceOriginX: root.popupSurfaceOriginX
                             popupSurfaceOriginY: root.popupSurfaceOriginY
@@ -555,10 +554,6 @@ FocusScope {
             shadowHorizontalOffset: 0
             blurMax: 48
         }
-    }
-
-    Services.WifiConnectionService {
-        id: wifiService
     }
 
     states: State {

@@ -863,6 +863,7 @@ ShellRoot {
                 batteryService: batteryServiceState
                 brightnessService: brightnessServiceState
                 networkService: networkServiceState
+                platformService: platformServiceState
                 inputService: inputServiceState
                 externalDrivesService: externalDrivesServiceState
                 sshSessionsService: sshSessionsServiceState
