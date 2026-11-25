@@ -52,7 +52,8 @@ The FreeBSD network status and Ethernet-toggle backend now feeds the shared
 network service. The Wi-Fi scan, saved-profile, connect, and forget commands
 are also adapted to the shared Wi-Fi page model. These FreeBSD paths have only
 been syntax-checked on Linux and still need a build and hardware validation on
-the preserved FreeBSD machine.
+the preserved FreeBSD machine. The FreeBSD Bluetooth status, power, device
+connection, and settings commands now use the shared Bluetooth page.
 
 ## 05 — Make the session reliable
 

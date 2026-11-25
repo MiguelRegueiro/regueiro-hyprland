@@ -433,6 +433,10 @@ Item {
                 cursorShape: Qt.ArrowCursor
                 hoverEnabled: true
                 onClicked: {
+                    if (root.platformService.isFreeBSD)
+                        searchProc.command = [root.platformService.bluetoothCommandPath, "settings"];
+                    else
+                        searchProc.command = ["blueman-manager"];
                     searchProc.running = true;
                 }
             }
@@ -493,7 +497,8 @@ Item {
     Process {
         id: pollProc
 
-        command: [root.platformService.bluetoothCommandPath, "status"]
+        command: root.platformService.bluetoothCommandPath.length > 0
+            ? [root.platformService.bluetoothCommandPath, "status"] : ["true"]
 
         stdout: StdioCollector {
             id: pollData
@@ -534,7 +539,7 @@ Item {
     Process {
         id: searchProc
 
-        command: ["blueman-manager"]
+        command: ["true"]
     }
 
     Process {
