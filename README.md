@@ -168,11 +168,13 @@ It currently lists paired devices and lets you connect/disconnect them inline fr
 ### Clipboard history
 
 Clipboard history is handled by [`mimeclip`](https://github.com/MiguelRegueiro/mimeclip), not `cliphist`.
-Install `mimeclip` / `mimeclipd` separately. Hyprland starts one daemon directly
-per session, with no systemd dependency; it resolves either a system install or
-`~/.cargo/bin`. Do not start it globally for GNOME, which does not support the
-wlroots clipboard protocol MimeClip requires. A systemd user service remains an
-optional supervisor for installations that want one.
+Install `mimeclip` / `mimeclipd` separately. Hyprland starts a session-owned
+supervisor without requiring systemd or Linux-specific session tools. It
+resolves either a system install or `~/.cargo/bin`, avoids duplicate
+supervisors, and retries daemon exits with bounded backoff. Do not start it
+globally for GNOME, which does not support the wlroots clipboard protocol
+MimeClip requires. A systemd user service remains an optional supervisor for
+installations that want one.
 
 The `mimeclip` Stow package keeps history at 500 entries and 256 MiB of stored
 payload data. The root `./install.sh` links it with the rest of the desktop;

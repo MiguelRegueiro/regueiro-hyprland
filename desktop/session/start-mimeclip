@@ -1,30 +1,62 @@
 #!/bin/sh
-# MimeClip is session-owned; systemd is optional, not required.
+set -u
+
+# MimeClip is session-owned; neither systemd nor Linux-specific setsid is
+# required. The pid directory prevents duplicate supervisors when Hyprland's
+# delayed autostart commands race or this launcher is invoked again.
+if [ "${1:-}" = "--supervise" ]; then
+    daemon=$2
+    log_file=$3
+    lock_dir=$4
+    trap 'rm -rf "$lock_dir"' 0
+    trap 'exit 0' HUP INT TERM
+    delay=2
+    while :; do
+        "$daemon" >>"$log_file" 2>&1
+        sleep "$delay"
+        if [ "$delay" -lt 30 ]; then
+            delay=$((delay * 2))
+            [ "$delay" -le 30 ] || delay=30
+        fi
+    done
+fi
 
 daemon=$(command -v mimeclipd 2>/dev/null || true)
 if [ -z "$daemon" ] || [ ! -x "$daemon" ]; then
     daemon="$HOME/.cargo/bin/mimeclipd"
 fi
-
 [ -x "$daemon" ] || exit 0
 
 client="$(dirname "$daemon")/mimeclip"
 if [ ! -x "$client" ]; then
     client=$(command -v mimeclip 2>/dev/null || true)
 fi
-
 if [ -n "$client" ] && [ -x "$client" ] && "$client" ping >/dev/null 2>&1; then
     exit 0
 fi
 
-# The compositor may reap its direct child after the launcher returns. Give
-# the daemon its own session and restart it if its Wayland connection drops,
-# without requiring a systemd user service.
+runtime_dir=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}
+lock_dir=$runtime_dir/triton-mimeclip
 log_file="${XDG_CACHE_HOME:-$HOME/.cache}/mimeclipd.log"
 mkdir -p "$(dirname "$log_file")"
-exec setsid -f sh -c '
-    while :; do
-        "$1" >>"$2" 2>&1
-        sleep 2
+
+if ! mkdir "$lock_dir" 2>/dev/null; then
+    # Allow the creator time to publish its pid before deciding the lock is
+    # stale (for example, after a forced session termination).
+    attempt=0
+    while [ "$attempt" -lt 10 ] && [ ! -s "$lock_dir/pid" ]; do
+        sleep 0.1
+        attempt=$((attempt + 1))
     done
-' sh "$daemon" "$log_file"
+    if [ -s "$lock_dir/pid" ] && kill -0 "$(cat "$lock_dir/pid")" 2>/dev/null; then
+        exit 0
+    fi
+    rm -rf "$lock_dir"
+    mkdir "$lock_dir" 2>/dev/null || exit 0
+fi
+
+nohup "$0" --supervise "$daemon" "$log_file" "$lock_dir" \
+    </dev/null >/dev/null 2>&1 &
+supervisor_pid=$!
+printf '%s\n' "$supervisor_pid" >"$lock_dir/pid"
+exit 0
