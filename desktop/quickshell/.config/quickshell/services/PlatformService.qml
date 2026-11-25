@@ -14,6 +14,7 @@ QtObject {
     readonly property bool hasBatteryAdapter: isLinux || isFreeBSD
     readonly property bool hasPowerProfilesAdapter: isLinux || isFreeBSD
     readonly property bool hasPowerPolicyAdapter: isLinux
+    readonly property bool hasSuspendAdapter: isLinux
     readonly property string systemPowerCommandPath: isLinux
         ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-linux-power"
         : (isFreeBSD ? (Quickshell.env("HOME") || "") + "/.local/bin/triton-freebsd-power" : "")

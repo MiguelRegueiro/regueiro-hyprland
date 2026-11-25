@@ -19,6 +19,7 @@ Item {
     required property var wifiPage
     required property var bluetoothPage
     required property bool hasPerformanceProfile
+    required property bool suspendAvailable
     required property string powerMode
     required property real viewportHeight
     property Item popupParent: root
@@ -631,6 +632,7 @@ Item {
             surfaceX: root.powerMenuSurfaceX
             surfaceY: root.powerMenuSurfaceY
             targetScreen: root.targetScreen
+            suspendAvailable: root.suspendAvailable
             open: root.powerMenuOpen
             onActionTriggered: root.powerMenuOpen = false
             onActionRequested: actionId => {

@@ -11,12 +11,13 @@ PanelWindow {
     required property var targetScreen
     property bool active: true
     property bool open: false
+    property bool suspendAvailable: true
     property string mode: "menu"
     property string actionId: ""
     property string busyAction: ""
     property int selectedIndex: 0
     property int selectedConfirmIndex: 0
-    readonly property var actions: [{
+    readonly property var allActions: [{
         "actionId": "lock",
         "label": "Lock",
         "icon": "\uf023",
@@ -47,6 +48,8 @@ PanelWindow {
         "iconOffsetX": 0,
         "iconPixelSize": 21
     }]
+    readonly property var actions: suspendAvailable
+        ? allActions : allActions.filter(action => action.actionId !== "suspend")
     readonly property int pad: 14
     readonly property int itemGap: 8
     readonly property int itemW: Math.max(58, Math.min(92, Math.floor((Math.max(360, root.width) - 48 - root.pad * 2 - root.itemGap * (root.actions.length - 1)) / root.actions.length)))

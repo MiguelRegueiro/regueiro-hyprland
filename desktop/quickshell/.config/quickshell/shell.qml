@@ -151,6 +151,8 @@ ShellRoot {
     function runPowerAction(actionId) {
         if (powerBusyAction !== "")
             return;
+        if (actionId === "suspend" && !platformServiceState.hasSuspendAdapter)
+            return;
         if ((actionId === "reboot" || actionId === "shutdown")
                 && platformServiceState.systemPowerCommandPath.length === 0)
             return;
@@ -1109,6 +1111,7 @@ ShellRoot {
                 targetScreen: modelData
                 active: activeScreen
                 open: root.powerMenuVisible && activeScreen
+                suspendAvailable: platformServiceState.hasSuspendAdapter
                 mode: root.powerMenuMode
                 actionId: root.powerMenuAction
                 busyAction: root.powerBusyAction

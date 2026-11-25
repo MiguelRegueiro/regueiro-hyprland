@@ -410,6 +410,7 @@ FocusScope {
                             bluetoothPage: bluetoothPageView
                             powerMode: root.powerMode
                             hasPerformanceProfile: root.powerProfileService.hasPerformanceProfile
+                            suspendAvailable: root.platformService.hasSuspendAdapter
                             onWifiPageRequested: {
                                 root.audioOutputPopupOpen = false;
                                 root.wifiPageOpen = true;

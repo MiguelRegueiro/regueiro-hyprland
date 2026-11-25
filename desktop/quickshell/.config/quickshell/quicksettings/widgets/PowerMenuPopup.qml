@@ -7,6 +7,7 @@ Item {
     id: root
 
     property bool open: false
+    property bool suspendAvailable: true
     required property real surfaceX
     required property real surfaceY
     required property var targetScreen
@@ -14,7 +15,7 @@ Item {
     readonly property color rowBgHover: QS.cardBgHover
     readonly property color rowBorder: QS.cardBorder
     readonly property color rowBorderHover: QS.cardBorderHover
-    readonly property var actions: [
+    readonly property var allActions: [
         {
             "actionId": "suspend",
             "label": "Suspend",
@@ -37,6 +38,8 @@ Item {
             "iconPixelSize": 15
         }
     ]
+    readonly property var actions: suspendAvailable
+        ? allActions : allActions.filter(action => action.actionId !== "suspend")
 
     signal actionTriggered
     signal actionRequested(string actionId)

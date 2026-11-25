@@ -61,8 +61,9 @@ helpers. The shared power-profile selector now uses the FreeBSD `powerd` and
 EPP helper. Shared reboot and poweroff actions now resolve through the
 platform service; FreeBSD uses a dedicated non-interactive `doas shutdown`
 adapter. Linux-only idle, lock, suspend-timer, and power-button policy controls
-are now explicitly unavailable on FreeBSD until that backend is ported.
-Suspend remains unvalidated and is still part of hardware validation.
+are now explicitly unavailable on FreeBSD until that backend is ported, and
+Suspend is omitted from its power menus until a FreeBSD suspend adapter is
+validated.
 
 ## 05 — Make the session reliable
 
