@@ -18,7 +18,8 @@ PanelWindow {
     property bool carouselInitialized: false
     property bool carouselVisible: false
     property bool carouselMotionEnabled: false
-    readonly property string wallpaperDir: Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers"
+    readonly property string desktopRoot: Quickshell.env("TRITON_DESKTOP_DIR") || (Quickshell.env("HOME") + "/regueiro-hyprland")
+    readonly property string wallpaperDir: desktopRoot + "/desktop/assets/wallpapers"
     property var previewSources: ({})
 
     // Warm the disk cache while hidden. Periodic metadata checks also catch
@@ -71,6 +72,13 @@ PanelWindow {
         return 0;
     }
 
+    function migrateWallpaperPath(path) {
+        const legacyDir = Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/";
+        if (path.startsWith(legacyDir))
+            return wallpaperDir + "/" + path.slice(legacyDir.length);
+        return path;
+    }
+
     function selectAdjacent(direction) {
         if (wallpaperFiles.count === 0)
             return;
@@ -113,7 +121,7 @@ PanelWindow {
         watchChanges: true
         onLoaded: {
             root.carouselInitialized = false;
-            root.currentWallpaper = this.text().trim();
+            root.currentWallpaper = root.migrateWallpaperPath(this.text().trim());
             root.selectedIndex = root.indexForPath(root.currentWallpaper);
             carouselSettleTimer.restart();
         }

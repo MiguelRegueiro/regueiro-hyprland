@@ -18,7 +18,8 @@ FocusScope {
     property real revealProgress: revealed ? 1 : 0
     property bool revealed: false
     readonly property real uiScale: Math.min(1, width / 800, height / 650)
-    property string wallpaperPath: Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/wallpaper5.png"
+    readonly property string desktopRoot: Quickshell.env("TRITON_DESKTOP_DIR") || (Quickshell.env("HOME") + "/regueiro-hyprland")
+    property string wallpaperPath: desktopRoot + "/desktop/assets/wallpapers/wallpaper5.png"
 
     signal passwordEdited(string text)
     signal passwordVisibilityRequested(bool visible)
@@ -95,8 +96,18 @@ FocusScope {
         watchChanges: true
         onLoaded: {
             const path = wallpaperState.text().trim();
-            if (path.length > 0)
+            if (path.length === 0)
+                return;
+
+            // Preserve wallpaper selections written by the old repository
+            // layout while resolving them to the moved assets directory.
+            const legacyWallpaperDir = Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/";
+            if (path.startsWith(legacyWallpaperDir)) {
+                const filename = path.slice(legacyWallpaperDir.length);
+                root.wallpaperPath = root.desktopRoot + "/desktop/assets/wallpapers/" + filename;
+            } else {
                 root.wallpaperPath = path;
+            }
         }
     }
     Image {
@@ -105,7 +116,7 @@ FocusScope {
         anchors.fill: parent
         anchors.margins: -96
         fillMode: Image.PreserveAspectCrop
-        source: "file://" + root.wallpaperPath
+        source: root.wallpaperPath
         visible: false
     }
     MultiEffect {

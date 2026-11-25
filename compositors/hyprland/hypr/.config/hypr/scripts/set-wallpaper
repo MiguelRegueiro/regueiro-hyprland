@@ -1,20 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-wallpaper=${1:?usage: set-wallpaper /absolute/path/to/image}
-repo="$HOME/regueiro-hyprland"
-wallpaper_dir="$repo/wallpapers"
-config="$HOME/.config/hypr/hyprpaper.conf"
+action=${1:?usage: set-wallpaper /absolute/path/to/image | restore}
+script=$(readlink -f -- "${BASH_SOURCE[0]}")
+script_dir=$(dirname -- "$script")
+repo_root=$(cd "$script_dir/../../../../../../" && pwd)
+wallpaper_dir="$repo_root/desktop/assets/wallpapers"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/regueiro-hyprland"
 state="$state_dir/wallpaper"
+
+if [[ "$action" == restore ]]; then
+    wallpaper=$(cat "$state" 2>/dev/null || true)
+    case "$wallpaper" in
+        "$HOME"/regueiro-hyprland/wallpapers/*)
+            wallpaper="$wallpaper_dir/${wallpaper##*/}"
+            ;;
+    esac
+    if [[ ! -f "$wallpaper" ]]; then
+        wallpaper="$wallpaper_dir/wallpaper5.png"
+    fi
+else
+    wallpaper=$action
+fi
 
 wallpaper=$(realpath -e -- "$wallpaper")
 case "$wallpaper" in
     "$wallpaper_dir"/*) ;;
     *) printf 'Wallpaper must be inside %s\n' "$wallpaper_dir" >&2; exit 2 ;;
 esac
-
-config_wallpaper="~/regueiro-hyprland/wallpapers/${wallpaper##*/}"
 
 case "${wallpaper##*.}" in
     png|PNG|jpg|JPG|jpeg|JPEG|webp|WEBP) ;;
@@ -25,15 +38,6 @@ mkdir -p -- "$state_dir"
 exec 9>"$state_dir/wallpaper.lock"
 flock 9
 printf '%s\n' "$wallpaper" > "$state"
-cat > "$config" <<EOF
-preload = $config_wallpaper
-wallpaper {
-    monitor =
-    path = $config_wallpaper
-}
-
-splash = false
-EOF
 
 if ! hyprctl hyprpaper listactive >/dev/null 2>&1; then
     hyprpaper 9>&- >/dev/null 2>&1 &
