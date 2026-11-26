@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 qs_bin="${QS_BIN:-$(command -v qs 2>/dev/null || true)}"
 backend_script="${INPUT_BACKEND_SCRIPT:-$HOME/.config/hypr/scripts/fcitx-toggle.sh}"

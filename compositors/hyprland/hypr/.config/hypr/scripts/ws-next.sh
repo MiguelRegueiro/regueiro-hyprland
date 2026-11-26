@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 cur="$(hyprctl activeworkspace -j | jq '.id')"
 
