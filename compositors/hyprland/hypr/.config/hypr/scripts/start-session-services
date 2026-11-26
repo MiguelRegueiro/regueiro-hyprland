@@ -32,7 +32,7 @@ if [ -z "$session_pid" ]; then
     exit 1
 fi
 
-session_runner="$HOME/.config/hypr/scripts/run-session-command"
+session_runner="$HOME/.local/bin/triton-run-session-command"
 if [ -x "$session_runner" ]; then
     persist=$(command -v wl-clip-persist 2>/dev/null || true)
     persist=${persist:-"$HOME/.cargo/bin/wl-clip-persist"}

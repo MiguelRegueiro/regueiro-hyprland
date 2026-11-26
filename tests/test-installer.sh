@@ -23,7 +23,8 @@ for relative in \
     .config/hypr/scripts/run-session-command \
     .config/hypr/scripts/start-session-quickshell \
     .config/hypr/scripts/start-session-services \
-    .config/hypr/scripts/powerctl
+    .config/hypr/scripts/powerctl \
+    .local/bin/triton-run-session-command
 do
     target=$fresh_home/$relative
     if [ ! -L "$target" ] || [ ! -e "$target" ]; then
