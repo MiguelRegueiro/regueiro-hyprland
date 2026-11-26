@@ -21,6 +21,11 @@ case "$action" in
     *) echo "Usage: ./install.sh [install|update|setup|uninstall|packages]" >&2; exit 2 ;;
 esac
 
+if [ "$(id -u)" -eq 0 ]; then
+    echo "Do not run the Triton Desktop installer as root; it installs user configuration." >&2
+    exit 1
+fi
+
 is_legacy_link() {
     case "$1" in
         *regueiro-hyprland/*|*triton-desktop/platforms/linux/*|*triton-desktop/platforms/freebsd/*)
@@ -124,6 +129,63 @@ if ! command -v stow >/dev/null 2>&1; then
     exit 1
 fi
 
+stow_check_package() {
+    package_dir=$1
+    package=$2
+    package_root=$repo_dir/$package_dir/$package
+    [ -d "$package_root" ] || return 0
+    case "$package_dir/$package" in
+        compositors/hyprland/hypr)
+            stow --simulate --no-folding --ignore='^\.local/share/applications/elio\.desktop$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" >/dev/null 2>&1 || {
+                    echo "Stow preflight failed for $package_dir/$package." >&2; return 1;
+                }
+            ;;
+        desktop/quickshell)
+            stow --simulate --no-folding --ignore='notification-times\.ini$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" >/dev/null 2>&1 || {
+                    echo "Stow preflight failed for $package_dir/$package." >&2; return 1;
+                }
+            ;;
+        configs/fcitx5)
+            stow --simulate --no-folding --ignore='cached_layouts$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" >/dev/null 2>&1 || {
+                    echo "Stow preflight failed for $package_dir/$package." >&2; return 1;
+                }
+            ;;
+        configs/flatpak)
+            stow --simulate --no-folding --ignore='^\.local/share/flatpak/overrides/app\.zen_browser\.zen$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" >/dev/null 2>&1 || {
+                    echo "Stow preflight failed for $package_dir/$package." >&2; return 1;
+                }
+            ;;
+        *)
+            stow --simulate --no-folding --dir="$repo_dir/$package_dir" --target="$HOME" "$package" >/dev/null 2>&1 || {
+                echo "Stow preflight failed for $package_dir/$package." >&2; return 1;
+            }
+            ;;
+    esac
+}
+
+for package in hypr hypridle; do stow_check_package compositors/hyprland "$package"; done
+for package in quickshell scripts; do stow_check_package desktop "$package"; done
+stow_check_package desktop/platforms "$platform_package"
+for package in fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak; do
+    stow_check_package configs "$package"
+done
+
+hardware_tmp=
+cleanup_hardware_tmp() {
+    [ -z "$hardware_tmp" ] || rm -f "$hardware_tmp"
+}
+trap cleanup_hardware_tmp EXIT
+trap 'exit 1' HUP INT TERM
+if [ "$platform_package" = freebsd ]; then
+    hardware_tmp=$(mktemp "${TMPDIR:-/tmp}/triton-hardware.XXXXXX")
+    TRITON_DESKTOP_DIR="$repo_dir" TRITON_HARDWARE_OUTPUT="$hardware_tmp" \
+        "$repo_dir/desktop/platforms/freebsd/.local/bin/triton-freebsd-build-hardware"
+fi
+
 stow_packages() {
     package_dir=$1
     shift
@@ -183,7 +245,7 @@ stow_packages desktop quickshell
 stow_packages desktop scripts
 stow_packages desktop/platforms "$platform_package"
 if [ "$platform_package" = freebsd ]; then
-    TRITON_DESKTOP_DIR="$repo_dir" "$HOME/.local/bin/triton-freebsd-build-hardware"
+    install -m 0755 "$hardware_tmp" "$HOME/.local/bin/triton-freebsd-hardware"
 fi
 stow_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
 

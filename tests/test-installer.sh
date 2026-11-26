@@ -160,6 +160,24 @@ for relative in .config/hypr/scripts/powerctl .config/quickshell/shell.qml; do
     fi
 done
 
+root_bin=$tmp_dir/root-bin
+mkdir -p "$root_bin"
+cat >"$root_bin/id" <<'EOF'
+#!/bin/sh
+[ "${1:-}" = -u ] || exit 2
+printf '%s\n' 0
+EOF
+chmod +x "$root_bin/id"
+if HOME=$setup_home PATH="$root_bin:/usr/bin:/bin" "$repo_dir/install.sh" >"$tmp_dir/root-install.log" 2>&1; then
+    echo "Installer unexpectedly allowed root execution." >&2
+    exit 1
+fi
+if ! grep -F 'Do not run the Triton Desktop installer as root' "$tmp_dir/root-install.log" >/dev/null; then
+    echo "Installer did not explain its root execution refusal." >&2
+    cat "$tmp_dir/root-install.log" >&2
+    exit 1
+fi
+
 "$repo_dir/tests/test-package-detection.sh"
 "$repo_dir/tests/test-package-ownership.sh"
 "$repo_dir/tests/test-platform-detection.sh"

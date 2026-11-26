@@ -2,6 +2,10 @@
 set -eu
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if [ "$(id -u)" -eq 0 ]; then
+    echo "Do not run the Triton Desktop uninstaller as root; it removes user configuration." >&2
+    exit 1
+fi
 remove_packages=no
 if [ "${1:-}" = --packages ]; then
     remove_packages=yes

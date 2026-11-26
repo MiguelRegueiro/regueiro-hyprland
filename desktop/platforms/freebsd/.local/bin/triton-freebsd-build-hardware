@@ -8,6 +8,7 @@ if [ -z "$repo_dir" ] || [ ! -f "$repo_dir/desktop/platforms/src/freebsd/triton-
 fi
 
 mkdir -p "$HOME/.local/bin"
+output=${TRITON_HARDWARE_OUTPUT:-$HOME/.local/bin/triton-freebsd-hardware}
 exec cc -O2 -pipe -std=c11 -Wall -Wextra -Werror \
-    -o "$HOME/.local/bin/triton-freebsd-hardware" \
+    -o "$output" \
     "$repo_dir/desktop/platforms/src/freebsd/triton-freebsd-hardware.c"
