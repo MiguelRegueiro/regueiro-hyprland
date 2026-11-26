@@ -98,7 +98,7 @@ print_readable_icon() {
         *.svg | *.SVG | *.svgz | *.SVGZ | *.png | *.PNG | *.xpm | *.XPM)
             candidate="$base/$dir/$name"
             if [ -r "$candidate" ]; then
-                readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate"
+                realpath "$candidate" 2>/dev/null || printf '%s\n' "$candidate"
                 return 0
             fi
             ;;
@@ -106,7 +106,7 @@ print_readable_icon() {
             for ext in svg svgz png xpm; do
                 candidate="$base/$dir/$name.$ext"
                 if [ -r "$candidate" ]; then
-                    readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate"
+                    realpath "$candidate" 2>/dev/null || printf '%s\n' "$candidate"
                     return 0
                 fi
             done
@@ -152,7 +152,7 @@ find_icon_in_theme() {
                 ;;
         esac
         if [ -n "$candidate" ] && [ -r "$candidate" ]; then
-            readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate"
+            realpath "$candidate" 2>/dev/null || printf '%s\n' "$candidate"
             return
         fi
     done
@@ -173,7 +173,7 @@ resolve_icon() {
     source_path="$2"
 
     if [ -n "$icon_name" ] && [ "${icon_name#/}" != "$icon_name" ] && [ -r "$icon_name" ]; then
-        readlink -f "$icon_name" 2>/dev/null || printf '%s\n' "$icon_name"
+        realpath "$icon_name" 2>/dev/null || printf '%s\n' "$icon_name"
         return
     fi
 
@@ -194,13 +194,13 @@ resolve_icon() {
     fi
 
     if [ -n "$source_path" ] && [ -r "$source_path" ]; then
-        readlink -f "$source_path" 2>/dev/null || printf '%s\n' "$source_path"
+        realpath "$source_path" 2>/dev/null || printf '%s\n' "$source_path"
     fi
 }
 
 rasterize_icon() {
     source_path="$1"
-    real_source="$(readlink -f "$source_path" 2>/dev/null || printf '%s' "$source_path")"
+    real_source="$(realpath "$source_path" 2>/dev/null || printf '%s' "$source_path")"
     if stat_data="$(stat -Lc '%s:%Y' "$real_source" 2>/dev/null)"; then
         :
     elif stat_data="$(stat -f '%z:%m' "$real_source" 2>/dev/null)"; then

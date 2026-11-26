@@ -31,7 +31,7 @@ start() {
     fi
     mkdir -p "$runtime_root"
     local script_path feature_root worker
-    script_path="$(readlink -f -- "$0")"
+        script_path="$(realpath "$0")"
     feature_root="$(cd -- "$(dirname -- "$script_path")" && pwd)"
     worker="$feature_root/worker.py"
     nohup python3 "$worker" >/dev/null 2>&1 &
