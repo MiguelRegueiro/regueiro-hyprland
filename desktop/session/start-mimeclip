@@ -37,6 +37,7 @@ if [ "${1:-}" = "--supervise" ]; then
             exit 0
         fi
 
+        started_at=$(date +%s)
         "$daemon" >>"$log_file" 2>&1 &
         daemon_pid=$!
         if [ -n "$session_pid" ]; then
@@ -47,6 +48,8 @@ if [ "${1:-}" = "--supervise" ]; then
             session_watch_pid=$!
         fi
         wait "$daemon_pid" || true
+        stopped_at=$(date +%s)
+        runtime=$((stopped_at - started_at))
         daemon_pid=
         if [ -n "$session_watch_pid" ]; then
             kill "$session_watch_pid" 2>/dev/null || true
@@ -57,6 +60,11 @@ if [ "${1:-}" = "--supervise" ]; then
             exit 0
         fi
 
+        # A daemon that stayed healthy for a while has recovered; don't keep
+        # imposing the maximum backoff after a later, isolated crash.
+        if [ "$runtime" -ge 60 ]; then
+            delay=2
+        fi
         if [ "$delay" -lt 30 ]; then
             delay=$((delay * 2))
             [ "$delay" -le 30 ] || delay=30
@@ -83,26 +91,37 @@ elif [ "$#" -gt 0 ]; then
     exit 2
 fi
 
-daemon=$(command -v mimeclipd 2>/dev/null || true)
-if [ -z "$daemon" ] || [ ! -x "$daemon" ]; then
-    daemon="$HOME/.cargo/bin/mimeclipd"
-fi
+resolver="$HOME/.local/bin/triton-mimeclip"
+[ -x "$resolver" ] || exit 0
+daemon=$("$resolver" resolve daemon 2>/dev/null || true)
 [ -x "$daemon" ] || exit 0
 
-client="$(dirname "$daemon")/mimeclip"
-if [ ! -x "$client" ]; then
-    client=$(command -v mimeclip 2>/dev/null || true)
-fi
-if [ -n "$client" ] && [ -x "$client" ] && "$client" ping >/dev/null 2>&1; then
+# Bound the health check even if the client is stuck waiting on a broken
+# daemon. The watcher only touches this short-lived child process.
+"$resolver" client ping >/dev/null 2>&1 &
+ping_pid=$!
+(
+    sleep 2
+    kill -TERM "$ping_pid" 2>/dev/null || exit 0
+    sleep 1
+    kill -KILL "$ping_pid" 2>/dev/null || true
+) &
+ping_timer=$!
+ping_status=0
+wait "$ping_pid" || ping_status=$?
+kill "$ping_timer" 2>/dev/null || true
+wait "$ping_timer" 2>/dev/null || true
+if [ "$ping_status" -eq 0 ]; then
     exit 0
 fi
 
+uid=$(id -u)
 runtime_dir=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}
-lock_dir=$runtime_dir/triton-mimeclip
+lock_dir=$runtime_dir/triton-mimeclip-$uid
 log_file="${XDG_CACHE_HOME:-$HOME/.cache}/mimeclipd.log"
 mkdir -p "$(dirname "$log_file")"
 
-if ! mkdir "$lock_dir" 2>/dev/null; then
+if ! mkdir -m 700 "$lock_dir" 2>/dev/null; then
     # Allow the creator time to publish its pid before deciding the lock is
     # stale (for example, after a forced session termination).
     attempt=0
@@ -113,8 +132,9 @@ if ! mkdir "$lock_dir" 2>/dev/null; then
     if [ -s "$lock_dir/pid" ] && kill -0 "$(cat "$lock_dir/pid")" 2>/dev/null; then
         exit 0
     fi
+    [ ! -L "$lock_dir" ] || exit 1
     rm -rf "$lock_dir"
-    mkdir "$lock_dir" 2>/dev/null || exit 0
+    mkdir -m 700 "$lock_dir" 2>/dev/null || exit 0
 fi
 
 nohup "$0" --supervise "$daemon" "$log_file" "$lock_dir" "$session_pid" \

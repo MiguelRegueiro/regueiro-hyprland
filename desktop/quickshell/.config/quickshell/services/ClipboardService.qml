@@ -14,8 +14,7 @@ Item {
     property var imagePreviewPending: ({})
     property var imagePreviewQueue: []
     property string imagePreviewCurrentId: ""
-    // Support the documented cargo install path, manual /usr/local installs, and PATH installs.
-    property string mimeclipLauncher: 'cmd="$HOME/.cargo/bin/mimeclip"; if [ ! -x "$cmd" ]; then if [ -x /usr/local/bin/mimeclip ]; then cmd=/usr/local/bin/mimeclip; else cmd="$(command -v mimeclip 2>/dev/null || true)"; fi; fi; if [ -z "$cmd" ] || [ ! -x "$cmd" ]; then echo "mimeclip not found in $HOME/.cargo/bin, /usr/local/bin, or PATH" >&2; exit 127; fi; exec "$cmd" "$@"'
+    property string mimeclipLauncher: 'exec "$HOME/.local/bin/triton-mimeclip" client "$@"'
 
     signal copyCompleted(bool success)
     signal deleteCompleted(bool success)
@@ -35,18 +34,15 @@ Item {
 
     function imagePreviewCommand(entryId) {
         const script = "set -euo pipefail\n"
-            + "cmd=\"$HOME/.cargo/bin/mimeclip\"\n"
-            + "if [ ! -x \"$cmd\" ]; then\n"
-            + "  if [ -x /usr/local/bin/mimeclip ]; then cmd=/usr/local/bin/mimeclip; else cmd=\"$(command -v mimeclip 2>/dev/null || true)\"; fi\n"
-            + "fi\n"
-            + "[ -n \"$cmd\" ] && [ -x \"$cmd\" ]\n"
+            + "cmd=\"$HOME/.local/bin/triton-mimeclip\"\n"
+            + "[ -x \"$cmd\" ]\n"
             + "cache_dir=\"$HOME/.cache/quickshell/clipboard-thumbnails\"\n"
             + "mkdir -p \"$cache_dir\"\n"
             + "target=\"$cache_dir/$1.png\"\n"
             + "if [ ! -s \"$target\" ]; then\n"
             + "  tmp=\"$target.tmp\"\n"
             + "  trap 'rm -f \"$tmp\"' EXIT\n"
-            + "  \"$cmd\" decode \"$1\" | jq -r '.[] | select(.mime_type | startswith(\"image/\")) | .data_b64' | head -n 1 | base64 -d | magick - -auto-orient -thumbnail '128x128^' -gravity center -extent 128x128 \"png:$tmp\"\n"
+            + "  \"$cmd\" client decode \"$1\" | jq -r '.[] | select(.mime_type | startswith(\"image/\")) | .data_b64' | head -n 1 | base64 -d | magick - -auto-orient -thumbnail '128x128^' -gravity center -extent 128x128 \"png:$tmp\"\n"
             + "  mv \"$tmp\" \"$target\"\n"
             + "fi\n"
             + "printf '%s' \"$target\"";

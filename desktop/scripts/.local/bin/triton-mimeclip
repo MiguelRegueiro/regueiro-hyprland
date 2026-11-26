@@ -1,0 +1,60 @@
+#!/bin/sh
+set -eu
+
+resolve() {
+    name=$1
+    # Prefer complete installations so the client and daemon come from the
+    # same prefix. Fall back to partial installs only after checking all
+    # standard prefixes.
+    system_bin=${TRITON_MIMECLIP_SYSTEM_BIN:-/usr/local/bin}
+    for directory in "$HOME/.cargo/bin" "$system_bin"; do
+        if [ -x "$directory/mimeclip" ] && [ -x "$directory/mimeclipd" ]; then
+            printf '%s\n' "$directory/$name"
+            return 0
+        fi
+    done
+    old_ifs=$IFS
+    IFS=:
+    for directory in $PATH; do
+        [ -n "$directory" ] || directory=.
+        if [ -x "$directory/mimeclip" ] && [ -x "$directory/mimeclipd" ]; then
+            printf '%s\n' "$directory/$name"
+            IFS=$old_ifs
+            return 0
+        fi
+    done
+    IFS=$old_ifs
+    for directory in "$HOME/.cargo/bin" "$system_bin"; do
+        [ -x "$directory/$name" ] && { printf '%s\n' "$directory/$name"; return 0; }
+    done
+    old_ifs=$IFS
+    IFS=:
+    for directory in $PATH; do
+        [ -n "$directory" ] || directory=.
+        if [ -x "$directory/$name" ]; then
+            printf '%s\n' "$directory/$name"
+            IFS=$old_ifs
+            return 0
+        fi
+    done
+    IFS=$old_ifs
+    return 1
+}
+
+case "${1:-}" in
+    resolve)
+        [ "$#" -eq 2 ] || exit 2
+        case "$2" in client|mimeclip) resolve mimeclip ;; daemon|mimeclipd) resolve mimeclipd ;; *) exit 2 ;; esac
+        ;;
+    client)
+        shift
+        client=$(resolve mimeclip) || { echo "mimeclip is not installed" >&2; exit 127; }
+        exec "$client" "$@"
+        ;;
+    daemon)
+        shift
+        daemon=$(resolve mimeclipd) || { echo "mimeclipd is not installed" >&2; exit 127; }
+        exec "$daemon" "$@"
+        ;;
+    *) echo "usage: triton-mimeclip resolve client|daemon | client [args...] | daemon [args...]" >&2; exit 2 ;;
+esac

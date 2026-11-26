@@ -37,6 +37,7 @@ for relative in \
     .config/hypr/scripts/start-session-services \
     .config/hypr/scripts/powerctl \
     .local/bin/triton-run-session-command \
+    .local/bin/triton-mimeclip \
     .local/bin/triton-platform \
     .local/bin/triton-connect-session \
     .local/bin/triton-linux-session-cleanup
@@ -162,5 +163,6 @@ done
 "$repo_dir/tests/test-package-detection.sh"
 "$repo_dir/tests/test-package-ownership.sh"
 "$repo_dir/tests/test-platform-detection.sh"
+"$repo_dir/tests/test-mimeclip-resolver.sh"
 
 echo "Installer fresh, repeat, and conflict checks passed."
