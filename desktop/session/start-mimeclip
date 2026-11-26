@@ -116,8 +116,16 @@ if [ "$ping_status" -eq 0 ]; then
 fi
 
 uid=$(id -u)
-runtime_dir=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}
-lock_dir=$runtime_dir/triton-mimeclip-$uid
+if [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+    lock_dir=$XDG_RUNTIME_DIR/triton-mimeclip-$uid
+else
+    # Never create a predictable per-user lock directly under shared /tmp.
+    # The cache fallback is owned by this user and private to this account.
+    runtime_dir=${XDG_CACHE_HOME:-$HOME/.cache}/triton-mimeclip
+    (umask 077; mkdir -p "$runtime_dir")
+    chmod 700 "$runtime_dir"
+    lock_dir=$runtime_dir/supervisor
+fi
 log_file="${XDG_CACHE_HOME:-$HOME/.cache}/mimeclipd.log"
 mkdir -p "$(dirname "$log_file")"
 
