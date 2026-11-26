@@ -81,7 +81,7 @@ if HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     echo "Unsupported Fedora Hyprland profile was not rejected." >&2
     exit 1
 fi
-if ! grep -F 'required compositor, idle, and wallpaper packages' "$tmp_dir/profile-error.log" >/dev/null; then
+if ! grep -F 'do not provide a complete, matching package set' "$tmp_dir/profile-error.log" >/dev/null; then
     echo "Fedora profile refusal did not explain the missing package set." >&2
     cat "$tmp_dir/profile-error.log" >&2
     exit 1
