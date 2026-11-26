@@ -22,6 +22,7 @@ is_secure() {
     [[ "$(qs ipc -p "$config" call lock isSecure 2>/dev/null)" == "true" ]]
 }
 
+lock_already_held=false
 case "${1:-lock}" in
     --wait)
         if is_secure; then exit 0; fi
@@ -35,12 +36,33 @@ case "${1:-lock}" in
         echo "Lock could not be confirmed; refusing to suspend." >&2
         exit 1
         ;;
+    --locked)
+        shift
+        [[ "$#" -eq 0 ]] || { echo "Usage: $0 [--wait]" >&2; exit 2; }
+        lock_already_held=true
+        ;;
     lock) ;;
     *) echo "Usage: $0 [--wait]" >&2; exit 2 ;;
 esac
 
 exec 9>"$runtime_dir/quickshell-lock-${display##*/}.lock"
-flock -n 9 || exit 0
+if [[ "$lock_already_held" != true ]]; then
+    if command -v flock >/dev/null 2>&1; then
+        flock -n 9 || exit 0
+    elif command -v lockf >/dev/null 2>&1; then
+        lock_file="$runtime_dir/quickshell-lock-${display##*/}.lock"
+        if (umask 077; lockf -s -k -t 0 "$lock_file" "$self" --locked); then
+            exit 0
+        else
+            status=$?
+            [[ "$status" -eq 75 ]] && exit 0
+            exit "$status"
+        fi
+    else
+        echo "quickshell-lock: neither flock nor lockf is available" >&2
+        exit 1
+    fi
+fi
 is_secure && exit 0
 
 # Passwords must never be written into core dumps or handed to an external IME.

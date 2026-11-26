@@ -30,7 +30,23 @@ done
 kill -0 "$compositor_pid" 2>/dev/null || exit 1
 
 exec 9>"$XDG_RUNTIME_DIR/fcitx-hyprland-session.lock"
-flock -n 9 || exit 0
+if [[ "${1:-}" == --locked ]]; then
+    shift
+    [[ "$#" -eq 0 ]] || exit 2
+elif command -v flock >/dev/null 2>&1; then
+    flock -n 9 || exit 0
+elif command -v lockf >/dev/null 2>&1; then
+    if (umask 077; lockf -s -k -t 0 "$XDG_RUNTIME_DIR/fcitx-hyprland-session.lock" "$0" --locked); then
+        exit 0
+    else
+        status=$?
+        [[ "$status" -eq 75 ]] && exit 0
+        exit "$status"
+    fi
+else
+    echo "fcitx-session: neither flock nor lockf is available" >&2
+    exit 1
+fi
 
 # Do not replace a Fcitx instance owned by another graphical session.
 if fcitx5-remote --check >/dev/null 2>&1; then

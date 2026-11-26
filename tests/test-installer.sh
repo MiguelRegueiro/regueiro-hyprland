@@ -239,6 +239,7 @@ fi
 "$repo_dir/tests/test-freebsd-privileged.sh"
 "$repo_dir/tests/test-installer-rollback.sh"
 "$repo_dir/tests/test-update.sh"
+"$repo_dir/tests/test-wallpaper-state.sh"
 python3 "$repo_dir/tests/test-tts-state.py"
 
 echo "Installer fresh, repeat, and conflict checks passed."

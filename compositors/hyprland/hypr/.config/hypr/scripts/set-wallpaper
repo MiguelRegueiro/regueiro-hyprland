@@ -1,16 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-action=${1:?usage: set-wallpaper /absolute/path/to/image | restore}
-script=$(readlink -f -- "${BASH_SOURCE[0]}")
+lock_already_held=false
+if [[ "${1:-}" == --locked ]]; then
+    [[ "$#" -eq 2 ]] || { echo "Usage: set-wallpaper /absolute/path/to/image | restore" >&2; exit 2; }
+    lock_already_held=true
+    action=$2
+else
+    action=${1:?usage: set-wallpaper /absolute/path/to/image | restore}
+fi
+script=$(realpath "${BASH_SOURCE[0]}")
 script_dir=$(dirname -- "$script")
 repo_root=$(cd "$script_dir/../../../../../../" && pwd)
 wallpaper_dir="$repo_root/desktop/assets/wallpapers"
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/regueiro-hyprland"
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+state_dir="$state_root/triton-desktop"
 state="$state_dir/wallpaper"
+legacy_state="$state_root/regueiro-hyprland/wallpaper"
+
+mkdir -p -- "$state_dir"
+if [[ "$lock_already_held" != true ]]; then
+    if command -v flock >/dev/null 2>&1; then
+        exec 9>"$state_dir/wallpaper.lock"
+        flock 9
+    elif command -v lockf >/dev/null 2>&1; then
+        if (umask 077; lockf -k -t 0 "$state_dir/wallpaper.lock" "$script" --locked "$action"); then
+            exit 0
+        else
+            status=$?
+            [[ "$status" -eq 75 ]] && exit 0
+            exit "$status"
+        fi
+    else
+        echo "set-wallpaper: neither flock nor lockf is available" >&2
+        exit 1
+    fi
+fi
 
 if [[ "$action" == restore ]]; then
-    wallpaper=$(cat "$state" 2>/dev/null || true)
+    wallpaper=$(cat "$state" 2>/dev/null || cat "$legacy_state" 2>/dev/null || true)
     case "$wallpaper" in
         "$HOME"/regueiro-hyprland/wallpapers/*)
             wallpaper="$wallpaper_dir/${wallpaper##*/}"
@@ -37,9 +65,6 @@ case "${wallpaper##*.}" in
     *) printf 'Unsupported wallpaper format: %s\n' "$wallpaper" >&2; exit 2 ;;
 esac
 
-mkdir -p -- "$state_dir"
-exec 9>"$state_dir/wallpaper.lock"
-flock 9
 printf '%s\n' "$wallpaper" > "$state"
 
 if ! hyprctl hyprpaper listactive >/dev/null 2>&1; then

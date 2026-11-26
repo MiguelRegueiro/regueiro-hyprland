@@ -123,7 +123,7 @@ PanelWindow {
     }
 
     FileView {
-        path: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/regueiro-hyprland/wallpaper"
+        path: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/triton-desktop/wallpaper"
         watchChanges: true
         onLoaded: {
             root.carouselInitialized = false;
