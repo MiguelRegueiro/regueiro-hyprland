@@ -1,4 +1,4 @@
-# Triton Desktop
+<h1 align="left"><img src="desktop/assets/branding/triton-desktop-logo.png" height="88" alt="Triton Desktop logo" align="absmiddle" />&nbsp;Triton Desktop</h1>
 
 Shared desktop UI and settings with compositor, operating-system, and distribution integrations. Hyprland on Linux is the supported profile today; Niri and native BSD adapters are future work.
 
