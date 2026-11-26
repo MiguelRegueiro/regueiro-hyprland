@@ -85,7 +85,7 @@ Restart/health behavior is not yet unified across all long-running services.
 ## 06 — Implement the installer
 
 - [x] Detect OS and distribution automatically for the bootstrap package command.
-- [ ] Install native dependencies.
+- [ ] Complete native dependency installation across supported distributions.
 - [ ] Add optional application and feature selection.
 - [ ] Back up existing configuration and deploy Stow packages safely.
 - [x] Test repeated installations and reject Stow conflicts before changing files.
@@ -96,13 +96,14 @@ and selects the matching package manager. It installs only Git and GNU Stow
 optional feature selection remain manual. Tests use fake package managers and
 temporary home directories, so they do not install packages on the host.
 
-An explicit `./install.sh packages --profile hyprland` profile now installs the
-current Hyprland runtime package set on Arch/CachyOS only. The default install
-still only deploys configuration, and the profile does not enable services.
-Fedora's official builds for the compositor, idle daemon, and wallpaper daemon
-do not currently line up with current Fedora releases, so the profile refuses
-there without installing packages. Other distribution profiles remain
-unimplemented until their package sets and service setup have been verified.
+An explicit `./install.sh packages --profile hyprland` profile installs the
+current runtime package set on Arch/CachyOS and Debian 13 Trixie. Debian requires
+the official `trixie-backports` repository to be enabled and refreshed; the
+script checks that its core Hyprland packages are available before installing.
+Fedora is explicitly rejected, and Void and FreeBSD do not yet have runtime
+profiles. The package-profile tests use mocks: real installation and service
+activation still need validation on each supported distribution. The default
+install deploys configuration and does not enable system services.
 
 ## 07 — Implement stable releases and updates
 
