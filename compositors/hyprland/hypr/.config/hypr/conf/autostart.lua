@@ -28,8 +28,7 @@ hl.on("hyprland.start", function()
     -- A few SOF/SoundWire sessions expose only PipeWire's auto_null fallback
     -- during login. Retry WirePlumber only if that fallback remains default.
     hl.exec_cmd("sh -c 'exec ~/.config/hypr/scripts/ensure-audio-sink'")
-    -- Triton Connect owns its tray window and starts its paired-device daemon
-    -- itself. It is optional so a fresh dotfiles install can still start a
-    -- session before Triton has been bootstrapped.
-    hl.exec_cmd("sh -c 'sleep 2; app=\"$HOME/.local/bin/triton-control\"; [ -x \"$app\" ] && exec \"$app\" --background'")
+    -- The session helper adopts or starts the optional tray app and gracefully
+    -- shuts down its host service when this Hyprland session exits.
+    hl.exec_cmd("sh -c 'sleep 2; app=\"$HOME/.local/bin/triton-connect-session\"; [ -x \"$app\" ] && exec ~/.config/hypr/scripts/run-session-command --current \"$app\"'")
 end)

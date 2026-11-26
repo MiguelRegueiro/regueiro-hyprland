@@ -21,7 +21,7 @@ if [ "${1:-}" = --profile ]; then
                 brightnessctl playerctl grim slurp wl-clipboard wtype \
                 kitty fish starship fastfetch \
                 fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy \
-                python imagemagick librsvg xorg-xhost \
+                python procps-ng imagemagick librsvg xorg-xhost \
                 "$@"
             ;;
         *)

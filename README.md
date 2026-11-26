@@ -94,7 +94,8 @@ installed. Bootstrap it once; the helper clones its private checkout to
 ```
 
 Set `TRITON_CONNECT_DIR` when the checkout lives elsewhere. The helper builds
-and installs the desktop client; future Hyprland logins start it automatically.
+and installs the desktop client; future Hyprland logins start its tray app and
+stop the tray app and host service when the Hyprland session ends.
 
 On Fedora, keep `tuned-ppd` if it already provides power profiles. QuickShell uses the same PowerProfiles interface with either backend; it does not require `powerprofilesctl`.
 

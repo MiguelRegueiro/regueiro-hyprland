@@ -39,6 +39,7 @@ sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-system-details
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-drives
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-drive-eject
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-power-profile
+sh -n desktop/scripts/.local/bin/triton-connect-session
 sh -n installer/install.sh
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/triton-pycache" \

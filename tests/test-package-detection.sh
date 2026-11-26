@@ -60,7 +60,7 @@ printf 'ID=cachyos\nID_LIKE="arch"\n' >"$os_release"
 : >"$call_log"
 HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland custom-extra-package >/dev/null
-if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent networkmanager bluez bluez-utils blueman power-profiles-daemon pipewire wireplumber pipewire-pulse brightnessctl playerctl grim slurp wl-clipboard wtype kitty fish starship fastfetch fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy python imagemagick librsvg xorg-xhost custom-extra-package' "$call_log" >/dev/null; then
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent networkmanager bluez bluez-utils blueman power-profiles-daemon pipewire wireplumber pipewire-pulse brightnessctl playerctl grim slurp wl-clipboard wtype kitty fish starship fastfetch fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy python procps-ng imagemagick librsvg xorg-xhost custom-extra-package' "$call_log" >/dev/null; then
     echo "Arch Hyprland profile did not resolve the expected package set." >&2
     cat "$call_log" >&2
     exit 1
