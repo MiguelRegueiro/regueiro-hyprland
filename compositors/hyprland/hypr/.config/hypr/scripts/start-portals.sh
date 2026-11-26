@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 [[ ":${XDG_CURRENT_DESKTOP:-}:" == *:Hyprland:* ]] || exit 0
+service_manager="${HOME}/.local/bin/triton-linux-service"
+if [[ ! -x "$service_manager" ]]; then
+    echo "Skipping Linux portal activation: the Linux service adapter is unavailable." >&2
+    exit 0
+fi
 # Do not import IM variables into the user-wide activation environment.
-~/.local/bin/triton-linux-service activation-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE
+"$service_manager" activation-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE
 
 # Plain GDM Hyprland sessions may not activate graphical-session.target.
 # A transient service holds that target only while this compositor PID exists.
 # UWSM/GNOME-managed targets need no additional owner.
-if ! ~/.local/bin/triton-linux-service user is-active --quiet graphical-session.target; then
+if ! "$service_manager" user is-active --quiet graphical-session.target; then
     compositor_pid=""
     for ((attempt = 0; attempt < 50; attempt++)); do
         compositor_pid=$(hyprctl instances -j 2>/dev/null | jq -er --arg instance "$HYPRLAND_INSTANCE_SIGNATURE" \
@@ -16,20 +21,20 @@ if ! ~/.local/bin/triton-linux-service user is-active --quiet graphical-session.
         sleep 0.2
     done
     [[ "$compositor_pid" =~ ^[0-9]+$ ]] || exit 1
-    ~/.local/bin/triton-linux-service run-user --collect --unit="regueiro-hyprland-session-${compositor_pid}" \
+    "$service_manager" run-user --collect --unit="regueiro-hyprland-session-${compositor_pid}" \
         --property=BindsTo=graphical-session.target \
         --property=After=graphical-session.target \
         /bin/sh -c 'while kill -0 "$1" 2>/dev/null; do sleep 1; done' sh "$compositor_pid"
 fi
 
 # Service files know the right binary locations on both Fedora and Arch.
-~/.local/bin/triton-linux-service user stop xdg-desktop-portal.service
+"$service_manager" user stop xdg-desktop-portal.service
 for backend in gtk hyprland; do
-    ~/.local/bin/triton-linux-service user restart "xdg-desktop-portal-${backend}.service" || \
+    "$service_manager" user restart "xdg-desktop-portal-${backend}.service" || \
         echo "${backend} portal failed; continuing to start the main portal." >&2
 done
-if ~/.local/bin/triton-linux-service user cat xdg-desktop-portal-termfilechooser.service >/dev/null 2>&1; then
-    ~/.local/bin/triton-linux-service user restart xdg-desktop-portal-termfilechooser.service || \
+if "$service_manager" user cat xdg-desktop-portal-termfilechooser.service >/dev/null 2>&1; then
+    "$service_manager" user restart xdg-desktop-portal-termfilechooser.service || \
         echo "termfilechooser failed; see README for GTK recovery." >&2
 fi
-~/.local/bin/triton-linux-service user start xdg-desktop-portal.service
+"$service_manager" user start xdg-desktop-portal.service

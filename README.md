@@ -25,7 +25,7 @@ The entry point is `desktop/quickshell/.config/quickshell/lock.qml`. It uses Way
 
 `desktop/session/quickshell-lock` supervises the locker and retries up to three times after an unexpected exit. The command is installed as `~/.local/bin/triton-lock`. Hyprland's `allow_session_lock_restore` lets Quickshell recover while the compositor keeps the session locked. Hypridle uses `inhibit_sleep = 3` to wait for the compositor's lock notification. The power menu refuses to suspend unless Quickshell confirms its lock.
 
-Settings → Power configures idle screen off, automatic lock, automatic suspend, the power button, and a temporary Keep awake switch. The defaults preserve the previous behavior: lock after 20 minutes, with automatic screen off and suspend disabled. Preferences are saved on each machine in `~/.config/hypr-local/power.json`, outside the stow repository. Keep awake lasts only for the current session and pauses automatic idle actions. The generated hypridle policy is stored beside the preferences; `powerctl` starts and reloads hypridle for the current Hyprland session.
+Settings → Power configures idle screen off, automatic lock, automatic suspend, the power button, and a temporary Keep awake switch. The defaults preserve the previous behavior: lock after 20 minutes, with automatic screen off and suspend disabled. Preferences are saved on each machine in `~/.config/hypr-local/power.json`, outside the stow repository. Keep awake lasts only for the current session and pauses automatic idle actions. The generated hypridle policy is stored beside the preferences; `powerctl` starts and reloads hypridle for the current Hyprland session, then stops it when that compositor exits.
 
 To lock manually:
 
@@ -168,8 +168,10 @@ It currently lists paired devices and lets you connect/disconnect them inline fr
 ### Clipboard history
 
 Clipboard history is handled by [`mimeclip`](https://github.com/MiguelRegueiro/mimeclip), not `cliphist`.
-Install `mimeclip` / `mimeclipd` separately. Hyprland starts a session-owned
-supervisor without requiring systemd or Linux-specific session tools. It
+Install `mimeclip` / `mimeclipd` separately. Hyprland starts MimeClip and
+Triton TTS with the active compositor's process ID, so both stop when that
+session ends. MimeClip uses a session-owned supervisor without requiring
+systemd or Linux-specific session tools. It
 resolves either a system install or `~/.cargo/bin`, avoids duplicate
 supervisors, and retries daemon exits with bounded backoff. Do not start it
 globally for GNOME, which does not support the wlroots clipboard protocol

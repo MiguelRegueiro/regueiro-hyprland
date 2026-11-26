@@ -3,6 +3,8 @@
 set -euo pipefail
 
 [[ ":${XDG_CURRENT_DESKTOP:-}:" == *:Hyprland:* ]] || exit 0
+command -v fcitx5 >/dev/null 2>&1 || exit 0
+command -v fcitx5-remote >/dev/null 2>&1 || exit 0
 : "${HYPRLAND_INSTANCE_SIGNATURE:?A running Hyprland session is required}"
 : "${XDG_RUNTIME_DIR:?A running user session is required}"
 

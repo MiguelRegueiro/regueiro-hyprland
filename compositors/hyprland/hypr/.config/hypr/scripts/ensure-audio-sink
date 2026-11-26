@@ -6,6 +6,11 @@
 # are left untouched.
 set -euo pipefail
 
+service_manager="${HOME}/.local/bin/triton-linux-service"
+if [[ ! -x "$service_manager" ]] || ! command -v wpctl >/dev/null 2>&1; then
+    exit 0
+fi
+
 # Give PipeWire, WirePlumber, and ALSA UCM time to enumerate first.
 sleep 8
 
@@ -18,7 +23,7 @@ for _ in 1 2 3 4 5; do
         fi
 
         ((restarts += 1))
-        ~/.local/bin/triton-linux-service user restart wireplumber
+        "$service_manager" user restart wireplumber
         sleep 5
         continue
     fi

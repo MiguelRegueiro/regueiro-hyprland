@@ -8,17 +8,79 @@ if [ "${1:-}" = "--supervise" ]; then
     daemon=$2
     log_file=$3
     lock_dir=$4
-    trap 'rm -rf "$lock_dir"' 0
+    session_pid=${5:-}
+    daemon_pid=
+    session_watch_pid=
+    cleanup() {
+        trap - 0 HUP INT TERM
+        if [ -n "$daemon_pid" ]; then
+            kill -TERM "$daemon_pid" 2>/dev/null || true
+            wait "$daemon_pid" 2>/dev/null || true
+        fi
+        if [ -n "$session_watch_pid" ]; then
+            kill "$session_watch_pid" 2>/dev/null || true
+            wait "$session_watch_pid" 2>/dev/null || true
+        fi
+        if [ "$(cat "$lock_dir/pid" 2>/dev/null || true)" = "$$" ]; then
+            rm -rf "$lock_dir"
+        fi
+    }
+    trap cleanup 0
     trap 'exit 0' HUP INT TERM
+    printf '%s\n' "$$" >"$lock_dir/pid"
+    if [ -n "$session_pid" ]; then
+        printf '%s\n' "$session_pid" >"$lock_dir/session-pid"
+    fi
     delay=2
     while :; do
-        "$daemon" >>"$log_file" 2>&1
-        sleep "$delay"
+        if [ -n "$session_pid" ] && ! kill -0 "$session_pid" 2>/dev/null; then
+            exit 0
+        fi
+
+        "$daemon" >>"$log_file" 2>&1 &
+        daemon_pid=$!
+        if [ -n "$session_pid" ]; then
+            (
+                while kill -0 "$session_pid" 2>/dev/null; do sleep 1; done
+                kill -TERM "$daemon_pid" 2>/dev/null || true
+            ) &
+            session_watch_pid=$!
+        fi
+        wait "$daemon_pid" || true
+        daemon_pid=
+        if [ -n "$session_watch_pid" ]; then
+            kill "$session_watch_pid" 2>/dev/null || true
+            wait "$session_watch_pid" 2>/dev/null || true
+            session_watch_pid=
+        fi
+        if [ -n "$session_pid" ] && ! kill -0 "$session_pid" 2>/dev/null; then
+            exit 0
+        fi
+
         if [ "$delay" -lt 30 ]; then
             delay=$((delay * 2))
             [ "$delay" -le 30 ] || delay=30
         fi
+        waited=0
+        while [ "$waited" -lt "$delay" ]; do
+            if [ -n "$session_pid" ] && ! kill -0 "$session_pid" 2>/dev/null; then
+                exit 0
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
     done
+fi
+
+session_pid=
+if [ "${1:-}" = "--session-pid" ]; then
+    [ "$#" -eq 2 ] || { echo "Usage: $0 [--session-pid PID]" >&2; exit 2; }
+    session_pid=$2
+    case "$session_pid" in ''|*[!0-9]*) echo "Invalid session PID" >&2; exit 2 ;; esac
+    kill -0 "$session_pid" 2>/dev/null || exit 0
+elif [ "$#" -gt 0 ]; then
+    echo "Usage: $0 [--session-pid PID]" >&2
+    exit 2
 fi
 
 daemon=$(command -v mimeclipd 2>/dev/null || true)
@@ -55,8 +117,6 @@ if ! mkdir "$lock_dir" 2>/dev/null; then
     mkdir "$lock_dir" 2>/dev/null || exit 0
 fi
 
-nohup "$0" --supervise "$daemon" "$log_file" "$lock_dir" \
+nohup "$0" --supervise "$daemon" "$log_file" "$lock_dir" "$session_pid" \
     </dev/null >/dev/null 2>&1 &
-supervisor_pid=$!
-printf '%s\n' "$supervisor_pid" >"$lock_dir/pid"
 exit 0

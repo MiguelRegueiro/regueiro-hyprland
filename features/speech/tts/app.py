@@ -479,6 +479,15 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     addresses = server_addresses()
+    session_pid_value = os.environ.get("TRITON_SESSION_PID", "").strip()
+    session_pid = None
+    if session_pid_value:
+        try:
+            session_pid = int(session_pid_value)
+            if session_pid <= 0:
+                raise ValueError
+        except ValueError:
+            raise SystemExit("TRITON_SESSION_PID must be a positive process ID")
 
     print()
     print("  Triton TTS")
@@ -492,4 +501,25 @@ if __name__ == "__main__":
     servers = [ThreadingHTTPServer(address, Handler) for address in addresses]
     for server in servers[1:]:
         threading.Thread(target=server.serve_forever, daemon=True).start()
-    servers[0].serve_forever()
+
+    if session_pid is not None:
+        def stop_when_session_ends():
+            while True:
+                try:
+                    os.kill(session_pid, 0)
+                except ProcessLookupError:
+                    print("  Hyprland session ended; stopping Triton TTS.")
+                    for server in servers:
+                        server.shutdown()
+                    return
+                except PermissionError:
+                    pass
+                time.sleep(1)
+
+        threading.Thread(target=stop_when_session_ends, daemon=True).start()
+
+    try:
+        servers[0].serve_forever()
+    finally:
+        for server in servers:
+            server.server_close()

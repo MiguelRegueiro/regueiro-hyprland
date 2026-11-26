@@ -1,0 +1,56 @@
+#!/bin/sh
+set -u
+
+# Resolve this exact Hyprland instance to its process. The environment
+# signature is exported by Hyprland to its child processes.
+instance=${HYPRLAND_INSTANCE_SIGNATURE:-}
+if [ -z "$instance" ]; then
+    echo "start-session-services: HYPRLAND_INSTANCE_SIGNATURE is missing" >&2
+    exit 1
+fi
+
+session_pid=
+attempt=0
+while [ "$attempt" -lt 20 ]; do
+    session_pid=$(hyprctl -j instances 2>/dev/null |
+        jq -er --arg instance "$instance" '.[] | select(.instance == $instance) | .pid' 2>/dev/null || true)
+    case "$session_pid" in
+        ''|*[!0-9]*) session_pid= ;;
+        *)
+            if kill -0 "$session_pid" 2>/dev/null; then
+                break
+            fi
+            session_pid=
+            ;;
+    esac
+    attempt=$((attempt + 1))
+    sleep 0.25
+done
+
+if [ -z "$session_pid" ]; then
+    echo "start-session-services: could not resolve the active Hyprland process" >&2
+    exit 1
+fi
+
+session_runner="$HOME/.config/hypr/scripts/run-session-command"
+if [ -x "$session_runner" ]; then
+    persist=$(command -v wl-clip-persist 2>/dev/null || true)
+    persist=${persist:-"$HOME/.cargo/bin/wl-clip-persist"}
+    if [ -x "$persist" ]; then
+        "$session_runner" "$session_pid" "$persist" --clipboard regular --ignore-event-on-error &
+    fi
+    if command -v blueman-applet >/dev/null 2>&1; then
+        "$session_runner" "$session_pid" blueman-applet &
+    fi
+fi
+
+mimeclip="$HOME/.local/bin/triton-mimeclip-start"
+if [ -x "$mimeclip" ]; then
+    "$mimeclip" --session-pid "$session_pid" ||
+        echo "start-session-services: MimeClip failed to start" >&2
+fi
+
+tts="$HOME/.local/bin/triton-tts-start"
+if [ -x "$tts" ]; then
+    exec "$tts" --session-pid "$session_pid"
+fi

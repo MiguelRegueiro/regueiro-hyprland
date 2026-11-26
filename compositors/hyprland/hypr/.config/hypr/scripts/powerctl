@@ -16,7 +16,8 @@ CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / 
 STATE_FILE = CONFIG_DIR / "power.json"
 IDLE_CONFIG = CONFIG_DIR / "hypridle.conf"
 RUNTIME_DIR = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
-SESSION = re.sub(r"[^a-zA-Z0-9_-]", "_", os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", ""))
+INSTANCE_SIGNATURE = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+SESSION = re.sub(r"[^a-zA-Z0-9_-]", "_", INSTANCE_SIGNATURE)
 PID_FILE = RUNTIME_DIR / f"powerctl-{SESSION}.pid"
 LOCK_FILE = RUNTIME_DIR / f"powerctl-{SESSION}.lock"
 AWAKE_FILE = RUNTIME_DIR / f"powerctl-{SESSION}.awake"
@@ -83,6 +84,31 @@ def daemon_pid():
         return None
 
 
+def compositor_pid():
+    """Resolve this Hyprland instance, retrying while startup publishes it."""
+    if not INSTANCE_SIGNATURE:
+        return None
+    for _ in range(40):
+        try:
+            result = subprocess.run(["hyprctl", "-j", "instances"], check=True,
+                                    capture_output=True, text=True, timeout=2)
+            instances = json.loads(result.stdout)
+            for instance in instances:
+                if instance.get("instance") != INSTANCE_SIGNATURE:
+                    continue
+                pid = int(instance.get("pid", 0))
+                if pid > 0:
+                    try:
+                        os.kill(pid, 0)
+                        return pid
+                    except (ProcessLookupError, PermissionError):
+                        pass
+        except (OSError, subprocess.SubprocessError, ValueError, TypeError):
+            pass
+        time.sleep(0.25)
+    return None
+
+
 def legacy_idle_pids():
     """Replace only the old bare hypridle from this Hyprland session."""
     if not SESSION:
@@ -137,6 +163,10 @@ def start_inhibitor():
 
 
 def daemon():
+    session_pid = compositor_pid()
+    if session_pid is None:
+        print("powerctl: could not resolve the active Hyprland process", file=sys.stderr)
+        return
     RUNTIME_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
     with LOCK_FILE.open("w") as lock:
         try:
@@ -165,6 +195,13 @@ def daemon():
         button_action = "system"
         try:
             while running:
+                try:
+                    os.kill(session_pid, 0)
+                except ProcessLookupError:
+                    running = False
+                    break
+                except PermissionError:
+                    pass
                 if changed or idle is None or idle.poll() is not None:
                     stop(idle)
                     stop_inhibitor(inhibitor)

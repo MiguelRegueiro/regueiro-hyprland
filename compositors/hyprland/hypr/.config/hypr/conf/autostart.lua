@@ -16,20 +16,16 @@ hl.on("hyprland.start", function()
     -- helpers are independent of the bar and can safely start just after it.
     -- This is deliberately a delay for the helpers, never for QuickShell.
     -- Claim browser "show in folder" requests before another file manager can.
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/elio-filemanager1'")
+    hl.exec_cmd("sh -c 'sleep 2; app=\"$HOME/.local/bin/elio-filemanager1\"; [ -x \"$app\" ] && exec \"$app\"'")
 
     -- Import the session environment before restarting portal services.
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/start-portals.sh'")
 
-    -- Hyprland's PATH may exclude Cargo; prefer a system install, then Cargo.
-    hl.exec_cmd("sh -c 'sleep 2; persist=$(command -v wl-clip-persist || true); persist=${persist:-\"$HOME/.cargo/bin/wl-clip-persist\"}; [ -x \"$persist\" ] && exec \"$persist\" --clipboard regular --ignore-event-on-error'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/triton-mimeclip-start'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/triton-tts-start'")
+    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/start-session-services'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/powerctl daemon'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/set-wallpaper restore'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.local/bin/triton-linux-service user start hyprpolkitagent.service'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/fcitx-session.sh'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec blueman-applet'")
+    hl.exec_cmd("sh -c 'sleep 2; service=\"$HOME/.local/bin/triton-linux-service\"; [ -x \"$service\" ] && exec \"$service\" user start hyprpolkitagent.service'")
+    hl.exec_cmd("sh -c 'sleep 2; command -v fcitx5 >/dev/null 2>&1 && command -v fcitx5-remote >/dev/null 2>&1 && exec ~/.config/hypr/scripts/fcitx-session.sh'")
     -- A few SOF/SoundWire sessions expose only PipeWire's auto_null fallback
     -- during login. Retry WirePlumber only if that fallback remains default.
     hl.exec_cmd("sh -c 'exec ~/.config/hypr/scripts/ensure-audio-sink'")
