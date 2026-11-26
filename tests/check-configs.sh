@@ -32,6 +32,7 @@ bash -n desktop/platforms/linux/.local/bin/triton-linux-system-details
 sh -n desktop/platforms/linux/.local/bin/triton-linux-drives
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-battery
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-build-hardware
+sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-power
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-network
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-bluetooth
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-system-details

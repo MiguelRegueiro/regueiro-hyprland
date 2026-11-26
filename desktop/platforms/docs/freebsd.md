@@ -2,7 +2,9 @@
 
 The shared battery service uses `apm` and `acpiconf` through
 `triton-freebsd-battery`. The shared brightness service uses the persistent
-native backlight and OSS mixer bridge from `../src/freebsd/triton-freebsd-hardware.c`.
+native backlight bridge from `../src/freebsd/triton-freebsd-hardware.c`.
+Shared audio controls use PipeWire/WirePlumber through the common
+`AudioService`.
 Shared network and Wi-Fi UI uses `triton-freebsd-network` for interface status,
 Wi-Fi scanning, saved profiles, connection, and Ethernet toggling.
 The shared Bluetooth page uses `triton-freebsd-bluetooth` for controller state,
@@ -23,5 +25,5 @@ validated by the existing FreeBSD branch (`/dev/backlight/backlight0` and
 `/dev/mixer0`); machines with different device paths need adaptation.
 
 The FreeBSD adapters are not runtime-validated by the Linux test host. Confirm
-device permissions, backlight behavior, and mixer behavior on the target
-FreeBSD machine before relying on them.
+device permissions, backlight behavior, PipeWire audio, and native service
+behavior on the target FreeBSD machine before relying on them.
