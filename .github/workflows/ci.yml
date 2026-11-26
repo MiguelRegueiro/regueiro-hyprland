@@ -16,6 +16,6 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes jq stow
+          sudo apt-get install --yes jq ripgrep stow
       - name: Run installer and session regression suite
         run: tests/test-installer.sh
