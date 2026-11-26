@@ -21,6 +21,7 @@ HOME=$fresh_home "$repo_dir/install.sh" >/dev/null
 
 for relative in \
     .config/hypr/scripts/run-session-command \
+    .config/hypr/scripts/start-session-quickshell \
     .config/hypr/scripts/start-session-services \
     .config/hypr/scripts/powerctl
 do

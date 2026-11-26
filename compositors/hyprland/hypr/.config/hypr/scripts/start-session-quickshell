@@ -1,0 +1,47 @@
+#!/bin/sh
+set -u
+
+instance=${HYPRLAND_INSTANCE_SIGNATURE:-}
+if [ -z "$instance" ]; then
+    echo "start-session-quickshell: HYPRLAND_INSTANCE_SIGNATURE is missing" >&2
+    exit 1
+fi
+
+if ! command -v hyprctl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+    echo "start-session-quickshell: hyprctl and jq are required" >&2
+    exit 1
+fi
+
+session_pid=
+attempt=0
+while [ "$attempt" -lt 20 ]; do
+    session_pid=$(hyprctl -j instances 2>/dev/null |
+        jq -er --arg instance "$instance" '.[] | select(.instance == $instance) | .pid' 2>/dev/null || true)
+    case "$session_pid" in
+        ''|*[!0-9]*) session_pid= ;;
+        *)
+            if kill -0 "$session_pid" 2>/dev/null; then
+                break
+            fi
+            session_pid=
+            ;;
+    esac
+    attempt=$((attempt + 1))
+    sleep 0.25
+done
+
+if [ -z "$session_pid" ]; then
+    echo "start-session-quickshell: could not resolve the active Hyprland process" >&2
+    exit 1
+fi
+
+data_dirs=${XDG_DATA_DIRS:-/usr/local/share:/usr/share}
+export XDG_DATA_DIRS="$HOME/.local/share:$HOME/.local/share/flatpak/exports/share:$data_dirs"
+
+runner="$HOME/.config/hypr/scripts/run-session-command"
+if [ ! -x "$runner" ]; then
+    echo "start-session-quickshell: session command runner is not installed" >&2
+    exit 1
+fi
+
+exec "$runner" "$session_pid" qs -n -p "$HOME/.config/quickshell/shell.qml"
