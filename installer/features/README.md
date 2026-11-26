@@ -7,7 +7,7 @@ installer metadata and orchestration.
 Native package names are stored in tab-separated catalogs under
 `installer/packages/profiles/`. Each row is an install group and one package
 name. `base` is the small Git/Stow bootstrap set; `core`, `connectivity`,
-`connectivity`, `power`, `audio`, `capture`, `terminal`, `input`, `runtime`,
+`power`, `audio`, `capture`, `terminal`, `input`, `runtime`,
 `editor`, and `flatpak` are optional groups where available. The default
 package profile installs all groups to preserve existing behavior. Pass
 `--groups GROUP[,GROUP...]` after `--profile hyprland` to select optional

@@ -57,9 +57,9 @@ for the shared system-details service. External-drive discovery parses the
 FreeBSD UDisks dump, while mount and eject operations use FreeBSD platform
 helpers. The shared power-profile selector now uses the FreeBSD `powerd` and
 EPP helper. Shared reboot and poweroff actions now resolve through the
-platform service; FreeBSD uses a dedicated non-interactive `doas shutdown`
-adapter. Linux-only idle, lock, suspend-timer, and power-button policy controls
-are now explicitly unavailable on FreeBSD until that backend is ported, and
+platform service; FreeBSD power actions use the root-owned allowlist helper
+through `doas`. Linux-only idle, lock, suspend-timer, and power-button policy
+controls are unavailable on FreeBSD until that backend is ported, and
 Suspend is omitted from its power menus until a FreeBSD suspend adapter is
 validated.
 
@@ -67,7 +67,7 @@ validated.
 
 - [ ] Unify startup and shutdown.
 - [x] Fix MimeClip client/daemon resolution and avoid competing session supervisors.
-- [ ] Implement restart and health checks.
+- [x] Implement bounded MimeClip health checks, restart backoff, and session cleanup.
 - [ ] Make optional services capability-aware.
 
 Progress: QuickShell, Triton TTS, powerctl, Fcitx, `wl-clip-persist`, and
@@ -81,6 +81,11 @@ For non-UWSM Linux sessions, a compositor-bound monitor stops portal and
 polkit services when Hyprland exits; UWSM continues to own those through its
 graphical-session target.
 Restart/health behavior is not yet unified across all long-running services.
+MimeClip's standalone supervisor now bounds its client health check, restarts a
+crashing daemon with backoff, resets that backoff after a healthy run, and exits
+when its owning compositor session ends. Regression tests cover a hung health
+check, repeated crashes, and session cleanup. TTS now uses a private runtime
+directory and a PID file rather than Linux `/proc` inspection.
 
 ## 06 — Implement the installer
 
@@ -88,22 +93,24 @@ Restart/health behavior is not yet unified across all long-running services.
 - [x] Move native package names into per-platform catalogs and add opt-in group selection.
 - [x] Add a numbered text selector for optional package groups.
 - [x] Run the setup package selection only after the Stow conflict preflight.
-- [ ] Complete native dependency installation across supported distributions.
+- [x] Declare core runtime dependencies in the supported native package profiles.
 - [ ] Add optional application and feature selection.
 - [x] Record explicit packages newly installed by Triton without claiming dependencies or pre-existing packages.
-- [ ] Back up existing configuration and deploy Stow packages safely.
+- [x] Preflight Stow destinations and roll back failed Stow/asset deployments.
 - [x] Add an uninstaller for Triton-owned Stow links and an opt-in removal path for recorded packages.
 - [x] Test repeated installations and reject Stow conflicts before changing files.
 
 Progress: `./install.sh packages` detects FreeBSD or reads Linux `os-release`
 and selects the matching package manager. It installs only Git and GNU Stow
-(plus explicitly requested package names); runtime desktop dependencies and
-optional feature selection remain manual. Explicitly requested packages absent
-before installation are recorded in `~/.local/state/triton-desktop/packages/`;
-automatic dependencies and pre-existing packages are excluded. The default
-`./install.sh uninstall` removes configuration links only. The
-`./install.sh uninstall --packages` mode prompts before removing each manager's
-recorded explicit packages.
+(plus explicitly requested package names). The opt-in Hyprland profile declares
+core dependencies per supported package manager, installs pinned MimeClip on
+setup, and links the bundled fonts, cursor, and desktop assets. Optional
+application-level selection and dependency resolution remain manual. Explicitly
+requested packages absent before installation are recorded in
+`~/.local/state/triton-desktop/packages/`; automatic dependencies and
+pre-existing packages are excluded. The default `./install.sh uninstall`
+removes configuration links only. The `./install.sh uninstall --packages` mode
+prompts before removing each manager's recorded explicit packages.
 Tests use fake package managers and temporary home directories, so they do not
 install or remove packages on the host.
 
@@ -122,12 +129,23 @@ mocks: real installation and service activation still need validation on each
 supported distribution. The default install deploys configuration and does not
 enable system services.
 
+The installer checks all Stow destinations before changing links. If a later
+Stow operation fails, it removes newly deployed links and restores packages
+that were already linked before this run. Asset linking has matching preflight
+and rollback coverage. These checks protect configuration deployment; they do
+not roll back native packages installed by the package manager.
+
 ## 07 — Implement stable releases and updates
 
 - [ ] Add versioned releases and a stable channel.
 - [ ] Add update and rollback commands.
 - [ ] Preserve local settings.
 - [ ] Add desktop diagnostics.
+
+The Fish `up` abbreviation now uses `triton-update`, which selects the native
+package manager by OS/distribution and updates Flatpak/Cargo tools only when
+present. This updates system/application packages; it does not fetch Triton
+Desktop releases or provide desktop rollback.
 
 ## 08 — Integrate TritonBSD
 
