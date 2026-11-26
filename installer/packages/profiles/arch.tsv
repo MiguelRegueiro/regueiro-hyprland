@@ -17,6 +17,9 @@ core	imagemagick
 core	playerctl
 core	brightnessctl
 core	kitty
+core	cargo
+core	wayland
+core	pkgconf
 connectivity	networkmanager
 connectivity	bluez
 connectivity	bluez-utils

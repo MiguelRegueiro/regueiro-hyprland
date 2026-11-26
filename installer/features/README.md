@@ -17,7 +17,10 @@ optional configurations, so selecting `none` does not link Fish, Fcitx, Neovim,
 or Flatpak settings. The lower-level `./install.sh packages` command installs
 packages only. This is still package-group selection, not the future declarative
 application feature resolver: dependencies and setup actions are handled by the
-native package manager or manually.
+native package manager or the small feature setup scripts. MimeClip is installed
+from a pinned upstream Git commit after `./install.sh setup` installs Cargo.
+Bundled fonts and the Bibata cursor theme are linked from the checkout by the
+configuration installer; existing real files at those destinations are kept.
 
 Use `--interactive` instead of `--groups` for a numbered text prompt. An empty
 answer chooses the full recommended set; `none` installs only base and core.

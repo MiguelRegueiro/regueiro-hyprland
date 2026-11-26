@@ -47,7 +47,7 @@ The previous Hyprlock theme remains in the repository as an inactive configurati
 
 The package scripts under `installer/packages/` install the portable bootstrap tools, Git and GNU Stow, for Arch, Fedora, Debian/Ubuntu, Void, or FreeBSD. Run `./install.sh packages` to select the current OS package manager. An opt-in `./install.sh packages --profile hyprland` installs the current runtime package set on Arch/CachyOS, Debian 13 Trixie, or FreeBSD 14.4, 14.5, and 15.1. Debian requires the official `trixie-backports` repository to be enabled and refreshed. Profiles are not run by the normal Stow installer and do not enable system services. Package names live in platform-specific TSV catalogs under `installer/packages/profiles/`; the default profile installs all groups, `--groups input,audio` chooses optional groups, and `--interactive` opens a numbered text selector. Both selection modes always include base and core. `./install.sh setup` applies the selected groups to both package installation and matching optional configurations. Fedora’s official stable repositories do not yet provide a complete, matching package set for the desktop runtime, so the profile refuses there without installing anything. Void remains unsupported because the Hyprland packages require a community repository. FreeBSD’s profile is based on the native ports packages and still needs real-machine validation.
 
-On Arch/CachyOS, Debian Trixie, and FreeBSD 14.4, 14.5, and 15.1, the opt-in Hyprland package profile includes the compositor, shell, wallpaper and idle tools, portals, and common desktop tools. You still need to enable and configure platform services separately. On other distributions, install the equivalent runtime packages from their native sources. Some personal apps are optional and listed in their feature documentation.
+On Arch/CachyOS, Debian Trixie, and FreeBSD 14.4, 14.5, and 15.1, the opt-in Hyprland package profile includes the compositor, shell, wallpaper and idle tools, portals, Cargo, and common desktop tools. `./install.sh setup` installs MimeClip from a pinned upstream commit after package installation. You still need to enable and configure platform services separately. On other distributions, install the equivalent runtime packages from their native sources. Some personal apps are optional and listed in their feature documentation.
 
 On FreeBSD, Wi-Fi, Bluetooth, and power-profile controls use a root-owned,
 allowlisted helper. Review `desktop/platforms/freebsd/libexec/triton-privileged`
@@ -65,20 +65,11 @@ cargo install runin
 
 ## Manual steps
 
-### Bibata cursor theme
+### Fonts and cursor theme
 
-```sh
-cp -r desktop/assets/icons/Bibata-Modern-Classic ~/.local/share/icons/
-```
-
-### Fonts
-
-The `desktop/assets/fonts/` folder contains all needed fonts. Install them by copying to your fonts directory:
-
-```sh
-cp -r desktop/assets/fonts/. ~/.local/share/fonts/
-fc-cache -fv
-```
+The installer links the bundled fonts and Bibata cursor theme into
+`~/.local/share`. You can also apply those links later with
+`./installer/install-assets.sh`; it preserves existing real directories.
 
 QuickShell uses **Adwaita Sans**, **Cantarell**, and the bundled **Symbols Nerd Font Mono**. On Arch, install the first two explicitly with `adwaita-fonts` and `cantarell-fonts`.
 

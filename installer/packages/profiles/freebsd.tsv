@@ -16,6 +16,9 @@ core	ImageMagick7
 core	playerctl
 core	bsdisks
 core	kitty
+core	rust
+core	wayland
+core	pkgconf
 audio	pipewire
 audio	wireplumber
 audio	pipewire-spa-oss

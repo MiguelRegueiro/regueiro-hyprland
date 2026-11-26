@@ -68,6 +68,18 @@ done
 selection_file=${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop/package-groups
 rm -f "$selection_file"
 
+remove_asset_link() {
+    target=$1
+    expected=$2
+    if [ -L "$target" ] && [ "$(realpath "$target")" = "$(realpath "$expected")" ]; then
+        rm "$target"
+    fi
+}
+remove_asset_link "${XDG_DATA_HOME:-$HOME/.local/share}/fonts/triton-desktop" \
+    "$repo_dir/desktop/assets/fonts"
+remove_asset_link "${XDG_DATA_HOME:-$HOME/.local/share}/icons/Bibata-Modern-Classic" \
+    "$repo_dir/desktop/assets/icons/Bibata-Modern-Classic"
+
 if [ "$remove_packages" = yes ]; then
     state_dir=${TRITON_PACKAGE_STATE_DIR:-$HOME/.local/state/triton-desktop/packages}
     for manifest in "$state_dir"/*.list; do

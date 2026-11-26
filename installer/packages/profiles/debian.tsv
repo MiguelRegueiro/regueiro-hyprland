@@ -17,6 +17,9 @@ core	imagemagick
 core	playerctl
 core	brightnessctl
 core	kitty
+core	cargo
+core	libwayland-dev
+core	pkg-config
 connectivity	network-manager
 connectivity	bluez
 connectivity	blueman

@@ -85,7 +85,7 @@ printf 'ID=cachyos\nID_LIKE="arch"\n' >"$os_release"
 : >"$call_log"
 HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland custom-extra-package >/dev/null
-if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty networkmanager bluez bluez-utils blueman power-profiles-daemon pipewire wireplumber pipewire-pulse grim slurp wl-clipboard wtype fish starship fastfetch fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy neovim flatpak librsvg xorg-xhost custom-extra-package' "$call_log" >/dev/null; then
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty cargo wayland pkgconf networkmanager bluez bluez-utils blueman power-profiles-daemon pipewire wireplumber pipewire-pulse grim slurp wl-clipboard wtype fish starship fastfetch fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy neovim flatpak librsvg xorg-xhost custom-extra-package' "$call_log" >/dev/null; then
     echo "Arch Hyprland profile did not resolve the expected package set." >&2
     cat "$call_log" >&2
     exit 1
@@ -95,7 +95,7 @@ fi
 HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland \
     --groups input,audio custom-extra-package >/dev/null
-if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty pipewire wireplumber pipewire-pulse fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy custom-extra-package' "$call_log" >/dev/null; then
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty cargo wayland pkgconf pipewire wireplumber pipewire-pulse fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy custom-extra-package' "$call_log" >/dev/null; then
     echo "Selected Arch package groups did not resolve to base, core, and requested groups." >&2
     cat "$call_log" >&2
     exit 1
@@ -118,7 +118,7 @@ fi
 : >"$call_log"
 printf '2\n' | HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland --interactive >/dev/null 2>&1
-if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty grim slurp wl-clipboard wtype' "$call_log" >/dev/null; then
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty cargo wayland pkgconf grim slurp wl-clipboard wtype' "$call_log" >/dev/null; then
     echo "Interactive package selection did not resolve the selected capture group." >&2
     cat "$call_log" >&2
     exit 1
@@ -127,7 +127,7 @@ fi
 : >"$call_log"
 printf 'none\n' | HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland --interactive >/dev/null 2>&1
-if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty' "$call_log" >/dev/null; then
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty cargo wayland pkgconf' "$call_log" >/dev/null; then
     echo "Interactive 'none' did not retain only the required base and core groups." >&2
     cat "$call_log" >&2
     exit 1
@@ -137,7 +137,7 @@ fi
 HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland \
     --groups base >/dev/null
-if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty' "$call_log" >/dev/null; then
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty cargo wayland pkgconf' "$call_log" >/dev/null; then
     echo "Explicit base selection omitted required core dependencies." >&2
     cat "$call_log" >&2
     exit 1
@@ -207,7 +207,7 @@ fi
 HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release TRITON_TEST_BACKPORTS=yes \
     "$repo_dir/install.sh" packages --profile hyprland custom-extra-package >/dev/null
-if ! grep -Fx 'apt install -t trixie-backports git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python3 procps imagemagick playerctl brightnessctl kitty network-manager bluez blueman power-profiles-daemon pipewire wireplumber pipewire-pulse grim slurp wl-clipboard wtype fish starship fastfetch fcitx5 fcitx5-frontend-all fcitx5-anthy neovim flatpak librsvg2-bin x11-xserver-utils custom-extra-package' "$call_log" >/dev/null; then
+if ! grep -Fx 'apt install -t trixie-backports git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python3 procps imagemagick playerctl brightnessctl kitty cargo libwayland-dev pkg-config network-manager bluez blueman power-profiles-daemon pipewire wireplumber pipewire-pulse grim slurp wl-clipboard wtype fish starship fastfetch fcitx5 fcitx5-frontend-all fcitx5-anthy neovim flatpak librsvg2-bin x11-xserver-utils custom-extra-package' "$call_log" >/dev/null; then
     echo "Debian Trixie Hyprland profile did not resolve the expected package set." >&2
     cat "$call_log" >&2
     exit 1
@@ -239,7 +239,7 @@ fi
 : >"$call_log"
 HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$tmp_dir/freebsd-bin:$bin_dir:/usr/bin:/bin" \
     "$repo_dir/install.sh" packages --profile hyprland custom-extra-package >/dev/null
-if ! grep -Fx 'pkg install git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python ImageMagick7 playerctl bsdisks kitty pipewire wireplumber pipewire-spa-oss grim slurp wl-clipboard wtype fish starship fastfetch fcitx5 neovim custom-extra-package' "$call_log" >/dev/null; then
+if ! grep -Fx 'pkg install git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python ImageMagick7 playerctl bsdisks kitty rust wayland pkgconf pipewire wireplumber pipewire-spa-oss grim slurp wl-clipboard wtype fish starship fastfetch fcitx5 neovim custom-extra-package' "$call_log" >/dev/null; then
     echo "FreeBSD Hyprland profile did not resolve the expected package set." >&2
     cat "$call_log" >&2
     exit 1

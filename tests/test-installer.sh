@@ -1,5 +1,7 @@
 #!/bin/sh
 set -eu
+XDG_DATA_HOME=
+export XDG_DATA_HOME
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/triton-installer-test.XXXXXX")
@@ -30,6 +32,12 @@ printf '%s\n' 'user-owned target' >"$fresh_home/.local/share/user-app/data"
 ln -s "$fresh_home/.local/share/user-app/data" "$fresh_home/.local/bin/user-app-data"
 HOME=$fresh_home "$repo_dir/install.sh" >/dev/null
 HOME=$fresh_home "$repo_dir/install.sh" >/dev/null
+for relative in .local/share/fonts/triton-desktop .local/share/icons/Bibata-Modern-Classic; do
+    if [ ! -L "$fresh_home/$relative" ]; then
+        echo "Installer did not link the bundled asset at $relative" >&2
+        exit 1
+    fi
+done
 
 for relative in \
     .config/hypr/scripts/run-session-command \
@@ -122,7 +130,13 @@ cat >"$setup_bin/sudo" <<'EOF'
 #!/bin/sh
 exec "$@"
 EOF
-chmod +x "$setup_bin/pacman" "$setup_bin/sudo"
+for command in mimeclip mimeclipd; do
+    cat >"$setup_bin/$command" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+done
+chmod +x "$setup_bin/pacman" "$setup_bin/sudo" "$setup_bin/mimeclip" "$setup_bin/mimeclipd"
 printf 'ID=cachyos\nID_LIKE="arch"\n' >"$tmp_dir/setup-os-release"
 : >"$tmp_dir/setup-package-calls"
 if printf 'none\n' | HOME=$conflict_home \
@@ -148,7 +162,7 @@ printf 'none\n' | HOME=$setup_home \
     CALL_LOG=$tmp_dir/setup-package-calls \
     TRITON_OS_RELEASE_FILE=$tmp_dir/setup-os-release \
     "$repo_dir/install.sh" setup >/dev/null 2>&1
-if ! grep -Fx -- '-S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty' "$tmp_dir/setup-package-calls" >/dev/null; then
+if ! grep -Fx -- '-S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty cargo wayland pkgconf' "$tmp_dir/setup-package-calls" >/dev/null; then
     echo "Setup did not request the selected base and core package set." >&2
     cat "$tmp_dir/setup-package-calls" >&2
     exit 1
@@ -190,6 +204,12 @@ if [ -e "$selected_home/.local/state/triton-desktop/package-groups" ]; then
     echo "Uninstaller kept the installer-only package-group selection." >&2
     exit 1
 fi
+for relative in .local/share/fonts/triton-desktop .local/share/icons/Bibata-Modern-Classic; do
+    if [ -L "$selected_home/$relative" ]; then
+        echo "Uninstaller kept a Triton asset link at $relative" >&2
+        exit 1
+    fi
+done
 
 root_bin=$tmp_dir/root-bin
 mkdir -p "$root_bin"
@@ -213,6 +233,7 @@ fi
 "$repo_dir/tests/test-package-ownership.sh"
 "$repo_dir/tests/test-platform-detection.sh"
 "$repo_dir/tests/test-mimeclip-resolver.sh"
+"$repo_dir/tests/test-feature-installer.sh"
 "$repo_dir/tests/test-freebsd-privileged.sh"
 
 echo "Installer fresh, repeat, and conflict checks passed."

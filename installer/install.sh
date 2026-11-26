@@ -141,6 +141,7 @@ if [ "$(uname -s)" = FreeBSD ]; then
 fi
 preflight_packages desktop/platforms "$platform_package"
 preflight_packages configs $config_packages
+"$repo_dir/installer/install-assets.sh" --check
 
 if ! command -v stow >/dev/null 2>&1; then
     echo "GNU Stow is missing; installing the bootstrap packages with the native package manager."
@@ -200,6 +201,7 @@ done
 # runtime profile. This keeps package changes out of ordinary Stow conflicts.
 if [ "$action" = setup ]; then
     "$repo_dir/installer/packages/install.sh" --profile hyprland --groups "$selected_groups"
+    "$repo_dir/installer/features/install-mimeclip.sh"
 fi
 
 hardware_tmp=
@@ -276,6 +278,7 @@ if [ "$platform_package" = freebsd ]; then
     install -m 0755 "$hardware_tmp" "$HOME/.local/bin/triton-freebsd-hardware"
 fi
 stow_packages configs $config_packages
+"$repo_dir/installer/install-assets.sh"
 
 if [ "$action" = setup ]; then
     mkdir -p "$(dirname "$selection_file")"
