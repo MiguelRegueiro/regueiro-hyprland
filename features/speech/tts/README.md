@@ -14,6 +14,9 @@ The first run creates `features/speech/tts/.venv/`; it is local to each machine
 and is not tracked by Git. Set `TRITON_TTS_HOST` or `TRITON_TTS_PORT` to
 override the address or port. The previous `EASYTTS_*` environment names remain
 supported for existing setups.
+Preferences now live under `~/.config/triton-tts`; the server reads the previous
+`~/.config/regueiro-easytts/preferences.json` until new preferences are saved.
+Runtime files live in the private `triton-tts` runtime directory.
 
 ## Start with Hyprland
 

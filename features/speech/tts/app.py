@@ -21,6 +21,7 @@ else:
     cache_home = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
     RUNTIME = cache_home / "triton-tts" / "runtime"
 STATE = RUNTIME / "state.json"
+PID_FILE = Path(os.environ.get("TRITON_TTS_PID_FILE", RUNTIME / "server.pid"))
 CONFIG_HOME = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
 PREFERENCES = CONFIG_HOME / "triton-tts" / "preferences.json"
 LEGACY_PREFERENCES = CONFIG_HOME / "regueiro-easytts" / "preferences.json"
@@ -517,6 +518,16 @@ if __name__ == "__main__":
     print()
 
     servers = [ThreadingHTTPServer(address, Handler) for address in addresses]
+    PID_FILE.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    pid_temporary = PID_FILE.with_name(f".{PID_FILE.name}.{os.getpid()}.tmp")
+    pid_temporary.write_text(f"{os.getpid()}\n", encoding="ascii")
+    pid_temporary.chmod(0o600)
+    pid_temporary.replace(PID_FILE)
+
+    def stop_on_term(_signum, _frame):
+        raise SystemExit(0)
+
+    signal.signal(signal.SIGTERM, stop_on_term)
     for server in servers[1:]:
         threading.Thread(target=server.serve_forever, daemon=True).start()
 
@@ -541,3 +552,8 @@ if __name__ == "__main__":
     finally:
         for server in servers:
             server.server_close()
+        try:
+            if PID_FILE.read_text(encoding="ascii").strip() == str(os.getpid()):
+                PID_FILE.unlink()
+        except OSError:
+            pass

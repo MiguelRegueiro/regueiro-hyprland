@@ -2,9 +2,16 @@
 
 set -euo pipefail
 
-SOURCE="$(readlink -f -- "${BASH_SOURCE[0]}")"
+SOURCE="$(realpath "${BASH_SOURCE[0]}")"
 TTS_ROOT="$(cd -- "$(dirname -- "$SOURCE")" && pwd)"
 RUNNER="$TTS_ROOT/runtts.sh"
+if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
+    RUNTIME_DIR="$XDG_RUNTIME_DIR/triton-tts"
+else
+    RUNTIME_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/triton-tts/runtime"
+fi
+PID_FILE="$RUNTIME_DIR/server.pid"
+LOG_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/triton-tts/server.log"
 restart=false
 background=false
 session_pid=
@@ -40,20 +47,29 @@ if "$background" && [[ -z "${TRITON_TTS_BACKGROUND_CHILD:-${EASYTTS_BACKGROUND_C
     arguments=()
     "$restart" && arguments+=(--restart)
     [[ -n "$session_pid" ]] && arguments+=(--session-pid "$session_pid")
+    mkdir -p "$(dirname -- "$LOG_FILE")"
     nohup env TRITON_TTS_BACKGROUND_CHILD=1 "$0" "${arguments[@]}" \
-        </dev/null >/tmp/triton-tts.log 2>&1 &
-    echo "Triton TTS started in the background (log: /tmp/triton-tts.log)"
+        </dev/null >"$LOG_FILE" 2>&1 &
+    echo "Triton TTS started in the background (log: $LOG_FILE)"
     exit 0
 fi
 
-# Hyprland can reload without ending the existing server process.  The Python
-# command itself uses relative paths, so identify it by its working directory.
+server_pid_is_active() {
+    local candidate=$1 command
+    [[ "$candidate" =~ ^[0-9]+$ ]] && kill -0 "$candidate" 2>/dev/null || return 1
+    command=$(ps -ww -p "$candidate" -o command= 2>/dev/null || true)
+    [[ "$command" == *".venv/bin/python app.py"* ]]
+}
+
 active_pids=()
-while IFS= read -r PID; do
-    if [[ "$(readlink -f -- "/proc/$PID/cwd")" == "$TTS_ROOT" ]]; then
+if [[ -r "$PID_FILE" ]]; then
+    PID=$(<"$PID_FILE")
+    if server_pid_is_active "$PID"; then
         active_pids+=("$PID")
+    else
+        rm -f "$PID_FILE"
     fi
-done < <(pgrep -u "$(id -u)" -f '\.venv/bin/python app\.py' || true)
+fi
 
 if ((${#active_pids[@]})); then
     if ! "$restart"; then
@@ -64,7 +80,7 @@ if ((${#active_pids[@]})); then
     for _ in {1..50}; do
         still_running=false
         for PID in "${active_pids[@]}"; do
-            if kill -0 "$PID" 2>/dev/null; then
+            if server_pid_is_active "$PID"; then
                 still_running=true
                 break
             fi
@@ -82,6 +98,7 @@ if ((${#active_pids[@]})); then
 fi
 
 if [[ -n "$session_pid" ]]; then
-    exec env TRITON_TTS_OPEN_BROWSER=0 TRITON_SESSION_PID="$session_pid" "$RUNNER"
+    exec env TRITON_TTS_OPEN_BROWSER=0 TRITON_TTS_PID_FILE="$PID_FILE" \
+        TRITON_SESSION_PID="$session_pid" "$RUNNER"
 fi
-exec env TRITON_TTS_OPEN_BROWSER=0 "$RUNNER"
+exec env TRITON_TTS_OPEN_BROWSER=0 TRITON_TTS_PID_FILE="$PID_FILE" "$RUNNER"
