@@ -15,7 +15,7 @@ hl.on("hyprland.start", function()
     -- helpers are independent of the bar and can safely start just after it.
     -- This is deliberately a delay for the helpers, never for QuickShell.
     -- Claim browser "show in folder" requests before another file manager can.
-    hl.exec_cmd("sh -c 'sleep 2; app=\"$HOME/.local/bin/elio-filemanager1\"; [ -x \"$app\" ] && exec \"$app\"'")
+    hl.exec_cmd("sh -c 'sleep 2; app=\"$HOME/.local/bin/elio-filemanager1\"; [ -x \"$app\" ] && exec ~/.config/hypr/scripts/run-session-command --current \"$app\"'")
 
     -- Import the session environment before restarting portal services.
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/start-portals.sh'")

@@ -1,2 +1,19 @@
 #!/bin/sh
+set -eu
+
+if [ "${1:-}" = --current ]; then
+    shift
+    instance=${HYPRLAND_INSTANCE_SIGNATURE:-}
+    if [ -z "$instance" ]; then
+        echo "run-session-command: HYPRLAND_INSTANCE_SIGNATURE is missing" >&2
+        exit 1
+    fi
+    session_pid=$(hyprctl -j instances |
+        jq -er --arg instance "$instance" '.[] | select(.instance == $instance) | .pid') || {
+        echo "run-session-command: could not resolve the active Hyprland process" >&2
+        exit 1
+    }
+    exec "$HOME/.local/bin/triton-run-session-command" "$session_pid" "$@"
+fi
+
 exec "$HOME/.local/bin/triton-run-session-command" "$@"
