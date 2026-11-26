@@ -2,6 +2,15 @@
 # Own only the Fcitx process started here; never kill another desktop's IME.
 set -euo pipefail
 
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop"
+selection_file="$state_root/package-groups"
+if [[ -r "$selection_file" ]]; then
+    selected_groups=$(<"$selection_file")
+    if [[ "$selected_groups" != all && ",$selected_groups," != *,input,* ]]; then
+        exit 0
+    fi
+fi
+
 [[ ":${XDG_CURRENT_DESKTOP:-}:" == *:Hyprland:* ]] || exit 0
 command -v fcitx5 >/dev/null 2>&1 || exit 0
 command -v fcitx5-remote >/dev/null 2>&1 || exit 0

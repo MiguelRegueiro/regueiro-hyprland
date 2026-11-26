@@ -16,8 +16,8 @@ operations for the shared external-drive menu.
 The shared power-profile selector uses `triton-freebsd-power-profile` to apply
 `powerd` flags and Intel EPP values.
 Shared reboot and poweroff actions use `triton-freebsd-power`, which invokes
-`shutdown` through non-interactive `doas`. Configure an appropriate narrowly
-scoped `doas` rule on the target system; without it the command fails closed.
+the root-owned Triton allowlist helper through `doas`. Configure an appropriate
+administrator policy on the target system; without it the command fails closed.
 
 On FreeBSD, `./install.sh` selects this Stow package and compiles the bridge
 into `~/.local/bin/triton-freebsd-hardware`. The bridge targets the device paths
@@ -25,5 +25,7 @@ validated by the existing FreeBSD branch (`/dev/backlight/backlight0` and
 `/dev/mixer0`); machines with different device paths need adaptation.
 
 The FreeBSD adapters are not runtime-validated by the Linux test host. Confirm
-device permissions, backlight behavior, PipeWire audio, and native service
-behavior on the target FreeBSD machine before relying on them.
+device permissions, backlight behavior, PipeWire audio, native portal/polkit
+startup, and service behavior on the target FreeBSD machine before relying on
+them. Idle policy, automatic suspend, and resume actions are currently exposed
+only by the Linux backend; Hyprland startup skips the Linux power daemon on BSD.

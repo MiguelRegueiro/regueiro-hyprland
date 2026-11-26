@@ -349,12 +349,10 @@ if [ "$platform_package" = freebsd ]; then
 fi
 stow_packages configs $config_packages
 
-if [ "$action" = setup ]; then
-    mkdir -p "$(dirname "$selection_file")"
-    selection_tmp=$(mktemp "$(dirname "$selection_file")/.package-groups.XXXXXX")
-    printf '%s\n' "$selected_groups" >"$selection_tmp"
-    mv "$selection_tmp" "$selection_file"
-fi
+mkdir -p "$(dirname "$selection_file")"
+selection_tmp=$(mktemp "$(dirname "$selection_file")/.package-groups.XXXXXX")
+printf '%s\n' "$selected_groups" >"$selection_tmp"
+mv "$selection_tmp" "$selection_file"
 
 # Remove dangling links left by files deleted in earlier refactors. Keep this
 # sweep limited to Stow-managed locations and the old checkout's unique path.

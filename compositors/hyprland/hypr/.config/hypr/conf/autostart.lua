@@ -21,7 +21,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/start-portals.sh'")
 
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/start-session-services'")
-    hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/powerctl daemon'")
+    -- powerctl currently generates a Linux hypridle/logind policy. Keep the
+    -- native FreeBSD session usable while its idle/suspend backend is pending.
+    hl.exec_cmd("sh -c 'if [ \"$(uname -s)\" = Linux ]; then sleep 2; exec ~/.config/hypr/scripts/powerctl daemon; fi'")
     hl.exec_cmd("sh -c 'sleep 2 && exec ~/.config/hypr/scripts/set-wallpaper restore'")
     hl.exec_cmd("sh -c 'sleep 2; service=\"$HOME/.local/bin/triton-linux-service\"; [ -x \"$service\" ] && exec \"$service\" user start hyprpolkitagent.service'")
     hl.exec_cmd("sh -c 'sleep 2; command -v fcitx5 >/dev/null 2>&1 && command -v fcitx5-remote >/dev/null 2>&1 && exec ~/.config/hypr/scripts/fcitx-session.sh'")

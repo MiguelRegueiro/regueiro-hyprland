@@ -18,8 +18,10 @@ FocusScope {
     property real revealProgress: revealed ? 1 : 0
     property bool revealed: false
     readonly property real uiScale: Math.min(1, width / 800, height / 650)
-    readonly property string desktopRoot: Quickshell.env("TRITON_DESKTOP_DIR") || (Quickshell.env("HOME") + "/triton-desktop")
-    property string wallpaperPath: desktopRoot + "/desktop/assets/wallpapers/wallpaper5.png"
+    readonly property string assetRoot: Quickshell.env("TRITON_DESKTOP_DIR")
+        ? Quickshell.env("TRITON_DESKTOP_DIR") + "/desktop/assets"
+        : (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/triton-desktop/assets"
+    property string wallpaperPath: assetRoot + "/wallpapers/wallpaper5.png"
 
     signal passwordEdited(string text)
     signal passwordVisibilityRequested(bool visible)
@@ -104,14 +106,14 @@ FocusScope {
             const legacyWallpaperDir = Quickshell.env("HOME") + "/regueiro-hyprland/wallpapers/";
             if (path.startsWith(legacyWallpaperDir)) {
                 const filename = path.slice(legacyWallpaperDir.length);
-                root.wallpaperPath = root.desktopRoot + "/desktop/assets/wallpapers/" + filename;
+                root.wallpaperPath = root.assetRoot + "/wallpapers/" + filename;
                 return;
             }
 
             const legacyCheckoutDir = Quickshell.env("HOME") + "/regueiro-hyprland/desktop/assets/wallpapers/";
             if (path.startsWith(legacyCheckoutDir)) {
                 const filename = path.slice(legacyCheckoutDir.length);
-                root.wallpaperPath = root.desktopRoot + "/desktop/assets/wallpapers/" + filename;
+                root.wallpaperPath = root.assetRoot + "/wallpapers/" + filename;
             } else {
                 root.wallpaperPath = path;
             }

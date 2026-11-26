@@ -2,9 +2,11 @@
 set -euo pipefail
 
 # Resolve through Stow, so new locker files work without restowing ~/.config.
-self="$(readlink -f "${BASH_SOURCE[0]}")"
+self="$(realpath "${BASH_SOURCE[0]}")"
 script_dir="$(dirname "$self")"
 repo_root="$(cd "$script_dir/../.." && pwd)"
+TRITON_DESKTOP_DIR=$repo_root
+export TRITON_DESKTOP_DIR
 config="$repo_root/desktop/quickshell/.config/quickshell/lock.qml"
 runtime_dir="${XDG_RUNTIME_DIR:?A running Wayland session is required}"
 display="${WAYLAND_DISPLAY:?A running Wayland session is required}"

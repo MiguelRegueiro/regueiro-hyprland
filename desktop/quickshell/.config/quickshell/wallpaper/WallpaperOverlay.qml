@@ -19,8 +19,10 @@ PanelWindow {
     property bool carouselInitialized: false
     property bool carouselVisible: false
     property bool carouselMotionEnabled: false
-    readonly property string desktopRoot: Quickshell.env("TRITON_DESKTOP_DIR") || (Quickshell.env("HOME") + "/triton-desktop")
-    readonly property string wallpaperDir: desktopRoot + "/desktop/assets/wallpapers"
+    readonly property string assetRoot: Quickshell.env("TRITON_DESKTOP_DIR")
+        ? Quickshell.env("TRITON_DESKTOP_DIR") + "/desktop/assets"
+        : (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/triton-desktop/assets"
+    readonly property string wallpaperDir: assetRoot + "/wallpapers"
     property var previewSources: ({})
 
     // Warm the disk cache while hidden. Periodic metadata checks also catch

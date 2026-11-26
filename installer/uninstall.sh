@@ -79,6 +79,8 @@ remove_asset_link "${XDG_DATA_HOME:-$HOME/.local/share}/fonts/triton-desktop" \
     "$repo_dir/desktop/assets/fonts"
 remove_asset_link "${XDG_DATA_HOME:-$HOME/.local/share}/icons/Bibata-Modern-Classic" \
     "$repo_dir/desktop/assets/icons/Bibata-Modern-Classic"
+remove_asset_link "${XDG_DATA_HOME:-$HOME/.local/share}/triton-desktop/assets" \
+    "$repo_dir/desktop/assets"
 
 if [ "$remove_packages" = yes ]; then
     state_dir=${TRITON_PACKAGE_STATE_DIR:-$HOME/.local/state/triton-desktop/packages}
