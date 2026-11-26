@@ -138,7 +138,7 @@ machine-local files under `$XDG_CONFIG_HOME` (normally `~/.config`) can override
 
 Keep these files outside Stow and version control.
 
-### Portals and Elio file chooser
+### Portals and elio file chooser
 
 Install `xdg-desktop-portal-hyprland` and `xdg-desktop-portal-gtk`, then run
 `./install.sh` to link the `xdg-portals` package with the rest of the profile.
@@ -147,7 +147,7 @@ The desktop-specific `hyprland-portals.conf` leaves GNOME's portal selection alo
 When upgrading, remove the old `~/.config/xdg-desktop-portal/portals.conf` **only
 if it is a symlink into this repo**, then rerun `./install.sh`.
 
-Elio integration requires `xdg-desktop-portal-termfilechooser`, `kitty`, and an
+elio integration requires `xdg-desktop-portal-termfilechooser`, `kitty`, and an
 `elio` build supporting `--chooser-file`. GTK is the fallback when termfilechooser
 is unavailable; it is not automatic recovery from a running backend that fails.
 To select GTK explicitly, set `org.freedesktop.impl.portal.FileChooser=gtk` in the

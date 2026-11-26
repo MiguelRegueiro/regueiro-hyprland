@@ -41,6 +41,8 @@ sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-drive-eject
 sh -n desktop/platforms/freebsd/.local/bin/triton-freebsd-power-profile
 sh -n installer/install.sh
 python -m py_compile compositors/hyprland/hypr/.config/hypr/scripts/powerctl
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/triton-pycache" \
+    python -m py_compile compositors/hyprland/hypr/.local/bin/elio-filemanager1
 git diff --check
 
 echo "Formatting and syntax checks passed."

@@ -75,7 +75,7 @@ Blueman are tied to the active Hyprland session. `powerctl` cleans up stale
 daemons from previous sessions; MimeClip uses a session supervisor when one is
 not already owned by a systemd user service. That existing user service may
 persist across logins and reconnect to Wayland. The shared process supervisor
-also owns Elio's file-manager integration. Triton Connect still needs an
+also owns elio's file-manager integration. Triton Connect still needs an
 explicit shutdown policy, and restart/health behavior is not yet unified
 across all long-running services.
 
