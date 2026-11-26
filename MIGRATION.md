@@ -66,17 +66,31 @@ validated.
 ## 05 — Make the session reliable
 
 - [ ] Unify startup and shutdown.
-- [x] Fix MimeClip client/daemon resolution.
+- [x] Fix MimeClip client/daemon resolution and avoid competing session supervisors.
 - [ ] Implement restart and health checks.
 - [ ] Make optional services capability-aware.
 
+Progress: QuickShell, Triton TTS, powerctl, Fcitx, `wl-clip-persist`, and
+Blueman are tied to the active Hyprland session. `powerctl` cleans up stale
+daemons from previous sessions; MimeClip uses a session supervisor when one is
+not already owned by a systemd user service. That existing user service may
+persist across logins and reconnect to Wayland. Elio's file-manager integration
+and Triton Connect still need an explicit shutdown policy, and restart/health
+behavior is not yet unified across all long-running services.
+
 ## 06 — Implement the installer
 
-- [ ] Detect OS and distribution automatically.
+- [x] Detect OS and distribution automatically for the bootstrap package command.
 - [ ] Install native dependencies.
 - [ ] Add optional application and feature selection.
 - [ ] Back up existing configuration and deploy Stow packages safely.
-- [ ] Test repeated installations.
+- [x] Test repeated installations and reject Stow conflicts before changing files.
+
+Progress: `./install.sh packages` detects FreeBSD or reads Linux `os-release`
+and selects the matching package manager. It installs only Git and GNU Stow
+(plus explicitly requested package names); runtime desktop dependencies and
+optional feature selection remain manual. Tests use fake package managers and
+temporary home directories, so they do not install packages on the host.
 
 ## 07 — Implement stable releases and updates
 
