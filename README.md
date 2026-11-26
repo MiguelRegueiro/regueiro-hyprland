@@ -45,9 +45,9 @@ The previous Hyprlock theme remains in the repository as an inactive configurati
 
 ## Dependencies
 
-The package scripts under `installer/packages/` install the portable bootstrap tools, Git and GNU Stow, for Arch, Fedora, Debian/Ubuntu, Void, or FreeBSD. Run `./install.sh packages` to select the current OS package manager. Desktop runtime dependencies remain profile-specific while the platform adapters are being separated; this does not claim the full Hyprland desktop profile works on every listed OS.
+The package scripts under `installer/packages/` install the portable bootstrap tools, Git and GNU Stow, for Arch, Fedora, Debian/Ubuntu, Void, or FreeBSD. Run `./install.sh packages` to select the current OS package manager. An opt-in `./install.sh packages --profile hyprland` installs the current runtime package set on Arch and CachyOS; it is not run by the normal Stow installer and does not enable system services. Other distributions remain unsupported by this profile until their package names and runtime requirements are mapped and validated.
 
-The Hyprland profile additionally needs Hyprland, QuickShell, hypridle, hyprpaper, and the services documented below. Install those with the package source appropriate to your distribution. Some personal apps are optional and listed in their feature documentation.
+On Arch/CachyOS, the opt-in Hyprland package profile includes the compositor, shell, wallpaper and idle tools, portals, and the common hardware/input integrations. You still need to enable the services listed below. On other distributions, install the equivalent runtime packages from their native sources. Some personal apps are optional and listed in their feature documentation.
 
 Optional / personal extras:
 

@@ -92,6 +92,12 @@ and selects the matching package manager. It installs only Git and GNU Stow
 optional feature selection remain manual. Tests use fake package managers and
 temporary home directories, so they do not install packages on the host.
 
+An explicit `./install.sh packages --profile hyprland` profile now installs the
+current Hyprland runtime package set on Arch/CachyOS only. The default install
+still only deploys configuration, and the profile does not enable services.
+Other distribution profiles remain unimplemented until their package sets and
+service setup have been verified.
+
 ## 07 — Implement stable releases and updates
 
 - [ ] Add versioned releases and a stable channel.

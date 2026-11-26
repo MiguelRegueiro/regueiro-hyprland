@@ -1,6 +1,16 @@
 #!/bin/sh
 set -eu
 
+profile=
+if [ "${1:-}" = --profile ]; then
+    if [ "$#" -lt 2 ]; then
+        echo "Usage: ./install.sh packages [package ...] | --profile NAME [package ...]" >&2
+        exit 2
+    fi
+    profile=$2
+    shift 2
+fi
+
 os=$(uname -s)
 if [ "$os" = FreeBSD ]; then
     script=freebsd.sh
@@ -21,4 +31,17 @@ else
         *) echo "Unsupported distribution: $id (ID_LIKE: ${id_like:-none})" >&2; exit 1 ;;
     esac
 fi
+
+if [ -n "$profile" ]; then
+    case "$script:$profile" in
+        arch.sh:hyprland)
+            exec "$(dirname "$0")/$script" --profile "$profile" "$@"
+            ;;
+        *)
+            echo "Package profile '$profile' is not supported on this platform yet." >&2
+            exit 2
+            ;;
+    esac
+fi
+
 exec "$(dirname "$0")/$script" "$@"
