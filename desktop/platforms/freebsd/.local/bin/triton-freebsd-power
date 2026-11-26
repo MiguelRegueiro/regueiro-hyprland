@@ -11,10 +11,10 @@ action=${1:-}
 
 case "$action" in
     reboot)
-        exec doas -n shutdown -r now
+        exec doas -n /usr/local/libexec/triton-privileged system reboot
         ;;
     poweroff)
-        exec doas -n shutdown -p now
+        exec doas -n /usr/local/libexec/triton-privileged system poweroff
         ;;
     *)
         usage

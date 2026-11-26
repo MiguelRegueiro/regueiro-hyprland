@@ -167,7 +167,7 @@ for relative in .config/fish/config.fish .config/fcitx5/config .local/share/flat
 done
 
 selected_home=$tmp_dir/selected-home
-mkdir -p "$selected_home"
+mkdir -p "$selected_home/.local/state/triton-desktop"
 printf '6,9\n' | HOME=$selected_home \
     PATH="$setup_bin:/usr/bin:/bin" \
     CALL_LOG=$tmp_dir/setup-package-calls \
@@ -185,6 +185,11 @@ for relative in .local/share/flatpak/overrides/net.ankiweb.Anki .config/nvim/ini
         exit 1
     fi
 done
+HOME=$selected_home "$repo_dir/install.sh" uninstall >/dev/null
+if [ -e "$selected_home/.local/state/triton-desktop/package-groups" ]; then
+    echo "Uninstaller kept the installer-only package-group selection." >&2
+    exit 1
+fi
 
 root_bin=$tmp_dir/root-bin
 mkdir -p "$root_bin"
@@ -208,5 +213,6 @@ fi
 "$repo_dir/tests/test-package-ownership.sh"
 "$repo_dir/tests/test-platform-detection.sh"
 "$repo_dir/tests/test-mimeclip-resolver.sh"
+"$repo_dir/tests/test-freebsd-privileged.sh"
 
 echo "Installer fresh, repeat, and conflict checks passed."

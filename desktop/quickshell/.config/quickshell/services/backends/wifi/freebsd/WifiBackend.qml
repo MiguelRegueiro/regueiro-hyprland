@@ -12,6 +12,7 @@ Item {
     property var savedProfiles: []
     property var connectedNetwork: null
     property var pendingConnection: null
+    property string pendingPassword: ""
     readonly property var wifiDevice: root
     readonly property var networks: networkCollection
 
@@ -127,9 +128,9 @@ Item {
             return;
         actionTarget = network;
         actionKind = action;
+        pendingPassword = action === "password" ? (password || "") : "";
         const args = [Quickshell.env("HOME") + "/.local/bin/triton-freebsd-network", action === "forget" ? "forget" : "connect", network.name];
-        if (action === "password")
-            args.push(password || "");
+        actionProc.stdinEnabled = action === "password";
         actionProc.command = args;
         actionProc.running = true;
     }
@@ -209,8 +210,16 @@ Item {
     Process {
         id: actionProc
         command: ["true"]
+        onStarted: {
+            if (root.actionKind === "password") {
+                write(root.pendingPassword + "\n");
+                root.pendingPassword = "";
+                stdinEnabled = false;
+            }
+        }
         stderr: StdioCollector { id: actionError }
         onExited: (exitCode) => {
+            root.pendingPassword = "";
             const target = root.actionTarget;
             const action = root.actionKind;
             root.actionTarget = null;

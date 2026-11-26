@@ -1,0 +1,442 @@
+#!/bin/sh
+set -eu
+
+# This file is intended to be installed root:wheel, mode 0755, at
+# /usr/local/libexec/triton-privileged. It must never be invoked from a
+# user-writable checkout with elevated privileges.
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+LC_ALL=C
+export PATH LC_ALL
+umask 077
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "triton-privileged must run as root" >&2
+    exit 1
+fi
+
+usage() {
+    echo "usage: triton-privileged system reboot|poweroff | power-profile set MODE | wifi profiles|connect|forget|toggle ... | ethernet toggle IFACE up|down | bluetooth ..." >&2
+    exit 2
+}
+
+validate_iface() {
+    case "${1:-}" in
+        wlan*) digits=${1#wlan} ;;
+        *) echo "Invalid wireless interface" >&2; exit 2 ;;
+    esac
+    case "$digits" in ''|*[!0-9]*) echo "Invalid wireless interface" >&2; exit 2 ;; esac
+    [ "${#digits}" -le 3 ] || { echo "Invalid wireless interface" >&2; exit 2; }
+}
+
+validate_network_iface() {
+    case "${1:-}" in
+        ''|-*|*[![:alnum:]_.-]*) echo "Invalid network interface" >&2; exit 2 ;;
+    esac
+    [ "${#1}" -le 15 ] || { echo "Invalid network interface" >&2; exit 2; }
+}
+
+validate_ssid() {
+    [ -n "${1:-}" ] && [ "${#1}" -le 32 ] || {
+        echo "SSID must contain between 1 and 32 bytes" >&2
+        exit 2
+    }
+    case "$1" in *[![:print:]]*) echo "SSID contains unsupported control characters" >&2; exit 2 ;; esac
+}
+
+validate_mac() {
+    printf '%s\n' "${1:-}" | grep -Eq '^([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}$' || {
+        echo "Invalid Bluetooth address" >&2
+        exit 2
+    }
+}
+
+validate_bt_device() {
+    case "${1:-}" in ubt[0-9]) ;; *) echo "Invalid Bluetooth device" >&2; exit 2 ;; esac
+}
+
+validate_bt_hci() {
+    case "${1:-}" in ubt[0-9]hci) ;; *) echo "Invalid Bluetooth controller" >&2; exit 2 ;; esac
+}
+
+wifi_conf=/usr/local/etc/triton-desktop/wpa_supplicant.conf
+wifi_dir=/usr/local/etc/triton-desktop
+
+check_wifi_directory() {
+    [ -d "$wifi_dir" ] && [ ! -L "$wifi_dir" ] || {
+        echo "Wi-Fi configuration directory is not installed safely" >&2
+        exit 1
+    }
+    [ "$(stat -f %u "$wifi_dir")" = 0 ] && [ "$(stat -f %Lp "$wifi_dir")" = 755 ] || {
+        echo "Wi-Fi configuration directory must be root-owned mode 755" >&2
+        exit 1
+    }
+}
+
+ssid_hex() {
+    printf '%s' "$1" | od -An -tx1 | tr -d ' \n'
+}
+
+profile_exists() {
+    [ -r "$wifi_conf" ] || return 1
+    marker="# triton-ssid=$(ssid_hex "$1")"
+    awk -v target="$marker" '$0 == target { found = 1 } END { exit !found }' "$wifi_conf"
+}
+
+write_profile() {
+    action=$1
+    ssid=$2
+    psk_hex=${3:-}
+    marker="# triton-ssid=$(ssid_hex "$ssid")"
+    escaped_ssid=$(printf '%s' "$ssid" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    tmp=$(mktemp "$wifi_dir/.wpa.XXXXXXXX")
+    trap 'rm -f "$tmp"' 0
+    trap 'exit 1' HUP INT TERM
+
+    if [ -r "$wifi_conf" ]; then
+        awk -v target="$marker" '
+            /^[[:space:]]*network=[[:space:]]*\{/ {
+                in_block = 1
+                block = $0 ORS
+                remove = 0
+                next
+            }
+            in_block {
+                block = block $0 ORS
+                if ($0 == target) remove = 1
+                if ($0 ~ /^[[:space:]]*\}/) {
+                    if (!remove) printf "%s", block
+                    in_block = 0
+                    block = ""
+                }
+                next
+            }
+            { print }
+            END { if (in_block) printf "%s", block }
+        ' "$wifi_conf" >"$tmp"
+    else
+        : >"$tmp"
+    fi
+
+    if [ "$action" = connect ]; then
+        {
+            printf 'network={\n'
+            printf '\t%s\n' "$marker"
+            printf '\tssid="%s"\n' "$escaped_ssid"
+            if [ -n "$psk_hex" ]; then
+                printf '\tpsk=%s\n' "$psk_hex"
+            else
+                printf '\tkey_mgmt=NONE\n'
+            fi
+            printf '}\n'
+        } >>"$tmp"
+    fi
+
+    chmod 600 "$tmp"
+    chown root:wheel "$tmp"
+    mv -f "$tmp" "$wifi_conf"
+    trap - 0 HUP INT TERM
+}
+
+wifi_profiles() {
+    check_wifi_directory
+    [ -r "$wifi_conf" ] || exit 0
+    awk '
+        /^[[:space:]]*ssid="/ {
+            line = $0
+            sub(/^[[:space:]]*ssid="/, "", line)
+            sub(/"[[:space:]]*$/, "", line)
+            gsub(/\\"/, "\"", line)
+            print line ":wifi"
+        }
+    ' "$wifi_conf"
+}
+
+wifi_connect() {
+    iface=$1
+    ssid=$2
+    validate_iface "$iface"
+    validate_ssid "$ssid"
+    check_wifi_directory
+
+    psk=
+    IFS= read -r psk || [ -z "$psk" ]
+    if [ -n "$psk" ]; then
+        [ "${#psk}" -ge 8 ] && [ "${#psk}" -le 63 ] || {
+            echo "Wi-Fi password must contain 8 to 63 characters" >&2
+            exit 2
+        }
+        case "$psk" in *[![:print:]]*) echo "Wi-Fi password contains unsupported characters" >&2; exit 2 ;; esac
+        psk_hex=$(printf '%s\n' "$psk" | wpa_passphrase "$ssid" |
+            awk '$1 == "psk=" { value = $0; sub(/^psk=/, "", value); if (length(value) == 64 && value !~ /[^0-9a-fA-F]/) { print value; exit } }')
+        [ -n "$psk_hex" ] || { echo "Could not derive the WPA key" >&2; exit 1; }
+        write_profile connect "$ssid" "$psk_hex"
+    elif ! profile_exists "$ssid"; then
+        write_profile connect "$ssid"
+    fi
+
+    if ! ifconfig "$iface" >/dev/null 2>&1; then
+        echo "$iface does not exist; configure it in rc.conf and reboot" >&2
+        exit 1
+    fi
+    if ! ifconfig "$iface" | grep -Eq '<([^>]*,)?UP(,|>)'; then
+        echo "$iface is down; enable Wi-Fi before connecting" >&2
+        exit 1
+    fi
+    pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
+    wpa_supplicant -B -i "$iface" -c "$wifi_conf"
+    dhclient "$iface" >/dev/null 2>&1 || true
+}
+
+wifi_forget() {
+    iface=$1
+    ssid=$2
+    validate_iface "$iface"
+    validate_ssid "$ssid"
+    check_wifi_directory
+    write_profile forget "$ssid"
+}
+
+wifi_toggle() {
+    iface=$1
+    action=$2
+    validate_iface "$iface"
+    if ! ifconfig "$iface" >/dev/null 2>&1; then
+        echo "$iface does not exist; configure it in rc.conf and reboot" >&2
+        exit 1
+    fi
+    case "$action" in
+        start)
+            service netif start "$iface" || true
+            if ! ifconfig "$iface" | grep -Eq '<([^>]*,)?UP(,|>)'; then
+                echo "$iface could not be brought up" >&2
+                exit 1
+            fi
+            if [ -s "$wifi_conf" ]; then
+                service wpa_supplicant stop "$iface" >/dev/null 2>&1 || true
+                pkill -f "wpa_supplicant.*-i[[:space:]]*$iface([[:space:]]|$)" >/dev/null 2>&1 || true
+                wpa_supplicant -B -i "$iface" -c "$wifi_conf"
+                dhclient "$iface" >/dev/null 2>&1 || true
+            fi
+            ;;
+        stop)
+            service wpa_supplicant stop "$iface" >/dev/null 2>&1 || true
+            pkill -f "wpa_supplicant.*-i[[:space:]]*$iface([[:space:]]|$)" >/dev/null 2>&1 || true
+            service dhclient stop "$iface" >/dev/null 2>&1 || true
+            pkill -f "dhclient:.*$iface([[:space:]]|$)" >/dev/null 2>&1 || true
+            ifconfig "$iface" down
+            ;;
+        *) usage ;;
+    esac
+}
+
+ethernet_toggle() {
+    iface=$1
+    action=$2
+    validate_network_iface "$iface"
+    if ! ifconfig "$iface" >/dev/null 2>&1; then
+        echo "$iface does not exist" >&2
+        exit 1
+    fi
+    case "$action" in
+        up)
+            ifconfig "$iface" up
+            dhclient "$iface"
+            ;;
+        down)
+            service dhclient stop "$iface" >/dev/null 2>&1 || true
+            pkill -f "dhclient:.*$iface([[:space:]]|$)" >/dev/null 2>&1 || true
+            ifconfig "$iface" down
+            ;;
+        *) usage ;;
+    esac
+}
+
+bluetooth_toggle() {
+    dev=$1
+    action=$2
+    validate_bt_device "$dev"
+    case "$action" in
+        start) service bluetooth start "$dev" ;;
+        stop) service bluetooth stop "$dev" ;;
+        *) usage ;;
+    esac
+}
+
+bluetooth_connect() {
+    hci=$1
+    mac=$2
+    validate_bt_hci "$hci"
+    validate_mac "$mac"
+    hccontrol -n "$hci" create_connection "$mac" 0xcc18 2 0 0 1
+}
+
+bluetooth_disconnect() {
+    hci=$1
+    mac=$2
+    validate_bt_hci "$hci"
+    validate_mac "$mac"
+    mac=$(printf '%s' "$mac" | tr '[:upper:]' '[:lower:]')
+    handle=$(hccontrol -N -n "$hci" read_connection_list 2>/dev/null |
+        awk -v target="$mac" 'tolower($1) == target { print $2; exit }')
+    case "$handle" in ''|*[!0-9]*) echo "Bluetooth device is not connected" >&2; exit 1 ;; esac
+    hccontrol -n "$hci" disconnect "$handle" 19
+}
+
+bluetooth_forget() {
+    mac=$1
+    validate_mac "$mac"
+    mac=$(printf '%s' "$mac" | tr '[:upper:]' '[:lower:]')
+
+    if [ -f /etc/bluetooth/hosts ]; then
+        tmp_hosts=$(mktemp /etc/bluetooth/.triton-hosts.XXXXXXXX)
+        trap 'rm -f "$tmp_hosts"' 0
+        trap 'exit 1' HUP INT TERM
+        awk -v target="$mac" '
+            /^[[:space:]]*#/ { print; next }
+            NF >= 1 && tolower($1) == target { next }
+            { print }
+        ' /etc/bluetooth/hosts >"$tmp_hosts"
+        chown root:wheel "$tmp_hosts"
+        chmod 0644 "$tmp_hosts"
+        mv -f "$tmp_hosts" /etc/bluetooth/hosts
+        trap - 0 HUP INT TERM
+    fi
+
+    if [ -f /etc/bluetooth/hcsecd.conf ]; then
+        tmp_hcsecd=$(mktemp /etc/bluetooth/.triton-hcsecd.XXXXXXXX)
+        trap 'rm -f "$tmp_hcsecd"' 0
+        trap 'exit 1' HUP INT TERM
+        awk -v target="$mac" '
+            /^[[:space:]]*device[[:space:]]*\{/ {
+                in_block = 1; block = $0 ORS; remove = 0; next
+            }
+            in_block {
+                block = block $0 ORS
+                if (tolower($0) ~ "bdaddr[[:space:]]+" target "[[:space:]]*;") remove = 1
+                if ($0 ~ /^[[:space:]]*\}/) {
+                    if (!remove) printf "%s", block
+                    in_block = 0; block = ""
+                }
+                next
+            }
+            { print }
+            END { if (in_block) printf "%s", block }
+        ' /etc/bluetooth/hcsecd.conf >"$tmp_hcsecd"
+        chown root:wheel "$tmp_hcsecd"
+        chmod 0600 "$tmp_hcsecd"
+        mv -f "$tmp_hcsecd" /etc/bluetooth/hcsecd.conf
+        trap - 0 HUP INT TERM
+    fi
+    service hcsecd restart >/dev/null 2>&1 || true
+}
+
+bluetooth_scan() {
+    dev=$1
+    validate_bt_device "$dev"
+    exec /usr/sbin/bluetooth-config scan -n "$dev"
+}
+
+validate_disk() {
+    case "${1:-}" in /dev/da[0-9]*|/dev/ada[0-9]*) ;; *) echo "Invalid disk device" >&2; exit 2 ;; esac
+    case "${1#/dev/}" in *[![:alnum:]]*) echo "Invalid disk device" >&2; exit 2 ;; esac
+}
+
+validate_partition() {
+    case "${1:-}" in /dev/da[0-9]*|/dev/ada[0-9]*) ;; *) echo "Invalid partition device" >&2; exit 2 ;; esac
+    case "${1#/dev/}" in *[![:alnum:]]*) echo "Invalid partition device" >&2; exit 2 ;; esac
+}
+
+validate_mountpoint() {
+    case "${1:-}" in /*) ;; *) echo "Invalid mount point" >&2; exit 2 ;; esac
+    case "$1" in *[![:print:]]*) echo "Invalid mount point" >&2; exit 2 ;; esac
+}
+
+drive_unmount() {
+    partition=$1
+    mountpoint=$2
+    validate_partition "$partition"
+    validate_mountpoint "$mountpoint"
+    mount -p | awk -v device="$partition" -v point="$mountpoint" \
+        '$1 == device && $2 == point { found = 1 } END { exit !found }' || return 0
+    umount -f "$mountpoint"
+}
+
+drive_poweroff() {
+    disk=$1
+    validate_disk "$disk"
+    disk_name=${disk#/dev/}
+    umass=$(camcontrol devlist -v 2>/dev/null | awk -v disk="$disk_name" '
+        $1 ~ /^scbus[0-9-]+$/ && $3 ~ /^umass-sim[0-9]+$/ {
+            umass = $3
+            sub(/^umass-sim/, "", umass)
+            next
+        }
+        index($0, "(" disk ",") > 0 { print umass; exit }
+    ')
+    case "$umass" in ''|*[!0-9]*) echo "Could not identify the USB storage device" >&2; exit 1 ;; esac
+    location=$(sysctl -n "dev.umass.${umass}.%location" 2>/dev/null || true)
+    ugen=$(printf '%s\n' "$location" | sed -n 's/.*ugen=\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')
+    case "$ugen" in ''|*[!0-9.]*) echo "Could not identify the USB device" >&2; exit 1 ;; esac
+    usbconfig -d "$ugen" power_off
+}
+
+case "${1:-}" in
+    power-profile)
+        [ "${2:-}" = set ] && [ "$#" -eq 3 ] || usage
+        case "$3" in
+            power-saver) flags='-a minimum -b minimum -n minimum'; epp=100 ;;
+            balanced) flags='-a hiadaptive -b adaptive -n adaptive'; epp=50 ;;
+            performance) flags='-a maximum -b maximum -n maximum'; epp=0 ;;
+            *) usage ;;
+        esac
+        service powerd onestop >/dev/null 2>&1 || true
+        # These arguments are selected from the closed mode table above.
+        # shellcheck disable=SC2086
+        /usr/sbin/powerd $flags >/dev/null 2>&1
+        ncpu=$(sysctl -n hw.ncpu 2>/dev/null || printf 0)
+        cpu=0
+        while [ "$cpu" -lt "$ncpu" ]; do
+            sysctl "dev.hwpstate_intel.${cpu}.epp=${epp}" >/dev/null 2>&1 || true
+            cpu=$((cpu + 1))
+        done
+        ;;
+    system)
+        [ "$#" -eq 2 ] || usage
+        case "$2" in
+            reboot) /sbin/shutdown -r now ;;
+            poweroff) /sbin/shutdown -p now ;;
+            *) usage ;;
+        esac
+        ;;
+    wifi)
+        case "${2:-}" in
+            profiles) [ "$#" -eq 2 ] || usage; wifi_profiles ;;
+            connect) [ "$#" -eq 4 ] || usage; wifi_connect "$3" "$4" ;;
+            forget) [ "$#" -eq 4 ] || usage; wifi_forget "$3" "$4" ;;
+            toggle) [ "$#" -eq 4 ] || usage; wifi_toggle "$3" "$4" ;;
+            *) usage ;;
+        esac
+        ;;
+    ethernet)
+        [ "${2:-}" = toggle ] && [ "$#" -eq 4 ] || usage
+        ethernet_toggle "$3" "$4"
+        ;;
+    drive)
+        case "${2:-}" in
+            unmount) [ "$#" -eq 4 ] || usage; drive_unmount "$3" "$4" ;;
+            poweroff) [ "$#" -eq 3 ] || usage; drive_poweroff "$3" ;;
+            *) usage ;;
+        esac
+        ;;
+    bluetooth)
+        case "${2:-}" in
+            toggle) [ "$#" -eq 4 ] || usage; bluetooth_toggle "$3" "$4" ;;
+            connect) [ "$#" -eq 4 ] || usage; bluetooth_connect "$3" "$4" ;;
+            disconnect) [ "$#" -eq 4 ] || usage; bluetooth_disconnect "$3" "$4" ;;
+            forget) [ "$#" -eq 3 ] || usage; bluetooth_forget "$3" ;;
+            scan) [ "$#" -eq 3 ] || usage; bluetooth_scan "$3" ;;
+            *) usage ;;
+        esac
+        ;;
+    *) usage ;;
+esac

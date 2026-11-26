@@ -23,27 +23,6 @@ disk_exists() {
     udisksctl info -b "$disk" >/dev/null 2>&1
 }
 
-umass_index_for_disk() {
-    base="$(basename "$disk")"
-    doas -n camcontrol devlist -v 2>/dev/null | awk -v disk="$base" '
-        $1 ~ /^scbus[0-9-]+$/ && $3 ~ /^umass-sim[0-9]+$/ {
-            umass = $3
-            sub(/^umass-sim/, "", umass)
-            next
-        }
-        index($0, "(" disk ",") > 0 {
-            print umass
-            exit
-        }
-    '
-}
-
-ugen_for_umass() {
-    umass="$1"
-    [ -n "$umass" ] || return 1
-    sysctl -n "dev.umass.${umass}.%location" 2>/dev/null | sed -n 's/.*ugen=\([^ ]*\).*/\1/p'
-}
-
 unmount_drive() {
     [ -n "$part" ] || return 1
     if ! is_mounted; then
@@ -52,7 +31,7 @@ unmount_drive() {
 
     if ! udisksctl unmount -b "$part"; then
         [ -n "$mountpoint" ] || return 1
-        doas -n umount -f "$mountpoint"
+        doas -n /usr/local/libexec/triton-privileged drive unmount "$part" "$mountpoint"
     fi
 
     if is_mounted; then
@@ -70,14 +49,7 @@ power_off_drive() {
         return 0
     fi
 
-    umass="$(umass_index_for_disk)"
-    ugen="$(ugen_for_umass "$umass")"
-    [ -n "$ugen" ] || {
-        printf '%s\n' "Could not find USB device for $disk"
-        return 1
-    }
-
-    doas -n usbconfig -d "$ugen" power_off
+    doas -n /usr/local/libexec/triton-privileged drive poweroff "$disk"
     sleep 0.3
     if disk_exists; then
         printf '%s\n' "Drive did not power off"

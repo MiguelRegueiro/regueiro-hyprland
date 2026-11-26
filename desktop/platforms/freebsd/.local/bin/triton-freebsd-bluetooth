@@ -4,6 +4,7 @@ set -eu
 
 dev="${BT_DEV:-}"
 hci="${BT_HCI:-}"
+privileged_helper=/usr/local/libexec/triton-privileged
 hosts="${BT_HOSTS:-/etc/bluetooth/hosts}"
 hids="${BT_HIDS:-/var/db/bthidd.hids}"
 
@@ -134,9 +135,9 @@ poll() {
 toggle() {
     detect_dev
     if stack_ready; then
-        doas service bluetooth stop "$dev"
+        doas "$privileged_helper" bluetooth toggle "$dev" stop
     else
-        doas service bluetooth start "$dev"
+        doas "$privileged_helper" bluetooth toggle "$dev" start
     fi
 }
 
@@ -152,7 +153,7 @@ connect_device() {
         echo "Already connected"
         return 0
     fi
-    doas hccontrol -n "$hci" create_connection "$mac" 0xcc18 2 0 0 1
+    doas "$privileged_helper" bluetooth connect "$hci" "$mac"
     start_audio_device "$mac"
     echo "Connection successful"
 }
@@ -169,7 +170,7 @@ disconnect_device() {
         echo "Device is not connected" >&2
         exit 1
     }
-    doas hccontrol -n "$hci" disconnect "$handle" 19
+    doas "$privileged_helper" bluetooth disconnect "$hci" "$mac"
     echo "Disconnect successful"
 }
 
@@ -185,48 +186,7 @@ forget_device() {
         disconnect_device "$mac" >/dev/null 2>&1 || true
     fi
 
-    doas sh -c '
-        mac="$1"
-        lower="$(printf "%s" "$mac" | tr "[:upper:]" "[:lower:]")"
-
-        if [ -f /etc/bluetooth/hosts ]; then
-            awk -v target="$lower" "
-                /^[[:space:]]*#/ { print; next }
-                NF >= 1 && tolower(\$1) == target { next }
-                { print }
-            " /etc/bluetooth/hosts > /tmp/qs-bt-hosts &&
-            install -m 0644 -o root -g wheel /tmp/qs-bt-hosts /etc/bluetooth/hosts
-        fi
-
-        if [ -f /etc/bluetooth/hcsecd.conf ]; then
-            awk -v target="$lower" "
-                BEGIN { in_block = 0; block = \"\"; block_match = 0 }
-                /^[[:space:]]*device[[:space:]]*\\{/ {
-                    in_block = 1
-                    block = \$0 ORS
-                    block_match = 0
-                    next
-                }
-                in_block {
-                    block = block \$0 ORS
-                    if (tolower(\$0) ~ \"bdaddr[[:space:]]+\" target \"[[:space:]]*;\")
-                        block_match = 1
-                    if (\$0 ~ /^[[:space:]]*\\}/) {
-                        if (!block_match)
-                            printf \"%s\", block
-                        in_block = 0
-                        block = \"\"
-                        block_match = 0
-                    }
-                    next
-                }
-                { print }
-            " /etc/bluetooth/hcsecd.conf > /tmp/qs-bt-hcsecd.conf &&
-            install -m 0600 -o root -g wheel /tmp/qs-bt-hcsecd.conf /etc/bluetooth/hcsecd.conf
-        fi
-
-        service hcsecd restart >/dev/null 2>&1 || true
-    ' sh "$mac"
+    doas "$privileged_helper" bluetooth forget "$mac"
 
     echo "Forget successful"
 }
@@ -250,12 +210,11 @@ case "${1:-poll}" in
     settings)
         detect_dev
         title="Bluetooth Settings"
-        cmd="doas bluetooth-config scan -n '$dev'; printf '\\nPress Enter to close...'; read _"
         if command -v kitty >/dev/null 2>&1; then
-            exec kitty --title "$title" sh -c "$cmd"
+            exec kitty --title "$title" doas -n /usr/local/libexec/triton-privileged bluetooth scan "$dev"
         fi
         if command -v xterm >/dev/null 2>&1; then
-            exec xterm -T "$title" -e sh -c "$cmd"
+            exec xterm -T "$title" -e doas -n /usr/local/libexec/triton-privileged bluetooth scan "$dev"
         fi
         echo "No terminal emulator is available for Bluetooth settings" >&2
         exit 1

@@ -10,7 +10,7 @@ if [ -z "$iface" ]; then
     iface="wlan0"
 fi
 
-wpa_conf="${WPA_SUPPLICANT_CONF:-${XDG_RUNTIME_DIR:-/tmp}/triton-wpa_supplicant.conf}"
+privileged_helper=/usr/local/libexec/triton-privileged
 disabled_marker="${XDG_RUNTIME_DIR:-/tmp}/triton-wifi-disabled.${iface}"
 
 wifi_parent() {
@@ -105,15 +105,7 @@ wifi_state() {
 }
 
 list_profiles() {
-    doas cat "$wpa_conf" 2>/dev/null | awk '
-        /^[[:space:]]*ssid="/ {
-            line = $0
-            sub(/^[[:space:]]*ssid="/, "", line)
-            sub(/"[[:space:]]*$/, "", line)
-            gsub(/\\"/, "\"", line)
-            print line ":wifi"
-        }
-    '
+    doas "$privileged_helper" wifi profiles
 }
 
 scan_networks() {
@@ -215,44 +207,14 @@ status() {
 start_wifi() {
     rm -f "$disabled_marker"
     ensure_iface || return 1
-
-    doas service netif start "$iface" || true
-    if ! iface_is_up "$(ifconfig "$iface" 2>/dev/null || true)"; then
-        echo "FreeBSD netif did not bring $iface up; reboot instead of cycling rtw88 manually" >&2
-        return 1
-    fi
-
-    if [ -s "$wpa_conf" ]; then
-        doas pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
-        doas wpa_supplicant -B -i "$iface" -c "$wpa_conf"
-        doas dhclient "$iface" >/dev/null 2>&1 || true
-    fi
+    doas "$privileged_helper" wifi toggle "$iface" start
 }
 
 stop_wifi() {
     mkdir -p "$(dirname "$disabled_marker")"
     touch "$disabled_marker"
 
-    default_gateway="$(netstat -rn -f inet 2>/dev/null | awk -v iface="$iface" '$1 == "default" && $NF == iface { print $2; exit }')"
-
-    doas service wpa_supplicant stop "$iface" >/dev/null 2>&1 || \
-        doas pkill -f "wpa_supplicant.*-i[[:space:]]*$iface([[:space:]]|$)" >/dev/null 2>&1 || true
-    doas service dhclient stop "$iface" >/dev/null 2>&1 || \
-        doas pkill -f "dhclient:.*$iface" >/dev/null 2>&1 || true
-
-    inet_addr="$(ifconfig "$iface" 2>/dev/null | awk '/^[[:space:]]*inet / { print $2; exit }')"
-    if [ -n "$inet_addr" ]; then
-        doas ifconfig "$iface" inet "$inet_addr" delete >/dev/null 2>&1 || true
-    fi
-
-    if netstat -rn -f inet 2>/dev/null | awk -v iface="$iface" '$1 == "default" && $NF == iface { found = 1 } END { exit found ? 0 : 1 }'; then
-        doas route delete default >/dev/null 2>&1 || true
-    fi
-
-    eth_iface="$(ethernet_iface)"
-    if [ -n "$default_gateway" ] && [ -n "$eth_iface" ] && [ "$(ethernet_state)" = "connected" ]; then
-        doas route add default "$default_gateway" >/dev/null 2>&1 || true
-    fi
+    doas "$privileged_helper" wifi toggle "$iface" stop
 }
 
 toggle_wifi() {
@@ -272,120 +234,9 @@ toggle_ethernet() {
 
     eth_ifconfig="$(ifconfig "$eth_iface" 2>/dev/null || true)"
     if ethernet_is_connected "$eth_ifconfig"; then
-        doas service dhclient stop "$eth_iface" >/dev/null 2>&1 || \
-            doas pkill -f "dhclient:.*$eth_iface" >/dev/null 2>&1 || true
-        inet_addr="$(printf '%s\n' "$eth_ifconfig" | awk '/^[[:space:]]*inet / { print $2; exit }')"
-        if [ -n "$inet_addr" ]; then
-            doas ifconfig "$eth_iface" inet "$inet_addr" delete
-        fi
-        doas ifconfig "$eth_iface" down
+        doas "$privileged_helper" ethernet toggle "$eth_iface" down
     else
-        doas ifconfig "$eth_iface" up
-        doas dhclient "$eth_iface"
-    fi
-}
-
-root_update_wifi() {
-    action="$1"
-    ssid="${2:-}"
-    psk="${3:-}"
-    tmp="${wpa_conf}.qs.$$"
-
-    [ "$(id -u)" -eq 0 ] || {
-        echo "This action must run as root" >&2
-        exit 1
-    }
-
-    [ -n "$ssid" ] || {
-        echo "No SSID specified" >&2
-        exit 1
-    }
-
-    mkdir -p "$(dirname "$wpa_conf")"
-    touch "$wpa_conf"
-    chmod 600 "$wpa_conf"
-    chown root:wheel "$wpa_conf" 2>/dev/null || true
-
-    profile_exists=no
-    awk -v target="$ssid" '
-        /^[[:space:]]*ssid="/ {
-            line = $0
-            sub(/^[[:space:]]*ssid="/, "", line)
-            sub(/"[[:space:]]*$/, "", line)
-            gsub(/\\"/, "\"", line)
-            if (line == target)
-                found = 1
-        }
-        END { exit found ? 0 : 1 }
-    ' "$wpa_conf" && profile_exists=yes || profile_exists=no
-
-    if [ "$action" = "connect" ] && [ -z "$psk" ] && [ "$profile_exists" = "yes" ]; then
-        cp "$wpa_conf" "$tmp"
-    else
-        awk -v target="$ssid" '
-            BEGIN { depth = 0; block = ""; block_ssid = "" }
-            /^[[:space:]]*network=\{/ {
-                depth = 1
-                block = $0 ORS
-                block_ssid = ""
-                next
-            }
-            depth > 0 {
-                block = block $0 ORS
-                if ($0 ~ /^[[:space:]]*ssid="/) {
-                    block_ssid = $0
-                    sub(/^[[:space:]]*ssid="/, "", block_ssid)
-                    sub(/"[[:space:]]*$/, "", block_ssid)
-                    gsub(/\\"/, "\"", block_ssid)
-                }
-                if ($0 ~ /^[[:space:]]*\}/) {
-                    if (block_ssid != target)
-                        printf "%s", block
-                    depth = 0
-                    block = ""
-                    block_ssid = ""
-                }
-                next
-            }
-            { print }
-        ' "$wpa_conf" > "$tmp"
-
-        if [ "$action" = "connect" ]; then
-            esc_ssid="$(printf '%s' "$ssid" | sed 's/\\/\\\\/g; s/"/\\"/g')"
-            {
-                printf 'network={\n'
-                printf '\tssid="%s"\n' "$esc_ssid"
-                if [ -n "$psk" ]; then
-                    esc_psk="$(printf '%s' "$psk" | sed 's/\\/\\\\/g; s/"/\\"/g')"
-                    printf '\tpsk="%s"\n' "$esc_psk"
-                else
-                    printf '\tkey_mgmt=NONE\n'
-                fi
-                printf '}\n'
-            } >> "$tmp"
-        elif [ "$action" != "forget" ]; then
-            rm -f "$tmp"
-            echo "Unknown action: $action" >&2
-            exit 1
-        fi
-    fi
-
-    chmod 600 "$tmp"
-    chown root:wheel "$tmp" 2>/dev/null || true
-    mv "$tmp" "$wpa_conf"
-
-    if [ "$action" = "connect" ]; then
-        if ! ifconfig "$iface" >/dev/null 2>&1; then
-            echo "$iface does not exist; reboot to let FreeBSD rc.conf create it safely" >&2
-            exit 1
-        fi
-        if ! iface_is_up "$(ifconfig "$iface" 2>/dev/null || true)"; then
-            echo "$iface is down; use the Wi-Fi toggle once or reboot instead of cycling rtw88 manually" >&2
-            exit 1
-        fi
-        pkill -f "wpa_supplicant.*-i[[:space:]]*$iface" >/dev/null 2>&1 || true
-        wpa_supplicant -B -i "$iface" -c "$wpa_conf"
-        dhclient "$iface" >/dev/null 2>&1 || true
+        doas "$privileged_helper" ethernet toggle "$eth_iface" up
     fi
 }
 
@@ -398,10 +249,12 @@ case "${1:-scan}" in
         ;;
     connect)
         rm -f "$disabled_marker"
-        doas "$0" root-update connect "${2:-}" "${3:-}"
+        [ -n "${2:-}" ] || { echo "No SSID specified" >&2; exit 2; }
+        doas "$privileged_helper" wifi connect "$iface" "$2"
         ;;
     forget)
-        doas "$0" root-update forget "${2:-}"
+        [ -n "${2:-}" ] || { echo "No SSID specified" >&2; exit 2; }
+        doas "$privileged_helper" wifi forget "$iface" "$2"
         ;;
     toggle)
         toggle_wifi
@@ -418,12 +271,8 @@ case "${1:-scan}" in
     status)
         status
         ;;
-    root-update)
-        shift
-        root_update_wifi "$@"
-        ;;
     *)
-        echo "usage: $0 scan|profiles|connect SSID [PASSWORD]|forget SSID|toggle|toggle-ethernet|network-state|ethernet-state|status" >&2
+        echo "usage: $0 scan|profiles|connect SSID|forget SSID|toggle|toggle-ethernet|network-state|ethernet-state|status (connect reads an optional password from stdin)" >&2
         exit 2
         ;;
 esac

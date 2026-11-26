@@ -49,6 +49,13 @@ The package scripts under `installer/packages/` install the portable bootstrap t
 
 On Arch/CachyOS, Debian Trixie, and FreeBSD 14.4, 14.5, and 15.1, the opt-in Hyprland package profile includes the compositor, shell, wallpaper and idle tools, portals, and common desktop tools. You still need to enable and configure platform services separately. On other distributions, install the equivalent runtime packages from their native sources. Some personal apps are optional and listed in their feature documentation.
 
+On FreeBSD, Wi-Fi, Bluetooth, and power-profile controls use a root-owned,
+allowlisted helper. Review `desktop/platforms/freebsd/libexec/triton-privileged`
+and install it with `doas installer/platforms/freebsd/install-privileged-helper.sh`.
+The script does not change `doas` policy. Network toggles, Bluetooth, power
+profiles, shutdown, and the removable-drive fallback use the helper. Drive
+unmount requests must match the device and mount point reported by the system.
+
 Optional / personal extras:
 
 ```sh

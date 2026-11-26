@@ -142,18 +142,9 @@ fi
 preflight_packages desktop/platforms "$platform_package"
 preflight_packages configs $config_packages
 
-# Check every Stow destination before any package installation or link changes.
-if [ "$action" = setup ]; then
-    "$repo_dir/installer/packages/install.sh" --profile hyprland --groups "$selected_groups"
-elif ! command -v stow >/dev/null 2>&1; then
+if ! command -v stow >/dev/null 2>&1; then
     echo "GNU Stow is missing; installing the bootstrap packages with the native package manager."
     "$repo_dir/installer/packages/install.sh"
-fi
-if [ "$action" = setup ]; then
-    mkdir -p "$(dirname "$selection_file")"
-    selection_tmp=$(mktemp "$(dirname "$selection_file")/.package-groups.XXXXXX")
-    printf '%s\n' "$selected_groups" >"$selection_tmp"
-    mv "$selection_tmp" "$selection_file"
 fi
 if ! command -v stow >/dev/null 2>&1; then
     echo "GNU Stow is still unavailable after package installation." >&2
@@ -204,6 +195,12 @@ stow_check_package desktop/platforms "$platform_package"
 for package in $config_packages; do
     stow_check_package configs "$package"
 done
+
+# The configuration simulation above must pass before installing the selected
+# runtime profile. This keeps package changes out of ordinary Stow conflicts.
+if [ "$action" = setup ]; then
+    "$repo_dir/installer/packages/install.sh" --profile hyprland --groups "$selected_groups"
+fi
 
 hardware_tmp=
 cleanup_hardware_tmp() {
@@ -279,6 +276,13 @@ if [ "$platform_package" = freebsd ]; then
     install -m 0755 "$hardware_tmp" "$HOME/.local/bin/triton-freebsd-hardware"
 fi
 stow_packages configs $config_packages
+
+if [ "$action" = setup ]; then
+    mkdir -p "$(dirname "$selection_file")"
+    selection_tmp=$(mktemp "$(dirname "$selection_file")/.package-groups.XXXXXX")
+    printf '%s\n' "$selected_groups" >"$selection_tmp"
+    mv "$selection_tmp" "$selection_file"
+fi
 
 # Remove dangling links left by files deleted in earlier refactors. Keep this
 # sweep limited to Stow-managed locations and the old checkout's unique path.

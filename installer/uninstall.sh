@@ -64,6 +64,10 @@ for package in fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portal
     remove_package configs "$package"
 done
 
+# The selected optional groups are installer state, not user configuration.
+selection_file=${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop/package-groups
+rm -f "$selection_file"
+
 if [ "$remove_packages" = yes ]; then
     state_dir=${TRITON_PACKAGE_STATE_DIR:-$HOME/.local/state/triton-desktop/packages}
     for manifest in "$state_dir"/*.list; do

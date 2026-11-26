@@ -23,7 +23,7 @@ case "$action" in
             exit 0
         fi
         [ -n "$mountpoint" ] || exit 1
-        exec doas -n umount -f "$mountpoint"
+        exec doas -n /usr/local/libexec/triton-privileged drive unmount "$part" "$mountpoint"
         ;;
     eject)
         [ "$#" -eq 4 ] || exit 2
