@@ -32,7 +32,7 @@ printf '%s\n' 'user-owned target' >"$fresh_home/.local/share/user-app/data"
 ln -s "$fresh_home/.local/share/user-app/data" "$fresh_home/.local/bin/user-app-data"
 HOME=$fresh_home "$repo_dir/install.sh" >/dev/null
 HOME=$fresh_home "$repo_dir/install.sh" >/dev/null
-for relative in .local/share/fonts/triton-desktop .local/share/icons/Bibata-Modern-Classic; do
+for relative in .local/share/fonts/triton-desktop .local/share/icons/Bibata-Modern-Classic .local/share/triton-desktop/assets; do
     if [ ! -L "$fresh_home/$relative" ]; then
         echo "Installer did not link the bundled asset at $relative" >&2
         exit 1
@@ -204,7 +204,7 @@ if [ -e "$selected_home/.local/state/triton-desktop/package-groups" ]; then
     echo "Uninstaller kept the installer-only package-group selection." >&2
     exit 1
 fi
-for relative in .local/share/fonts/triton-desktop .local/share/icons/Bibata-Modern-Classic; do
+for relative in .local/share/fonts/triton-desktop .local/share/icons/Bibata-Modern-Classic .local/share/triton-desktop/assets; do
     if [ -L "$selected_home/$relative" ]; then
         echo "Uninstaller kept a Triton asset link at $relative" >&2
         exit 1
@@ -231,10 +231,13 @@ fi
 
 "$repo_dir/tests/test-package-detection.sh"
 "$repo_dir/tests/test-package-ownership.sh"
+"$repo_dir/tests/test-assets-installer.sh"
 "$repo_dir/tests/test-platform-detection.sh"
 "$repo_dir/tests/test-mimeclip-resolver.sh"
+"$repo_dir/tests/test-mimeclip-supervisor.sh"
 "$repo_dir/tests/test-feature-installer.sh"
 "$repo_dir/tests/test-freebsd-privileged.sh"
 "$repo_dir/tests/test-installer-rollback.sh"
+"$repo_dir/tests/test-update.sh"
 
 echo "Installer fresh, repeat, and conflict checks passed."
