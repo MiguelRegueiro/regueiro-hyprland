@@ -53,6 +53,10 @@ preflight_package() {
 
         parent=$(dirname "$target")
         while [ "$parent" != "$HOME" ] && [ "$parent" != / ]; do
+            if [ -e "$parent" ] && [ ! -d "$parent" ]; then
+                printf 'Install conflict: %s exists but a directory is required.\n' "$parent" >&2
+                exit 1
+            fi
             if [ -L "$parent" ]; then
                 if [ ! -e "$parent" ]; then
                     link=$(readlink "$parent")

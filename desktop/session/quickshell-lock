@@ -8,6 +8,13 @@ repo_root="$(cd "$script_dir/../.." && pwd)"
 config="$repo_root/desktop/quickshell/.config/quickshell/lock.qml"
 runtime_dir="${XDG_RUNTIME_DIR:?A running Wayland session is required}"
 display="${WAYLAND_DISPLAY:?A running Wayland session is required}"
+platform_detector="$HOME/.local/bin/triton-platform"
+if [[ ! -x "$platform_detector" ]]; then
+    echo "quickshell-lock: platform detector is not installed" >&2
+    exit 1
+fi
+TRITON_PLATFORM=$("$platform_detector")
+export TRITON_PLATFORM
 
 is_secure() {
     [[ "$(qs ipc -p "$config" call lock isSecure 2>/dev/null)" == "true" ]]

@@ -1,6 +1,14 @@
 #!/bin/sh
 set -u
 
+platform_detector="$HOME/.local/bin/triton-platform"
+if [ ! -x "$platform_detector" ]; then
+    echo "start-session-quickshell: platform detector is not installed" >&2
+    exit 1
+fi
+TRITON_PLATFORM=$("$platform_detector")
+export TRITON_PLATFORM
+
 instance=${HYPRLAND_INSTANCE_SIGNATURE:-}
 if [ -z "$instance" ]; then
     echo "start-session-quickshell: HYPRLAND_INSTANCE_SIGNATURE is missing" >&2

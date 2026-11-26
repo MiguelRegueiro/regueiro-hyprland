@@ -37,6 +37,7 @@ for relative in \
     .config/hypr/scripts/start-session-services \
     .config/hypr/scripts/powerctl \
     .local/bin/triton-run-session-command \
+    .local/bin/triton-platform \
     .local/bin/triton-connect-session \
     .local/bin/triton-linux-session-cleanup
 do
@@ -95,6 +96,21 @@ if [ "$(cat "$conflict")" != 'user-owned file' ] || [ -e "$conflict_home/.config
     exit 1
 fi
 
+parent_conflict_home=$tmp_dir/parent-conflict-home
+mkdir -p "$parent_conflict_home/.config"
+printf '%s\n' 'user-owned file' >"$parent_conflict_home/.config/quickshell"
+if HOME=$parent_conflict_home "$repo_dir/install.sh" >"$tmp_dir/parent-conflict.log" 2>&1; then
+    echo "Installer unexpectedly accepted a file where a configuration directory is required." >&2
+    exit 1
+fi
+if [ "$(cat "$parent_conflict_home/.config/quickshell")" != 'user-owned file' ] || \
+    ! grep -F 'exists but a directory is required' "$tmp_dir/parent-conflict.log" >/dev/null || \
+    [ -e "$parent_conflict_home/.config/hypr" ]; then
+    echo "Installer did not safely reject the regular-file parent conflict." >&2
+    cat "$tmp_dir/parent-conflict.log" >&2
+    exit 1
+fi
+
 setup_bin=$tmp_dir/setup-bin
 mkdir -p "$setup_bin"
 cat >"$setup_bin/pacman" <<'EOF'
@@ -145,5 +161,6 @@ done
 
 "$repo_dir/tests/test-package-detection.sh"
 "$repo_dir/tests/test-package-ownership.sh"
+"$repo_dir/tests/test-platform-detection.sh"
 
 echo "Installer fresh, repeat, and conflict checks passed."

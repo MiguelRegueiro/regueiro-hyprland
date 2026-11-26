@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+case "$(uname -s)" in
+    Linux) printf '%s\n' linux ;;
+    FreeBSD) printf '%s\n' freebsd ;;
+    *) printf '%s\n' unknown ;;
+esac

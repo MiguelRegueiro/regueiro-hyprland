@@ -2,8 +2,12 @@ import QtQuick
 import Quickshell
 
 QtObject {
-    readonly property string name: Qt.platform.os === "linux" ? "linux"
-        : (Qt.platform.os === "freebsd" ? "freebsd" : "unknown")
+    readonly property string name: {
+        const sessionPlatform = Quickshell.env("TRITON_PLATFORM");
+        if (sessionPlatform === "linux" || sessionPlatform === "freebsd")
+            return sessionPlatform;
+        return Qt.platform.os === "linux" ? "linux" : "unknown";
+    }
     readonly property bool isLinux: name === "linux"
     readonly property bool isFreeBSD: name === "freebsd"
 
