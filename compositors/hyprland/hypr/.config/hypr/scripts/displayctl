@@ -81,10 +81,7 @@ scale_for() {
         printf '%s\n' "$saved"
         return
     fi
-    case "$1" in
-        eDP-*) printf '1.8\n' ;;
-        *) printf '1\n' ;;
-    esac
+    printf 'auto\n'
 }
 
 lua_string() {
@@ -105,11 +102,7 @@ monitor_expression() {
     transform="$(state | jq -r --arg output "$output" '.transforms[$output] // 0')"
     requested_mode="$(state | jq -r --arg output "$output" '.outputModes[$output] // ""')"
     if [ -z "$requested_mode" ]; then
-        case "$output" in
-            DP-1) requested_mode="1920x1080@170" ;;
-            eDP-1) requested_mode="2880x1800@120" ;;
-            *) requested_mode="preferred" ;;
-        esac
+        requested_mode="preferred"
     fi
     printf 'hl.monitor({ output = %s, mode = %s, position = %s, scale = %s, transform = %s, mirror = %s })' \
         "$(lua_string "$output")" "$(lua_string "$requested_mode")" "$(lua_string "$position")" \

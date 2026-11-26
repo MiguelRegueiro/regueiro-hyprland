@@ -7,8 +7,7 @@ if local_file then
     return
 end
 
--- Monitor layout.
-
-hl.monitor({ output = "DP-1", mode = "1920x1080@170", position = "1600x0", scale = "1" })
-hl.monitor({ output = "eDP-1", mode = "2880x1800@120", position = "0x120", scale = "1.8" })
+-- Generic first-run baseline: ask connected outputs for their preferred mode
+-- and let Hyprland arrange them. The Display settings page saves per-machine
+-- resolutions, scales, transforms, and positions outside the shared config.
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
