@@ -36,11 +36,11 @@ fi
 
 # Hyprland already launches commands independently. This mode exists for
 # manual starts from a terminal, and uses no systemd-specific behavior.
-if "$background" && [[ -z "${EASYTTS_BACKGROUND_CHILD:-}" ]]; then
+if "$background" && [[ -z "${TRITON_TTS_BACKGROUND_CHILD:-${EASYTTS_BACKGROUND_CHILD:-}}" ]]; then
     arguments=()
     "$restart" && arguments+=(--restart)
     [[ -n "$session_pid" ]] && arguments+=(--session-pid "$session_pid")
-    nohup env EASYTTS_BACKGROUND_CHILD=1 "$0" "${arguments[@]}" \
+    nohup env TRITON_TTS_BACKGROUND_CHILD=1 "$0" "${arguments[@]}" \
         </dev/null >/tmp/triton-tts.log 2>&1 &
     echo "Triton TTS started in the background (log: /tmp/triton-tts.log)"
     exit 0
@@ -82,6 +82,6 @@ if ((${#active_pids[@]})); then
 fi
 
 if [[ -n "$session_pid" ]]; then
-    exec env EASYTTS_OPEN_BROWSER=0 TRITON_SESSION_PID="$session_pid" "$RUNNER"
+    exec env TRITON_TTS_OPEN_BROWSER=0 TRITON_SESSION_PID="$session_pid" "$RUNNER"
 fi
-exec env EASYTTS_OPEN_BROWSER=0 "$RUNNER"
+exec env TRITON_TTS_OPEN_BROWSER=0 "$RUNNER"

@@ -19,14 +19,14 @@ if [[ ! -x ".venv/bin/python" ]]; then
     echo "Triton TTS: ready."
 fi
 
-HOST="${EASYTTS_HOST:-}"
-PORT="${EASYTTS_PORT:-8765}"
+HOST="${TRITON_TTS_HOST:-${EASYTTS_HOST:-}}"
+PORT="${TRITON_TTS_PORT:-${EASYTTS_PORT:-8765}}"
 
 if [[ -z "$HOST" ]] && command -v tailscale >/dev/null 2>&1; then
     HOST="$(tailscale ip -4 2>/dev/null | head -n 1 || true)"
 fi
 
-if [[ "${EASYTTS_OPEN_BROWSER:-1}" == "1" ]]; then
+if [[ "${TRITON_TTS_OPEN_BROWSER:-${EASYTTS_OPEN_BROWSER:-1}}" == "1" ]]; then
     URL="http://${HOST:-127.0.0.1}:${PORT}"
 
     (

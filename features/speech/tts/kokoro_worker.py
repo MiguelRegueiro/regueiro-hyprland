@@ -37,7 +37,7 @@ def use_cuda(ort):
     allocation failure instead of a useful fallback, while CPU mode remains
     reliable on the older laptop's ample system memory.
     """
-    preference = os.environ.get("EASYTTS_KOKORO_DEVICE", "auto").lower()
+    preference = os.environ.get("TRITON_TTS_KOKORO_DEVICE", os.environ.get("EASYTTS_KOKORO_DEVICE", "auto")).lower()
     if preference == "cpu":
         return False
     if "CUDAExecutionProvider" not in ort.get_available_providers():
@@ -56,7 +56,7 @@ def use_cuda(ort):
 
 
 def use_openvino(ort):
-    preference = os.environ.get("EASYTTS_KOKORO_DEVICE", "auto").lower()
+    preference = os.environ.get("TRITON_TTS_KOKORO_DEVICE", os.environ.get("EASYTTS_KOKORO_DEVICE", "auto")).lower()
     return preference != "cpu" and preference != "cuda" and "OpenVINOExecutionProvider" in ort.get_available_providers()
 
 

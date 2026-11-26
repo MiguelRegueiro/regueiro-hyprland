@@ -11,8 +11,9 @@ the address printed at startup.
 ```
 
 The first run creates `features/speech/tts/.venv/`; it is local to each machine
-and is not tracked by Git. Set `EASYTTS_HOST` or `EASYTTS_PORT` to override the
-address or port.
+and is not tracked by Git. Set `TRITON_TTS_HOST` or `TRITON_TTS_PORT` to
+override the address or port. The previous `EASYTTS_*` environment names remain
+supported for existing setups.
 
 ## Start with Hyprland
 
@@ -48,6 +49,7 @@ Kokoro Python runtime. It is safe to run again after future pulls.
 Kokoro automatically uses CUDA on NVIDIA GPUs with at least 3 GB of VRAM. On
 the 2 GB MX250 laptop it instead uses the Intel iGPU through OpenVINO, with CPU
 fallback if the Intel driver cannot execute part of the model. Set
-`EASYTTS_KOKORO_DEVICE=cpu` or `=cuda` only to override that automatic choice.
+`TRITON_TTS_KOKORO_DEVICE=cpu` or `=cuda` only to override that automatic
+choice. The previous `EASYTTS_KOKORO_DEVICE` name remains supported.
 The worker releases its model process five seconds after the last synthesis,
 so it does not reserve VRAM while idle.

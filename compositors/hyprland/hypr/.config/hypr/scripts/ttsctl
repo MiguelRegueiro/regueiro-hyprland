@@ -4,13 +4,23 @@
 # The server owns generation/playback; this command only starts a job and exits.
 set -euo pipefail
 
-state_root="${XDG_RUNTIME_DIR:-/tmp/regueiro-$(id -u)}/regueiro-easytts"
+if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
+    state_root="$XDG_RUNTIME_DIR/triton-tts"
+else
+    state_root="${XDG_CACHE_HOME:-$HOME/.cache}/triton-tts/runtime"
+fi
 state_file="$state_root/state.json"
 media_player_file="$state_root/media-player"
 
+ensure_state_dir() {
+    mkdir -p "$state_root"
+    chmod 700 "$state_root"
+}
+
 server_host() {
-    if [[ -n "${EASYTTS_HOST:-}" ]]; then
-        printf '%s\n' "$EASYTTS_HOST"
+    local host="${TRITON_TTS_HOST:-${EASYTTS_HOST:-}}"
+    if [[ -n "$host" ]]; then
+        printf '%s\n' "$host"
     else
         # The server starts locally with this Hyprland session. Remote servers
         # remain supported through EASYTTS_HOST, without spawning tailscale for
@@ -27,7 +37,7 @@ notify_shell() {
 status() {
     local host port
     host="$(server_host)"
-    port="${EASYTTS_PORT:-8765}"
+    port="${TRITON_TTS_PORT:-${EASYTTS_PORT:-8765}}"
     [[ -n "$host" ]] || host="127.0.0.1"
     curl --fail --silent --max-time 2 "http://${host}:${port}/api/status" \
         || { [[ -f "$state_file" ]] && cat "$state_file" || printf '%s\n' '{"state":"idle","text":"","detail":"","position":0,"duration":0}'; }
@@ -46,12 +56,12 @@ speak_clipboard() {
     # old job atomically before starting the new one.
     copied="$(wl-paste --no-newline 2>/dev/null || true)"
     if [[ -z "$copied" ]]; then
-        mkdir -p "$state_root"
+        ensure_state_dir
         printf '%s\n' '{"state":"error","text":"","detail":"Clipboard is empty"}' > "$state_file"
         exit 1
     fi
     host="$(server_host)"
-    port="${EASYTTS_PORT:-8765}"
+    port="${TRITON_TTS_PORT:-${EASYTTS_PORT:-8765}}"
     if [[ -z "$host" ]]; then
         host="127.0.0.1"
     fi
@@ -59,7 +69,7 @@ speak_clipboard() {
         | curl --fail --silent --show-error --max-time 5 \
             -H 'Content-Type: application/json' \
             --data-binary @- "http://${host}:${port}/api/speak" >/dev/null; then
-        mkdir -p "$state_root"
+        ensure_state_dir
         printf '%s\n' '{"state":"error","text":"","detail":"Triton TTS is not reachable"}' > "$state_file"
         exit 1
     fi
@@ -69,7 +79,7 @@ toggle() {
     local host port
     notify_shell
     host="$(server_host)"
-    port="${EASYTTS_PORT:-8765}"
+    port="${TRITON_TTS_PORT:-${EASYTTS_PORT:-8765}}"
     [[ -n "$host" ]] || host="127.0.0.1"
     curl --fail --silent --max-time 2 -H 'Content-Type: application/json' \
         --data '{"action":"toggle"}' "http://${host}:${port}/api/control" >/dev/null
@@ -108,7 +118,7 @@ media_toggle() {
     while IFS= read -r player; do
         state="$(playerctl --player="$player" status 2>/dev/null || true)"
         if [[ "$state" == "Playing" ]] && playerctl --player="$player" play-pause; then
-            mkdir -p "$state_root"
+            ensure_state_dir
             printf '%s\n' "$player" > "$media_player_file"
             return
         fi
@@ -125,7 +135,7 @@ media_toggle() {
     while IFS= read -r player; do
         state="$(playerctl --player="$player" status 2>/dev/null || true)"
         if [[ "$state" == "Paused" ]] && playerctl --player="$player" play-pause; then
-            mkdir -p "$state_root"
+            ensure_state_dir
             printf '%s\n' "$player" > "$media_player_file"
             return
         fi
@@ -138,7 +148,7 @@ settings() {
     local provider="${1:-}" voice="${2:-}" rate="${3:-}" host port
     notify_shell
     host="$(server_host)"
-    port="${EASYTTS_PORT:-8765}"
+    port="${TRITON_TTS_PORT:-${EASYTTS_PORT:-8765}}"
     [[ -n "$host" ]] || host="127.0.0.1"
     python3 -c 'import json, sys; print(json.dumps({"action": "settings", "provider": sys.argv[1], "voice": sys.argv[2], "rate": sys.argv[3]}))' "$provider" "$voice" "$rate" \
         | curl --fail --silent --max-time 2 -H 'Content-Type: application/json' --data-binary @- "http://${host}:${port}/api/control" >/dev/null
@@ -148,7 +158,7 @@ control() {
     local action="$1" value="${2:-}" host port
     notify_shell
     host="$(server_host)"
-    port="${EASYTTS_PORT:-8765}"
+    port="${TRITON_TTS_PORT:-${EASYTTS_PORT:-8765}}"
     [[ -n "$host" ]] || host="127.0.0.1"
     python3 -c 'import json, sys; print(json.dumps({"action": sys.argv[1], **({"position": float(sys.argv[2])} if sys.argv[2] else {})}))' "$action" "$value" \
         | curl --fail --silent --max-time 2 -H 'Content-Type: application/json' --data-binary @- "http://${host}:${port}/api/control" >/dev/null

@@ -15,9 +15,15 @@ from provider import DEFAULT_PROVIDER, DEFAULT_RATE, DEFAULT_VOICE, synthesize_t
 
 
 ROOT = Path(__file__).resolve().parent
-RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR", f"/tmp/regueiro-{os.getuid()}")) / "regueiro-easytts"
+if os.environ.get("XDG_RUNTIME_DIR"):
+    RUNTIME = Path(os.environ["XDG_RUNTIME_DIR"]) / "triton-tts"
+else:
+    cache_home = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
+    RUNTIME = cache_home / "triton-tts" / "runtime"
 STATE = RUNTIME / "state.json"
-PREFERENCES = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "regueiro-easytts" / "preferences.json"
+CONFIG_HOME = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+PREFERENCES = CONFIG_HOME / "triton-tts" / "preferences.json"
+LEGACY_PREFERENCES = CONFIG_HOME / "regueiro-easytts" / "preferences.json"
 DEFAULT_SELECTION_RATE = "+50%"
 VALID_PROVIDERS = {"edge", "kokoro"}
 VALID_VOICES = {
@@ -46,15 +52,22 @@ def compatible_voice(provider, voice):
 def load_preferences():
     """Load the UI's last selected voice and rate, with sane first-run defaults."""
     preferences = {"provider": DEFAULT_PROVIDER, "voice": DEFAULT_VOICE, "rate": DEFAULT_SELECTION_RATE}
+    for path in (PREFERENCES, LEGACY_PREFERENCES):
+        try:
+            stored = json.loads(path.read_text(encoding="utf-8"))
+            break
+        except (OSError, ValueError, TypeError):
+            continue
+    else:
+        stored = {}
     try:
-        stored = json.loads(PREFERENCES.read_text(encoding="utf-8"))
         if stored.get("voice") in VALID_VOICES:
             preferences["voice"] = stored["voice"]
         if stored.get("provider") in VALID_PROVIDERS:
             preferences["provider"] = stored["provider"]
         if isinstance(stored.get("rate"), str) and stored["rate"]:
             preferences["rate"] = stored["rate"]
-    except (OSError, ValueError, TypeError):
+    except (AttributeError, TypeError):
         pass
     if not compatible_voice(preferences["provider"], preferences["voice"]):
         preferences["voice"] = default_voice_for(preferences["provider"])
@@ -68,10 +81,15 @@ def save_preferences(provider, voice, rate):
     temporary.replace(PREFERENCES)
 
 
+def ensure_runtime():
+    RUNTIME.mkdir(parents=True, exist_ok=True, mode=0o700)
+    RUNTIME.chmod(0o700)
+
+
 def server_addresses():
     """Return loopback plus the optional Tailscale interface for Triton TTS."""
-    host = os.environ.get("EASYTTS_HOST")
-    port = int(os.environ.get("EASYTTS_PORT", "8765"))
+    host = os.environ.get("TRITON_TTS_HOST") or os.environ.get("EASYTTS_HOST")
+    port = int(os.environ.get("TRITON_TTS_PORT", os.environ.get("EASYTTS_PORT", "8765")))
 
     if host:
         return [(host, port)]
@@ -107,7 +125,7 @@ def server_addresses():
 async def synthesize(text, voice, rate, provider):
     started = time.perf_counter()
 
-    RUNTIME.mkdir(parents=True, exist_ok=True)
+    ensure_runtime()
     output = RUNTIME / f"http-{threading.get_ident()}-{time.time_ns()}.mp3"
     try:
         await synthesize_to_file(text, output, voice, rate, provider)
@@ -128,7 +146,7 @@ async def synthesize(text, voice, rate, provider):
 
 def remove_orphaned_audio():
     """A restart cannot replay a previous process's audio, so do not retain it."""
-    RUNTIME.mkdir(parents=True, exist_ok=True)
+    ensure_runtime()
     for pattern in ("speech-*.mp3", "http-*.mp3"):
         for audio_file in RUNTIME.glob(pattern):
             audio_file.unlink(missing_ok=True)
