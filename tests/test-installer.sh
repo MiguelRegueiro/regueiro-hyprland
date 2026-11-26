@@ -45,4 +45,6 @@ if [ "$(cat "$conflict")" != 'user-owned file' ] || [ -e "$conflict_home/.config
     exit 1
 fi
 
+"$repo_dir/tests/test-package-detection.sh"
+
 echo "Installer fresh, repeat, and conflict checks passed."
