@@ -77,6 +77,9 @@ not already owned by a systemd user service. That existing user service may
 persist across logins and reconnect to Wayland. The shared process supervisor
 also owns elio's file-manager integration. Triton Connect now has a session
 launcher that shuts down its tray app and host over the local control socket.
+For non-UWSM Linux sessions, a compositor-bound monitor stops portal and
+polkit services when Hyprland exits; UWSM continues to own those through its
+graphical-session target.
 Restart/health behavior is not yet unified across all long-running services.
 
 ## 06 — Implement the installer

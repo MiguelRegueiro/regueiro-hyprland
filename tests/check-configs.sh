@@ -26,6 +26,8 @@ done < <(find desktop/quickshell/.config/quickshell -type f -name '*.qml' -print
 bash -n compositors/hyprland/hypr/.config/hypr/scripts/*.sh
 sh -n desktop/platforms/linux/.local/bin/triton-linux-power
 sh -n desktop/platforms/linux/.local/bin/triton-linux-service
+sh -n desktop/platforms/linux/.local/bin/triton-linux-session-cleanup
+sh -n tests/test-session-cleanup.sh
 bash -n desktop/platforms/linux/.local/bin/triton-fcitx-toggle
 sh -n desktop/platforms/linux/.local/bin/triton-linux-bluetooth
 bash -n desktop/platforms/linux/.local/bin/triton-linux-system-details

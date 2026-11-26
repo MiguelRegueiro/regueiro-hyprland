@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: triton-linux-session-cleanup COMPOSITOR_PID" >&2
+    exit 2
+fi
+compositor_pid=$1
+case "$compositor_pid" in ''|*[!0-9]*) echo "Invalid compositor PID" >&2; exit 2 ;; esac
+
+while kill -0 "$compositor_pid" 2>/dev/null; do
+    sleep 1
+done
+
+service_manager="$HOME/.local/bin/triton-linux-service"
+[ -x "$service_manager" ] || exit 0
+
+set --
+for unit in \
+    xdg-desktop-portal.service \
+    xdg-desktop-portal-gtk.service \
+    xdg-desktop-portal-hyprland.service \
+    xdg-desktop-portal-termfilechooser.service \
+    hyprpolkitagent.service
+do
+    if "$service_manager" user cat "$unit" >/dev/null 2>&1; then
+        set -- "$@" "$unit"
+    fi
+done
+
+[ "$#" -gt 0 ] || exit 0
+"$service_manager" user stop "$@" || true

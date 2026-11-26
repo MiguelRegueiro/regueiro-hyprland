@@ -10,9 +10,12 @@ fi
 "$service_manager" activation-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE
 
 # Plain GDM Hyprland sessions may not activate graphical-session.target.
-# A transient service holds that target only while this compositor PID exists.
-# UWSM/GNOME-managed targets need no additional owner.
-if ! "$service_manager" user is-active --quiet graphical-session.target; then
+# Start a monitor that stops the session-owned services when this compositor
+# exits. UWSM-managed targets already provide that lifecycle.
+uwsm_units=$("$service_manager" user list-units --type=service \
+    --state=active,activating --plain --no-legend --no-pager \
+    'wayland-wm@*.service' 2>/dev/null) || uwsm_units=""
+if [[ -z "$uwsm_units" ]]; then
     compositor_pid=""
     for ((attempt = 0; attempt < 50; attempt++)); do
         compositor_pid=$(hyprctl instances -j 2>/dev/null | jq -er --arg instance "$HYPRLAND_INSTANCE_SIGNATURE" \
@@ -22,9 +25,7 @@ if ! "$service_manager" user is-active --quiet graphical-session.target; then
     done
     [[ "$compositor_pid" =~ ^[0-9]+$ ]] || exit 1
     "$service_manager" run-user --collect --unit="regueiro-hyprland-session-${compositor_pid}" \
-        --property=BindsTo=graphical-session.target \
-        --property=After=graphical-session.target \
-        /bin/sh -c 'while kill -0 "$1" 2>/dev/null; do sleep 1; done' sh "$compositor_pid"
+        "$HOME/.local/bin/triton-linux-session-cleanup" "$compositor_pid"
 fi
 
 # Service files know the right binary locations on both Fedora and Arch.

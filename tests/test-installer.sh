@@ -25,7 +25,8 @@ for relative in \
     .config/hypr/scripts/start-session-services \
     .config/hypr/scripts/powerctl \
     .local/bin/triton-run-session-command \
-    .local/bin/triton-connect-session
+    .local/bin/triton-connect-session \
+    .local/bin/triton-linux-session-cleanup
 do
     target=$fresh_home/$relative
     if [ ! -L "$target" ] || [ ! -e "$target" ]; then
