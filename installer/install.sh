@@ -26,6 +26,31 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
+selection_file=${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop/package-groups
+if [ "$action" = setup ]; then
+    selected_groups=$("$repo_dir/installer/packages/install.sh" --profile hyprland --select-groups)
+elif [ -r "$selection_file" ]; then
+    selected_groups=$(cat "$selection_file")
+else
+    selected_groups=all
+fi
+
+group_selected() {
+    [ "$selected_groups" = all ] && return 0
+    case ",$selected_groups," in *,"$1",*) return 0 ;; esac
+    return 1
+}
+
+if [ "$selected_groups" = all ]; then
+    config_packages='fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak'
+else
+    config_packages='kitty gtk mimeclip xdg-portals'
+    group_selected terminal && config_packages="$config_packages fish starship fastfetch"
+    group_selected input && config_packages="$config_packages fcitx5"
+    group_selected editor && config_packages="$config_packages nvim"
+    group_selected flatpak && config_packages="$config_packages flatpak"
+fi
+
 is_legacy_link() {
     case "$1" in
         *regueiro-hyprland/*|*triton-desktop/platforms/linux/*|*triton-desktop/platforms/freebsd/*)
@@ -115,14 +140,20 @@ if [ "$(uname -s)" = FreeBSD ]; then
     platform_package=freebsd
 fi
 preflight_packages desktop/platforms "$platform_package"
-preflight_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
+preflight_packages configs $config_packages
 
 # Check every Stow destination before any package installation or link changes.
 if [ "$action" = setup ]; then
-    "$repo_dir/installer/packages/install.sh" --profile hyprland --interactive
+    "$repo_dir/installer/packages/install.sh" --profile hyprland --groups "$selected_groups"
 elif ! command -v stow >/dev/null 2>&1; then
     echo "GNU Stow is missing; installing the bootstrap packages with the native package manager."
     "$repo_dir/installer/packages/install.sh"
+fi
+if [ "$action" = setup ]; then
+    mkdir -p "$(dirname "$selection_file")"
+    selection_tmp=$(mktemp "$(dirname "$selection_file")/.package-groups.XXXXXX")
+    printf '%s\n' "$selected_groups" >"$selection_tmp"
+    mv "$selection_tmp" "$selection_file"
 fi
 if ! command -v stow >/dev/null 2>&1; then
     echo "GNU Stow is still unavailable after package installation." >&2
@@ -170,7 +201,7 @@ stow_check_package() {
 for package in hypr hypridle; do stow_check_package compositors/hyprland "$package"; done
 for package in quickshell scripts; do stow_check_package desktop "$package"; done
 stow_check_package desktop/platforms "$platform_package"
-for package in fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak; do
+for package in $config_packages; do
     stow_check_package configs "$package"
 done
 
@@ -247,7 +278,7 @@ stow_packages desktop/platforms "$platform_package"
 if [ "$platform_package" = freebsd ]; then
     install -m 0755 "$hardware_tmp" "$HOME/.local/bin/triton-freebsd-hardware"
 fi
-stow_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
+stow_packages configs $config_packages
 
 # Remove dangling links left by files deleted in earlier refactors. Keep this
 # sweep limited to Stow-managed locations and the old checkout's unique path.

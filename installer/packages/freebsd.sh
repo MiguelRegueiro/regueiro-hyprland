@@ -13,7 +13,11 @@ if [ "${1:-}" = --profile ]; then
         hyprland)
             groups=all
             catalog=$(dirname -- "$0")/profiles/freebsd.tsv
-            if [ "${1:-}" = --groups ]; then
+            if [ "${1:-}" = --select-groups ]; then
+                [ "$#" -eq 1 ] || { echo "Usage: freebsd.sh --profile hyprland --select-groups" >&2; exit 2; }
+                select_catalog_groups "$catalog"
+                exit 0
+            elif [ "${1:-}" = --groups ]; then
                 [ "$#" -ge 2 ] || { echo "Usage: freebsd.sh --profile hyprland [--groups GROUP[,GROUP...]] [additional-package ...]" >&2; exit 2; }
                 groups=$2
                 shift 2
@@ -39,4 +43,4 @@ if [ "${1:-}" = --profile ]; then
     exit 0
 fi
 
-install_catalog freebsd "$(dirname -- "$0")/profiles/freebsd.tsv" base "$@"
+install_catalog freebsd "$(dirname -- "$0")/profiles/freebsd.tsv" bootstrap "$@"

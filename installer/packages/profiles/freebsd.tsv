@@ -9,6 +9,13 @@ core	xdg-desktop-portal
 core	xdg-desktop-portal-hyprland
 core	xdg-desktop-portal-gtk
 core	hyprpolkitagent
+core	bash
+core	jq
+core	python
+core	ImageMagick7
+core	playerctl
+core	bsdisks
+core	kitty
 audio	pipewire
 audio	wireplumber
 audio	pipewire-spa-oss
@@ -16,8 +23,8 @@ capture	grim
 capture	slurp
 capture	wl-clipboard
 capture	wtype
-terminal	kitty
 terminal	fish
 terminal	starship
 terminal	fastfetch
 input	fcitx5
+editor	neovim

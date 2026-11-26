@@ -114,7 +114,7 @@ install_catalog() (
         echo "Package catalog is missing or unreadable: $catalog" >&2
         return 1
     fi
-    if [ "$selection" != all ]; then
+    if [ "$selection" != all ] && [ "$selection" != bootstrap ]; then
         case "$selection" in
             ,*|*,|*,,*)
                 echo "Invalid package group selection: $selection" >&2
@@ -145,9 +145,8 @@ install_catalog() (
     packages=$(awk -F '\t' -v selection="$selection" '
         BEGIN { count = split(selection, requested, ","); for (i = 1; i <= count; i++) selected[requested[i]] = 1 }
         NF >= 2 && $1 !~ /^#/ && $1 != "" && $2 != "" &&
-            (selection == "all" ||
-                (selection == "base" && $1 == "base") ||
-                (selection != "base" && ($1 == "base" || $1 == "core" || selected[$1]))) { print $2 }
+            (selection == "all" || selection == "bootstrap" && $1 == "base" ||
+                selection != "bootstrap" && ($1 == "base" || $1 == "core" || selected[$1])) { print $2 }
     ' "$catalog")
     set -f
     set -- $packages "$@"

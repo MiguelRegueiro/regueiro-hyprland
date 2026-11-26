@@ -148,7 +148,7 @@ printf 'none\n' | HOME=$setup_home \
     CALL_LOG=$tmp_dir/setup-package-calls \
     TRITON_OS_RELEASE_FILE=$tmp_dir/setup-os-release \
     "$repo_dir/install.sh" setup >/dev/null 2>&1
-if ! grep -Fx -- '-S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent' "$tmp_dir/setup-package-calls" >/dev/null; then
+if ! grep -Fx -- '-S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent bash jq python procps-ng imagemagick playerctl brightnessctl kitty' "$tmp_dir/setup-package-calls" >/dev/null; then
     echo "Setup did not request the selected base and core package set." >&2
     cat "$tmp_dir/setup-package-calls" >&2
     exit 1
@@ -156,6 +156,32 @@ fi
 for relative in .config/hypr/scripts/powerctl .config/quickshell/shell.qml; do
     if [ ! -L "$setup_home/$relative" ] || [ ! -e "$setup_home/$relative" ]; then
         echo "Setup did not deploy the expected configuration link: $relative" >&2
+        exit 1
+    fi
+done
+for relative in .config/fish/config.fish .config/fcitx5/config .local/share/flatpak/overrides/net.ankiweb.Anki .config/nvim/init.lua; do
+    if [ -L "$setup_home/$relative" ]; then
+        echo "Setup deployed an optional config despite the 'none' selection: $relative" >&2
+        exit 1
+    fi
+done
+
+selected_home=$tmp_dir/selected-home
+mkdir -p "$selected_home"
+printf '6,9\n' | HOME=$selected_home \
+    PATH="$setup_bin:/usr/bin:/bin" \
+    CALL_LOG=$tmp_dir/setup-package-calls \
+    TRITON_OS_RELEASE_FILE=$tmp_dir/setup-os-release \
+    "$repo_dir/install.sh" setup >/dev/null 2>&1
+for relative in .config/fish/config.fish .config/fcitx5/config; do
+    if [ ! -L "$selected_home/$relative" ] || [ ! -e "$selected_home/$relative" ]; then
+        echo "Setup did not deploy the selected optional config: $relative" >&2
+        exit 1
+    fi
+done
+for relative in .local/share/flatpak/overrides/net.ankiweb.Anki .config/nvim/init.lua; do
+    if [ -L "$selected_home/$relative" ]; then
+        echo "Setup deployed an unselected optional config: $relative" >&2
         exit 1
     fi
 done
