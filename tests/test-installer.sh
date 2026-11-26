@@ -235,5 +235,6 @@ fi
 "$repo_dir/tests/test-mimeclip-resolver.sh"
 "$repo_dir/tests/test-feature-installer.sh"
 "$repo_dir/tests/test-freebsd-privileged.sh"
+"$repo_dir/tests/test-installer-rollback.sh"
 
 echo "Installer fresh, repeat, and conflict checks passed."

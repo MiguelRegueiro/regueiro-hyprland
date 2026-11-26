@@ -208,7 +208,91 @@ hardware_tmp=
 cleanup_hardware_tmp() {
     [ -z "$hardware_tmp" ] || rm -f "$hardware_tmp"
 }
-trap cleanup_hardware_tmp EXIT
+attempted_packages=
+previous_packages=
+deployment_active=no
+
+stow_apply_package() {
+    package_dir=$1
+    package=$2
+    case "$package_dir/$package" in
+        compositors/hyprland/hypr)
+            stow --no-folding --ignore='^\.local/share/applications/elio\.desktop$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        desktop/quickshell)
+            stow --no-folding --ignore='notification-times\.ini$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        configs/fcitx5)
+            stow --no-folding --ignore='cached_layouts$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        configs/flatpak)
+            stow --no-folding --ignore='^\.local/share/flatpak/overrides/app\.zen_browser\.zen$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        *) stow --no-folding --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+    esac
+}
+
+stow_delete_package() {
+    package_dir=$1
+    package=$2
+    case "$package_dir/$package" in
+        compositors/hyprland/hypr)
+            stow --delete --no-folding --ignore='^\.local/share/applications/elio\.desktop$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        desktop/quickshell)
+            stow --delete --no-folding --ignore='notification-times\.ini$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        configs/fcitx5)
+            stow --delete --no-folding --ignore='cached_layouts$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        configs/flatpak)
+            stow --delete --no-folding --ignore='^\.local/share/flatpak/overrides/app\.zen_browser\.zen$' \
+                --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+        *) stow --delete --no-folding --dir="$repo_dir/$package_dir" --target="$HOME" "$package" ;;
+    esac
+}
+
+package_was_stowed() {
+    package_dir=$1
+    package=$2
+    package_root=$repo_dir/$package_dir/$package
+    marker=$(mktemp "${TMPDIR:-/tmp}/triton-stow-state.XXXXXX")
+    find "$package_root" -type f | while IFS= read -r source; do
+        relative=${source#"$package_root"/}
+        target=$HOME/$relative
+        if [ -L "$target" ] && [ -e "$target" ] && \
+            [ "$(realpath "$target")" = "$(realpath "$source")" ]; then
+            printf x >"$marker"
+            break
+        fi
+    done
+    result=1
+    [ -s "$marker" ] && result=0
+    rm -f "$marker"
+    return "$result"
+}
+
+rollback_deployment() {
+    result=$?
+    trap - EXIT HUP INT TERM
+    if [ "$result" -ne 0 ] && [ "$deployment_active" = yes ]; then
+        echo "Configuration deployment failed; restoring the previous Stow links." >&2
+        for spec in $attempted_packages; do
+            package_dir=${spec%%:*}
+            package=${spec#*:}
+            stow_delete_package "$package_dir" "$package" >/dev/null 2>&1 || true
+        done
+        for spec in $previous_packages; do
+            package_dir=${spec%%:*}
+            package=${spec#*:}
+            stow_apply_package "$package_dir" "$package" >/dev/null 2>&1 || \
+                echo "Rollback could not restore $spec; inspect its Stow links manually." >&2
+        done
+    fi
+    cleanup_hardware_tmp
+    exit "$result"
+}
+trap rollback_deployment EXIT
 trap 'exit 1' HUP INT TERM
 if [ "$platform_package" = freebsd ]; then
     hardware_tmp=$(mktemp "${TMPDIR:-/tmp}/triton-hardware.XXXXXX")
@@ -222,6 +306,12 @@ stow_packages() {
     for package do
         package_root=$repo_dir/$package_dir/$package
         if [ -d "$package_root" ]; then
+            deployment_active=yes
+            package_spec=$package_dir:$package
+            case " $attempted_packages " in *" $package_spec "*) ;; *) attempted_packages="$attempted_packages $package_spec" ;; esac
+            if package_was_stowed "$package_dir" "$package"; then
+                case " $previous_packages " in *" $package_spec "*) ;; *) previous_packages="$previous_packages $package_spec" ;; esac
+            fi
             # Remove only broken Stow links that still point at this checkout's
             # former top-level package paths. Leave real files and unrelated
             # symlinks untouched for GNU Stow to report as conflicts.
@@ -243,27 +333,7 @@ stow_packages() {
             done
             # Keep machine-local application overrides that already exist as
             # regular files. They are intentionally not replaced by Stow.
-            case "$package_dir/$package" in
-                compositors/hyprland/hypr)
-                    stow --no-folding --ignore='^\.local/share/applications/elio\.desktop$' \
-                        --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
-                    ;;
-                desktop/quickshell)
-                    stow --no-folding --ignore='notification-times\.ini$' \
-                        --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
-                    ;;
-                configs/fcitx5)
-                    stow --no-folding --ignore='cached_layouts$' \
-                        --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
-                    ;;
-                configs/flatpak)
-                    stow --no-folding --ignore='^\.local/share/flatpak/overrides/app\.zen_browser\.zen$' \
-                        --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
-                    ;;
-                *)
-                    stow --no-folding --dir="$repo_dir/$package_dir" --target="$HOME" "$package"
-                    ;;
-            esac
+            stow_apply_package "$package_dir" "$package"
         fi
     done
 }
@@ -278,7 +348,6 @@ if [ "$platform_package" = freebsd ]; then
     install -m 0755 "$hardware_tmp" "$HOME/.local/bin/triton-freebsd-hardware"
 fi
 stow_packages configs $config_packages
-"$repo_dir/installer/install-assets.sh"
 
 if [ "$action" = setup ]; then
     mkdir -p "$(dirname "$selection_file")"
@@ -299,5 +368,7 @@ for managed_root in "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share"; do
             [ -e "$stale_link" ] || rm "$stale_link"
         done
 done
+
+"$repo_dir/installer/install-assets.sh"
 
 printf '%s\n' "Triton Desktop configuration linked. Log out and back in to start the session changes."
