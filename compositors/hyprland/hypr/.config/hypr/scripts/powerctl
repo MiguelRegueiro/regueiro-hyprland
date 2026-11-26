@@ -109,6 +109,53 @@ def compositor_pid():
     return None
 
 
+def stale_daemon_pids():
+    """Find powerctl daemons left by a different Hyprland session."""
+    found = []
+    for proc in Path("/proc").iterdir():
+        if not proc.name.isdigit() or int(proc.name) == os.getpid():
+            continue
+        try:
+            args = (proc / "cmdline").read_bytes().split(b"\0")
+            if len(args) < 3 or args[2] != b"daemon":
+                continue
+            if Path(os.fsdecode(args[1])).resolve() != SCRIPT:
+                continue
+            signature = next((value.split(b"=", 1)[1].decode(errors="replace")
+                              for value in (proc / "environ").read_bytes().split(b"\0")
+                              if value.startswith(b"HYPRLAND_INSTANCE_SIGNATURE=")), "")
+            if signature and signature != INSTANCE_SIGNATURE:
+                found.append(int(proc.name))
+        except (OSError, ValueError, IndexError):
+            continue
+    return found
+
+
+def stop_stale_daemons():
+    pids = stale_daemon_pids()
+    for pid in pids:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            continue
+        print(f"powerctl: stopping daemon from ended Hyprland session (PID {pid})", file=sys.stderr)
+
+    deadline = time.monotonic() + 3
+    while pids and time.monotonic() < deadline:
+        remaining = []
+        for pid in pids:
+            try:
+                stat = (Path("/proc") / str(pid) / "stat").read_text().split()
+                if stat[2] != "Z":
+                    os.kill(pid, 0)
+                    remaining.append(pid)
+            except (OSError, ProcessLookupError, IndexError):
+                pass
+        pids = remaining
+        if pids:
+            time.sleep(0.1)
+
+
 def legacy_idle_pids():
     """Replace only the old bare hypridle from this Hyprland session."""
     if not SESSION:
@@ -167,6 +214,7 @@ def daemon():
     if session_pid is None:
         print("powerctl: could not resolve the active Hyprland process", file=sys.stderr)
         return
+    stop_stale_daemons()
     RUNTIME_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
     with LOCK_FILE.open("w") as lock:
         try:

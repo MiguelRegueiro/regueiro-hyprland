@@ -168,15 +168,14 @@ It currently lists paired devices and lets you connect/disconnect them inline fr
 ### Clipboard history
 
 Clipboard history is handled by [`mimeclip`](https://github.com/MiguelRegueiro/mimeclip), not `cliphist`.
-Install `mimeclip` / `mimeclipd` separately. Hyprland starts MimeClip and
-Triton TTS with the active compositor's process ID, so both stop when that
-session ends. MimeClip uses a session-owned supervisor without requiring
-systemd or Linux-specific session tools. It
-resolves either a system install or `~/.cargo/bin`, avoids duplicate
-supervisors, and retries daemon exits with bounded backoff. Do not start it
-globally for GNOME, which does not support the wlroots clipboard protocol
-MimeClip requires. A systemd user service remains an optional supervisor for
-installations that want one.
+Install `mimeclip` / `mimeclipd` separately. Triton TTS is tied to the active
+compositor and stops when that session ends. Hyprland starts MimeClip with a
+session-owned supervisor when no daemon is already running. That supervisor
+resolves either a system install or `~/.cargo/bin`, avoids duplicates, and
+retries daemon exits with bounded backoff. If a systemd user service already
+owns MimeClip, it remains the owner and may persist across graphical sessions
+while reconnecting to Wayland. Do not start it globally for GNOME, which does
+not support the wlroots clipboard protocol MimeClip requires.
 
 The `mimeclip` Stow package keeps history at 500 entries and 256 MiB of stored
 payload data. The root `./install.sh` links it with the rest of the desktop;
