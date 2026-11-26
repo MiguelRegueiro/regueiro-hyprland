@@ -20,6 +20,14 @@ for manager in pacman dnf apt xbps-install pkg; do
     ln -s package-manager "$bin_dir/$manager"
 done
 
+cat >"$bin_dir/apt-cache" <<'EOF'
+#!/bin/sh
+if [ "${TRITON_TEST_BACKPORTS:-}" = yes ]; then
+    printf '%s\n' '500 http://deb.debian.org/debian trixie-backports/main amd64 Packages'
+fi
+EOF
+chmod +x "$bin_dir/apt-cache"
+
 cat >"$bin_dir/sudo" <<'EOF'
 #!/bin/sh
 exec "$@"
@@ -80,6 +88,45 @@ if ! grep -F 'required compositor, idle, and wallpaper packages' "$tmp_dir/profi
 fi
 if [ -s "$call_log" ]; then
     echo "Package manager ran for an unsupported profile." >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+printf 'ID=debian\nVERSION_CODENAME=bookworm\n' >"$os_release"
+: >"$call_log"
+if HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland >"$tmp_dir/debian-profile-error.log" 2>&1; then
+    echo "Debian Hyprland profile accepted an unsupported release." >&2
+    exit 1
+fi
+if ! grep -F 'Debian 13 (Trixie) only' "$tmp_dir/debian-profile-error.log" >/dev/null || [ -s "$call_log" ]; then
+    echo "Debian release guard did not reject an unsupported release before installing." >&2
+    cat "$tmp_dir/debian-profile-error.log" >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+printf 'ID=debian\nVERSION_CODENAME=trixie\n' >"$os_release"
+: >"$call_log"
+if HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release TRITON_TEST_BACKPORTS=no \
+    "$repo_dir/install.sh" packages --profile hyprland >"$tmp_dir/debian-profile-error.log" 2>&1; then
+    echo "Debian Hyprland profile accepted missing backports metadata." >&2
+    exit 1
+fi
+if ! grep -F 'Enable Debian' "$tmp_dir/debian-profile-error.log" >/dev/null || [ -s "$call_log" ]; then
+    echo "Debian profile did not fail safely when Trixie backports was unavailable." >&2
+    cat "$tmp_dir/debian-profile-error.log" >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release TRITON_TEST_BACKPORTS=yes \
+    "$repo_dir/install.sh" packages --profile hyprland custom-extra-package >/dev/null
+if ! grep -Fx 'apt install -t trixie-backports git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent network-manager bluez blueman power-profiles-daemon pipewire wireplumber pipewire-pulse brightnessctl playerctl grim slurp wl-clipboard wtype kitty fish starship fastfetch fcitx5 fcitx5-frontend-all fcitx5-anthy python3 python-is-python3 procps imagemagick librsvg2-bin x11-xserver-utils custom-extra-package' "$call_log" >/dev/null; then
+    echo "Debian Trixie Hyprland profile did not resolve the expected package set." >&2
     cat "$call_log" >&2
     exit 1
 fi
