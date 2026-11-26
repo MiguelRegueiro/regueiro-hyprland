@@ -95,8 +95,10 @@ temporary home directories, so they do not install packages on the host.
 An explicit `./install.sh packages --profile hyprland` profile now installs the
 current Hyprland runtime package set on Arch/CachyOS only. The default install
 still only deploys configuration, and the profile does not enable services.
-Other distribution profiles remain unimplemented until their package sets and
-service setup have been verified.
+Fedora's official builds for the compositor, idle daemon, and wallpaper daemon
+do not currently line up with current Fedora releases, so the profile refuses
+there without installing packages. Other distribution profiles remain
+unimplemented until their package sets and service setup have been verified.
 
 ## 07 — Implement stable releases and updates
 

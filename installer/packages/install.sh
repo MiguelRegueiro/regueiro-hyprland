@@ -37,6 +37,10 @@ if [ -n "$profile" ]; then
         arch.sh:hyprland)
             exec "$(dirname "$0")/$script" --profile "$profile" "$@"
             ;;
+        fedora.sh:hyprland)
+            echo "The Hyprland profile is not available on Fedora yet: the required compositor, idle, and wallpaper packages do not have matching builds for current Fedora releases. No packages were installed." >&2
+            exit 2
+            ;;
         *)
             echo "Package profile '$profile' is not supported on this platform yet." >&2
             exit 2

@@ -69,8 +69,13 @@ fi
 printf 'ID=fedora\n' >"$os_release"
 : >"$call_log"
 if HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
-    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland >/dev/null 2>&1; then
+    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland >"$tmp_dir/profile-error.log" 2>&1; then
     echo "Unsupported Fedora Hyprland profile was not rejected." >&2
+    exit 1
+fi
+if ! grep -F 'required compositor, idle, and wallpaper packages' "$tmp_dir/profile-error.log" >/dev/null; then
+    echo "Fedora profile refusal did not explain the missing package set." >&2
+    cat "$tmp_dir/profile-error.log" >&2
     exit 1
 fi
 if [ -s "$call_log" ]; then
