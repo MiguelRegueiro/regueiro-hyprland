@@ -13,14 +13,9 @@ end
 functions -q fzf_key_bindings; and fzf_key_bindings
 
 
-# Distro-aware updater abbreviation.
-if test -f /etc/os-release
-    if grep -qiE '(^ID=fedora$|^ID_LIKE=.*fedora)' /etc/os-release
-        abbr -a up "sudo dnf upgrade --refresh -y && flatpak update -y && cargo install-update -a"
-    else
-        abbr -a up "paru -Syu && flatpak update && cargo install-update -a"
-    end
-end
+# The shared updater detects the native package manager and skips optional tools
+# that are not installed on this machine.
+abbr -a up triton-update
 
 fish_add_path $HOME/.local/bin
 

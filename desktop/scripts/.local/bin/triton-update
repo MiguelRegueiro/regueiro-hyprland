@@ -1,0 +1,56 @@
+#!/bin/sh
+set -eu
+
+run_as_root() {
+    if [ "$(id -u)" -eq 0 ]; then
+        "$@"
+    elif command -v sudo >/dev/null 2>&1; then
+        sudo "$@"
+    elif command -v doas >/dev/null 2>&1; then
+        doas "$@"
+    else
+        echo "System updates require sudo or doas." >&2
+        return 1
+    fi
+}
+
+platform=$(uname -s)
+case "$platform" in
+    FreeBSD)
+        run_as_root pkg upgrade -y
+        ;;
+    Linux)
+        os_release=${TRITON_OS_RELEASE_FILE:-/etc/os-release}
+        if [ ! -r "$os_release" ]; then
+            echo "Cannot identify Linux distribution: $os_release is unreadable." >&2
+            exit 1
+        fi
+        # shellcheck disable=SC1090
+        . "$os_release"
+        case "${ID:-} ${ID_LIKE:-}" in
+            *fedora*) run_as_root dnf upgrade --refresh -y ;;
+            *arch*|*cachyos*)
+                if command -v paru >/dev/null 2>&1; then
+                    paru -Syu
+                else
+                    run_as_root pacman -Syu
+                fi
+                ;;
+            *debian*|*ubuntu*)
+                run_as_root apt update
+                run_as_root apt full-upgrade -y
+                ;;
+            *void*) run_as_root xbps-install -Su ;;
+            *) echo "Unsupported Linux distribution: ${ID:-unknown}" >&2; exit 2 ;;
+        esac
+        ;;
+    *) echo "Unsupported operating system: $platform" >&2; exit 2 ;;
+esac
+
+# User-scoped integrations are updated only when their own tools are present.
+if command -v flatpak >/dev/null 2>&1; then
+    flatpak update -y
+fi
+if command -v cargo-install-update >/dev/null 2>&1; then
+    cargo install-update -a
+fi
