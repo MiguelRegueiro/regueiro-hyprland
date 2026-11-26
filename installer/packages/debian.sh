@@ -11,6 +11,16 @@ if [ "${1:-}" = --profile ]; then
     shift 2
     case "$profile" in
         hyprland)
+            groups=all
+            catalog=$(dirname -- "$0")/profiles/debian.tsv
+            if [ "${1:-}" = --groups ]; then
+                [ "$#" -ge 2 ] || { echo "Usage: debian.sh --profile hyprland [--groups GROUP[,GROUP...]] [additional-package ...]" >&2; exit 2; }
+                groups=$2
+                shift 2
+            elif [ "${1:-}" = --interactive ]; then
+                groups=$(select_catalog_groups "$catalog") || exit $?
+                shift
+            fi
             os_release_file=${TRITON_OS_RELEASE_FILE:-/etc/os-release}
             [ -r "$os_release_file" ] || {
                 echo "Cannot identify Debian release: $os_release_file is missing." >&2
@@ -31,18 +41,7 @@ if [ "${1:-}" = --profile ]; then
                     exit 2
                 fi
             done
-            run_as_root apt install -t trixie-backports \
-                git stow \
-                hyprland quickshell hypridle hyprpaper \
-                xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
-                hyprpolkitagent \
-                network-manager bluez blueman power-profiles-daemon \
-                pipewire wireplumber pipewire-pulse \
-                brightnessctl playerctl grim slurp wl-clipboard wtype \
-                kitty fish starship fastfetch \
-                fcitx5 fcitx5-frontend-all fcitx5-anthy \
-                python3 python-is-python3 procps imagemagick librsvg2-bin x11-xserver-utils \
-                "$@"
+            install_catalog debian-backports "$catalog" "$groups" "$@"
             ;;
         *)
             echo "Unsupported Debian package profile: $profile" >&2
@@ -52,4 +51,4 @@ if [ "${1:-}" = --profile ]; then
     exit 0
 fi
 
-run_as_root apt install git stow "$@"
+install_catalog debian "$(dirname -- "$0")/profiles/debian.tsv" base "$@"

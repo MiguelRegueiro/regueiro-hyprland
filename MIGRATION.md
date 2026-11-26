@@ -85,25 +85,42 @@ Restart/health behavior is not yet unified across all long-running services.
 ## 06 — Implement the installer
 
 - [x] Detect OS and distribution automatically for the bootstrap package command.
+- [x] Move native package names into per-platform catalogs and add opt-in group selection.
+- [x] Add a numbered text selector for optional package groups.
+- [x] Run the setup package selection only after the Stow conflict preflight.
 - [ ] Complete native dependency installation across supported distributions.
 - [ ] Add optional application and feature selection.
+- [x] Record explicit packages newly installed by Triton without claiming dependencies or pre-existing packages.
 - [ ] Back up existing configuration and deploy Stow packages safely.
+- [x] Add an uninstaller for Triton-owned Stow links and an opt-in removal path for recorded packages.
 - [x] Test repeated installations and reject Stow conflicts before changing files.
 
 Progress: `./install.sh packages` detects FreeBSD or reads Linux `os-release`
 and selects the matching package manager. It installs only Git and GNU Stow
 (plus explicitly requested package names); runtime desktop dependencies and
-optional feature selection remain manual. Tests use fake package managers and
-temporary home directories, so they do not install packages on the host.
+optional feature selection remain manual. Explicitly requested packages absent
+before installation are recorded in `~/.local/state/triton-desktop/packages/`;
+automatic dependencies and pre-existing packages are excluded. The default
+`./install.sh uninstall` removes configuration links only. The
+`./install.sh uninstall --packages` mode prompts before removing each manager's
+recorded explicit packages.
+Tests use fake package managers and temporary home directories, so they do not
+install or remove packages on the host.
 
 An explicit `./install.sh packages --profile hyprland` profile installs the
-current runtime package set on Arch/CachyOS and Debian 13 Trixie. Debian requires
-the official `trixie-backports` repository to be enabled and refreshed; the
-script checks that its core Hyprland packages are available before installing.
-Fedora is explicitly rejected, and Void and FreeBSD do not yet have runtime
-profiles. The package-profile tests use mocks: real installation and service
-activation still need validation on each supported distribution. The default
-install deploys configuration and does not enable system services.
+current runtime package set on Arch/CachyOS, Debian 13 Trixie, and FreeBSD
+14.4, 14.5, and 15.1.
+Package names are read from platform TSV catalogs. The profile installs all
+groups by default; `--groups` can select optional groups while preserving the
+base and core set. Application-level dependency resolution and setup actions
+remain future work.
+Debian requires the official `trixie-backports` repository to be enabled and
+refreshed; the script checks its core Hyprland packages before installing.
+Fedora is explicitly rejected, and Void remains unsupported because its
+Hyprland packages require a community repository. Package-profile tests use
+mocks: real installation and service activation still need validation on each
+supported distribution. The default install deploys configuration and does not
+enable system services.
 
 ## 07 — Implement stable releases and updates
 

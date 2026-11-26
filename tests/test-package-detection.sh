@@ -19,6 +19,19 @@ chmod +x "$bin_dir/package-manager"
 for manager in pacman dnf apt xbps-install pkg; do
     ln -s package-manager "$bin_dir/$manager"
 done
+cat >"$bin_dir/dpkg-query" <<'EOF'
+#!/bin/sh
+printf '%s\n' installed
+EOF
+cat >"$bin_dir/rpm" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+cat >"$bin_dir/xbps-query" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+chmod +x "$bin_dir/dpkg-query" "$bin_dir/rpm" "$bin_dir/xbps-query"
 
 cat >"$bin_dir/apt-cache" <<'EOF'
 #!/bin/sh
@@ -36,7 +49,11 @@ chmod +x "$bin_dir/sudo"
 
 cat >"$tmp_dir/freebsd-bin/uname" <<'EOF'
 #!/bin/sh
-printf '%s\n' FreeBSD
+case "${1:-}" in
+    -s) printf '%s\n' FreeBSD ;;
+    -r) printf '%s\n' "${TRITON_TEST_FREEBSD_RELEASE:-15.1-RELEASE}" ;;
+    *) exit 1 ;;
+esac
 EOF
 chmod +x "$tmp_dir/freebsd-bin/uname"
 
@@ -70,6 +87,61 @@ HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
     TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland custom-extra-package >/dev/null
 if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent networkmanager bluez bluez-utils blueman power-profiles-daemon pipewire wireplumber pipewire-pulse brightnessctl playerctl grim slurp wl-clipboard wtype kitty fish starship fastfetch fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy python procps-ng imagemagick librsvg xorg-xhost custom-extra-package' "$call_log" >/dev/null; then
     echo "Arch Hyprland profile did not resolve the expected package set." >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland \
+    --groups input,audio custom-extra-package >/dev/null
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent pipewire wireplumber pipewire-pulse fcitx5 fcitx5-gtk fcitx5-qt fcitx5-anthy custom-extra-package' "$call_log" >/dev/null; then
+    echo "Selected Arch package groups did not resolve to base, core, and requested groups." >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+if HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland \
+    --groups input,not-a-group >"$tmp_dir/group-error.log" 2>&1; then
+    echo "Unknown package group was accepted." >&2
+    exit 1
+fi
+if ! grep -F "Unknown package group 'not-a-group'" "$tmp_dir/group-error.log" >/dev/null || [ -s "$call_log" ]; then
+    echo "Unknown package group was not rejected before invoking the package manager." >&2
+    cat "$tmp_dir/group-error.log" >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+printf '2\n' | HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland --interactive >/dev/null 2>&1
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent grim slurp wl-clipboard wtype' "$call_log" >/dev/null; then
+    echo "Interactive package selection did not resolve the selected capture group." >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+printf 'none\n' | HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland --interactive >/dev/null 2>&1
+if ! grep -Fx 'pacman -S --needed git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent' "$call_log" >/dev/null; then
+    echo "Interactive 'none' did not retain only the required base and core groups." >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+if printf '99\n' | HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$bin_dir:/usr/bin:/bin" \
+    TRITON_OS_RELEASE_FILE=$os_release "$repo_dir/install.sh" packages --profile hyprland --interactive >"$tmp_dir/menu-error.log" 2>&1; then
+    echo "Interactive package selection accepted an unavailable menu number." >&2
+    exit 1
+fi
+if ! grep -F 'No optional package group has menu number 99' "$tmp_dir/menu-error.log" >/dev/null || [ -s "$call_log" ]; then
+    echo "Invalid interactive choice was not rejected before invoking the package manager." >&2
+    cat "$tmp_dir/menu-error.log" >&2
     cat "$call_log" >&2
     exit 1
 fi
@@ -136,6 +208,29 @@ HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$tmp_dir/freebsd-bin:$bin_dir:/usr/b
     "$repo_dir/install.sh" packages triton-test-package >/dev/null
 if ! grep -Fx 'pkg install git stow triton-test-package' "$call_log" >/dev/null; then
     echo "FreeBSD did not select pkg." >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+if HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$tmp_dir/freebsd-bin:$bin_dir:/usr/bin:/bin" \
+    TRITON_TEST_FREEBSD_RELEASE=14.3-RELEASE \
+    "$repo_dir/install.sh" packages --profile hyprland >"$tmp_dir/freebsd-profile-error.log" 2>&1; then
+    echo "FreeBSD Hyprland profile accepted an unsupported release." >&2
+    exit 1
+fi
+if ! grep -F 'supports FreeBSD 14.4, 14.5, and 15.1' "$tmp_dir/freebsd-profile-error.log" >/dev/null || [ -s "$call_log" ]; then
+    echo "FreeBSD release guard did not reject an unsupported release before installing." >&2
+    cat "$tmp_dir/freebsd-profile-error.log" >&2
+    cat "$call_log" >&2
+    exit 1
+fi
+
+: >"$call_log"
+HOME=$tmp_dir/home CALL_LOG=$call_log PATH="$tmp_dir/freebsd-bin:$bin_dir:/usr/bin:/bin" \
+    "$repo_dir/install.sh" packages --profile hyprland custom-extra-package >/dev/null
+if ! grep -Fx 'pkg install git stow hyprland quickshell hypridle hyprpaper xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent pipewire wireplumber pipewire-spa-oss grim slurp wl-clipboard wtype kitty fish starship fastfetch fcitx5 custom-extra-package' "$call_log" >/dev/null; then
+    echo "FreeBSD Hyprland profile did not resolve the expected package set." >&2
     cat "$call_log" >&2
     exit 1
 fi

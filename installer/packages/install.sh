@@ -4,7 +4,7 @@ set -eu
 profile=
 if [ "${1:-}" = --profile ]; then
     if [ "$#" -lt 2 ]; then
-        echo "Usage: ./install.sh packages [package ...] | --profile NAME [package ...]" >&2
+        echo "Usage: ./install.sh packages [package ...] | --profile NAME [--groups GROUP[,GROUP...]] [package ...]" >&2
         exit 2
     fi
     profile=$2
@@ -34,6 +34,9 @@ fi
 
 if [ -n "$profile" ]; then
     case "$script:$profile" in
+        freebsd.sh:hyprland)
+            exec "$(dirname "$0")/$script" --profile "$profile" "$@"
+            ;;
         arch.sh:hyprland)
             exec "$(dirname "$0")/$script" --profile "$profile" "$@"
             ;;

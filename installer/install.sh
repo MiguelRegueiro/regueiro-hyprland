@@ -6,21 +6,20 @@ action=${1:-install}
 
 case "$action" in
     install|update) ;;
+    setup)
+        shift
+        [ "$#" -eq 0 ] || { echo "Usage: ./install.sh setup" >&2; exit 2; }
+        ;;
+    uninstall)
+        shift
+        exec "$repo_dir/installer/uninstall.sh" "$@"
+        ;;
     packages)
         shift
         exec "$repo_dir/installer/packages/install.sh" "$@"
         ;;
-    *) echo "Usage: ./install.sh [install|update|packages]" >&2; exit 2 ;;
+    *) echo "Usage: ./install.sh [install|update|setup|uninstall|packages]" >&2; exit 2 ;;
 esac
-
-if ! command -v stow >/dev/null 2>&1; then
-    echo "GNU Stow is missing; installing the bootstrap packages with the native package manager."
-    "$repo_dir/installer/packages/install.sh"
-    if ! command -v stow >/dev/null 2>&1; then
-        echo "GNU Stow is still unavailable after package installation." >&2
-        exit 1
-    fi
-fi
 
 is_legacy_link() {
     case "$1" in
@@ -108,6 +107,18 @@ if [ "$(uname -s)" = FreeBSD ]; then
 fi
 preflight_packages desktop/platforms "$platform_package"
 preflight_packages configs fish kitty starship fastfetch gtk fcitx5 mimeclip nvim xdg-portals flatpak
+
+# Check every Stow destination before any package installation or link changes.
+if [ "$action" = setup ]; then
+    "$repo_dir/installer/packages/install.sh" --profile hyprland --interactive
+elif ! command -v stow >/dev/null 2>&1; then
+    echo "GNU Stow is missing; installing the bootstrap packages with the native package manager."
+    "$repo_dir/installer/packages/install.sh"
+fi
+if ! command -v stow >/dev/null 2>&1; then
+    echo "GNU Stow is still unavailable after package installation." >&2
+    exit 1
+fi
 
 stow_packages() {
     package_dir=$1

@@ -45,9 +45,9 @@ The previous Hyprlock theme remains in the repository as an inactive configurati
 
 ## Dependencies
 
-The package scripts under `installer/packages/` install the portable bootstrap tools, Git and GNU Stow, for Arch, Fedora, Debian/Ubuntu, Void, or FreeBSD. Run `./install.sh packages` to select the current OS package manager. An opt-in `./install.sh packages --profile hyprland` installs the current runtime package set on Arch/CachyOS or Debian 13 Trixie; on Debian, the official `trixie-backports` repository must already be enabled and refreshed. The profile is not run by the normal Stow installer and does not enable system services. Fedora’s official stable repositories do not yet provide a complete, matching package set for the desktop runtime, so the profile refuses there without installing anything. Other distributions remain unsupported until their package names and runtime requirements are mapped and validated.
+The package scripts under `installer/packages/` install the portable bootstrap tools, Git and GNU Stow, for Arch, Fedora, Debian/Ubuntu, Void, or FreeBSD. Run `./install.sh packages` to select the current OS package manager. An opt-in `./install.sh packages --profile hyprland` installs the current runtime package set on Arch/CachyOS, Debian 13 Trixie, or FreeBSD 14.4, 14.5, and 15.1. Debian requires the official `trixie-backports` repository to be enabled and refreshed. Profiles are not run by the normal Stow installer and do not enable system services. Package names live in platform-specific TSV catalogs under `installer/packages/profiles/`; the default profile installs all groups, `--groups input,audio` chooses optional groups, and `--interactive` opens a numbered text selector. Both selection modes always include base and core. Fedora’s official stable repositories do not yet provide a complete, matching package set for the desktop runtime, so the profile refuses there without installing anything. Void remains unsupported because the Hyprland packages require a community repository. FreeBSD’s profile is based on the native ports packages and still needs real-machine validation.
 
-On Arch/CachyOS and Debian Trixie, the opt-in Hyprland package profile includes the compositor, shell, wallpaper and idle tools, portals, and the common hardware/input integrations. You still need to enable the services listed below. On other distributions, install the equivalent runtime packages from their native sources. Some personal apps are optional and listed in their feature documentation.
+On Arch/CachyOS, Debian Trixie, and FreeBSD 14.4, 14.5, and 15.1, the opt-in Hyprland package profile includes the compositor, shell, wallpaper and idle tools, portals, and common desktop tools. You still need to enable and configure platform services separately. On other distributions, install the equivalent runtime packages from their native sources. Some personal apps are optional and listed in their feature documentation.
 
 Optional / personal extras:
 
@@ -254,7 +254,9 @@ cd ~/triton-desktop
 ./install.sh
 ```
 
-The root `install.sh` is the public installer. It deploys the current Hyprland profile through GNU Stow. Use `./install.sh packages` to install the base packages for a supported package manager. After pulling file additions or moves, rerun `./install.sh`; machine-local overrides remain outside the checkout.
+The root `install.sh` is the public installer. `./install.sh` deploys the current Hyprland configuration through GNU Stow. On platforms with a supported Hyprland package profile, `./install.sh setup` first checks for configuration conflicts, then opens the package-group selector, installs the selected packages, and deploys the configuration. `./install.sh packages` installs only bootstrap packages unless a profile is requested. Explicit package installs record newly installed requested packages under `~/.local/state/triton-desktop/packages/`; dependencies and packages already present are not recorded. After pulling file additions or moves, rerun `./install.sh`; machine-local overrides remain outside the checkout.
+
+Run `./install.sh uninstall` to remove Triton Desktop's Stow-managed configuration links. It preserves local override files and leaves OS packages installed. Add `--packages` to review packages recorded as newly installed by Triton; each package manager gets a separate confirmation prompt. Only explicitly requested packages are recorded—automatic dependencies and packages already present are excluded.
 
 ## Formatting
 

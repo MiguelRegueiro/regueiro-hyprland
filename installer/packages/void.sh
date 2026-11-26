@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 . "$(dirname "$0")/root.sh"
-run_as_root xbps-install -S git stow "$@"
+install_catalog void "$(dirname -- "$0")/profiles/void.tsv" base "$@"
