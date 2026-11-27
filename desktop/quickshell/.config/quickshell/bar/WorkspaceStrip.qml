@@ -10,7 +10,12 @@ Row {
     property string screenName: ""
     property int barHeight: 34
     readonly property var compositorMonitor: targetScreen ? compositorService.monitorFor(targetScreen) : null
-    readonly property int activeWorkspaceId: compositorService.workspaceId(compositorService.activeWorkspaceFor(targetScreen))
+    readonly property int activeWorkspaceId: {
+        if (compositorMonitor && compositorService.sameMonitor(compositorMonitor, compositorService.focusedMonitor))
+            return compositorService.workspaceId(compositorService.focusedWorkspace);
+
+        return compositorService.workspaceId(compositorService.activeWorkspaceFor(targetScreen));
+    }
     readonly property var pinnedWorkspaceIds: [1, 2, 3, 4, 5]
 
     function dispatchWorkspace(workspace) {
