@@ -36,14 +36,16 @@ cursor_anchor() {
     local current="$1" cursor
     cursor="$(hyprctl -j cursorpos 2>/dev/null)" || return 0
     jq -cn --argjson monitors "$current" --argjson cursor "$cursor" '
+        def logical_width: (if ((.transform // 0) % 2) == 1 then .height else .width end) / (.scale // 1);
+        def logical_height: (if ((.transform // 0) % 2) == 1 then .width else .height end) / (.scale // 1);
         ($monitors | map(select(.disabled != true and (.mirrorOf // "none") == "none"
             and $cursor.x >= .x and $cursor.y >= .y
-            and $cursor.x < .x + (.width / .scale)
-            and $cursor.y < .y + (.height / .scale))) | .[0]) as $m |
+            and $cursor.x < .x + logical_width
+            and $cursor.y < .y + logical_height)) | .[0]) as $m |
         if $m == null then {}
         else {name: $m.name,
-              u: (($cursor.x - $m.x) / ($m.width / $m.scale)),
-              v: (($cursor.y - $m.y) / ($m.height / $m.scale))}
+              u: (($cursor.x - $m.x) / ($m | logical_width)),
+              v: (($cursor.y - $m.y) / ($m | logical_height))}
         end
     ' 2>/dev/null || true
 }
@@ -53,12 +55,14 @@ restore_cursor() {
     [ -n "$anchor" ] && [ "$(jq -r '.name // ""' <<<"$anchor")" != "" ] || return 0
     current="$(monitors)" || return 0
     destination="$(jq -rn --argjson monitors "$current" --argjson anchor "$anchor" --arg preferred "$preferred" '
+        def logical_width: (if ((.transform // 0) % 2) == 1 then .height else .width end) / (.scale // 1);
+        def logical_height: (if ((.transform // 0) % 2) == 1 then .width else .height end) / (.scale // 1);
         (($monitors | map(select(.name == $anchor.name and .disabled != true)) | .[0]) //
          ($monitors | map(select(.name == $preferred and .disabled != true)) | .[0])) as $m |
         if $m == null then empty
         else
-            ($m.width / $m.scale) as $w |
-            ($m.height / $m.scale) as $h |
+            ($m | logical_width) as $w |
+            ($m | logical_height) as $h |
             "\(($m.x + ([([$anchor.u * $w, 1] | max), ($w - 2)] | min) | round)) \(($m.y + ([([$anchor.v * $h, 1] | max), ($h - 2)] | min) | round))"
         end
     ' 2>/dev/null)" || return 0
@@ -114,7 +118,7 @@ apply_monitor() {
 }
 
 apply_extend_layout() {
-    local current="$1" primary="$2" laptop="$3" saved="$4" action="$5"
+    local current="$1" primary="$2" laptop="$3" saved="$4" action="$5" single_output="${6:-}"
     local park_x output position program changed
     local -a ordered=("$primary")
     if [ -n "$laptop" ] && [ "$laptop" != "$primary" ]; then
@@ -127,6 +131,12 @@ apply_extend_layout() {
 
     if [ "$(jq 'length' <<<"$current")" -eq 1 ]; then
         apply_monitor "$primary" "0x0"
+        return
+    fi
+    if [ "$action" = single ] && [ -n "$single_output" ]; then
+        # Geometry changes reflow only the selected output. Keep the other
+        # displays fixed instead of parking every output during the update.
+        apply_monitor "$single_output" "$(position_for "$single_output" "0x0")"
         return
     fi
     if [ "$action" = layout ] && [ "$saved" = true ]; then
@@ -145,12 +155,16 @@ apply_extend_layout() {
     fi
     if [ "$saved" = true ]; then
         park_x="$(jq -nr --argjson monitors "$current" --argjson positions "$(state | jq '.positions')" '
-            [0, ($monitors[] | .x + .width / .scale),
-             ($monitors[] | ($positions[.name] | split("x")[0] | tonumber) + .width / .scale)]
+            def logical_width: (if ((.transform // 0) % 2) == 1 then .height else .width end) / (.scale // 1);
+            [0, ($monitors[] | .x + logical_width),
+             ($monitors[] | ($positions[.name] | split("x")[0] | tonumber) + logical_width)]
             | max | ceil + 4096
         ')"
     else
-        park_x="$(jq -nr --argjson monitors "$current" '[0, ($monitors[] | .x + .width / .scale), ([$monitors[] | .width / .scale] | add)] | max | ceil + 4096')"
+        park_x="$(jq -nr --argjson monitors "$current" '
+            def logical_width: (if ((.transform // 0) % 2) == 1 then .height else .width end) / (.scale // 1);
+            [0, ($monitors[] | .x + logical_width), ([$monitors[] | logical_width] | add)] | max | ceil + 4096
+        ')"
     fi
 
     # Repositioning adjacent outputs directly can overlap them halfway through
@@ -225,7 +239,7 @@ apply_workspaces() {
 }
 
 apply() {
-    local current mode primary laptop secondary saved_positions_complete anchor action="${1:-}"
+    local current mode primary laptop secondary saved_positions_complete anchor action="${1:-}" single_output="${2:-}"
     current="$(monitors)"
     anchor="$(cursor_anchor "$current")"
     mode="$(state | jq -r '.mode // "extend"')"
@@ -261,8 +275,8 @@ apply() {
         return
     fi
 
-    apply_extend_layout "$current" "$primary" "$laptop" "$saved_positions_complete" "$action"
-    if [ "$action" != layout ]; then
+    apply_extend_layout "$current" "$primary" "$laptop" "$saved_positions_complete" "$action" "$single_output"
+    if [ "$action" != layout ] && [ "$action" != single ]; then
         apply_workspaces "$primary" "$secondary" "$laptop" "$mode"
     fi
     restore_cursor "$anchor" "$primary"
@@ -291,8 +305,8 @@ reflow_for() {
 }
 
 apply_saved_change() {
-    local previous="$1"
-    if ! apply; then
+    local previous="$1" output="$2"
+    if ! apply single "$output"; then
         printf '%s\n' "$previous" | save_state
         apply || true
         return 1
@@ -339,8 +353,29 @@ case "${1:-status}" in
         ;;
     transform)
         [ -n "${2:-}" ] && [[ "${3:-}" =~ ^[0-7]$ ]] || { printf 'Usage: %s transform OUTPUT [0-7]\n' "$0" >&2; exit 2; }
-        state | jq --arg output "$2" --argjson transform "$3" '.transforms[$output] = $transform' | save_state
-        apply
+        current="$(monitors)"
+        if ! jq -e --arg output "$2" '.[] | select(.name == $output and .disabled != true and (.mirrorOf // "none") == "none")' \
+            >/dev/null <<<"$current"; then
+            printf 'Display %s is not active\n' "$2" >&2
+            exit 2
+        fi
+        previous="$(state)"
+        if [ "$(jq -r '.mode' <<<"$previous")" = extend ]; then
+            # Use the compositor's live scale and dimensions. Saved scale values
+            # may be rounded differently by Hyprland, so using them here can
+            # create a gap or overlap after the transform is applied.
+            dims="$(jq -cn --argjson monitors "$current" --arg output "$2" --argjson transform "$3" '
+                $monitors | map(select(.name == $output)) | .[0] as $m |
+                if ($transform % 2) == 1 then [$m.height / ($m.scale // 1), $m.width / ($m.scale // 1)]
+                else [$m.width / ($m.scale // 1), $m.height / ($m.scale // 1)] end')"
+            positions="$(reflow_for "$current" "$2" "$(jq '.[0]' <<<"$dims")" "$(jq '.[1]' <<<"$dims")")" || exit 2
+        else
+            positions='{}'
+        fi
+        jq --arg output "$2" --argjson transform "$3" --argjson positions "$positions" \
+            '.transforms[$output] = $transform | .positions = ((.positions // {}) + $positions)' \
+            <<<"$previous" | save_state
+        apply_saved_change "$previous" "$2"
         ;;
     output-mode)
         [ -n "${2:-}" ] && [[ "${3:-}" =~ ^[0-9]+x[0-9]+@[0-9]+(\.[0-9]+)?$ ]] || {
@@ -366,7 +401,7 @@ case "${1:-status}" in
         fi
         jq --arg output "$2" --arg mode "$3" --argjson positions "$positions" \
             '.outputModes[$output] = $mode | .positions = ((.positions // {}) + $positions)' <<<"$previous" | save_state
-        apply_saved_change "$previous"
+        apply_saved_change "$previous" "$2"
         ;;
     scale)
         [ -n "${2:-}" ] && [[ "${3:-}" =~ ^[0-9]+(\.[0-9]{1,2})?$ ]] &&
@@ -381,14 +416,16 @@ case "${1:-status}" in
         previous="$(state)"
         if [ "$(jq -r '.mode' <<<"$previous")" = extend ]; then
             dims="$(jq -cn --argjson monitors "$current" --arg output "$2" --argjson scale "$3" '
-                $monitors | map(select(.name == $output)) | .[0] | [.width / $scale, .height / $scale]')"
+                $monitors | map(select(.name == $output)) | .[0] as $m |
+                if (($m.transform // 0) % 2) == 1 then [$m.height / $scale, $m.width / $scale]
+                else [$m.width / $scale, $m.height / $scale] end')"
             positions="$(reflow_for "$current" "$2" "$(jq '.[0]' <<<"$dims")" "$(jq '.[1]' <<<"$dims")")" || exit 2
         else
             positions='{}'
         fi
         jq --arg output "$2" --argjson scale "$3" --argjson positions "$positions" \
             '.scales[$output] = $scale | .positions = ((.positions // {}) + $positions)' <<<"$previous" | save_state
-        apply_saved_change "$previous"
+        apply_saved_change "$previous" "$2"
         ;;
     layout)
         [ -n "${2:-}" ] || { printf 'Usage: %s layout POSITIONS_JSON\n' "$0" >&2; exit 2; }
@@ -409,9 +446,11 @@ case "${1:-status}" in
             ($monitors | map(. as $m | ($positions[$m.name] // "") as $p |
                 select($p | test("^[0-9]+x[0-9]+$")) |
                 ($p | split("x") | map(tonumber)) as $xy |
+                (if (($m.transform // 0) % 2) == 1 then $m.height else $m.width end) as $raw_width |
+                (if (($m.transform // 0) % 2) == 1 then $m.width else $m.height end) as $raw_height |
                 {name: $m.name, x: $xy[0], y: $xy[1],
-                 w: ($m.width / (if $m.scale > 0 then $m.scale else 1 end)),
-                 h: ($m.height / (if $m.scale > 0 then $m.scale else 1 end))})) as $rects |
+                 w: ($raw_width / (if $m.scale > 0 then $m.scale else 1 end)),
+                 h: ($raw_height / (if $m.scale > 0 then $m.scale else 1 end))})) as $rects |
             ($rects | length) == ($monitors | length) and
             (all(range(0; $rects | length); . as $i |
                 all(range($i + 1; $rects | length); . as $j |

@@ -11,6 +11,7 @@ Item {
     property bool showHeader: true
     property bool showAdvanced: false
     property string selectedOutput: ""
+    property bool dragActive: false
     property var dragPosition: null
     property var dropPreview: null
     property var pendingPositions: null
@@ -18,9 +19,9 @@ Item {
     readonly property bool selectedIsPrimary: selectedMonitor !== null && selectedMonitor.name === displayService.primary
     readonly property real layoutMinX: displayService.monitors.length > 0 ? Math.min.apply(null, displayService.monitors.map(monitor => monitorX(monitor))) : 0
     readonly property real layoutMinY: displayService.monitors.length > 0 ? Math.min.apply(null, displayService.monitors.map(monitor => monitorY(monitor))) : 0
-    readonly property real layoutMaxX: displayService.monitors.length > 0 ? Math.max.apply(null, displayService.monitors.map(monitor => monitorX(monitor) + monitor.width / Math.max(1, monitor.scale))) : 1
-    readonly property real layoutMaxY: displayService.monitors.length > 0 ? Math.max.apply(null, displayService.monitors.map(monitor => monitorY(monitor) + monitor.height / Math.max(1, monitor.scale))) : 1
-    readonly property real stackedHeight: displayService.monitors.reduce((sum, monitor) => sum + monitor.height / Math.max(1, monitor.scale), 0)
+    readonly property real layoutMaxX: displayService.monitors.length > 0 ? Math.max.apply(null, displayService.monitors.map(monitor => monitorX(monitor) + logicalWidth(monitor))) : 1
+    readonly property real layoutMaxY: displayService.monitors.length > 0 ? Math.max.apply(null, displayService.monitors.map(monitor => monitorY(monitor) + logicalHeight(monitor))) : 1
+    readonly property real stackedHeight: displayService.monitors.reduce((sum, monitor) => sum + logicalHeight(monitor), 0)
     readonly property real layoutScale: Math.min(0.14, (layoutCanvas.width - 64) / Math.max(1, layoutMaxX - layoutMinX), (layoutCanvas.height - 86) / Math.max(1, layoutMaxY - layoutMinY, displayService.monitors.length === 2 ? stackedHeight : 1))
     readonly property real layoutOffsetX: Math.max(16, (layoutCanvas.width - (layoutMaxX - layoutMinX) * layoutScale) / 2)
     readonly property real layoutOffsetY: Math.max(16, (layoutCanvas.height - (layoutMaxY - layoutMinY) * layoutScale) / 2)
@@ -93,6 +94,23 @@ Item {
         return pendingPositions && pendingPositions[monitor.name] ? pendingPositions[monitor.name].y : monitor.y;
     }
 
+    function monitorScale(monitor) {
+        const scale = Number(monitor && monitor.scale);
+        return Number.isFinite(scale) && scale > 0 ? scale : 1;
+    }
+
+    function swapsAxes(monitor) {
+        return [1, 3, 5, 7].indexOf(Number(monitor && monitor.transform) || 0) !== -1;
+    }
+
+    function logicalWidth(monitor) {
+        return (swapsAxes(monitor) ? monitor.height : monitor.width) / monitorScale(monitor);
+    }
+
+    function logicalHeight(monitor) {
+        return (swapsAxes(monitor) ? monitor.width : monitor.height) / monitorScale(monitor);
+    }
+
     function workspaceLabel(output) {
         if (!output)
             return "";
@@ -125,8 +143,8 @@ Item {
         const rects = monitors.map(monitor => ({
             x: monitor.name === moved.name ? candidate.x : monitorX(monitor),
             y: monitor.name === moved.name ? candidate.y : monitorY(monitor),
-            w: monitor.width / Math.max(1, monitor.scale),
-            h: monitor.height / Math.max(1, monitor.scale)
+            w: logicalWidth(monitor),
+            h: logicalHeight(monitor)
         }));
         const seen = [0];
         for (let index = 0; index < seen.length; index++) {
@@ -150,8 +168,8 @@ Item {
         if (Math.max(Math.abs(dragX), Math.abs(dragY)) < 4)
             return null;
         const monitors = displayService.monitors;
-        const width = moved.width / Math.max(1, moved.scale);
-        const height = moved.height / Math.max(1, moved.scale);
+        const width = logicalWidth(moved);
+        const height = logicalHeight(moved);
         const desiredX = monitorX(moved) + dragX / layoutScale;
         const desiredY = monitorY(moved) + dragY / layoutScale;
         const others = monitors.filter(monitor => monitor.name !== moved.name);
@@ -160,8 +178,8 @@ Item {
         // coordinate remains free except near optional alignment guides.
         const minOverlap = 12 / layoutScale;
         for (const other of others) {
-            const ow = other.width / Math.max(1, other.scale);
-            const oh = other.height / Math.max(1, other.scale);
+            const ow = logicalWidth(other);
+            const oh = logicalHeight(other);
             const ox = monitorX(other);
             const oy = monitorY(other);
             const vertical = Math.min(minOverlap, height / 2, oh / 2);
@@ -180,8 +198,8 @@ Item {
                 const collides = others.some(monitor => {
                     const mx = monitorX(monitor);
                     const my = monitorY(monitor);
-                    const mw = monitor.width / Math.max(1, monitor.scale);
-                    const mh = monitor.height / Math.max(1, monitor.scale);
+                    const mw = logicalWidth(monitor);
+                    const mh = logicalHeight(monitor);
                     return candidate.x < mx + mw - 1 && mx < candidate.x + width - 1 &&
                            candidate.y < my + mh - 1 && my < candidate.y + height - 1;
                 });
@@ -211,6 +229,16 @@ Item {
         }
         pendingPositions = pending;
         displayService.setLayout(positions);
+    }
+
+    function finishDrag(moved, commit) {
+        if (!dragActive)
+            return;
+        if (commit && dropPreview)
+            snapLayout(moved, dropPreview);
+        dragActive = false;
+        dragPosition = null;
+        dropPreview = null;
     }
 
     Connections {
@@ -353,8 +381,8 @@ Item {
                     required property var modelData
                     readonly property bool primary: modelData.name === root.displayService.primary
                     readonly property bool selected: root.selectedMonitor && modelData.name === root.selectedMonitor.name
-                    readonly property real logicalWidth: modelData.width / Math.max(1, modelData.scale)
-                    readonly property real logicalHeight: modelData.height / Math.max(1, modelData.scale)
+                    readonly property real logicalWidth: root.logicalWidth(modelData)
+                    readonly property real logicalHeight: root.logicalHeight(modelData)
                     readonly property real baseX: root.layoutOffsetX + (root.monitorX(modelData) - root.layoutMinX) * root.layoutScale
                     readonly property real baseY: root.layoutOffsetY + (root.monitorY(modelData) - root.layoutMinY) * root.layoutScale
 
@@ -438,6 +466,7 @@ Item {
 
                         onPressed: mouse => {
                             pressPoint = layoutMonitor.mapToItem(layoutCanvas, mouse.x, mouse.y);
+                            root.dragActive = true;
                             root.selectedOutput = modelData.name;
                             root.dragPosition = { name: modelData.name, dx: 0, dy: 0 };
                             root.dropPreview = null;
@@ -451,18 +480,23 @@ Item {
                             root.dragPosition = { name: modelData.name, dx: dx, dy: dy };
                             root.dropPreview = root.placementForDrag(modelData, dx, dy);
                         }
-                        onReleased: {
-                            if (root.dropPreview)
-                                root.snapLayout(modelData, root.dropPreview);
-                            root.dragPosition = null;
-                            root.dropPreview = null;
+                        function finish(commit) {
+                            root.finishDrag(modelData, commit);
                             pressPoint = null;
                         }
-                        onCanceled: {
-                            root.dragPosition = null;
-                            root.dropPreview = null;
-                            pressPoint = null;
-                        }
+                        onReleased: finish(true)
+                        onCanceled: finish(false)
+                        onPressedChanged: if (!pressed && root.dragActive) finish(true)
+                    }
+
+                    // Recover if a release is lost while the delegate is being
+                    // moved under the pointer. This prevents a stale drag
+                    // offset or drop hint from becoming the map's resting UI.
+                    Timer {
+                        interval: 60
+                        repeat: true
+                        running: root.dragActive && root.dragPosition && root.dragPosition.name === layoutMonitor.modelData.name
+                        onTriggered: if (!dragArea.pressed) root.finishDrag(layoutMonitor.modelData, true)
                     }
                 }
             }
@@ -523,7 +557,7 @@ Item {
                 color: Qt.rgba(0.13, 0.2, 0.34, 0.95)
                 border.color: Theme.blue
                 border.width: 1
-                visible: root.displayService.mode === "extend" && root.dropPreview !== null
+                visible: root.displayService.mode === "extend" && root.dragActive && root.dropPreview !== null
                 z: 3
 
                 Text {
