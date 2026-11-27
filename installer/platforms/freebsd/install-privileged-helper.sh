@@ -8,11 +8,14 @@ fi
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 source_file=$repo_dir/desktop/platforms/freebsd/libexec/triton-privileged
+profile_file=$repo_dir/desktop/platforms/freebsd/libexec/triton-wifi-profile.awk
 destination=/usr/local/libexec/triton-privileged
 
 [ -f "$source_file" ] || { echo "Privileged helper source is missing." >&2; exit 1; }
+[ -f "$profile_file" ] || { echo "Wi-Fi profile helper source is missing." >&2; exit 1; }
 install -d -o root -g wheel -m 0755 /usr/local/libexec /usr/local/etc/triton-desktop
 install -o root -g wheel -m 0755 "$source_file" "$destination"
+install -o root -g wheel -m 0644 "$profile_file" /usr/local/libexec/triton-wifi-profile.awk
 chmod 0755 /usr/local/etc/triton-desktop
 chown root:wheel /usr/local/etc/triton-desktop
 echo "Installed root-owned helper at $destination."

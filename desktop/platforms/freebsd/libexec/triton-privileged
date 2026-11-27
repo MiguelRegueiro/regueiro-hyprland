@@ -40,7 +40,10 @@ validate_ssid() {
         echo "SSID must contain between 1 and 32 bytes" >&2
         exit 2
     }
-    case "$1" in *[![:print:]]*) echo "SSID contains unsupported control characters" >&2; exit 2 ;; esac
+    if printf '%s' "$1" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+        echo "SSID contains unsupported control characters" >&2
+        exit 2
+    fi
 }
 
 validate_mac() {
@@ -60,6 +63,14 @@ validate_bt_hci() {
 
 wifi_conf=/usr/local/etc/triton-desktop/wpa_supplicant.conf
 wifi_dir=/usr/local/etc/triton-desktop
+wifi_lock_file=/var/run/triton-desktop-wifi.lock
+
+require_wifi_lock() {
+    [ "$(cat "$wifi_lock_file" 2>/dev/null || true)" = "$$" ] || {
+        echo "Wi-Fi profile operation must run through the serialized helper." >&2
+        exit 1
+    }
+}
 
 check_wifi_directory() {
     [ -d "$wifi_dir" ] && [ ! -L "$wifi_dir" ] || {
@@ -79,7 +90,16 @@ ssid_hex() {
 profile_exists() {
     [ -r "$wifi_conf" ] || return 1
     marker="# triton-ssid=$(ssid_hex "$1")"
-    awk -v target="$marker" '$0 == target { found = 1 } END { exit !found }' "$wifi_conf"
+    awk -v target="$marker" '
+        /^[[:space:]]*network=[[:space:]]*\{/ { in_block = 1; next }
+        in_block {
+            line = $0
+            sub(/^[[:space:]]+/, "", line)
+            if (line == target) found = 1
+            if ($0 ~ /^[[:space:]]*\}/) in_block = 0
+        }
+        END { exit !found }
+    ' "$wifi_conf"
 }
 
 write_profile() {
@@ -93,26 +113,7 @@ write_profile() {
     trap 'exit 1' HUP INT TERM
 
     if [ -r "$wifi_conf" ]; then
-        awk -v target="$marker" '
-            /^[[:space:]]*network=[[:space:]]*\{/ {
-                in_block = 1
-                block = $0 ORS
-                remove = 0
-                next
-            }
-            in_block {
-                block = block $0 ORS
-                if ($0 == target) remove = 1
-                if ($0 ~ /^[[:space:]]*\}/) {
-                    if (!remove) printf "%s", block
-                    in_block = 0
-                    block = ""
-                }
-                next
-            }
-            { print }
-            END { if (in_block) printf "%s", block }
-        ' "$wifi_conf" >"$tmp"
+        awk -v target="$marker" -f /usr/local/libexec/triton-wifi-profile.awk "$wifi_conf" >"$tmp"
     else
         : >"$tmp"
     fi
@@ -158,6 +159,17 @@ wifi_connect() {
     validate_ssid "$ssid"
     check_wifi_directory
 
+    exec /usr/bin/lockf -k -p -t 15 "$wifi_lock_file" \
+        "$0" wifi-connect-locked "$iface" "$ssid"
+}
+
+wifi_connect_locked() {
+    require_wifi_lock
+    iface=$1
+    ssid=$2
+    validate_iface "$iface"
+    validate_ssid "$ssid"
+    check_wifi_directory
     psk=
     IFS= read -r psk || [ -z "$psk" ]
     if [ -n "$psk" ]; then
@@ -167,12 +179,13 @@ wifi_connect() {
         }
         case "$psk" in *[![:print:]]*) echo "Wi-Fi password contains unsupported characters" >&2; exit 2 ;; esac
         psk_hex=$(printf '%s\n' "$psk" | wpa_passphrase "$ssid" |
-            awk '$1 == "psk=" { value = $0; sub(/^psk=/, "", value); if (length(value) == 64 && value !~ /[^0-9a-fA-F]/) { print value; exit } }')
+            awk -v mode=psk -f /usr/local/libexec/triton-wifi-profile.awk)
         [ -n "$psk_hex" ] || { echo "Could not derive the WPA key" >&2; exit 1; }
         write_profile connect "$ssid" "$psk_hex"
     elif ! profile_exists "$ssid"; then
         write_profile connect "$ssid"
     fi
+    unset psk psk_hex 2>/dev/null || true
 
     if ! ifconfig "$iface" >/dev/null 2>&1; then
         echo "$iface does not exist; configure it in rc.conf and reboot" >&2
@@ -188,6 +201,16 @@ wifi_connect() {
 }
 
 wifi_forget() {
+    iface=$1
+    ssid=$2
+    validate_iface "$iface"
+    validate_ssid "$ssid"
+    exec /usr/bin/lockf -k -p -t 15 "$wifi_lock_file" \
+        "$0" wifi-forget-locked "$iface" "$ssid"
+}
+
+wifi_forget_locked() {
+    require_wifi_lock
     iface=$1
     ssid=$2
     validate_iface "$iface"
@@ -348,7 +371,7 @@ validate_partition() {
 
 validate_mountpoint() {
     case "${1:-}" in /*) ;; *) echo "Invalid mount point" >&2; exit 2 ;; esac
-    case "$1" in *[![:print:]]*) echo "Invalid mount point" >&2; exit 2 ;; esac
+    case "$1" in *[![:print:]]*|*//*|*/../*|*/..|*/./*|*/.) echo "Invalid mount point" >&2; exit 2 ;; esac
 }
 
 drive_unmount() {
@@ -356,9 +379,21 @@ drive_unmount() {
     mountpoint=$2
     validate_partition "$partition"
     validate_mountpoint "$mountpoint"
+    case "$partition" in
+        /dev/da[0-9]* )
+            printf '%s\n' "$partition" | grep -Eq '^/dev/da[0-9]+(s[0-9]+[a-z]?|p[0-9]+)$' || {
+                echo "Invalid removable partition device" >&2
+                exit 2
+            }
+            ;;
+        *) echo "Privileged unmount is limited to removable da(4) devices" >&2; exit 1 ;;
+    esac
+    caller=${DOAS_USER:-}
+    case "$caller" in ''|*[!a-zA-Z0-9_.-]*) echo "Could not identify the invoking user" >&2; exit 1 ;; esac
+    case "$mountpoint" in "/media/$caller/"*) ;; *) echo "Unmount is limited to the invoking user's media directory" >&2; exit 1 ;; esac
     mount -p | awk -v device="$partition" -v point="$mountpoint" \
         '$1 == device && $2 == point { found = 1 } END { exit !found }' || return 0
-    umount -f "$mountpoint"
+    umount "$mountpoint"
 }
 
 drive_poweroff() {
@@ -381,6 +416,14 @@ drive_poweroff() {
 }
 
 case "${1:-}" in
+    wifi-connect-locked)
+        [ "$#" -eq 3 ] || usage
+        wifi_connect_locked "$2" "$3"
+        ;;
+    wifi-forget-locked)
+        [ "$#" -eq 3 ] || usage
+        wifi_forget_locked "$2" "$3"
+        ;;
     power-profile)
         [ "${2:-}" = set ] && [ "$#" -eq 3 ] || usage
         case "$3" in
