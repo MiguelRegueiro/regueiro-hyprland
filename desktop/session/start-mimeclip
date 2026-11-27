@@ -6,17 +6,74 @@ set -u
 # delayed autostart commands race or this launcher is invoked again.
 if [ "${1:-}" = "--supervise" ]; then
     daemon=$2
-    log_file=$3
-    lock_dir=$4
-    session_pid=${5:-}
+    resolver=$3
+    log_file=$4
+    lock_dir=$5
+    session_pid=${6:-}
     daemon_pid=
     session_watch_pid=
+    health_interval=${TRITON_MIMECLIP_HEALTH_INTERVAL:-30}
+    health_timeout=${TRITON_MIMECLIP_HEALTH_TIMEOUT:-2}
+    health_failures=${TRITON_MIMECLIP_HEALTH_FAILURES:-3}
+    stop_timeout=${TRITON_MIMECLIP_STOP_TIMEOUT:-5}
+
+    valid_positive_integer() {
+        case "$1" in ''|*[!0-9]*|0) return 1 ;; esac
+    }
+    valid_positive_integer "$health_interval" || health_interval=30
+    valid_positive_integer "$health_timeout" || health_timeout=2
+    valid_positive_integer "$health_failures" || health_failures=3
+    valid_positive_integer "$stop_timeout" || stop_timeout=5
+
+    stop_daemon() {
+        [ -n "$daemon_pid" ] || return 0
+        child_pid=$(cat "$lock_dir/daemon-pid" 2>/dev/null || true)
+        case "$child_pid" in ''|*[!0-9]*) child_pid= ;; esac
+        [ ! -f "$lock_dir/daemon-exit" ] || child_pid=
+        [ -z "$child_pid" ] || kill -TERM "$child_pid" 2>/dev/null || true
+        kill -TERM "$daemon_pid" 2>/dev/null || true
+        (
+            timer_sleep_pid=
+            trap 'kill "$timer_sleep_pid" 2>/dev/null || true; exit 0' HUP INT TERM
+            sleep "$stop_timeout" &
+            timer_sleep_pid=$!
+            wait "$timer_sleep_pid" || exit 0
+            [ -z "$child_pid" ] || kill -KILL "$child_pid" 2>/dev/null || true
+            kill -KILL "$daemon_pid" 2>/dev/null || true
+        ) &
+        stop_timer_pid=$!
+        wait "$daemon_pid" 2>/dev/null || true
+        kill "$stop_timer_pid" 2>/dev/null || true
+        wait "$stop_timer_pid" 2>/dev/null || true
+        daemon_pid=
+    }
+
+    bounded_ping() {
+        "$resolver" client ping >/dev/null 2>&1 &
+        ping_pid=$!
+        (
+            timer_sleep_pid=
+            trap 'kill "$timer_sleep_pid" 2>/dev/null || true; exit 0' HUP INT TERM
+            sleep "$health_timeout" &
+            timer_sleep_pid=$!
+            wait "$timer_sleep_pid" || exit 0
+            kill -TERM "$ping_pid" 2>/dev/null || exit 0
+            sleep 1 &
+            timer_sleep_pid=$!
+            wait "$timer_sleep_pid" || exit 0
+            kill -KILL "$ping_pid" 2>/dev/null || true
+        ) &
+        ping_timer_pid=$!
+        ping_status=0
+        wait "$ping_pid" || ping_status=$?
+        kill "$ping_timer_pid" 2>/dev/null || true
+        wait "$ping_timer_pid" 2>/dev/null || true
+        return "$ping_status"
+    }
+
     cleanup() {
         trap - 0 HUP INT TERM
-        if [ -n "$daemon_pid" ]; then
-            kill -TERM "$daemon_pid" 2>/dev/null || true
-            wait "$daemon_pid" 2>/dev/null || true
-        fi
+        stop_daemon
         if [ -n "$session_watch_pid" ]; then
             kill "$session_watch_pid" 2>/dev/null || true
             wait "$session_watch_pid" 2>/dev/null || true
@@ -38,27 +95,64 @@ if [ "${1:-}" = "--supervise" ]; then
         fi
 
         started_at=$(date +%s)
-        "$daemon" >>"$log_file" 2>&1 &
+        rm -f "$lock_dir/daemon-pid" "$lock_dir/daemon-exit"
+        (
+            "$daemon" >>"$log_file" 2>&1 &
+            child_pid=$!
+            printf '%s\n' "$child_pid" >"$lock_dir/daemon-pid"
+            trap 'kill -TERM "$child_pid" 2>/dev/null || true; wait "$child_pid" 2>/dev/null || true; exit 143' HUP INT TERM
+            daemon_status=0
+            wait "$child_pid" || daemon_status=$?
+            printf '%s\n' "$daemon_status" >"$lock_dir/daemon-exit"
+            exit "$daemon_status"
+        ) &
         daemon_pid=$!
+        failures=0
         if [ -n "$session_pid" ]; then
+            supervisor_pid=$$
             (
                 while kill -0 "$session_pid" 2>/dev/null; do sleep 1; done
-                kill -TERM "$daemon_pid" 2>/dev/null || true
+                child_pid=$(cat "$lock_dir/daemon-pid" 2>/dev/null || true)
+                case "$child_pid" in ''|*[!0-9]*) child_pid= ;; esac
+                [ -z "$child_pid" ] || kill -TERM "$child_pid" 2>/dev/null || true
+                kill -TERM "$supervisor_pid" 2>/dev/null || true
             ) &
             session_watch_pid=$!
         fi
-        wait "$daemon_pid" || true
+        while [ ! -f "$lock_dir/daemon-exit" ]; do
+            sleep "$health_interval" &
+            health_sleep_pid=$!
+            wait "$health_sleep_pid" 2>/dev/null || true
+            [ ! -f "$lock_dir/daemon-exit" ] || break
+            if bounded_ping; then
+                failures=0
+            else
+                failures=$((failures + 1))
+                if [ "$failures" -ge "$health_failures" ]; then
+                    echo "MimeClip health check failed $failures consecutive times; restarting daemon." >&2
+                    stop_daemon
+                    break
+                fi
+            fi
+        done
+        if [ -n "$daemon_pid" ]; then
+            wait "$daemon_pid" 2>/dev/null || true
+            daemon_pid=
+        fi
         stopped_at=$(date +%s)
         runtime=$((stopped_at - started_at))
-        daemon_pid=
         if [ -n "$session_watch_pid" ]; then
             kill "$session_watch_pid" 2>/dev/null || true
             wait "$session_watch_pid" 2>/dev/null || true
             session_watch_pid=
         fi
+        rm -f "$lock_dir/daemon-pid" "$lock_dir/daemon-exit"
         if [ -n "$session_pid" ] && ! kill -0 "$session_pid" 2>/dev/null; then
             exit 0
         fi
+
+        # A failed health check is already a reason to restart. Give a
+        # recovered daemon the normal restart backoff if it exits later.
 
         # A daemon that stayed healthy for a while has recovered; don't keep
         # imposing the maximum backoff after a later, isolated crash.
@@ -98,12 +192,20 @@ daemon=$("$resolver" resolve daemon 2>/dev/null || true)
 
 # Bound the health check even if the client is stuck waiting on a broken
 # daemon. The watcher only touches this short-lived child process.
+TRITON_MIMECLIP_HEALTH_TIMEOUT=${TRITON_MIMECLIP_HEALTH_TIMEOUT:-2}
+case "$TRITON_MIMECLIP_HEALTH_TIMEOUT" in ''|*[!0-9]*|0) TRITON_MIMECLIP_HEALTH_TIMEOUT=2 ;; esac
 "$resolver" client ping >/dev/null 2>&1 &
 ping_pid=$!
 (
-    sleep 2
+    timer_sleep_pid=
+    trap 'kill "$timer_sleep_pid" 2>/dev/null || true; exit 0' HUP INT TERM
+    sleep "$TRITON_MIMECLIP_HEALTH_TIMEOUT" &
+    timer_sleep_pid=$!
+    wait "$timer_sleep_pid" || exit 0
     kill -TERM "$ping_pid" 2>/dev/null || exit 0
-    sleep 1
+    sleep 1 &
+    timer_sleep_pid=$!
+    wait "$timer_sleep_pid" || exit 0
     kill -KILL "$ping_pid" 2>/dev/null || true
 ) &
 ping_timer=$!
@@ -145,6 +247,6 @@ if ! mkdir -m 700 "$lock_dir" 2>/dev/null; then
     mkdir -m 700 "$lock_dir" 2>/dev/null || exit 0
 fi
 
-nohup "$0" --supervise "$daemon" "$log_file" "$lock_dir" "$session_pid" \
+nohup "$0" --supervise "$daemon" "$resolver" "$log_file" "$lock_dir" "$session_pid" \
     </dev/null >/dev/null 2>&1 &
 exit 0
