@@ -72,20 +72,25 @@ validated.
 
 Progress: QuickShell, Triton TTS, powerctl, Fcitx, `wl-clip-persist`, and
 Blueman are tied to the active Hyprland session. `powerctl` cleans up stale
-daemons from previous sessions; MimeClip uses a session supervisor when one is
-not already owned by a systemd user service. That existing user service may
-persist across logins and reconnect to Wayland. The shared process supervisor
-also owns elio's file-manager integration. Triton Connect now has a session
-launcher that shuts down its tray app and host over the local control socket.
+daemons from previous sessions. When MimeClip is not already responsive, the
+portable session supervisor starts and owns its daemon. If an external manager
+already owns a responsive daemon, Triton leaves that process under its
+existing lifecycle. The shared process supervisor also owns elio's
+file-manager integration. Triton Connect now has a session launcher that shuts
+down its tray app and host over the local control socket.
 For non-UWSM Linux sessions, a compositor-bound monitor stops portal and
 polkit services when Hyprland exits; UWSM continues to own those through its
 graphical-session target.
 Restart/health behavior is not yet unified across all long-running services.
-MimeClip's standalone supervisor now bounds its client health check, restarts a
-crashing daemon with backoff, resets that backoff after a healthy run, and exits
-when its owning compositor session ends. Regression tests cover a hung health
-check, repeated crashes, and session cleanup. TTS now uses a private runtime
-directory and a PID file rather than Linux `/proc` inspection.
+MimeClip's session-owned supervisor checks daemon health every 30 seconds with
+a bounded client timeout, restarts after three consecutive failures, uses
+bounded TERM/KILL shutdown, applies restart backoff, and exits when its owning
+compositor session ends. Regression tests use a fake daemon to cover repeated
+crashes, a daemon that hangs after startup, ignored TERM, duplicate launches,
+bounded shutdown, and session cleanup. An already responsive daemon started
+outside this supervisor is not restarted by it; recovery for that process
+belongs to its external manager. TTS uses a private runtime directory and a PID
+file rather than Linux `/proc` inspection.
 
 ## 06 — Implement the installer
 
@@ -96,7 +101,7 @@ directory and a PID file rather than Linux `/proc` inspection.
 - [x] Declare core runtime dependencies in the supported native package profiles.
 - [ ] Add optional application and feature selection.
 - [x] Record explicit packages newly installed by Triton without claiming dependencies or pre-existing packages.
-- [x] Preflight Stow destinations and roll back failed Stow/asset deployments.
+- [x] Preflight Stow destinations and roll back failed Stow, asset, package-group-state, and generated FreeBSD bridge deployments.
 - [x] Add an uninstaller for Triton-owned Stow links and an opt-in removal path for recorded packages.
 - [x] Test repeated installations and reject Stow conflicts before changing files.
 
@@ -111,8 +116,11 @@ requested packages absent before installation are recorded in
 pre-existing packages are excluded. The default `./install.sh uninstall`
 removes configuration links only. The `./install.sh uninstall --packages` mode
 prompts before removing each manager's recorded explicit packages.
-Tests use fake package managers and temporary home directories, so they do not
-install or remove packages on the host.
+Tests use fake package managers, a mocked FreeBSD compiler, and temporary home
+directories, so they do not install or remove packages on the host. The
+FreeBSD Wi-Fi profile and privilege checks are functional/mock checks; no
+FreeBSD wireless, mount, audio, portal, authentication, or suspend hardware
+validation has been performed.
 
 An explicit `./install.sh packages --profile hyprland` profile installs the
 current runtime package set on Arch/CachyOS, Debian 13 Trixie, and FreeBSD
@@ -131,9 +139,15 @@ enable system services.
 
 The installer checks all Stow destinations before changing links. If a later
 Stow operation fails, it removes newly deployed links and restores packages
-that were already linked before this run. Asset linking has matching preflight
-and rollback coverage. These checks protect configuration deployment; they do
-not roll back native packages installed by the package manager.
+that were already linked before this run, including optional configurations
+that the new selection deselects. The saved package-group selection changes
+only after deployment succeeds. The generated FreeBSD bridge is tracked by a
+SHA-256 record, restored on a failed deployment, and removed by uninstall only while
+it still matches that checksum. Asset linking has matching preflight and
+rollback coverage. These checks protect configuration deployment; they do not
+roll back native packages installed by the package manager. Package profiles,
+FreeBSD backends, and FreeBSD hardware behavior still require validation on
+their actual supported systems.
 
 ## 07 — Implement stable releases and updates
 
