@@ -1,0 +1,110 @@
+#!/bin/sh
+set -u
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: quickshell-startup-trace COMMAND [ARG ...]" >&2
+    exit 2
+fi
+
+state_home=${XDG_STATE_HOME:-"$HOME/.local/state"}
+state_dir=$state_home/triton-desktop
+mkdir -p "$state_dir" || exit 1
+trace_file=$state_dir/quickshell-startup.strace
+trace_error_file=$state_dir/quickshell-startup-trace.log
+runtime_dir=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+umask 077
+: > "$trace_file"
+chmod 600 "$trace_file"
+
+if ! command -v strace >/dev/null 2>&1; then
+    echo "Quickshell startup trace: strace is unavailable; launching normally" >&2
+    exec "$@"
+fi
+
+strace -f -I 1 -ttt -T -yy -s 128 \
+    -e trace=%file,%process,connect,recvfrom,sendto,poll,ppoll,epoll_wait,futex,ioctl \
+    -o "$trace_file" "$@" 2>"$trace_error_file" &
+tracer_pid=$!
+quickshell_pid=
+
+stop_tracer() {
+    if [ -n "$tracer_pid" ]; then
+        # SIGINT may be inherited as ignored by this background process.
+        # SIGTERM is interruptible with strace -I 1 and detaches its tracees.
+        kill -TERM "$tracer_pid" 2>/dev/null || true
+        wait "$tracer_pid" 2>/dev/null || true
+        tracer_pid=
+    fi
+}
+
+cleanup() {
+    trap - 0 HUP INT TERM
+    stop_tracer
+    if [ -n "$quickshell_pid" ]; then
+        kill -TERM "$quickshell_pid" 2>/dev/null || true
+    fi
+}
+
+trap cleanup 0
+trap 'exit 0' HUP INT TERM
+
+attempt=0
+while [ "$attempt" -lt 100 ] && kill -0 "$tracer_pid" 2>/dev/null; do
+    quickshell_pid=$(pgrep -P "$tracer_pid" | head -n 1 || true)
+    case "$quickshell_pid" in
+        ''|*[!0-9]*) quickshell_pid= ;;
+        *) break ;;
+    esac
+    sleep 0.05
+    attempt=$((attempt + 1))
+done
+
+if [ -z "$quickshell_pid" ]; then
+    wait "$tracer_pid" 2>/dev/null || true
+    tracer_pid=
+    echo "Quickshell startup trace: strace could not launch Quickshell" >&2
+    cat "$trace_error_file" >&2
+    exit 1
+fi
+
+log_file=$runtime_dir/quickshell/by-pid/$quickshell_pid/log.log
+attempt=0
+while [ "$attempt" -lt 100 ] && kill -0 "$quickshell_pid" 2>/dev/null; do
+    [ -r "$log_file" ] && break
+    sleep 0.05
+    attempt=$((attempt + 1))
+done
+
+if [ -r "$log_file" ] && kill -0 "$quickshell_pid" 2>/dev/null; then
+    attempt=0
+    while [ "$attempt" -lt 600 ] && kill -0 "$quickshell_pid" 2>/dev/null; do
+        if grep -q 'Configuration Loaded' "$log_file" 2>/dev/null; then
+            stop_tracer
+            break
+        fi
+        if ! kill -0 "$tracer_pid" 2>/dev/null; then
+            tracer_pid=
+            break
+        fi
+        sleep 0.1
+        attempt=$((attempt + 1))
+    done
+    stop_tracer
+    echo "Quickshell startup trace saved to $trace_file" >&2
+else
+    stop_tracer
+    echo "Quickshell startup trace: could not locate its runtime log" >&2
+fi
+
+# strace has detached the shell after startup. Keep supervising its lifetime
+# so the session runner can still stop it when the compositor exits.
+while [ -n "$quickshell_pid" ] && kill -0 "$quickshell_pid" 2>/dev/null; do
+    process_state=$(ps -o stat= -p "$quickshell_pid" 2>/dev/null || true)
+    case "$process_state" in
+        ''|Z*) break ;;
+    esac
+    sleep 1
+done
+
+trap - 0 HUP INT TERM
+exit 0

@@ -63,4 +63,10 @@ if [ ! -x "$runner" ]; then
     exit 1
 fi
 
+trace_marker=${XDG_STATE_HOME:-"$HOME/.local/state"}/triton-desktop/quickshell-verbose-next-startup
+if [ -f "$trace_marker" ]; then
+    rm -f -- "$trace_marker"
+    exec "$runner" "$session_pid" "$repo_root/desktop/session/quickshell-startup-trace" qs -n --log-times -vv -p "$HOME/.config/quickshell/shell.qml"
+fi
+
 exec "$runner" "$session_pid" qs -n -p "$HOME/.config/quickshell/shell.qml"

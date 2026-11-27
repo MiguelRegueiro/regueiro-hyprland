@@ -15,6 +15,16 @@ import "wallpaper" as Wallpaper
 ShellRoot {
     id: root
 
+    // Lightweight startup trace: QML object completion marks are collected in
+    // memory and emitted with the existing one-shot startup log.
+    property double startupTraceOriginMs: Date.now()
+    property var startupTraceMarks: []
+
+    function markStartupTrace(name, screen) {
+        const suffix = screen && screen.name ? `:${screen.name}` : "";
+        startupTraceMarks.push(`${name}${suffix}@${Math.round(Date.now() - startupTraceOriginMs)}`);
+    }
+
     readonly property string shellScreenName: {
         const screens = Quickshell.screens;
         const selected = displayServiceState.primary;
@@ -87,7 +97,7 @@ ShellRoot {
                 "logger",
                 "-t",
                 "triton-desktop-startup",
-                `ready_after_seconds=${elapsedSeconds} screens=${screenNames}`
+                `ready_after_seconds=${elapsedSeconds} screens=${screenNames} qml_marks_ms=${startupTraceMarks.join(",")}`
             ]);
         }
     }
@@ -742,6 +752,7 @@ ShellRoot {
 
         compositorService: compositorServiceState
         popupSuppressed: root.notificationCenterVisible
+        Component.onCompleted: root.markStartupTrace("service:notifications")
     }
 
     Connections {
@@ -760,6 +771,7 @@ ShellRoot {
 
     Services.AudioService {
         id: audioServiceState
+        Component.onCompleted: root.markStartupTrace("service:audio")
     }
 
     Services.BrightnessService {
@@ -772,6 +784,7 @@ ShellRoot {
         id: displayServiceState
 
         compositorService: compositorServiceState
+        Component.onCompleted: root.markStartupTrace("service:displays")
     }
 
     Services.PowerService {
@@ -821,6 +834,7 @@ ShellRoot {
 
     Services.ClipboardService {
         id: clipboardServiceState
+        Component.onCompleted: root.markStartupTrace("service:clipboard")
     }
 
     Services.ExternalDrivesService {
@@ -841,6 +855,7 @@ ShellRoot {
 
     Services.LauncherService {
         id: launcherServiceState
+        Component.onCompleted: root.markStartupTrace("service:launcher")
     }
 
     Overlays.SettingsWindow {
@@ -885,6 +900,7 @@ ShellRoot {
                 inputService: inputServiceState
                 externalDrivesService: externalDrivesServiceState
                 sshSessionsService: sshSessionsServiceState
+                Component.onCompleted: root.markStartupTrace("window:bar", modelData)
                 onQuickSettingsClicked: root.toggleQuickSettings()
                 onNotificationCenterClicked: root.toggleNotificationCenter()
                 onClipboardClicked: root.toggleClipboard()
@@ -1054,6 +1070,7 @@ ShellRoot {
                 platformService: platformServiceState
                 brightnessService: brightnessServiceState
                 displayService: displayServiceState
+                Component.onCompleted: root.markStartupTrace("window:quicksettings", modelData)
                 networkService: networkServiceState
                 onOutsidePressed: root.closeAllPanels()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
@@ -1153,6 +1170,7 @@ ShellRoot {
                 notificationStore: notificationStoreService
                 notificationCenterVisible: root.notificationCenterVisible && activeScreen
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
+                Component.onCompleted: root.markStartupTrace("window:notifications", modelData)
                 onOutsidePressed: root.closeAllPanels()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onNotificationCenterHoveredChanged: {
@@ -1174,6 +1192,7 @@ ShellRoot {
                 targetScreen: modelData
                 compositorService: compositorServiceState
                 open: root.wallpaperPickerVisible && activeScreen
+                Component.onCompleted: root.markStartupTrace("window:wallpaper", modelData)
                 onRequestClose: root.closeWallpaperPicker()
             }
         }
@@ -1200,6 +1219,7 @@ ShellRoot {
                 dismissOnOutsideClick: root.launcherVisible && !menuScreen
                 forceOverlay: launcherOverlayActive
                 launcherService: launcherServiceState
+                Component.onCompleted: root.markStartupTrace("window:launcher", modelData)
                 onOutsidePressed: restoreWorkspaceFocus => root.closeLauncher(restoreWorkspaceFocus)
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
@@ -1226,6 +1246,7 @@ ShellRoot {
                 dismissOnOutsideClick: root.clipboardVisible && !menuScreen
                 forceOverlay: clipboardOverlayActive
                 clipboardService: clipboardServiceState
+                Component.onCompleted: root.markStartupTrace("window:clipboard", modelData)
                 onOutsidePressed: restoreWorkspaceFocus => root.closeClipboard(restoreWorkspaceFocus)
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
                 onBarHovered: (x, y) => root.routeBarMenuHover(modelData, x, y)
