@@ -30,8 +30,8 @@ mkdir -p "$fresh_home/.config/user-app" "$fresh_home/.local/share/user-app" "$fr
 printf '%s\n' 'user-owned settings' >"$fresh_home/.config/user-app/settings.ini"
 printf '%s\n' 'user-owned target' >"$fresh_home/.local/share/user-app/data"
 ln -s "$fresh_home/.local/share/user-app/data" "$fresh_home/.local/bin/user-app-data"
-HOME=$fresh_home "$repo_dir/install.sh" >/dev/null
-HOME=$fresh_home "$repo_dir/install.sh" >/dev/null
+HOME=$fresh_home "$repo_dir/install.sh" --config-only >/dev/null
+HOME=$fresh_home "$repo_dir/install.sh" --config-only >/dev/null
 for relative in .local/share/fonts/triton-desktop .local/share/icons/Bibata-Modern-Classic .local/share/triton-desktop/assets; do
     if [ ! -L "$fresh_home/$relative" ]; then
         echo "Installer did not link the bundled asset at $relative" >&2
@@ -96,7 +96,7 @@ conflict_home=$tmp_dir/conflict-home
 conflict=$conflict_home/.config/hypr/scripts/powerctl
 mkdir -p "$(dirname -- "$conflict")"
 printf '%s\n' 'user-owned file' >"$conflict"
-if HOME=$conflict_home "$repo_dir/install.sh" >"$tmp_dir/conflict.log" 2>&1; then
+if HOME=$conflict_home "$repo_dir/install.sh" --config-only >"$tmp_dir/conflict.log" 2>&1; then
     echo "Installer unexpectedly accepted a conflicting user file." >&2
     exit 1
 fi
@@ -108,7 +108,7 @@ fi
 parent_conflict_home=$tmp_dir/parent-conflict-home
 mkdir -p "$parent_conflict_home/.config"
 printf '%s\n' 'user-owned file' >"$parent_conflict_home/.config/quickshell"
-if HOME=$parent_conflict_home "$repo_dir/install.sh" >"$tmp_dir/parent-conflict.log" 2>&1; then
+if HOME=$parent_conflict_home "$repo_dir/install.sh" --config-only >"$tmp_dir/parent-conflict.log" 2>&1; then
     echo "Installer unexpectedly accepted a file where a configuration directory is required." >&2
     exit 1
 fi
@@ -138,6 +138,19 @@ EOF
 done
 chmod +x "$setup_bin/pacman" "$setup_bin/sudo" "$setup_bin/mimeclip" "$setup_bin/mimeclipd"
 printf 'ID=cachyos\nID_LIKE="arch"\n' >"$tmp_dir/setup-os-release"
+: >"$tmp_dir/setup-package-calls"
+if command -v script >/dev/null 2>&1; then
+    guided_home=$tmp_dir/guided-home
+    mkdir -p "$guided_home"
+    printf 'none\n' | script -qec \
+        "HOME=$guided_home PATH=$setup_bin:/usr/bin:/bin CALL_LOG=$tmp_dir/setup-package-calls TRITON_OS_RELEASE_FILE=$tmp_dir/setup-os-release '$repo_dir/install.sh'" \
+        /dev/null >"$tmp_dir/guided-install.log" 2>&1
+    if [ "$(cat "$guided_home/.local/state/triton-desktop/package-groups")" != core ]; then
+        echo "A fresh interactive ./install.sh did not enter guided setup." >&2
+        cat "$tmp_dir/guided-install.log" >&2
+        exit 1
+    fi
+fi
 : >"$tmp_dir/setup-package-calls"
 if printf 'none\n' | HOME=$conflict_home \
     PATH="$setup_bin:/usr/bin:/bin" \
@@ -199,6 +212,21 @@ for relative in .local/share/flatpak/overrides/net.ankiweb.Anki .config/nvim/ini
         exit 1
     fi
 done
+printf 'none\n' | HOME=$selected_home \
+    PATH="$setup_bin:/usr/bin:/bin" \
+    CALL_LOG=$tmp_dir/setup-package-calls \
+    TRITON_OS_RELEASE_FILE=$tmp_dir/setup-os-release \
+    "$repo_dir/install.sh" setup >/dev/null 2>&1
+for relative in .config/fish/config.fish .config/fcitx5/config; do
+    if [ -L "$selected_home/$relative" ]; then
+        echo "Setup left a previously selected optional config linked after deselection: $relative" >&2
+        exit 1
+    fi
+done
+if [ "$(cat "$selected_home/.local/state/triton-desktop/package-groups")" != core ]; then
+    echo "Setup did not update package-group state after changing selections." >&2
+    exit 1
+fi
 HOME=$selected_home "$repo_dir/install.sh" uninstall >/dev/null
 if [ -e "$selected_home/.local/state/triton-desktop/package-groups" ]; then
     echo "Uninstaller kept the installer-only package-group selection." >&2
@@ -219,7 +247,7 @@ cat >"$root_bin/id" <<'EOF'
 printf '%s\n' 0
 EOF
 chmod +x "$root_bin/id"
-if HOME=$setup_home PATH="$root_bin:/usr/bin:/bin" "$repo_dir/install.sh" >"$tmp_dir/root-install.log" 2>&1; then
+if HOME=$setup_home PATH="$root_bin:/usr/bin:/bin" "$repo_dir/install.sh" --config-only >"$tmp_dir/root-install.log" 2>&1; then
     echo "Installer unexpectedly allowed root execution." >&2
     exit 1
 fi
@@ -237,6 +265,8 @@ fi
 "$repo_dir/tests/test-mimeclip-supervisor.sh"
 "$repo_dir/tests/test-feature-installer.sh"
 "$repo_dir/tests/test-freebsd-privileged.sh"
+"$repo_dir/tests/test-freebsd-wifi-profiles.sh"
+"$repo_dir/tests/test-freebsd-unmount.sh"
 "$repo_dir/tests/test-installer-rollback.sh"
 "$repo_dir/tests/test-update.sh"
 "$repo_dir/tests/test-wallpaper-state.sh"

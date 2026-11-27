@@ -20,6 +20,16 @@ fi
 
 . "$repo_dir/installer/packages/root.sh"
 
+file_sha256() {
+    if command -v sha256 >/dev/null 2>&1; then
+        sha256 -q "$1"
+    elif command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{ print $1 }'
+    else
+        return 1
+    fi
+}
+
 remove_package() {
     package_dir=$1
     package=$2
@@ -66,7 +76,9 @@ done
 
 # The selected optional groups are installer state, not user configuration.
 selection_file=${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop/package-groups
-rm -f "$selection_file"
+if [ -f "$selection_file" ] && [ ! -L "$selection_file" ]; then
+    rm -f "$selection_file"
+fi
 
 remove_asset_link() {
     target=$1
@@ -81,6 +93,22 @@ remove_asset_link "${XDG_DATA_HOME:-$HOME/.local/share}/icons/Bibata-Modern-Clas
     "$repo_dir/desktop/assets/icons/Bibata-Modern-Classic"
 remove_asset_link "${XDG_DATA_HOME:-$HOME/.local/share}/triton-desktop/assets" \
     "$repo_dir/desktop/assets"
+
+hardware_target=$HOME/.local/bin/triton-freebsd-hardware
+hardware_manifest=${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop/generated/triton-freebsd-hardware.sha256
+if [ -L "$hardware_manifest" ]; then
+    echo "Preserving $hardware_target because its Triton ownership record is a symlink." >&2
+elif [ -f "$hardware_manifest" ]; then
+    recorded_checksum=$(cat "$hardware_manifest")
+    if [ ! -e "$hardware_target" ]; then
+        rm -f "$hardware_manifest"
+    elif [ -f "$hardware_target" ] && [ ! -L "$hardware_target" ] && \
+        [ "$(file_sha256 "$hardware_target" 2>/dev/null || true)" = "$recorded_checksum" ]; then
+        rm -f "$hardware_target" "$hardware_manifest"
+    else
+        echo "Preserving $hardware_target because it no longer matches Triton Desktop's recorded generated binary." >&2
+    fi
+fi
 
 if [ "$remove_packages" = yes ]; then
     state_dir=${TRITON_PACKAGE_STATE_DIR:-$HOME/.local/state/triton-desktop/packages}
@@ -133,7 +161,7 @@ for managed_root in "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share"; do
     [ -d "$managed_root" ] || continue
     find "$managed_root" -type l \
         \( -lname '*regueiro-hyprland/*' \
-        -o -lname '*triton-desktop/*' \) -print |
+    -o -lname "$repo_dir/*" \) -print |
         while IFS= read -r stale_link; do
             [ -e "$stale_link" ] || rm "$stale_link"
         done

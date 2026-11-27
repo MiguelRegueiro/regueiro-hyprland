@@ -3,9 +3,15 @@ set -eu
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 action=${1:-install}
+config_only=no
 
 case "$action" in
     install|update) ;;
+    --config-only)
+        [ "$#" -eq 1 ] || { echo "Usage: ./install.sh [--config-only]" >&2; exit 2; }
+        action=install
+        config_only=yes
+        ;;
     setup)
         shift
         [ "$#" -eq 0 ] || { echo "Usage: ./install.sh setup" >&2; exit 2; }
@@ -27,10 +33,21 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 selection_file=${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop/package-groups
+if [ -L "$selection_file" ]; then
+    echo "Install conflict: $selection_file is a symlink; move it before installing." >&2
+    exit 1
+fi
+setup_mode=no
 if [ "$action" = setup ]; then
+    setup_mode=yes
     selected_groups=$("$repo_dir/installer/packages/install.sh" --profile hyprland --select-groups)
 elif [ -r "$selection_file" ]; then
     selected_groups=$(cat "$selection_file")
+elif [ "$action" = install ] && [ "$config_only" = no ] && [ -t 0 ] && \
+    [ ! -L "$HOME/.config/quickshell/shell.qml" ] && \
+    [ ! -L "$HOME/.config/hypr/scripts/start-session-quickshell" ]; then
+    setup_mode=yes
+    selected_groups=$("$repo_dir/installer/packages/install.sh" --profile hyprland --select-groups)
 else
     selected_groups=all
 fi
@@ -67,6 +84,17 @@ is_local_override() {
             ;;
         *) return 1 ;;
     esac
+}
+
+file_sha256() {
+    if command -v sha256 >/dev/null 2>&1; then
+        sha256 -q "$1"
+    elif command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{ print $1 }'
+    else
+        echo "A SHA-256 utility is required to track the generated FreeBSD bridge." >&2
+        return 1
+    fi
 }
 
 preflight_package() {
@@ -141,6 +169,32 @@ if [ "$(uname -s)" = FreeBSD ]; then
 fi
 preflight_packages desktop/platforms "$platform_package"
 preflight_packages configs $config_packages
+hardware_target=$HOME/.local/bin/triton-freebsd-hardware
+hardware_state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/triton-desktop/generated
+hardware_manifest=$hardware_state_dir/triton-freebsd-hardware.sha256
+if [ "$platform_package" = freebsd ]; then
+    hardware_parent=$(dirname "$hardware_target")
+    if [ -e "$hardware_parent" ] && [ ! -d "$hardware_parent" ]; then
+        echo "Install conflict: $hardware_parent exists but a directory is required." >&2
+        exit 1
+    fi
+    if [ -L "$hardware_target" ]; then
+        echo "Install conflict: $hardware_target is a symlink; move it before installing the FreeBSD bridge." >&2
+        exit 1
+    fi
+    if [ -L "$hardware_manifest" ]; then
+        echo "Install conflict: $hardware_manifest is a symlink; move it before installing." >&2
+        exit 1
+    fi
+    if [ -e "$hardware_target" ]; then
+        current_hardware_checksum=$(file_sha256 "$hardware_target")
+        recorded_hardware_checksum=$(cat "$hardware_manifest" 2>/dev/null || true)
+        if [ -z "$recorded_hardware_checksum" ] || [ "$current_hardware_checksum" != "$recorded_hardware_checksum" ]; then
+            echo "Install conflict: $hardware_target exists and is not an unchanged Triton-generated binary." >&2
+            exit 1
+        fi
+    fi
+fi
 "$repo_dir/installer/install-assets.sh" --check
 
 if ! command -v stow >/dev/null 2>&1; then
@@ -199,14 +253,34 @@ done
 
 # The configuration simulation above must pass before installing the selected
 # runtime profile. This keeps package changes out of ordinary Stow conflicts.
-if [ "$action" = setup ]; then
+if [ "$setup_mode" = yes ]; then
     "$repo_dir/installer/packages/install.sh" --profile hyprland --groups "$selected_groups"
     "$repo_dir/installer/features/install-mimeclip.sh"
 fi
 
 hardware_tmp=
+hardware_backup=
+hardware_manifest_backup=
+hardware_installed=no
+hardware_was_owned=no
+hardware_manifest_existed=no
+hardware_install_tmp=
+hardware_manifest_tmp=
+hardware_manifest_written=no
+selection_tmp=
+selection_backup=
+selection_existed=no
+selection_written=no
+asset_install_done=no
+new_asset_links=
 cleanup_hardware_tmp() {
     [ -z "$hardware_tmp" ] || rm -f "$hardware_tmp"
+    [ -z "$hardware_backup" ] || rm -f "$hardware_backup"
+    [ -z "$hardware_manifest_backup" ] || rm -f "$hardware_manifest_backup"
+    [ -z "$hardware_install_tmp" ] || rm -f "$hardware_install_tmp"
+    [ -z "$hardware_manifest_tmp" ] || rm -f "$hardware_manifest_tmp"
+    [ -z "$selection_tmp" ] || rm -f "$selection_tmp"
+    [ -z "$selection_backup" ] || rm -f "$selection_backup"
 }
 attempted_packages=
 previous_packages=
@@ -289,6 +363,39 @@ rollback_deployment() {
                 echo "Rollback could not restore $spec; inspect its Stow links manually." >&2
         done
     fi
+    if [ "$result" -ne 0 ] && { [ "$hardware_installed" = yes ] || [ "$hardware_manifest_written" = yes ]; }; then
+        if [ "$hardware_was_owned" = yes ] && [ -n "$hardware_backup" ]; then
+            install -m 0755 "$hardware_backup" "$hardware_target" || \
+                echo "Rollback could not restore $hardware_target." >&2
+        else
+            rm -f "$hardware_target"
+        fi
+        if [ "$hardware_manifest_existed" = yes ] && [ -n "$hardware_manifest_backup" ]; then
+            cp "$hardware_manifest_backup" "$hardware_manifest" || \
+                echo "Rollback could not restore $hardware_manifest." >&2
+        else
+            rm -f "$hardware_manifest"
+        fi
+    fi
+    if [ "$result" -ne 0 ] && [ "$selection_written" = yes ]; then
+        if [ "$selection_existed" = yes ] && [ -n "$selection_backup" ]; then
+            selection_restore=$(mktemp "$(dirname "$selection_file")/.package-groups-restore.XXXXXX")
+            cp "$selection_backup" "$selection_restore" && mv "$selection_restore" "$selection_file" || {
+                rm -f "$selection_restore"
+                echo "Rollback could not restore the package-group selection." >&2
+            }
+        else
+            rm -f "$selection_file"
+        fi
+    fi
+    if [ "$result" -ne 0 ] && [ "$asset_install_done" = yes ]; then
+        printf '%s\n' "$new_asset_links" | while IFS='|' read -r target source; do
+            [ -n "$target" ] || continue
+            if [ -L "$target" ] && [ "$(realpath "$target")" = "$(realpath "$source")" ]; then
+                rm -f "$target"
+            fi
+        done
+    fi
     cleanup_hardware_tmp
     exit "$result"
 }
@@ -296,6 +403,16 @@ trap rollback_deployment EXIT
 trap 'exit 1' HUP INT TERM
 if [ "$platform_package" = freebsd ]; then
     hardware_tmp=$(mktemp "${TMPDIR:-/tmp}/triton-hardware.XXXXXX")
+    if [ -e "$hardware_target" ]; then
+        hardware_was_owned=yes
+        hardware_backup=$(mktemp "${TMPDIR:-/tmp}/triton-hardware-backup.XXXXXX")
+        cp "$hardware_target" "$hardware_backup"
+    fi
+    if [ -f "$hardware_manifest" ]; then
+        hardware_manifest_existed=yes
+        hardware_manifest_backup=$(mktemp "${TMPDIR:-/tmp}/triton-hardware-state.XXXXXX")
+        cp "$hardware_manifest" "$hardware_manifest_backup"
+    fi
     TRITON_DESKTOP_DIR="$repo_dir" TRITON_HARDWARE_OUTPUT="$hardware_tmp" \
         "$repo_dir/desktop/platforms/freebsd/.local/bin/triton-freebsd-build-hardware"
 fi
@@ -338,21 +455,44 @@ stow_packages() {
     done
 }
 
+record_package_state() {
+    package_dir=$1
+    package=$2
+    package_spec=$package_dir:$package
+    case " $attempted_packages " in *" $package_spec "*) ;; *) attempted_packages="$attempted_packages $package_spec" ;; esac
+    if package_was_stowed "$package_dir" "$package"; then
+        case " $previous_packages " in *" $package_spec "*) ;; *) previous_packages="$previous_packages $package_spec" ;; esac
+    fi
+}
+
+remove_deselected_optional_configs() {
+    for package in fish starship fastfetch fcitx5 nvim flatpak; do
+        case " $config_packages " in *" $package "*) continue ;; esac
+        package_root=$repo_dir/configs/$package
+        [ -d "$package_root" ] || continue
+        if package_was_stowed configs "$package"; then
+            deployment_active=yes
+            record_package_state configs "$package"
+            stow_delete_package configs "$package"
+        fi
+    done
+}
+
 # The public installer applies the current Hyprland desktop profile. OS package
 # installation is a separate, explicit operation in installer/packages/.
+remove_deselected_optional_configs
 stow_packages compositors/hyprland hypr hypridle
 stow_packages desktop quickshell
 stow_packages desktop scripts
 stow_packages desktop/platforms "$platform_package"
 if [ "$platform_package" = freebsd ]; then
-    install -m 0755 "$hardware_tmp" "$HOME/.local/bin/triton-freebsd-hardware"
+    hardware_install_tmp=$(mktemp "$HOME/.local/bin/.triton-freebsd-hardware.XXXXXX")
+    install -m 0755 "$hardware_tmp" "$hardware_install_tmp"
+    hardware_installed=yes
+    mv -f "$hardware_install_tmp" "$hardware_target"
+    hardware_install_tmp=
 fi
 stow_packages configs $config_packages
-
-mkdir -p "$(dirname "$selection_file")"
-selection_tmp=$(mktemp "$(dirname "$selection_file")/.package-groups.XXXXXX")
-printf '%s\n' "$selected_groups" >"$selection_tmp"
-mv "$selection_tmp" "$selection_file"
 
 # Remove dangling links left by files deleted in earlier refactors. Keep this
 # sweep limited to Stow-managed locations and the old checkout's unique path.
@@ -367,6 +507,41 @@ for managed_root in "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share"; do
         done
 done
 
+asset_data=${XDG_DATA_HOME:-$HOME/.local/share}
+for asset_spec in \
+    "$asset_data/fonts/triton-desktop|$repo_dir/desktop/assets/fonts" \
+    "$asset_data/icons/Bibata-Modern-Classic|$repo_dir/desktop/assets/icons/Bibata-Modern-Classic" \
+    "$asset_data/triton-desktop/assets|$repo_dir/desktop/assets"
+do
+    asset_target=${asset_spec%%|*}
+    asset_source=${asset_spec#*|}
+    if [ ! -e "$asset_target" ] && [ ! -L "$asset_target" ]; then
+        new_asset_links="$new_asset_links
+$asset_target|$asset_source"
+    fi
+done
 "$repo_dir/installer/install-assets.sh"
+asset_install_done=yes
+
+if [ "$platform_package" = freebsd ]; then
+    mkdir -p "$hardware_state_dir"
+    hardware_manifest_tmp=$(mktemp "$hardware_state_dir/.triton-freebsd-hardware.XXXXXX")
+    file_sha256 "$hardware_target" >"$hardware_manifest_tmp"
+    hardware_manifest_written=yes
+    mv "$hardware_manifest_tmp" "$hardware_manifest"
+    hardware_manifest_tmp=
+fi
+
+mkdir -p "$(dirname "$selection_file")"
+if [ -f "$selection_file" ]; then
+    selection_existed=yes
+    selection_backup=$(mktemp "${TMPDIR:-/tmp}/triton-groups-backup.XXXXXX")
+    cp "$selection_file" "$selection_backup"
+fi
+selection_tmp=$(mktemp "$(dirname "$selection_file")/.package-groups.XXXXXX")
+printf '%s\n' "$selected_groups" >"$selection_tmp"
+selection_written=yes
+mv "$selection_tmp" "$selection_file"
+selection_tmp=
 
 printf '%s\n' "Triton Desktop configuration linked. Log out and back in to start the session changes."
