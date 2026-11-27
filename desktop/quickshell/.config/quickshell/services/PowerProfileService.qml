@@ -17,6 +17,9 @@ Item {
     Loader {
         id: backend
 
+        // PowerProfiles can wait for a system D-Bus activation during startup.
+        // Keep that optional lookup from delaying the shell's first render.
+        asynchronous: true
         active: root.platformService.hasPowerProfilesAdapter
         source: !active ? "" : root.platformService.isLinux
             ? Qt.resolvedUrl("backends/power-profile/linux/PowerProfileBackend.qml")
