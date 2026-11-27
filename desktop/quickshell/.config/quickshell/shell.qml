@@ -78,6 +78,18 @@ ShellRoot {
     Component.onCompleted: {
         if (batteryWarningRequested)
             batteryWarningDelay.restart();
+
+        const startedAt = Number(Quickshell.env("TRITON_QS_START_EPOCH"));
+        if (startedAt > 0) {
+            const elapsedSeconds = Math.max(0, Math.round(Date.now() / 1000) - startedAt);
+            const screenNames = Quickshell.screens.map(screen => screen.name).join(",");
+            Quickshell.execDetached([
+                "logger",
+                "-t",
+                "triton-desktop-startup",
+                `ready_after_seconds=${elapsedSeconds} screens=${screenNames}`
+            ]);
+        }
     }
 
     function previewBatteryWarning(percentText) {

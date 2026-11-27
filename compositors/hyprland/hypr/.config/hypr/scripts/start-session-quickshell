@@ -15,6 +15,11 @@ fi
 TRITON_PLATFORM=$("$platform_detector")
 export TRITON_PLATFORM
 
+# Keep a wall-clock reference so the shell can report how long its initial
+# QML load took after the UI is already ready.
+TRITON_QS_START_EPOCH=$(date +%s)
+export TRITON_QS_START_EPOCH
+
 instance=${HYPRLAND_INSTANCE_SIGNATURE:-}
 if [ -z "$instance" ]; then
     echo "start-session-quickshell: HYPRLAND_INSTANCE_SIGNATURE is missing" >&2
