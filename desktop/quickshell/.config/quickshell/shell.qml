@@ -932,6 +932,7 @@ ShellRoot {
                 targetScreen: modelData
                 detailsService: systemDetailsServiceState
                 open: root.cpuStatsMenuVisible && activeScreen
+                dismissOnOutsideClick: root.cpuStatsMenuVisible && !activeScreen
                 fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeCpuStatsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
@@ -951,6 +952,7 @@ ShellRoot {
                 targetScreen: modelData
                 ttsService: ttsServiceState
                 open: root.ttsMenuVisible && activeScreen
+                dismissOnOutsideClick: root.ttsMenuVisible && !activeScreen
                 fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeTtsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
@@ -1001,6 +1003,7 @@ ShellRoot {
                 targetScreen: modelData
                 detailsService: systemDetailsServiceState
                 open: root.ramStatsMenuVisible && activeScreen
+                dismissOnOutsideClick: root.ramStatsMenuVisible && !activeScreen
                 fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeRamStatsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
@@ -1021,6 +1024,7 @@ ShellRoot {
                 targetScreen: modelData
                 sshService: sshSessionsServiceState
                 open: root.sshSessionsMenuVisible && activeScreen
+                dismissOnOutsideClick: root.sshSessionsMenuVisible && !activeScreen
                 fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeSshSessionsMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
@@ -1041,6 +1045,7 @@ ShellRoot {
                 targetScreen: modelData
                 driveService: externalDrivesServiceState
                 open: root.externalDrivesMenuVisible && activeScreen
+                dismissOnOutsideClick: root.externalDrivesMenuVisible && !activeScreen
                 fullscreenActive: activeScreen && activeWorkspace && compositorServiceState.workspaceHasFullscreen(activeWorkspace)
                 onCloseRequested: root.closeExternalDrivesMenu()
                 onBarPressed: (x, y) => root.routeBarMenuPress(modelData, x, y)
@@ -1063,6 +1068,7 @@ ShellRoot {
                 hasBar: activeScreen
                 forceOverlay: fullscreenPanelChromeActive
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
+                dismissOnOutsideClick: root.quickSettingsVisible && !activeScreen
                 notificationStore: notificationStoreService
                 audioService: audioServiceState
                 batteryService: batteryServiceState
@@ -1169,6 +1175,7 @@ ShellRoot {
                 forceOverlay: notificationOverlayActive
                 notificationStore: notificationStoreService
                 notificationCenterVisible: root.notificationCenterVisible && activeScreen
+                dismissOnOutsideClick: root.notificationCenterVisible && !activeScreen
                 quickSettingsVisible: root.quickSettingsVisible && activeScreen
                 Component.onCompleted: root.markStartupTrace("window:notifications", modelData)
                 onOutsidePressed: root.closeAllPanels()

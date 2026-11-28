@@ -18,6 +18,9 @@ PanelWindow {
     required property var networkService
     property bool hasBar: true
     property bool quickSettingsVisible: false
+    // Keep an input-only surface on other monitors while Quick Settings is
+    // open so a click there dismisses the panel just like the drawer/clipboard.
+    property bool dismissOnOutsideClick: false
     property bool forceOverlay: false
     readonly property bool quickSettingsHovered: quickSettingsPanel.hovered
     readonly property real topY: hasBar ? Theme.barHeight - Theme.frameTopOverlap : 0
@@ -55,12 +58,12 @@ PanelWindow {
 
 
     screen: targetScreen
-    visible: root.quickSettingsVisible || root.forceOverlay || quickSettingsPanel.reveal > 0.001
+    visible: root.quickSettingsVisible || root.dismissOnOutsideClick || root.forceOverlay || quickSettingsPanel.reveal > 0.001
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
+    WlrLayershell.layer: (root.forceOverlay || root.dismissOnOutsideClick) ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-border"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: root.quickSettingsVisible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     color: "transparent"
 
     anchors {
@@ -134,6 +137,13 @@ PanelWindow {
 
     }
 
+    MouseArea {
+        anchors.fill: parent
+        visible: root.dismissOnOutsideClick
+        acceptedButtons: Qt.AllButtons
+        onPressed: root.outsidePressed()
+    }
+
     QuickSettings.QuickSettingsPanel {
         id: quickSettingsPanel
 
@@ -157,9 +167,9 @@ PanelWindow {
     mask: Region {
         Region {
             x: 0
-            y: root.forceOverlay ? 0 : Theme.barHeight
-            width: root.quickSettingsVisible ? Math.round(root.width) : 0
-            height: root.quickSettingsVisible ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
+            y: root.dismissOnOutsideClick || root.forceOverlay ? 0 : Theme.barHeight
+            width: root.quickSettingsVisible || root.dismissOnOutsideClick ? Math.round(root.width) : 0
+            height: root.quickSettingsVisible || root.dismissOnOutsideClick ? Math.max(0, Math.round(root.height - (root.dismissOnOutsideClick || root.forceOverlay ? 0 : Theme.barHeight))) : 0
         }
 
     }

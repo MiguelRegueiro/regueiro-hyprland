@@ -11,6 +11,7 @@ PanelWindow {
     required property var notificationStore
     property bool showLayer: true
     property bool notificationCenterVisible: false
+    property bool dismissOnOutsideClick: false
     property bool quickSettingsVisible: false
     property bool forceOverlay: false
     readonly property bool notificationCenterHovered: notificationCenter.hovered
@@ -38,10 +39,10 @@ PanelWindow {
     // Keep the layer mapped for the panel's exit transition.  Closing the
     // controller flips notificationCenterVisible immediately, while the
     // panel itself still needs a frame or two to animate reveal back to 0.
-    visible: showLayer && (root.notificationCenterVisible || notificationCenter.reveal > 0.001 || root.notificationStore.popups.length > 0)
+    visible: root.dismissOnOutsideClick || showLayer && (root.notificationCenterVisible || notificationCenter.reveal > 0.001 || root.notificationStore.popups.length > 0)
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: root.forceOverlay ? WlrLayer.Overlay : WlrLayer.Top
+    WlrLayershell.layer: (root.forceOverlay || root.dismissOnOutsideClick) ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.namespace: "qs-notif"
     color: "transparent"
 
@@ -96,6 +97,13 @@ PanelWindow {
 
     }
 
+    MouseArea {
+        anchors.fill: parent
+        visible: root.dismissOnOutsideClick
+        acceptedButtons: Qt.AllButtons
+        onPressed: root.outsidePressed()
+    }
+
     NotificationCenterPanel {
         id: notificationCenter
 
@@ -108,7 +116,7 @@ PanelWindow {
     Column {
         id: toastStack
 
-        visible: !root.notificationCenterVisible && root.notificationStore.popups.length > 0
+        visible: showLayer && !root.notificationCenterVisible && root.notificationStore.popups.length > 0
         x: root.toastX
         y: Theme.barHeight + Theme.borderSize + 12
         width: Theme.toastWidth
@@ -141,9 +149,9 @@ PanelWindow {
     mask: Region {
         Region {
             x: 0
-            y: root.forceOverlay ? 0 : Theme.barHeight
-            width: (root.notificationCenterVisible || notificationCenter.reveal > 0.001) ? Math.round(root.width) : 0
-            height: (root.notificationCenterVisible || notificationCenter.reveal > 0.001) ? Math.max(0, Math.round(root.height - (root.forceOverlay ? 0 : Theme.barHeight))) : 0
+            y: root.dismissOnOutsideClick || root.forceOverlay ? 0 : Theme.barHeight
+            width: root.dismissOnOutsideClick || root.notificationCenterVisible || notificationCenter.reveal > 0.001 ? Math.round(root.width) : 0
+            height: root.dismissOnOutsideClick || root.notificationCenterVisible || notificationCenter.reveal > 0.001 ? Math.max(0, Math.round(root.height - (root.dismissOnOutsideClick || root.forceOverlay ? 0 : Theme.barHeight))) : 0
         }
 
         Region {

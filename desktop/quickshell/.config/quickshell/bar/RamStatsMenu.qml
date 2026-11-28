@@ -12,6 +12,7 @@ PanelWindow {
     required property var targetScreen
     required property var detailsService
     property bool open: false
+    property bool dismissOnOutsideClick: false
     property bool fullscreenActive: false
     readonly property real reveal: statsPanel.reveal
     readonly property real menuWidth: 430
@@ -43,7 +44,7 @@ PanelWindow {
     }
 
     screen: targetScreen
-    visible: root.open || root.reveal > 0.001
+    visible: root.open || root.dismissOnOutsideClick || root.reveal > 0.001
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
@@ -59,9 +60,9 @@ PanelWindow {
 
     mask: Region {
         x: 0
-        y: root.fullscreenActive ? 0 : Theme.barHeight
-        width: root.open ? Math.round(root.width) : 0
-        height: root.open ? Math.max(0, Math.round(root.height - (root.fullscreenActive ? 0 : Theme.barHeight))) : 0
+        y: root.dismissOnOutsideClick || root.fullscreenActive ? 0 : Theme.barHeight
+        width: root.open || root.dismissOnOutsideClick ? Math.round(root.width) : 0
+        height: root.open || root.dismissOnOutsideClick ? Math.max(0, Math.round(root.height - (root.dismissOnOutsideClick || root.fullscreenActive ? 0 : Theme.barHeight))) : 0
     }
 
     onOpenChanged: {
@@ -79,7 +80,7 @@ PanelWindow {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
-        enabled: root.open
+        enabled: root.open || root.dismissOnOutsideClick
         onPressed: (mouse) => {
             if (root.fullscreenActive && root.routeBarPress(mouse))
                 return ;

@@ -12,6 +12,7 @@ PanelWindow {
     required property var targetScreen
     required property var ttsService
     property bool open: false
+    property bool dismissOnOutsideClick: false
     property bool fullscreenActive: false
     property string provider: "kokoro"
     property string voice: "kokoro-michael"
@@ -96,7 +97,7 @@ PanelWindow {
     Component.onCompleted: syncPreferences()
 
     screen: targetScreen
-    visible: open
+    visible: root.open || root.dismissOnOutsideClick
     exclusiveZone: 0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
@@ -109,15 +110,15 @@ PanelWindow {
     // clicks and switch directly to another menu.
     mask: Region {
         x: 0
-        y: root.fullscreenActive ? 0 : Theme.barHeight
-        width: root.open ? Math.round(root.width) : 0
-        height: root.open ? Math.max(0, Math.round(root.height - (root.fullscreenActive ? 0 : Theme.barHeight))) : 0
+        y: root.dismissOnOutsideClick || root.fullscreenActive ? 0 : Theme.barHeight
+        width: root.open || root.dismissOnOutsideClick ? Math.round(root.width) : 0
+        height: root.open || root.dismissOnOutsideClick ? Math.max(0, Math.round(root.height - (root.dismissOnOutsideClick || root.fullscreenActive ? 0 : Theme.barHeight))) : 0
     }
 
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
-        enabled: root.open
+        enabled: root.open || root.dismissOnOutsideClick
         onPressed: mouse => {
             if (root.fullscreenActive && root.routeBarPress(mouse))
                 return;
@@ -127,6 +128,7 @@ PanelWindow {
     }
     Rectangle {
         id: ttsPanel
+        visible: root.open
         width: 520; height: 176
         x: Math.max(8, parent.width - width - 108)
         y: Theme.barHeight + Theme.topBarMenuTopGap
