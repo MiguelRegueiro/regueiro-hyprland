@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Settings
+GenericName=Desktop Settings
+Comment=Configure Triton Desktop displays and power
+Icon=preferences-system
+Exec=qs ipc call settings open
+TryExec=qs
+Terminal=false
+StartupNotify=false
+Categories=Settings;System;
+OnlyShowIn=Hyprland;

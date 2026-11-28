@@ -245,7 +245,7 @@ stow_check_package() {
 }
 
 for package in hypr hypridle; do stow_check_package compositors/hyprland "$package"; done
-for package in quickshell scripts; do stow_check_package desktop "$package"; done
+for package in quickshell scripts applications; do stow_check_package desktop "$package"; done
 stow_check_package desktop/platforms "$platform_package"
 for package in $config_packages; do
     stow_check_package configs "$package"
@@ -484,6 +484,7 @@ remove_deselected_optional_configs
 stow_packages compositors/hyprland hypr hypridle
 stow_packages desktop quickshell
 stow_packages desktop scripts
+stow_packages desktop applications
 stow_packages desktop/platforms "$platform_package"
 if [ "$platform_package" = freebsd ]; then
     hardware_install_tmp=$(mktemp "$HOME/.local/bin/.triton-freebsd-hardware.XXXXXX")
